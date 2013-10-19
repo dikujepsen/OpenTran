@@ -1,6 +1,7 @@
-*.class
-
-# Package Files #
-*.jar
-*.war
-*.ear
+*.o
+*.obj
+*.so
+*.lib
+*~
+*.exe
+a.out
