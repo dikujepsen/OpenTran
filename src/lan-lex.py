@@ -1,26 +1,127 @@
 import sys
 
-tokens = (
-    'NAME','NUMBER',
-    'PLUS','MINUS','TIMES','DIVIDE','EQUALS',
-    'LPAREN','RPAREN',
+import ply.lex as lex
+from ply.lex import TOKEN
+##
+## Reserved keywords
+##
+keywords = (
+    # Types
+    'CHAR', 'DOUBLE', 'FLOAT', 'INT', 'LONG',
+    'SHORT', 'SIGNED', 'UNSIGNED', 'VOID',
+    # Control flow
+    'DO',  'WHILE', 'IF', 'ELSE', 'FOR', 'RETURN',
+    
+    # C internals
+    'SIZEOF',  'STRUCT',
+
+    # qualifiers
+    'EXTERN',
     )
 
-# Tokens
+tokens = keywords + (
+    # Identifier
+    'ID',
+    # Type of variables/functions, not needed, covered by keywords
+    # 'TYPE', 
 
-t_PLUS    = r'\+'
-t_MINUS   = r'-'
-t_TIMES   = r'\*'
-t_DIVIDE  = r'/'
-t_EQUALS  = r'='
-t_LPAREN  = r'\('
-t_RPAREN  = r'\)'
-t_NAME    = r'[a-zA-Z_][a-zA-Z0-9_]*'
+    # Different types of constants
+    'FLOAT_CONST', 'INT_CONST',
 
-def t_NUMBER(t):
-    r'\d+'
-    t.value = int(t.value)
+    # Strings, e.g. "here is a string"
+    'STRING_LITERAL',
+
+    # Operators
+    # arithmetic
+    'PLUS','MINUS','TIMES','DIVIDE', 'MOD',
+    'OR', 'AND', 'LSHIFT', 'RSHIFT',
+    # comparison
+    'LOGOR', 'LOGAND', 'LOGNOT',
+    'LT', 'LE', 'GT', 'GE', 'EQ', 'NE',
+
+    # Assignments
+    'EQUALS', 'PLUSEQUAL', 'MINUSEQUAL', 'TIMESEQUAL',
+
+    # Increments/decrements
+    'PLUSPLUS', 'MINUSMINUS',
+    
+    # Delimeters 
+    'LPAREN', 'RPAREN',         # ( )
+    'LBRACKET', 'RBRACKET',     # [ ]
+    'LBRACE', 'RBRACE',         # { } 
+    'COMMA', 'PERIOD',          # . ,
+    'SEMI', 'COLON',            # ; :
+
+    # pre-processor 
+    'PPHASH',      # '#'
+
+    )
+
+
+# valid C identifiers (K&R2: A.2.3)
+floating_point = r"""([0-9]*\.[0-9]+)|([0-9]+\.)"""
+integer = r"""0|([1-9][0-9]*)"""
+
+identifier = r"""[a-zA-Z_][a-zA-Z0-9_]*"""
+
+@TOKEN(identifier)
+def t_ID(t):
+    tmp = t.value.upper()
+    if tmp in keywords:
+        t.type = tmp
     return t
+
+@TOKEN(floating_point)
+def t_FLOAT_CONST(t):
+    return t
+@TOKEN(integer)
+def t_INT_CONST(t):
+    return t
+
+
+t_STRING_LITERAL = r"""\"[a-zA-Z0-9_\+\.,:;<>\#\-@$%&/\{\}\(\)\[\]\?\*]*\""""
+# Operators
+t_PLUS    	= r'\+'
+t_MINUS   	= r'-'
+t_TIMES   	= r'\*'
+t_DIVIDE  	= r'/'
+t_MOD           = r'%'
+t_OR            = r'\|'
+t_AND           = r'&'
+t_LSHIFT        = r'<<'
+t_RSHIFT        = r'>>'
+t_LOGOR         = r'\|\|'
+t_LOGAND        = r'&&'
+t_LOGNOT        = r'!'
+t_LT            = r'<'
+t_GT            = r'>'
+t_LE            = r'<='
+t_GE            = r'>='
+t_EQ            = r'=='
+t_NE            = r'!='
+
+# Assignments
+t_EQUALS  	= r'='
+t_TIMESEQUAL    = r'\*='
+t_PLUSEQUAL     = r'\+='
+t_MINUSEQUAL    = r'-='
+
+# Increment/decrement
+t_PLUSPLUS      = r'\+\+'
+t_MINUSMINUS    = r'--'
+
+# Delimiters
+t_LPAREN  	= r'\('
+t_RPAREN  	= r'\)'
+t_LBRACKET      = r'\['
+t_RBRACKET      = r'\]'
+t_LBRACE        = r'\{'
+t_RBRACE        = r'\}'
+t_COMMA         = r','
+t_PERIOD        = r'\.'
+t_SEMI          = r';'
+t_COLON         = r':'
+t_PPHASH        = r'\#'
 
 # Ignored characters
 t_ignore = " \t"
@@ -34,12 +135,16 @@ def t_error(t):
     t.lexer.skip(1)
     
 # Build the lexer
-import ply.lex as lex
 lex.lex()
 
-while 1:
+run = 1
+while run:
     try:
-        s = raw_input('calc > ')   # use input() on Python 3
+        f = open('../test/matmulfunc.cpp', 'r')
+        s = f.read()
+        f.close()
+        print s
+        ## s = raw_input('calc > ')   # use input() on Python 3
     except EOFError:
         break
     lex.input(s)
@@ -47,3 +152,4 @@ while 1:
         tok = lex.token()
         if not tok: break
         print tok
+    run = 0

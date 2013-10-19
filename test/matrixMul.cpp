@@ -1,19 +1,9 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
-#include "oclMatmul.cpp"
 
 using namespace std;
 
-/////////////////////////////////////////////////////////////////////////////////
-//! Compute reference data set
-//! C = A * B
-//! @param C          reference data, computed but preallocated
-//! @param A          matrix A as provided to device
-//! @param B          matrix B as provided to device
-//! @param hA         height of matrix A
-//! @param wB         width of matrix B
-////////////////////////////////////////////////////////////////////////////////
 void
 matmul(float* A, float* B, float* C, unsigned hA, unsigned wA, unsigned wB)
 {
@@ -64,8 +54,6 @@ int main(int argc, char** argv)
   unsigned C_size = hC*wC;
   
   float* A_mat = new float[A_size];
-  hst_ptrA_dim1 = wA;
-  hst_ptrA_dim2 = hA;
   float* B_mat = new float[B_size];
   float* C_mat = new float[C_size];
 
@@ -75,13 +63,7 @@ int main(int argc, char** argv)
   randMat(B_mat,B_size);
   randMat(C_mat,C_size);
 
-  // matmul(A_mat, B_mat, C_mat, hA, wA, wB);
-  RunOCLMatmulKernel(A_mat,wA,hA,
-		     B_mat,wB,hB,
-		     C_mat,wC,hC);
-  RunOCLMatmulKernel(A_mat,wA,hA,
-		     B_mat,wB,hB,
-		     C_mat,wC,hC);
+  matmul(A_mat, B_mat, C_mat, hA, wA, wB);
   printMat(C_mat,C_size);
 
   free(A_mat);
