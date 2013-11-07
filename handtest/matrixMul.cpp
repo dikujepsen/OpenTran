@@ -74,14 +74,14 @@ int main(int argc, char** argv)
   randMat(A_mat,A_size);
   randMat(B_mat,B_size);
   randMat(C_mat,C_size);
-
+#define GPU 0
+#if GPU
+  RunOCLMatmulKernel(A_mat,wA,hA,
+		     B_mat,wB,hB,
+		     C_mat,wC,hC);
+#else
   // matmul(A_mat, B_mat, C_mat, hA, wA, wB);
-  RunOCLMatmulKernel(A_mat,wA,hA,
-		     B_mat,wB,hB,
-		     C_mat,wC,hC);
-  RunOCLMatmulKernel(A_mat,wA,hA,
-		     B_mat,wB,hB,
-		     C_mat,wC,hC);
+#endif
   printMat(C_mat,C_size);
 
   free(A_mat);
