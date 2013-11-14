@@ -6,3 +6,4 @@
 *.exe
 a.out
 *.personal
+*.pyc
