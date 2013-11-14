@@ -5,15 +5,6 @@
 
 using namespace std;
 
-/////////////////////////////////////////////////////////////////////////////////
-//! Compute reference data set
-//! C = A * B
-//! @param C          reference data, computed but preallocated
-//! @param A          matrix A as provided to device
-//! @param B          matrix B as provided to device
-//! @param hA         height of matrix A
-//! @param wB         width of matrix B
-////////////////////////////////////////////////////////////////////////////////
 void
 matmul(float* A, float* B, float* C, unsigned hA, unsigned wA, unsigned wB)
 {
@@ -55,7 +46,7 @@ int main(int argc, char** argv)
   unsigned hA = matsize;
   unsigned hB = matsize;
   unsigned hC = matsize;
-  const unsigned wA = matsize;
+  unsigned wA = matsize;
   unsigned wB = matsize;
   unsigned wC = matsize;
 
@@ -80,7 +71,7 @@ int main(int argc, char** argv)
 		     B_mat,wB,hB,
 		     C_mat,wC,hC);
 #else
-  // matmul(A_mat, B_mat, C_mat, hA, wA, wB);
+  matmul(A_mat, B_mat, C_mat, hA, wA, wB);
 #endif
   printMat(C_mat,C_size);
 

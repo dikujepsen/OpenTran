@@ -46,7 +46,7 @@ int main(int argc, char** argv)
   unsigned hA = matsize;
   unsigned hB = matsize;
   unsigned hC = matsize;
-  const unsigned wA = matsize;
+  unsigned wA = matsize;
   unsigned wB = matsize;
   unsigned wC = matsize;
 
