@@ -8,9 +8,9 @@ Unused terminals:
     EXTERN
     SIZEOF
     COLON
-    IF
     PERIOD
     ELSE
+    IF
     STRUCT
     PPHASH
 
@@ -89,41 +89,43 @@ Rule 69    function_declaration -> typeid arglist compound
 Rule 70    declaration -> typeid SEMI
 Rule 71    typeid -> type identifier
 Rule 72    native_type -> VOID
-Rule 73    native_type -> CHAR
-Rule 74    native_type -> SHORT
-Rule 75    native_type -> INT
-Rule 76    native_type -> LONG
-Rule 77    native_type -> FLOAT
-Rule 78    native_type -> DOUBLE
-Rule 79    native_type -> SIGNED
-Rule 80    native_type -> UNSIGNED
-Rule 81    type -> native_type
-Rule 82    type -> native_type TIMES
-Rule 83    identifier -> ID
-Rule 84    empty -> <empty>
+Rule 73    native_type -> SIZE_T
+Rule 74    native_type -> UNKNOWN
+Rule 75    native_type -> CHAR
+Rule 76    native_type -> SHORT
+Rule 77    native_type -> INT
+Rule 78    native_type -> LONG
+Rule 79    native_type -> FLOAT
+Rule 80    native_type -> DOUBLE
+Rule 81    native_type -> SIGNED
+Rule 82    native_type -> UNSIGNED
+Rule 83    type -> native_type
+Rule 84    type -> native_type TIMES
+Rule 85    identifier -> ID
+Rule 86    empty -> <empty>
 
 Terminals, with rules where they appear
 
 AND                  : 48
-CHAR                 : 73
+CHAR                 : 75
 COLON                : 
 COMMA                : 13
 COMMENT              : 12
 DIVIDE               : 38
 DO                   : 
-DOUBLE               : 78
+DOUBLE               : 80
 ELSE                 : 
 EQ                   : 57
 EQUALS               : 17
 EXTERN               : 
-FLOAT                : 77
+FLOAT                : 79
 FLOAT_CONST          : 26
 FOR                  : 63
 GE                   : 56
 GT                   : 54
-ID                   : 83
+ID                   : 85
 IF                   : 
-INT                  : 75
+INT                  : 77
 INT_CONST            : 25
 LBRACE               : 67
 LBRACKET             : 59
@@ -131,7 +133,7 @@ LE                   : 55
 LOGAND               : 52
 LOGNOT               : 29
 LOGOR                : 51
-LONG                 : 76
+LONG                 : 78
 LPAREN               : 16 34 63
 LSHIFT               : 49
 LT                   : 53
@@ -152,14 +154,16 @@ RETURN               :
 RPAREN               : 16 34 63
 RSHIFT               : 50
 SEMI                 : 24 63 63 68 70
-SHORT                : 74
-SIGNED               : 79
+SHORT                : 76
+SIGNED               : 81
 SIZEOF               : 
+SIZE_T               : 73
 STRING_LITERAL       : 27
 STRUCT               : 
-TIMES                : 37 82
+TIMES                : 37 84
 TIMESEQUALS          : 20
-UNSIGNED             : 80
+UNKNOWN              : 74
+UNSIGNED             : 82
 VOID                 : 72
 WHILE                : 
 error                : 
@@ -188,7 +192,7 @@ for_loop             : 10
 function_declaration : 4
 identifier           : 22 62 64 71
 increment            : 63
-native_type          : 81 82
+native_type          : 83 84
 subscript            : 60 61
 subscript_list       : 61 62
 term                 : 32 33 36 43
@@ -214,28 +218,30 @@ state 0
     (9) beginning_list -> . beginning_list expr
     (10) beginning_list -> . beginning_list for_loop
     (11) beginning_list -> . empty
-    (84) empty -> .
+    (86) empty -> .
 
-    $end            reduce using rule 84 (empty -> .)
-    COMMENT         reduce using rule 84 (empty -> .)
-    LBRACE          reduce using rule 84 (empty -> .)
-    FOR             reduce using rule 84 (empty -> .)
-    VOID            reduce using rule 84 (empty -> .)
-    CHAR            reduce using rule 84 (empty -> .)
-    SHORT           reduce using rule 84 (empty -> .)
-    INT             reduce using rule 84 (empty -> .)
-    LONG            reduce using rule 84 (empty -> .)
-    FLOAT           reduce using rule 84 (empty -> .)
-    DOUBLE          reduce using rule 84 (empty -> .)
-    SIGNED          reduce using rule 84 (empty -> .)
-    UNSIGNED        reduce using rule 84 (empty -> .)
-    ID              reduce using rule 84 (empty -> .)
-    MINUS           reduce using rule 84 (empty -> .)
-    LOGNOT          reduce using rule 84 (empty -> .)
-    INT_CONST       reduce using rule 84 (empty -> .)
-    FLOAT_CONST     reduce using rule 84 (empty -> .)
-    STRING_LITERAL  reduce using rule 84 (empty -> .)
-    LPAREN          reduce using rule 84 (empty -> .)
+    $end            reduce using rule 86 (empty -> .)
+    COMMENT         reduce using rule 86 (empty -> .)
+    LBRACE          reduce using rule 86 (empty -> .)
+    FOR             reduce using rule 86 (empty -> .)
+    VOID            reduce using rule 86 (empty -> .)
+    SIZE_T          reduce using rule 86 (empty -> .)
+    UNKNOWN         reduce using rule 86 (empty -> .)
+    CHAR            reduce using rule 86 (empty -> .)
+    SHORT           reduce using rule 86 (empty -> .)
+    INT             reduce using rule 86 (empty -> .)
+    LONG            reduce using rule 86 (empty -> .)
+    FLOAT           reduce using rule 86 (empty -> .)
+    DOUBLE          reduce using rule 86 (empty -> .)
+    SIGNED          reduce using rule 86 (empty -> .)
+    UNSIGNED        reduce using rule 86 (empty -> .)
+    ID              reduce using rule 86 (empty -> .)
+    MINUS           reduce using rule 86 (empty -> .)
+    LOGNOT          reduce using rule 86 (empty -> .)
+    INT_CONST       reduce using rule 86 (empty -> .)
+    FLOAT_CONST     reduce using rule 86 (empty -> .)
+    STRING_LITERAL  reduce using rule 86 (empty -> .)
+    LPAREN          reduce using rule 86 (empty -> .)
 
     beginning_list                 shift and go to state 1
     empty                          shift and go to state 2
@@ -255,8 +261,8 @@ state 1
     (12) comment -> . COMMENT
     (68) function_declaration -> . typeid arglist SEMI
     (69) function_declaration -> . typeid arglist compound
-    (81) type -> . native_type
-    (82) type -> . native_type TIMES
+    (83) type -> . native_type
+    (84) type -> . native_type TIMES
     (70) declaration -> . typeid SEMI
     (67) compound -> . LBRACE beginning_list RBRACE
     (24) assignment_expression_semi -> . assignment_expression SEMI
@@ -266,14 +272,16 @@ state 1
     (63) for_loop -> . FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound
     (71) typeid -> . type identifier
     (72) native_type -> . VOID
-    (73) native_type -> . CHAR
-    (74) native_type -> . SHORT
-    (75) native_type -> . INT
-    (76) native_type -> . LONG
-    (77) native_type -> . FLOAT
-    (78) native_type -> . DOUBLE
-    (79) native_type -> . SIGNED
-    (80) native_type -> . UNSIGNED
+    (73) native_type -> . SIZE_T
+    (74) native_type -> . UNKNOWN
+    (75) native_type -> . CHAR
+    (76) native_type -> . SHORT
+    (77) native_type -> . INT
+    (78) native_type -> . LONG
+    (79) native_type -> . FLOAT
+    (80) native_type -> . DOUBLE
+    (81) native_type -> . SIGNED
+    (82) native_type -> . UNSIGNED
     (21) assignment_expression -> . typeid assignment_operator expr
     (22) assignment_expression -> . identifier assignment_operator expr
     (23) assignment_expression -> . array_reference assignment_operator expr
@@ -282,7 +290,7 @@ state 1
     (64) term -> . identifier
     (65) term -> . constant
     (66) term -> . array_reference
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (62) array_reference -> . identifier subscript_list
     (28) unary_token_before -> . MINUS
     (29) unary_token_before -> . LOGNOT
@@ -297,46 +305,48 @@ state 1
     (35) binop_paren -> . binop_expression
 
     $end            reduce using rule 1 (first -> beginning_list .)
-    COMMENT         shift and go to state 18
-    LBRACE          shift and go to state 27
-    FOR             shift and go to state 20
-    VOID            shift and go to state 9
-    CHAR            shift and go to state 13
+    COMMENT         shift and go to state 19
+    LBRACE          shift and go to state 28
+    FOR             shift and go to state 21
+    VOID            shift and go to state 10
+    SIZE_T          shift and go to state 42
+    UNKNOWN         shift and go to state 9
+    CHAR            shift and go to state 14
     SHORT           shift and go to state 6
-    INT             shift and go to state 36
-    LONG            shift and go to state 22
-    FLOAT           shift and go to state 38
-    DOUBLE          shift and go to state 40
-    SIGNED          shift and go to state 39
-    UNSIGNED        shift and go to state 21
-    ID              shift and go to state 30
-    MINUS           shift and go to state 17
-    LOGNOT          shift and go to state 14
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
-    LPAREN          shift and go to state 28
+    INT             shift and go to state 37
+    LONG            shift and go to state 23
+    FLOAT           shift and go to state 39
+    DOUBLE          shift and go to state 41
+    SIGNED          shift and go to state 40
+    UNSIGNED        shift and go to state 22
+    ID              shift and go to state 31
+    MINUS           shift and go to state 18
+    LOGNOT          shift and go to state 15
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
+    LPAREN          shift and go to state 29
 
     comment                        shift and go to state 4
     unary_token_before             shift and go to state 5
     constant                       shift and go to state 7
     unary_expression               shift and go to state 8
-    compound                       shift and go to state 10
-    binop_paren                    shift and go to state 11
-    binop_expression               shift and go to state 12
-    native_type                    shift and go to state 16
-    array_reference                shift and go to state 15
-    type                           shift and go to state 23
-    for_loop                       shift and go to state 24
-    assignment_expression          shift and go to state 25
-    binop                          shift and go to state 26
-    declaration                    shift and go to state 29
-    typeid                         shift and go to state 32
-    term                           shift and go to state 33
-    assignment_expression_semi     shift and go to state 34
-    function_declaration           shift and go to state 35
-    expr                           shift and go to state 37
-    identifier                     shift and go to state 41
+    compound                       shift and go to state 11
+    binop_paren                    shift and go to state 12
+    binop_expression               shift and go to state 13
+    native_type                    shift and go to state 17
+    array_reference                shift and go to state 16
+    type                           shift and go to state 24
+    for_loop                       shift and go to state 25
+    assignment_expression          shift and go to state 26
+    binop                          shift and go to state 27
+    declaration                    shift and go to state 30
+    typeid                         shift and go to state 33
+    term                           shift and go to state 34
+    assignment_expression_semi     shift and go to state 35
+    function_declaration           shift and go to state 36
+    expr                           shift and go to state 38
+    identifier                     shift and go to state 43
 
 state 2
 
@@ -349,6 +359,8 @@ state 2
     LBRACE          reduce using rule 11 (beginning_list -> empty .)
     FOR             reduce using rule 11 (beginning_list -> empty .)
     VOID            reduce using rule 11 (beginning_list -> empty .)
+    SIZE_T          reduce using rule 11 (beginning_list -> empty .)
+    UNKNOWN         reduce using rule 11 (beginning_list -> empty .)
     CHAR            reduce using rule 11 (beginning_list -> empty .)
     SHORT           reduce using rule 11 (beginning_list -> empty .)
     INT             reduce using rule 11 (beginning_list -> empty .)
@@ -382,6 +394,8 @@ state 4
     LBRACE          reduce using rule 3 (beginning_list -> beginning_list comment .)
     FOR             reduce using rule 3 (beginning_list -> beginning_list comment .)
     VOID            reduce using rule 3 (beginning_list -> beginning_list comment .)
+    SIZE_T          reduce using rule 3 (beginning_list -> beginning_list comment .)
+    UNKNOWN         reduce using rule 3 (beginning_list -> beginning_list comment .)
     CHAR            reduce using rule 3 (beginning_list -> beginning_list comment .)
     SHORT           reduce using rule 3 (beginning_list -> beginning_list comment .)
     INT             reduce using rule 3 (beginning_list -> beginning_list comment .)
@@ -407,55 +421,56 @@ state 5
     (64) term -> . identifier
     (65) term -> . constant
     (66) term -> . array_reference
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (25) constant -> . INT_CONST
     (26) constant -> . FLOAT_CONST
     (27) constant -> . STRING_LITERAL
     (62) array_reference -> . identifier subscript_list
 
-    ID              shift and go to state 30
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
+    ID              shift and go to state 31
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
 
-    term                           shift and go to state 43
+    term                           shift and go to state 45
     constant                       shift and go to state 7
-    array_reference                shift and go to state 44
-    identifier                     shift and go to state 45
+    array_reference                shift and go to state 46
+    identifier                     shift and go to state 47
 
 state 6
 
-    (74) native_type -> SHORT .
+    (76) native_type -> SHORT .
 
-    TIMES           reduce using rule 74 (native_type -> SHORT .)
-    ID              reduce using rule 74 (native_type -> SHORT .)
-    RBRACE          reduce using rule 74 (native_type -> SHORT .)
-    COMMENT         reduce using rule 74 (native_type -> SHORT .)
-    LBRACE          reduce using rule 74 (native_type -> SHORT .)
-    FOR             reduce using rule 74 (native_type -> SHORT .)
-    VOID            reduce using rule 74 (native_type -> SHORT .)
-    CHAR            reduce using rule 74 (native_type -> SHORT .)
-    SHORT           reduce using rule 74 (native_type -> SHORT .)
-    INT             reduce using rule 74 (native_type -> SHORT .)
-    LONG            reduce using rule 74 (native_type -> SHORT .)
-    FLOAT           reduce using rule 74 (native_type -> SHORT .)
-    DOUBLE          reduce using rule 74 (native_type -> SHORT .)
-    SIGNED          reduce using rule 74 (native_type -> SHORT .)
-    UNSIGNED        reduce using rule 74 (native_type -> SHORT .)
-    MINUS           reduce using rule 74 (native_type -> SHORT .)
-    LOGNOT          reduce using rule 74 (native_type -> SHORT .)
-    INT_CONST       reduce using rule 74 (native_type -> SHORT .)
-    FLOAT_CONST     reduce using rule 74 (native_type -> SHORT .)
-    STRING_LITERAL  reduce using rule 74 (native_type -> SHORT .)
-    LPAREN          reduce using rule 74 (native_type -> SHORT .)
-    $end            reduce using rule 74 (native_type -> SHORT .)
+    TIMES           reduce using rule 76 (native_type -> SHORT .)
+    ID              reduce using rule 76 (native_type -> SHORT .)
+    COMMENT         reduce using rule 76 (native_type -> SHORT .)
+    LBRACE          reduce using rule 76 (native_type -> SHORT .)
+    FOR             reduce using rule 76 (native_type -> SHORT .)
+    VOID            reduce using rule 76 (native_type -> SHORT .)
+    SIZE_T          reduce using rule 76 (native_type -> SHORT .)
+    UNKNOWN         reduce using rule 76 (native_type -> SHORT .)
+    CHAR            reduce using rule 76 (native_type -> SHORT .)
+    SHORT           reduce using rule 76 (native_type -> SHORT .)
+    INT             reduce using rule 76 (native_type -> SHORT .)
+    LONG            reduce using rule 76 (native_type -> SHORT .)
+    FLOAT           reduce using rule 76 (native_type -> SHORT .)
+    DOUBLE          reduce using rule 76 (native_type -> SHORT .)
+    SIGNED          reduce using rule 76 (native_type -> SHORT .)
+    UNSIGNED        reduce using rule 76 (native_type -> SHORT .)
+    MINUS           reduce using rule 76 (native_type -> SHORT .)
+    LOGNOT          reduce using rule 76 (native_type -> SHORT .)
+    INT_CONST       reduce using rule 76 (native_type -> SHORT .)
+    FLOAT_CONST     reduce using rule 76 (native_type -> SHORT .)
+    STRING_LITERAL  reduce using rule 76 (native_type -> SHORT .)
+    LPAREN          reduce using rule 76 (native_type -> SHORT .)
+    $end            reduce using rule 76 (native_type -> SHORT .)
+    RBRACE          reduce using rule 76 (native_type -> SHORT .)
 
 
 state 7
 
     (65) term -> constant .
 
-    SEMI            reduce using rule 65 (term -> constant .)
     TIMES           reduce using rule 65 (term -> constant .)
     DIVIDE          reduce using rule 65 (term -> constant .)
     PLUS            reduce using rule 65 (term -> constant .)
@@ -477,6 +492,8 @@ state 7
     LBRACE          reduce using rule 65 (term -> constant .)
     FOR             reduce using rule 65 (term -> constant .)
     VOID            reduce using rule 65 (term -> constant .)
+    SIZE_T          reduce using rule 65 (term -> constant .)
+    UNKNOWN         reduce using rule 65 (term -> constant .)
     CHAR            reduce using rule 65 (term -> constant .)
     SHORT           reduce using rule 65 (term -> constant .)
     INT             reduce using rule 65 (term -> constant .)
@@ -493,6 +510,7 @@ state 7
     LPAREN          reduce using rule 65 (term -> constant .)
     $end            reduce using rule 65 (term -> constant .)
     RPAREN          reduce using rule 65 (term -> constant .)
+    SEMI            reduce using rule 65 (term -> constant .)
     RBRACE          reduce using rule 65 (term -> constant .)
     RBRACKET        reduce using rule 65 (term -> constant .)
     PLUSPLUS        reduce using rule 65 (term -> constant .)
@@ -503,11 +521,15 @@ state 8
 
     (41) expr -> unary_expression .
 
+    RBRACKET        reduce using rule 41 (expr -> unary_expression .)
+    SEMI            reduce using rule 41 (expr -> unary_expression .)
     RBRACE          reduce using rule 41 (expr -> unary_expression .)
     COMMENT         reduce using rule 41 (expr -> unary_expression .)
     LBRACE          reduce using rule 41 (expr -> unary_expression .)
     FOR             reduce using rule 41 (expr -> unary_expression .)
     VOID            reduce using rule 41 (expr -> unary_expression .)
+    SIZE_T          reduce using rule 41 (expr -> unary_expression .)
+    UNKNOWN         reduce using rule 41 (expr -> unary_expression .)
     CHAR            reduce using rule 41 (expr -> unary_expression .)
     SHORT           reduce using rule 41 (expr -> unary_expression .)
     INT             reduce using rule 41 (expr -> unary_expression .)
@@ -523,22 +545,51 @@ state 8
     FLOAT_CONST     reduce using rule 41 (expr -> unary_expression .)
     STRING_LITERAL  reduce using rule 41 (expr -> unary_expression .)
     LPAREN          reduce using rule 41 (expr -> unary_expression .)
-    SEMI            reduce using rule 41 (expr -> unary_expression .)
-    RBRACKET        reduce using rule 41 (expr -> unary_expression .)
     $end            reduce using rule 41 (expr -> unary_expression .)
 
 
 state 9
 
+    (74) native_type -> UNKNOWN .
+
+    TIMES           reduce using rule 74 (native_type -> UNKNOWN .)
+    ID              reduce using rule 74 (native_type -> UNKNOWN .)
+    COMMENT         reduce using rule 74 (native_type -> UNKNOWN .)
+    LBRACE          reduce using rule 74 (native_type -> UNKNOWN .)
+    FOR             reduce using rule 74 (native_type -> UNKNOWN .)
+    VOID            reduce using rule 74 (native_type -> UNKNOWN .)
+    SIZE_T          reduce using rule 74 (native_type -> UNKNOWN .)
+    UNKNOWN         reduce using rule 74 (native_type -> UNKNOWN .)
+    CHAR            reduce using rule 74 (native_type -> UNKNOWN .)
+    SHORT           reduce using rule 74 (native_type -> UNKNOWN .)
+    INT             reduce using rule 74 (native_type -> UNKNOWN .)
+    LONG            reduce using rule 74 (native_type -> UNKNOWN .)
+    FLOAT           reduce using rule 74 (native_type -> UNKNOWN .)
+    DOUBLE          reduce using rule 74 (native_type -> UNKNOWN .)
+    SIGNED          reduce using rule 74 (native_type -> UNKNOWN .)
+    UNSIGNED        reduce using rule 74 (native_type -> UNKNOWN .)
+    MINUS           reduce using rule 74 (native_type -> UNKNOWN .)
+    LOGNOT          reduce using rule 74 (native_type -> UNKNOWN .)
+    INT_CONST       reduce using rule 74 (native_type -> UNKNOWN .)
+    FLOAT_CONST     reduce using rule 74 (native_type -> UNKNOWN .)
+    STRING_LITERAL  reduce using rule 74 (native_type -> UNKNOWN .)
+    LPAREN          reduce using rule 74 (native_type -> UNKNOWN .)
+    $end            reduce using rule 74 (native_type -> UNKNOWN .)
+    RBRACE          reduce using rule 74 (native_type -> UNKNOWN .)
+
+
+state 10
+
     (72) native_type -> VOID .
 
     TIMES           reduce using rule 72 (native_type -> VOID .)
     ID              reduce using rule 72 (native_type -> VOID .)
-    RBRACE          reduce using rule 72 (native_type -> VOID .)
     COMMENT         reduce using rule 72 (native_type -> VOID .)
     LBRACE          reduce using rule 72 (native_type -> VOID .)
     FOR             reduce using rule 72 (native_type -> VOID .)
     VOID            reduce using rule 72 (native_type -> VOID .)
+    SIZE_T          reduce using rule 72 (native_type -> VOID .)
+    UNKNOWN         reduce using rule 72 (native_type -> VOID .)
     CHAR            reduce using rule 72 (native_type -> VOID .)
     SHORT           reduce using rule 72 (native_type -> VOID .)
     INT             reduce using rule 72 (native_type -> VOID .)
@@ -554,9 +605,10 @@ state 9
     STRING_LITERAL  reduce using rule 72 (native_type -> VOID .)
     LPAREN          reduce using rule 72 (native_type -> VOID .)
     $end            reduce using rule 72 (native_type -> VOID .)
+    RBRACE          reduce using rule 72 (native_type -> VOID .)
 
 
-state 10
+state 11
 
     (7) beginning_list -> beginning_list compound .
 
@@ -564,6 +616,8 @@ state 10
     LBRACE          reduce using rule 7 (beginning_list -> beginning_list compound .)
     FOR             reduce using rule 7 (beginning_list -> beginning_list compound .)
     VOID            reduce using rule 7 (beginning_list -> beginning_list compound .)
+    SIZE_T          reduce using rule 7 (beginning_list -> beginning_list compound .)
+    UNKNOWN         reduce using rule 7 (beginning_list -> beginning_list compound .)
     CHAR            reduce using rule 7 (beginning_list -> beginning_list compound .)
     SHORT           reduce using rule 7 (beginning_list -> beginning_list compound .)
     INT             reduce using rule 7 (beginning_list -> beginning_list compound .)
@@ -583,7 +637,7 @@ state 10
     RBRACE          reduce using rule 7 (beginning_list -> beginning_list compound .)
 
 
-state 11
+state 12
 
     (37) binop_expression -> binop_paren . TIMES binop_paren
     (38) binop_expression -> binop_paren . DIVIDE binop_paren
@@ -604,38 +658,41 @@ state 11
     (57) binary_token -> . EQ
     (58) binary_token -> . NE
 
-    TIMES           shift and go to state 54
-    DIVIDE          shift and go to state 50
-    PLUS            shift and go to state 57
-    MINUS           shift and go to state 61
-    MOD             shift and go to state 59
-    OR              shift and go to state 47
-    AND             shift and go to state 46
-    LSHIFT          shift and go to state 58
-    RSHIFT          shift and go to state 49
-    LOGOR           shift and go to state 51
-    LOGAND          shift and go to state 52
-    LT              shift and go to state 55
-    GT              shift and go to state 48
-    LE              shift and go to state 56
-    GE              shift and go to state 53
-    EQ              shift and go to state 60
-    NE              shift and go to state 62
+    TIMES           shift and go to state 56
+    DIVIDE          shift and go to state 52
+    PLUS            shift and go to state 59
+    MINUS           shift and go to state 63
+    MOD             shift and go to state 61
+    OR              shift and go to state 49
+    AND             shift and go to state 48
+    LSHIFT          shift and go to state 60
+    RSHIFT          shift and go to state 51
+    LOGOR           shift and go to state 53
+    LOGAND          shift and go to state 54
+    LT              shift and go to state 57
+    GT              shift and go to state 50
+    LE              shift and go to state 58
+    GE              shift and go to state 55
+    EQ              shift and go to state 62
+    NE              shift and go to state 64
 
-    binary_token                   shift and go to state 63
+    binary_token                   shift and go to state 65
 
-state 12
+state 13
 
     (40) binop -> binop_expression .
     (35) binop_paren -> binop_expression .
 
   ! reduce/reduce conflict for MINUS resolved using rule 35 (binop_paren -> binop_expression .)
     SEMI            reduce using rule 40 (binop -> binop_expression .)
+    RBRACKET        reduce using rule 40 (binop -> binop_expression .)
     RBRACE          reduce using rule 40 (binop -> binop_expression .)
     COMMENT         reduce using rule 40 (binop -> binop_expression .)
     LBRACE          reduce using rule 40 (binop -> binop_expression .)
     FOR             reduce using rule 40 (binop -> binop_expression .)
     VOID            reduce using rule 40 (binop -> binop_expression .)
+    SIZE_T          reduce using rule 40 (binop -> binop_expression .)
+    UNKNOWN         reduce using rule 40 (binop -> binop_expression .)
     CHAR            reduce using rule 40 (binop -> binop_expression .)
     SHORT           reduce using rule 40 (binop -> binop_expression .)
     INT             reduce using rule 40 (binop -> binop_expression .)
@@ -650,7 +707,6 @@ state 12
     FLOAT_CONST     reduce using rule 40 (binop -> binop_expression .)
     STRING_LITERAL  reduce using rule 40 (binop -> binop_expression .)
     LPAREN          reduce using rule 40 (binop -> binop_expression .)
-    RBRACKET        reduce using rule 40 (binop -> binop_expression .)
     $end            reduce using rule 40 (binop -> binop_expression .)
     TIMES           reduce using rule 35 (binop_paren -> binop_expression .)
     DIVIDE          reduce using rule 35 (binop_paren -> binop_expression .)
@@ -673,35 +729,37 @@ state 12
   ! MINUS           [ reduce using rule 40 (binop -> binop_expression .) ]
 
 
-state 13
-
-    (73) native_type -> CHAR .
-
-    TIMES           reduce using rule 73 (native_type -> CHAR .)
-    ID              reduce using rule 73 (native_type -> CHAR .)
-    RBRACE          reduce using rule 73 (native_type -> CHAR .)
-    COMMENT         reduce using rule 73 (native_type -> CHAR .)
-    LBRACE          reduce using rule 73 (native_type -> CHAR .)
-    FOR             reduce using rule 73 (native_type -> CHAR .)
-    VOID            reduce using rule 73 (native_type -> CHAR .)
-    CHAR            reduce using rule 73 (native_type -> CHAR .)
-    SHORT           reduce using rule 73 (native_type -> CHAR .)
-    INT             reduce using rule 73 (native_type -> CHAR .)
-    LONG            reduce using rule 73 (native_type -> CHAR .)
-    FLOAT           reduce using rule 73 (native_type -> CHAR .)
-    DOUBLE          reduce using rule 73 (native_type -> CHAR .)
-    SIGNED          reduce using rule 73 (native_type -> CHAR .)
-    UNSIGNED        reduce using rule 73 (native_type -> CHAR .)
-    MINUS           reduce using rule 73 (native_type -> CHAR .)
-    LOGNOT          reduce using rule 73 (native_type -> CHAR .)
-    INT_CONST       reduce using rule 73 (native_type -> CHAR .)
-    FLOAT_CONST     reduce using rule 73 (native_type -> CHAR .)
-    STRING_LITERAL  reduce using rule 73 (native_type -> CHAR .)
-    LPAREN          reduce using rule 73 (native_type -> CHAR .)
-    $end            reduce using rule 73 (native_type -> CHAR .)
-
-
 state 14
+
+    (75) native_type -> CHAR .
+
+    TIMES           reduce using rule 75 (native_type -> CHAR .)
+    ID              reduce using rule 75 (native_type -> CHAR .)
+    COMMENT         reduce using rule 75 (native_type -> CHAR .)
+    LBRACE          reduce using rule 75 (native_type -> CHAR .)
+    FOR             reduce using rule 75 (native_type -> CHAR .)
+    VOID            reduce using rule 75 (native_type -> CHAR .)
+    SIZE_T          reduce using rule 75 (native_type -> CHAR .)
+    UNKNOWN         reduce using rule 75 (native_type -> CHAR .)
+    CHAR            reduce using rule 75 (native_type -> CHAR .)
+    SHORT           reduce using rule 75 (native_type -> CHAR .)
+    INT             reduce using rule 75 (native_type -> CHAR .)
+    LONG            reduce using rule 75 (native_type -> CHAR .)
+    FLOAT           reduce using rule 75 (native_type -> CHAR .)
+    DOUBLE          reduce using rule 75 (native_type -> CHAR .)
+    SIGNED          reduce using rule 75 (native_type -> CHAR .)
+    UNSIGNED        reduce using rule 75 (native_type -> CHAR .)
+    MINUS           reduce using rule 75 (native_type -> CHAR .)
+    LOGNOT          reduce using rule 75 (native_type -> CHAR .)
+    INT_CONST       reduce using rule 75 (native_type -> CHAR .)
+    FLOAT_CONST     reduce using rule 75 (native_type -> CHAR .)
+    STRING_LITERAL  reduce using rule 75 (native_type -> CHAR .)
+    LPAREN          reduce using rule 75 (native_type -> CHAR .)
+    $end            reduce using rule 75 (native_type -> CHAR .)
+    RBRACE          reduce using rule 75 (native_type -> CHAR .)
+
+
+state 15
 
     (29) unary_token_before -> LOGNOT .
 
@@ -711,7 +769,7 @@ state 14
     STRING_LITERAL  reduce using rule 29 (unary_token_before -> LOGNOT .)
 
 
-state 15
+state 16
 
     (23) assignment_expression -> array_reference . assignment_operator expr
     (66) term -> array_reference .
@@ -720,10 +778,13 @@ state 15
     (19) assignment_operator -> . MINUSEQUALS
     (20) assignment_operator -> . TIMESEQUALS
 
+    RBRACE          reduce using rule 66 (term -> array_reference .)
     COMMENT         reduce using rule 66 (term -> array_reference .)
     LBRACE          reduce using rule 66 (term -> array_reference .)
     FOR             reduce using rule 66 (term -> array_reference .)
     VOID            reduce using rule 66 (term -> array_reference .)
+    SIZE_T          reduce using rule 66 (term -> array_reference .)
+    UNKNOWN         reduce using rule 66 (term -> array_reference .)
     CHAR            reduce using rule 66 (term -> array_reference .)
     SHORT           reduce using rule 66 (term -> array_reference .)
     INT             reduce using rule 66 (term -> array_reference .)
@@ -739,7 +800,6 @@ state 15
     FLOAT_CONST     reduce using rule 66 (term -> array_reference .)
     STRING_LITERAL  reduce using rule 66 (term -> array_reference .)
     LPAREN          reduce using rule 66 (term -> array_reference .)
-    $end            reduce using rule 66 (term -> array_reference .)
     TIMES           reduce using rule 66 (term -> array_reference .)
     DIVIDE          reduce using rule 66 (term -> array_reference .)
     PLUS            reduce using rule 66 (term -> array_reference .)
@@ -756,44 +816,46 @@ state 15
     GE              reduce using rule 66 (term -> array_reference .)
     EQ              reduce using rule 66 (term -> array_reference .)
     NE              reduce using rule 66 (term -> array_reference .)
-    RBRACE          reduce using rule 66 (term -> array_reference .)
-    EQUALS          shift and go to state 64
-    PLUSEQUALS      shift and go to state 65
-    MINUSEQUALS     shift and go to state 67
-    TIMESEQUALS     shift and go to state 68
+    $end            reduce using rule 66 (term -> array_reference .)
+    EQUALS          shift and go to state 66
+    PLUSEQUALS      shift and go to state 67
+    MINUSEQUALS     shift and go to state 69
+    TIMESEQUALS     shift and go to state 70
 
-    assignment_operator            shift and go to state 66
-
-state 16
-
-    (81) type -> native_type .
-    (82) type -> native_type . TIMES
-
-    ID              reduce using rule 81 (type -> native_type .)
-    RBRACE          reduce using rule 81 (type -> native_type .)
-    COMMENT         reduce using rule 81 (type -> native_type .)
-    LBRACE          reduce using rule 81 (type -> native_type .)
-    FOR             reduce using rule 81 (type -> native_type .)
-    VOID            reduce using rule 81 (type -> native_type .)
-    CHAR            reduce using rule 81 (type -> native_type .)
-    SHORT           reduce using rule 81 (type -> native_type .)
-    INT             reduce using rule 81 (type -> native_type .)
-    LONG            reduce using rule 81 (type -> native_type .)
-    FLOAT           reduce using rule 81 (type -> native_type .)
-    DOUBLE          reduce using rule 81 (type -> native_type .)
-    SIGNED          reduce using rule 81 (type -> native_type .)
-    UNSIGNED        reduce using rule 81 (type -> native_type .)
-    MINUS           reduce using rule 81 (type -> native_type .)
-    LOGNOT          reduce using rule 81 (type -> native_type .)
-    INT_CONST       reduce using rule 81 (type -> native_type .)
-    FLOAT_CONST     reduce using rule 81 (type -> native_type .)
-    STRING_LITERAL  reduce using rule 81 (type -> native_type .)
-    LPAREN          reduce using rule 81 (type -> native_type .)
-    $end            reduce using rule 81 (type -> native_type .)
-    TIMES           shift and go to state 69
-
+    assignment_operator            shift and go to state 68
 
 state 17
+
+    (83) type -> native_type .
+    (84) type -> native_type . TIMES
+
+    ID              reduce using rule 83 (type -> native_type .)
+    RBRACE          reduce using rule 83 (type -> native_type .)
+    COMMENT         reduce using rule 83 (type -> native_type .)
+    LBRACE          reduce using rule 83 (type -> native_type .)
+    FOR             reduce using rule 83 (type -> native_type .)
+    VOID            reduce using rule 83 (type -> native_type .)
+    SIZE_T          reduce using rule 83 (type -> native_type .)
+    UNKNOWN         reduce using rule 83 (type -> native_type .)
+    CHAR            reduce using rule 83 (type -> native_type .)
+    SHORT           reduce using rule 83 (type -> native_type .)
+    INT             reduce using rule 83 (type -> native_type .)
+    LONG            reduce using rule 83 (type -> native_type .)
+    FLOAT           reduce using rule 83 (type -> native_type .)
+    DOUBLE          reduce using rule 83 (type -> native_type .)
+    SIGNED          reduce using rule 83 (type -> native_type .)
+    UNSIGNED        reduce using rule 83 (type -> native_type .)
+    MINUS           reduce using rule 83 (type -> native_type .)
+    LOGNOT          reduce using rule 83 (type -> native_type .)
+    INT_CONST       reduce using rule 83 (type -> native_type .)
+    FLOAT_CONST     reduce using rule 83 (type -> native_type .)
+    STRING_LITERAL  reduce using rule 83 (type -> native_type .)
+    LPAREN          reduce using rule 83 (type -> native_type .)
+    $end            reduce using rule 83 (type -> native_type .)
+    TIMES           shift and go to state 71
+
+
+state 18
 
     (28) unary_token_before -> MINUS .
 
@@ -803,7 +865,7 @@ state 17
     STRING_LITERAL  reduce using rule 28 (unary_token_before -> MINUS .)
 
 
-state 18
+state 19
 
     (12) comment -> COMMENT .
 
@@ -812,6 +874,8 @@ state 18
     LBRACE          reduce using rule 12 (comment -> COMMENT .)
     FOR             reduce using rule 12 (comment -> COMMENT .)
     VOID            reduce using rule 12 (comment -> COMMENT .)
+    SIZE_T          reduce using rule 12 (comment -> COMMENT .)
+    UNKNOWN         reduce using rule 12 (comment -> COMMENT .)
     CHAR            reduce using rule 12 (comment -> COMMENT .)
     SHORT           reduce using rule 12 (comment -> COMMENT .)
     INT             reduce using rule 12 (comment -> COMMENT .)
@@ -830,7 +894,7 @@ state 18
     $end            reduce using rule 12 (comment -> COMMENT .)
 
 
-state 19
+state 20
 
     (25) constant -> INT_CONST .
 
@@ -855,6 +919,8 @@ state 19
     LBRACE          reduce using rule 25 (constant -> INT_CONST .)
     FOR             reduce using rule 25 (constant -> INT_CONST .)
     VOID            reduce using rule 25 (constant -> INT_CONST .)
+    SIZE_T          reduce using rule 25 (constant -> INT_CONST .)
+    UNKNOWN         reduce using rule 25 (constant -> INT_CONST .)
     CHAR            reduce using rule 25 (constant -> INT_CONST .)
     SHORT           reduce using rule 25 (constant -> INT_CONST .)
     INT             reduce using rule 25 (constant -> INT_CONST .)
@@ -878,80 +944,86 @@ state 19
     MINUSMINUS      reduce using rule 25 (constant -> INT_CONST .)
 
 
-state 20
+state 21
 
     (63) for_loop -> FOR . LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound
 
-    LPAREN          shift and go to state 70
-
-
-state 21
-
-    (80) native_type -> UNSIGNED .
-
-    TIMES           reduce using rule 80 (native_type -> UNSIGNED .)
-    ID              reduce using rule 80 (native_type -> UNSIGNED .)
-    RBRACE          reduce using rule 80 (native_type -> UNSIGNED .)
-    COMMENT         reduce using rule 80 (native_type -> UNSIGNED .)
-    LBRACE          reduce using rule 80 (native_type -> UNSIGNED .)
-    FOR             reduce using rule 80 (native_type -> UNSIGNED .)
-    VOID            reduce using rule 80 (native_type -> UNSIGNED .)
-    CHAR            reduce using rule 80 (native_type -> UNSIGNED .)
-    SHORT           reduce using rule 80 (native_type -> UNSIGNED .)
-    INT             reduce using rule 80 (native_type -> UNSIGNED .)
-    LONG            reduce using rule 80 (native_type -> UNSIGNED .)
-    FLOAT           reduce using rule 80 (native_type -> UNSIGNED .)
-    DOUBLE          reduce using rule 80 (native_type -> UNSIGNED .)
-    SIGNED          reduce using rule 80 (native_type -> UNSIGNED .)
-    UNSIGNED        reduce using rule 80 (native_type -> UNSIGNED .)
-    MINUS           reduce using rule 80 (native_type -> UNSIGNED .)
-    LOGNOT          reduce using rule 80 (native_type -> UNSIGNED .)
-    INT_CONST       reduce using rule 80 (native_type -> UNSIGNED .)
-    FLOAT_CONST     reduce using rule 80 (native_type -> UNSIGNED .)
-    STRING_LITERAL  reduce using rule 80 (native_type -> UNSIGNED .)
-    LPAREN          reduce using rule 80 (native_type -> UNSIGNED .)
-    $end            reduce using rule 80 (native_type -> UNSIGNED .)
+    LPAREN          shift and go to state 72
 
 
 state 22
 
-    (76) native_type -> LONG .
+    (82) native_type -> UNSIGNED .
 
-    TIMES           reduce using rule 76 (native_type -> LONG .)
-    ID              reduce using rule 76 (native_type -> LONG .)
-    RBRACE          reduce using rule 76 (native_type -> LONG .)
-    COMMENT         reduce using rule 76 (native_type -> LONG .)
-    LBRACE          reduce using rule 76 (native_type -> LONG .)
-    FOR             reduce using rule 76 (native_type -> LONG .)
-    VOID            reduce using rule 76 (native_type -> LONG .)
-    CHAR            reduce using rule 76 (native_type -> LONG .)
-    SHORT           reduce using rule 76 (native_type -> LONG .)
-    INT             reduce using rule 76 (native_type -> LONG .)
-    LONG            reduce using rule 76 (native_type -> LONG .)
-    FLOAT           reduce using rule 76 (native_type -> LONG .)
-    DOUBLE          reduce using rule 76 (native_type -> LONG .)
-    SIGNED          reduce using rule 76 (native_type -> LONG .)
-    UNSIGNED        reduce using rule 76 (native_type -> LONG .)
-    MINUS           reduce using rule 76 (native_type -> LONG .)
-    LOGNOT          reduce using rule 76 (native_type -> LONG .)
-    INT_CONST       reduce using rule 76 (native_type -> LONG .)
-    FLOAT_CONST     reduce using rule 76 (native_type -> LONG .)
-    STRING_LITERAL  reduce using rule 76 (native_type -> LONG .)
-    LPAREN          reduce using rule 76 (native_type -> LONG .)
-    $end            reduce using rule 76 (native_type -> LONG .)
+    TIMES           reduce using rule 82 (native_type -> UNSIGNED .)
+    ID              reduce using rule 82 (native_type -> UNSIGNED .)
+    COMMENT         reduce using rule 82 (native_type -> UNSIGNED .)
+    LBRACE          reduce using rule 82 (native_type -> UNSIGNED .)
+    FOR             reduce using rule 82 (native_type -> UNSIGNED .)
+    VOID            reduce using rule 82 (native_type -> UNSIGNED .)
+    SIZE_T          reduce using rule 82 (native_type -> UNSIGNED .)
+    UNKNOWN         reduce using rule 82 (native_type -> UNSIGNED .)
+    CHAR            reduce using rule 82 (native_type -> UNSIGNED .)
+    SHORT           reduce using rule 82 (native_type -> UNSIGNED .)
+    INT             reduce using rule 82 (native_type -> UNSIGNED .)
+    LONG            reduce using rule 82 (native_type -> UNSIGNED .)
+    FLOAT           reduce using rule 82 (native_type -> UNSIGNED .)
+    DOUBLE          reduce using rule 82 (native_type -> UNSIGNED .)
+    SIGNED          reduce using rule 82 (native_type -> UNSIGNED .)
+    UNSIGNED        reduce using rule 82 (native_type -> UNSIGNED .)
+    MINUS           reduce using rule 82 (native_type -> UNSIGNED .)
+    LOGNOT          reduce using rule 82 (native_type -> UNSIGNED .)
+    INT_CONST       reduce using rule 82 (native_type -> UNSIGNED .)
+    FLOAT_CONST     reduce using rule 82 (native_type -> UNSIGNED .)
+    STRING_LITERAL  reduce using rule 82 (native_type -> UNSIGNED .)
+    LPAREN          reduce using rule 82 (native_type -> UNSIGNED .)
+    $end            reduce using rule 82 (native_type -> UNSIGNED .)
+    RBRACE          reduce using rule 82 (native_type -> UNSIGNED .)
 
 
 state 23
 
+    (78) native_type -> LONG .
+
+    TIMES           reduce using rule 78 (native_type -> LONG .)
+    ID              reduce using rule 78 (native_type -> LONG .)
+    COMMENT         reduce using rule 78 (native_type -> LONG .)
+    LBRACE          reduce using rule 78 (native_type -> LONG .)
+    FOR             reduce using rule 78 (native_type -> LONG .)
+    VOID            reduce using rule 78 (native_type -> LONG .)
+    SIZE_T          reduce using rule 78 (native_type -> LONG .)
+    UNKNOWN         reduce using rule 78 (native_type -> LONG .)
+    CHAR            reduce using rule 78 (native_type -> LONG .)
+    SHORT           reduce using rule 78 (native_type -> LONG .)
+    INT             reduce using rule 78 (native_type -> LONG .)
+    LONG            reduce using rule 78 (native_type -> LONG .)
+    FLOAT           reduce using rule 78 (native_type -> LONG .)
+    DOUBLE          reduce using rule 78 (native_type -> LONG .)
+    SIGNED          reduce using rule 78 (native_type -> LONG .)
+    UNSIGNED        reduce using rule 78 (native_type -> LONG .)
+    MINUS           reduce using rule 78 (native_type -> LONG .)
+    LOGNOT          reduce using rule 78 (native_type -> LONG .)
+    INT_CONST       reduce using rule 78 (native_type -> LONG .)
+    FLOAT_CONST     reduce using rule 78 (native_type -> LONG .)
+    STRING_LITERAL  reduce using rule 78 (native_type -> LONG .)
+    LPAREN          reduce using rule 78 (native_type -> LONG .)
+    $end            reduce using rule 78 (native_type -> LONG .)
+    RBRACE          reduce using rule 78 (native_type -> LONG .)
+
+
+state 24
+
     (5) beginning_list -> beginning_list type .
     (71) typeid -> type . identifier
-    (83) identifier -> . ID
+    (85) identifier -> . ID
 
   ! shift/reduce conflict for ID resolved as shift
     COMMENT         reduce using rule 5 (beginning_list -> beginning_list type .)
     LBRACE          reduce using rule 5 (beginning_list -> beginning_list type .)
     FOR             reduce using rule 5 (beginning_list -> beginning_list type .)
     VOID            reduce using rule 5 (beginning_list -> beginning_list type .)
+    SIZE_T          reduce using rule 5 (beginning_list -> beginning_list type .)
+    UNKNOWN         reduce using rule 5 (beginning_list -> beginning_list type .)
     CHAR            reduce using rule 5 (beginning_list -> beginning_list type .)
     SHORT           reduce using rule 5 (beginning_list -> beginning_list type .)
     INT             reduce using rule 5 (beginning_list -> beginning_list type .)
@@ -968,13 +1040,13 @@ state 23
     LPAREN          reduce using rule 5 (beginning_list -> beginning_list type .)
     $end            reduce using rule 5 (beginning_list -> beginning_list type .)
     RBRACE          reduce using rule 5 (beginning_list -> beginning_list type .)
-    ID              shift and go to state 30
+    ID              shift and go to state 31
 
   ! ID              [ reduce using rule 5 (beginning_list -> beginning_list type .) ]
 
-    identifier                     shift and go to state 71
+    identifier                     shift and go to state 73
 
-state 24
+state 25
 
     (10) beginning_list -> beginning_list for_loop .
 
@@ -982,6 +1054,8 @@ state 24
     LBRACE          reduce using rule 10 (beginning_list -> beginning_list for_loop .)
     FOR             reduce using rule 10 (beginning_list -> beginning_list for_loop .)
     VOID            reduce using rule 10 (beginning_list -> beginning_list for_loop .)
+    SIZE_T          reduce using rule 10 (beginning_list -> beginning_list for_loop .)
+    UNKNOWN         reduce using rule 10 (beginning_list -> beginning_list for_loop .)
     CHAR            reduce using rule 10 (beginning_list -> beginning_list for_loop .)
     SHORT           reduce using rule 10 (beginning_list -> beginning_list for_loop .)
     INT             reduce using rule 10 (beginning_list -> beginning_list for_loop .)
@@ -1001,22 +1075,26 @@ state 24
     RBRACE          reduce using rule 10 (beginning_list -> beginning_list for_loop .)
 
 
-state 25
+state 26
 
     (24) assignment_expression_semi -> assignment_expression . SEMI
 
-    SEMI            shift and go to state 72
+    SEMI            shift and go to state 74
 
 
-state 26
+state 27
 
     (42) expr -> binop .
 
+    RBRACKET        reduce using rule 42 (expr -> binop .)
+    SEMI            reduce using rule 42 (expr -> binop .)
     RBRACE          reduce using rule 42 (expr -> binop .)
     COMMENT         reduce using rule 42 (expr -> binop .)
     LBRACE          reduce using rule 42 (expr -> binop .)
     FOR             reduce using rule 42 (expr -> binop .)
     VOID            reduce using rule 42 (expr -> binop .)
+    SIZE_T          reduce using rule 42 (expr -> binop .)
+    UNKNOWN         reduce using rule 42 (expr -> binop .)
     CHAR            reduce using rule 42 (expr -> binop .)
     SHORT           reduce using rule 42 (expr -> binop .)
     INT             reduce using rule 42 (expr -> binop .)
@@ -1032,12 +1110,10 @@ state 26
     FLOAT_CONST     reduce using rule 42 (expr -> binop .)
     STRING_LITERAL  reduce using rule 42 (expr -> binop .)
     LPAREN          reduce using rule 42 (expr -> binop .)
-    SEMI            reduce using rule 42 (expr -> binop .)
-    RBRACKET        reduce using rule 42 (expr -> binop .)
     $end            reduce using rule 42 (expr -> binop .)
 
 
-state 27
+state 28
 
     (67) compound -> LBRACE . beginning_list RBRACE
     (3) beginning_list -> . beginning_list comment
@@ -1049,33 +1125,35 @@ state 27
     (9) beginning_list -> . beginning_list expr
     (10) beginning_list -> . beginning_list for_loop
     (11) beginning_list -> . empty
-    (84) empty -> .
+    (86) empty -> .
 
-    RBRACE          reduce using rule 84 (empty -> .)
-    COMMENT         reduce using rule 84 (empty -> .)
-    LBRACE          reduce using rule 84 (empty -> .)
-    FOR             reduce using rule 84 (empty -> .)
-    VOID            reduce using rule 84 (empty -> .)
-    CHAR            reduce using rule 84 (empty -> .)
-    SHORT           reduce using rule 84 (empty -> .)
-    INT             reduce using rule 84 (empty -> .)
-    LONG            reduce using rule 84 (empty -> .)
-    FLOAT           reduce using rule 84 (empty -> .)
-    DOUBLE          reduce using rule 84 (empty -> .)
-    SIGNED          reduce using rule 84 (empty -> .)
-    UNSIGNED        reduce using rule 84 (empty -> .)
-    ID              reduce using rule 84 (empty -> .)
-    MINUS           reduce using rule 84 (empty -> .)
-    LOGNOT          reduce using rule 84 (empty -> .)
-    INT_CONST       reduce using rule 84 (empty -> .)
-    FLOAT_CONST     reduce using rule 84 (empty -> .)
-    STRING_LITERAL  reduce using rule 84 (empty -> .)
-    LPAREN          reduce using rule 84 (empty -> .)
+    RBRACE          reduce using rule 86 (empty -> .)
+    COMMENT         reduce using rule 86 (empty -> .)
+    LBRACE          reduce using rule 86 (empty -> .)
+    FOR             reduce using rule 86 (empty -> .)
+    VOID            reduce using rule 86 (empty -> .)
+    SIZE_T          reduce using rule 86 (empty -> .)
+    UNKNOWN         reduce using rule 86 (empty -> .)
+    CHAR            reduce using rule 86 (empty -> .)
+    SHORT           reduce using rule 86 (empty -> .)
+    INT             reduce using rule 86 (empty -> .)
+    LONG            reduce using rule 86 (empty -> .)
+    FLOAT           reduce using rule 86 (empty -> .)
+    DOUBLE          reduce using rule 86 (empty -> .)
+    SIGNED          reduce using rule 86 (empty -> .)
+    UNSIGNED        reduce using rule 86 (empty -> .)
+    ID              reduce using rule 86 (empty -> .)
+    MINUS           reduce using rule 86 (empty -> .)
+    LOGNOT          reduce using rule 86 (empty -> .)
+    INT_CONST       reduce using rule 86 (empty -> .)
+    FLOAT_CONST     reduce using rule 86 (empty -> .)
+    STRING_LITERAL  reduce using rule 86 (empty -> .)
+    LPAREN          reduce using rule 86 (empty -> .)
 
-    beginning_list                 shift and go to state 73
-    empty                          shift and go to state 74
+    beginning_list                 shift and go to state 75
+    empty                          shift and go to state 76
 
-state 28
+state 29
 
     (34) binop_paren -> LPAREN . binop_expression RPAREN
     (36) binop_expression -> . term
@@ -1087,26 +1165,26 @@ state 28
     (66) term -> . array_reference
     (34) binop_paren -> . LPAREN binop_expression RPAREN
     (35) binop_paren -> . binop_expression
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (25) constant -> . INT_CONST
     (26) constant -> . FLOAT_CONST
     (27) constant -> . STRING_LITERAL
     (62) array_reference -> . identifier subscript_list
 
-    LPAREN          shift and go to state 28
-    ID              shift and go to state 30
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
+    LPAREN          shift and go to state 29
+    ID              shift and go to state 31
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
 
-    term                           shift and go to state 75
+    term                           shift and go to state 77
     constant                       shift and go to state 7
-    binop_paren                    shift and go to state 11
-    array_reference                shift and go to state 44
-    binop_expression               shift and go to state 76
-    identifier                     shift and go to state 45
+    binop_paren                    shift and go to state 12
+    array_reference                shift and go to state 46
+    binop_expression               shift and go to state 78
+    identifier                     shift and go to state 47
 
-state 29
+state 30
 
     (6) beginning_list -> beginning_list declaration .
 
@@ -1114,6 +1192,8 @@ state 29
     LBRACE          reduce using rule 6 (beginning_list -> beginning_list declaration .)
     FOR             reduce using rule 6 (beginning_list -> beginning_list declaration .)
     VOID            reduce using rule 6 (beginning_list -> beginning_list declaration .)
+    SIZE_T          reduce using rule 6 (beginning_list -> beginning_list declaration .)
+    UNKNOWN         reduce using rule 6 (beginning_list -> beginning_list declaration .)
     CHAR            reduce using rule 6 (beginning_list -> beginning_list declaration .)
     SHORT           reduce using rule 6 (beginning_list -> beginning_list declaration .)
     INT             reduce using rule 6 (beginning_list -> beginning_list declaration .)
@@ -1133,61 +1213,63 @@ state 29
     RBRACE          reduce using rule 6 (beginning_list -> beginning_list declaration .)
 
 
-state 30
-
-    (83) identifier -> ID .
-
-    EQUALS          reduce using rule 83 (identifier -> ID .)
-    PLUSEQUALS      reduce using rule 83 (identifier -> ID .)
-    MINUSEQUALS     reduce using rule 83 (identifier -> ID .)
-    TIMESEQUALS     reduce using rule 83 (identifier -> ID .)
-    LBRACKET        reduce using rule 83 (identifier -> ID .)
-    RBRACE          reduce using rule 83 (identifier -> ID .)
-    COMMENT         reduce using rule 83 (identifier -> ID .)
-    LBRACE          reduce using rule 83 (identifier -> ID .)
-    FOR             reduce using rule 83 (identifier -> ID .)
-    VOID            reduce using rule 83 (identifier -> ID .)
-    CHAR            reduce using rule 83 (identifier -> ID .)
-    SHORT           reduce using rule 83 (identifier -> ID .)
-    INT             reduce using rule 83 (identifier -> ID .)
-    LONG            reduce using rule 83 (identifier -> ID .)
-    FLOAT           reduce using rule 83 (identifier -> ID .)
-    DOUBLE          reduce using rule 83 (identifier -> ID .)
-    SIGNED          reduce using rule 83 (identifier -> ID .)
-    UNSIGNED        reduce using rule 83 (identifier -> ID .)
-    ID              reduce using rule 83 (identifier -> ID .)
-    MINUS           reduce using rule 83 (identifier -> ID .)
-    LOGNOT          reduce using rule 83 (identifier -> ID .)
-    INT_CONST       reduce using rule 83 (identifier -> ID .)
-    FLOAT_CONST     reduce using rule 83 (identifier -> ID .)
-    STRING_LITERAL  reduce using rule 83 (identifier -> ID .)
-    LPAREN          reduce using rule 83 (identifier -> ID .)
-    TIMES           reduce using rule 83 (identifier -> ID .)
-    DIVIDE          reduce using rule 83 (identifier -> ID .)
-    PLUS            reduce using rule 83 (identifier -> ID .)
-    MOD             reduce using rule 83 (identifier -> ID .)
-    OR              reduce using rule 83 (identifier -> ID .)
-    AND             reduce using rule 83 (identifier -> ID .)
-    LSHIFT          reduce using rule 83 (identifier -> ID .)
-    RSHIFT          reduce using rule 83 (identifier -> ID .)
-    LOGOR           reduce using rule 83 (identifier -> ID .)
-    LOGAND          reduce using rule 83 (identifier -> ID .)
-    LT              reduce using rule 83 (identifier -> ID .)
-    GT              reduce using rule 83 (identifier -> ID .)
-    LE              reduce using rule 83 (identifier -> ID .)
-    GE              reduce using rule 83 (identifier -> ID .)
-    EQ              reduce using rule 83 (identifier -> ID .)
-    NE              reduce using rule 83 (identifier -> ID .)
-    RBRACKET        reduce using rule 83 (identifier -> ID .)
-    $end            reduce using rule 83 (identifier -> ID .)
-    SEMI            reduce using rule 83 (identifier -> ID .)
-    RPAREN          reduce using rule 83 (identifier -> ID .)
-    COMMA           reduce using rule 83 (identifier -> ID .)
-    PLUSPLUS        reduce using rule 83 (identifier -> ID .)
-    MINUSMINUS      reduce using rule 83 (identifier -> ID .)
-
-
 state 31
+
+    (85) identifier -> ID .
+
+    LBRACKET        reduce using rule 85 (identifier -> ID .)
+    RBRACKET        reduce using rule 85 (identifier -> ID .)
+    TIMES           reduce using rule 85 (identifier -> ID .)
+    DIVIDE          reduce using rule 85 (identifier -> ID .)
+    PLUS            reduce using rule 85 (identifier -> ID .)
+    MINUS           reduce using rule 85 (identifier -> ID .)
+    MOD             reduce using rule 85 (identifier -> ID .)
+    OR              reduce using rule 85 (identifier -> ID .)
+    AND             reduce using rule 85 (identifier -> ID .)
+    LSHIFT          reduce using rule 85 (identifier -> ID .)
+    RSHIFT          reduce using rule 85 (identifier -> ID .)
+    LOGOR           reduce using rule 85 (identifier -> ID .)
+    LOGAND          reduce using rule 85 (identifier -> ID .)
+    LT              reduce using rule 85 (identifier -> ID .)
+    GT              reduce using rule 85 (identifier -> ID .)
+    LE              reduce using rule 85 (identifier -> ID .)
+    GE              reduce using rule 85 (identifier -> ID .)
+    EQ              reduce using rule 85 (identifier -> ID .)
+    NE              reduce using rule 85 (identifier -> ID .)
+    COMMENT         reduce using rule 85 (identifier -> ID .)
+    LBRACE          reduce using rule 85 (identifier -> ID .)
+    FOR             reduce using rule 85 (identifier -> ID .)
+    VOID            reduce using rule 85 (identifier -> ID .)
+    SIZE_T          reduce using rule 85 (identifier -> ID .)
+    UNKNOWN         reduce using rule 85 (identifier -> ID .)
+    CHAR            reduce using rule 85 (identifier -> ID .)
+    SHORT           reduce using rule 85 (identifier -> ID .)
+    INT             reduce using rule 85 (identifier -> ID .)
+    LONG            reduce using rule 85 (identifier -> ID .)
+    FLOAT           reduce using rule 85 (identifier -> ID .)
+    DOUBLE          reduce using rule 85 (identifier -> ID .)
+    SIGNED          reduce using rule 85 (identifier -> ID .)
+    UNSIGNED        reduce using rule 85 (identifier -> ID .)
+    ID              reduce using rule 85 (identifier -> ID .)
+    LOGNOT          reduce using rule 85 (identifier -> ID .)
+    INT_CONST       reduce using rule 85 (identifier -> ID .)
+    FLOAT_CONST     reduce using rule 85 (identifier -> ID .)
+    STRING_LITERAL  reduce using rule 85 (identifier -> ID .)
+    LPAREN          reduce using rule 85 (identifier -> ID .)
+    $end            reduce using rule 85 (identifier -> ID .)
+    SEMI            reduce using rule 85 (identifier -> ID .)
+    RBRACE          reduce using rule 85 (identifier -> ID .)
+    EQUALS          reduce using rule 85 (identifier -> ID .)
+    PLUSEQUALS      reduce using rule 85 (identifier -> ID .)
+    MINUSEQUALS     reduce using rule 85 (identifier -> ID .)
+    TIMESEQUALS     reduce using rule 85 (identifier -> ID .)
+    RPAREN          reduce using rule 85 (identifier -> ID .)
+    PLUSPLUS        reduce using rule 85 (identifier -> ID .)
+    MINUSMINUS      reduce using rule 85 (identifier -> ID .)
+    COMMA           reduce using rule 85 (identifier -> ID .)
+
+
+state 32
 
     (27) constant -> STRING_LITERAL .
 
@@ -1212,6 +1294,8 @@ state 31
     LBRACE          reduce using rule 27 (constant -> STRING_LITERAL .)
     FOR             reduce using rule 27 (constant -> STRING_LITERAL .)
     VOID            reduce using rule 27 (constant -> STRING_LITERAL .)
+    SIZE_T          reduce using rule 27 (constant -> STRING_LITERAL .)
+    UNKNOWN         reduce using rule 27 (constant -> STRING_LITERAL .)
     CHAR            reduce using rule 27 (constant -> STRING_LITERAL .)
     SHORT           reduce using rule 27 (constant -> STRING_LITERAL .)
     INT             reduce using rule 27 (constant -> STRING_LITERAL .)
@@ -1235,7 +1319,7 @@ state 31
     MINUSMINUS      reduce using rule 27 (constant -> STRING_LITERAL .)
 
 
-state 32
+state 33
 
     (68) function_declaration -> typeid . arglist SEMI
     (69) function_declaration -> typeid . arglist compound
@@ -1247,28 +1331,30 @@ state 32
     (19) assignment_operator -> . MINUSEQUALS
     (20) assignment_operator -> . TIMESEQUALS
 
-    SEMI            shift and go to state 77
-    LPAREN          shift and go to state 79
-    EQUALS          shift and go to state 64
-    PLUSEQUALS      shift and go to state 65
-    MINUSEQUALS     shift and go to state 67
-    TIMESEQUALS     shift and go to state 68
+    SEMI            shift and go to state 79
+    LPAREN          shift and go to state 81
+    EQUALS          shift and go to state 66
+    PLUSEQUALS      shift and go to state 67
+    MINUSEQUALS     shift and go to state 69
+    TIMESEQUALS     shift and go to state 70
 
-    assignment_operator            shift and go to state 78
-    arglist                        shift and go to state 80
+    assignment_operator            shift and go to state 80
+    arglist                        shift and go to state 82
 
-state 33
+state 34
 
     (43) expr -> term .
     (36) binop_expression -> term .
 
-  ! reduce/reduce conflict for SEMI resolved using rule 36 (binop_expression -> term .)
+  ! reduce/reduce conflict for RBRACKET resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for MINUS resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for RBRACE resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for COMMENT resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for LBRACE resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for FOR resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for VOID resolved using rule 36 (binop_expression -> term .)
+  ! reduce/reduce conflict for SIZE_T resolved using rule 36 (binop_expression -> term .)
+  ! reduce/reduce conflict for UNKNOWN resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for CHAR resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for SHORT resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for INT resolved using rule 36 (binop_expression -> term .)
@@ -1283,9 +1369,9 @@ state 33
   ! reduce/reduce conflict for FLOAT_CONST resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for STRING_LITERAL resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for LPAREN resolved using rule 36 (binop_expression -> term .)
+  ! reduce/reduce conflict for SEMI resolved using rule 36 (binop_expression -> term .)
   ! reduce/reduce conflict for $end resolved using rule 36 (binop_expression -> term .)
-  ! reduce/reduce conflict for RBRACKET resolved using rule 36 (binop_expression -> term .)
-    SEMI            reduce using rule 36 (binop_expression -> term .)
+    RBRACKET        reduce using rule 36 (binop_expression -> term .)
     TIMES           reduce using rule 36 (binop_expression -> term .)
     DIVIDE          reduce using rule 36 (binop_expression -> term .)
     PLUS            reduce using rule 36 (binop_expression -> term .)
@@ -1308,6 +1394,8 @@ state 33
     LBRACE          reduce using rule 36 (binop_expression -> term .)
     FOR             reduce using rule 36 (binop_expression -> term .)
     VOID            reduce using rule 36 (binop_expression -> term .)
+    SIZE_T          reduce using rule 36 (binop_expression -> term .)
+    UNKNOWN         reduce using rule 36 (binop_expression -> term .)
     CHAR            reduce using rule 36 (binop_expression -> term .)
     SHORT           reduce using rule 36 (binop_expression -> term .)
     INT             reduce using rule 36 (binop_expression -> term .)
@@ -1322,14 +1410,18 @@ state 33
     FLOAT_CONST     reduce using rule 36 (binop_expression -> term .)
     STRING_LITERAL  reduce using rule 36 (binop_expression -> term .)
     LPAREN          reduce using rule 36 (binop_expression -> term .)
+    SEMI            reduce using rule 36 (binop_expression -> term .)
     $end            reduce using rule 36 (binop_expression -> term .)
-    RBRACKET        reduce using rule 36 (binop_expression -> term .)
 
+  ! RBRACKET        [ reduce using rule 43 (expr -> term .) ]
+  ! SEMI            [ reduce using rule 43 (expr -> term .) ]
   ! RBRACE          [ reduce using rule 43 (expr -> term .) ]
   ! COMMENT         [ reduce using rule 43 (expr -> term .) ]
   ! LBRACE          [ reduce using rule 43 (expr -> term .) ]
   ! FOR             [ reduce using rule 43 (expr -> term .) ]
   ! VOID            [ reduce using rule 43 (expr -> term .) ]
+  ! SIZE_T          [ reduce using rule 43 (expr -> term .) ]
+  ! UNKNOWN         [ reduce using rule 43 (expr -> term .) ]
   ! CHAR            [ reduce using rule 43 (expr -> term .) ]
   ! SHORT           [ reduce using rule 43 (expr -> term .) ]
   ! INT             [ reduce using rule 43 (expr -> term .) ]
@@ -1345,12 +1437,10 @@ state 33
   ! FLOAT_CONST     [ reduce using rule 43 (expr -> term .) ]
   ! STRING_LITERAL  [ reduce using rule 43 (expr -> term .) ]
   ! LPAREN          [ reduce using rule 43 (expr -> term .) ]
-  ! SEMI            [ reduce using rule 43 (expr -> term .) ]
-  ! RBRACKET        [ reduce using rule 43 (expr -> term .) ]
   ! $end            [ reduce using rule 43 (expr -> term .) ]
 
 
-state 34
+state 35
 
     (8) beginning_list -> beginning_list assignment_expression_semi .
 
@@ -1358,6 +1448,8 @@ state 34
     LBRACE          reduce using rule 8 (beginning_list -> beginning_list assignment_expression_semi .)
     FOR             reduce using rule 8 (beginning_list -> beginning_list assignment_expression_semi .)
     VOID            reduce using rule 8 (beginning_list -> beginning_list assignment_expression_semi .)
+    SIZE_T          reduce using rule 8 (beginning_list -> beginning_list assignment_expression_semi .)
+    UNKNOWN         reduce using rule 8 (beginning_list -> beginning_list assignment_expression_semi .)
     CHAR            reduce using rule 8 (beginning_list -> beginning_list assignment_expression_semi .)
     SHORT           reduce using rule 8 (beginning_list -> beginning_list assignment_expression_semi .)
     INT             reduce using rule 8 (beginning_list -> beginning_list assignment_expression_semi .)
@@ -1377,7 +1469,7 @@ state 34
     RBRACE          reduce using rule 8 (beginning_list -> beginning_list assignment_expression_semi .)
 
 
-state 35
+state 36
 
     (4) beginning_list -> beginning_list function_declaration .
 
@@ -1385,6 +1477,8 @@ state 35
     LBRACE          reduce using rule 4 (beginning_list -> beginning_list function_declaration .)
     FOR             reduce using rule 4 (beginning_list -> beginning_list function_declaration .)
     VOID            reduce using rule 4 (beginning_list -> beginning_list function_declaration .)
+    SIZE_T          reduce using rule 4 (beginning_list -> beginning_list function_declaration .)
+    UNKNOWN         reduce using rule 4 (beginning_list -> beginning_list function_declaration .)
     CHAR            reduce using rule 4 (beginning_list -> beginning_list function_declaration .)
     SHORT           reduce using rule 4 (beginning_list -> beginning_list function_declaration .)
     INT             reduce using rule 4 (beginning_list -> beginning_list function_declaration .)
@@ -1404,35 +1498,37 @@ state 35
     RBRACE          reduce using rule 4 (beginning_list -> beginning_list function_declaration .)
 
 
-state 36
-
-    (75) native_type -> INT .
-
-    TIMES           reduce using rule 75 (native_type -> INT .)
-    ID              reduce using rule 75 (native_type -> INT .)
-    RBRACE          reduce using rule 75 (native_type -> INT .)
-    COMMENT         reduce using rule 75 (native_type -> INT .)
-    LBRACE          reduce using rule 75 (native_type -> INT .)
-    FOR             reduce using rule 75 (native_type -> INT .)
-    VOID            reduce using rule 75 (native_type -> INT .)
-    CHAR            reduce using rule 75 (native_type -> INT .)
-    SHORT           reduce using rule 75 (native_type -> INT .)
-    INT             reduce using rule 75 (native_type -> INT .)
-    LONG            reduce using rule 75 (native_type -> INT .)
-    FLOAT           reduce using rule 75 (native_type -> INT .)
-    DOUBLE          reduce using rule 75 (native_type -> INT .)
-    SIGNED          reduce using rule 75 (native_type -> INT .)
-    UNSIGNED        reduce using rule 75 (native_type -> INT .)
-    MINUS           reduce using rule 75 (native_type -> INT .)
-    LOGNOT          reduce using rule 75 (native_type -> INT .)
-    INT_CONST       reduce using rule 75 (native_type -> INT .)
-    FLOAT_CONST     reduce using rule 75 (native_type -> INT .)
-    STRING_LITERAL  reduce using rule 75 (native_type -> INT .)
-    LPAREN          reduce using rule 75 (native_type -> INT .)
-    $end            reduce using rule 75 (native_type -> INT .)
-
-
 state 37
+
+    (77) native_type -> INT .
+
+    TIMES           reduce using rule 77 (native_type -> INT .)
+    ID              reduce using rule 77 (native_type -> INT .)
+    COMMENT         reduce using rule 77 (native_type -> INT .)
+    LBRACE          reduce using rule 77 (native_type -> INT .)
+    FOR             reduce using rule 77 (native_type -> INT .)
+    VOID            reduce using rule 77 (native_type -> INT .)
+    SIZE_T          reduce using rule 77 (native_type -> INT .)
+    UNKNOWN         reduce using rule 77 (native_type -> INT .)
+    CHAR            reduce using rule 77 (native_type -> INT .)
+    SHORT           reduce using rule 77 (native_type -> INT .)
+    INT             reduce using rule 77 (native_type -> INT .)
+    LONG            reduce using rule 77 (native_type -> INT .)
+    FLOAT           reduce using rule 77 (native_type -> INT .)
+    DOUBLE          reduce using rule 77 (native_type -> INT .)
+    SIGNED          reduce using rule 77 (native_type -> INT .)
+    UNSIGNED        reduce using rule 77 (native_type -> INT .)
+    MINUS           reduce using rule 77 (native_type -> INT .)
+    LOGNOT          reduce using rule 77 (native_type -> INT .)
+    INT_CONST       reduce using rule 77 (native_type -> INT .)
+    FLOAT_CONST     reduce using rule 77 (native_type -> INT .)
+    STRING_LITERAL  reduce using rule 77 (native_type -> INT .)
+    LPAREN          reduce using rule 77 (native_type -> INT .)
+    $end            reduce using rule 77 (native_type -> INT .)
+    RBRACE          reduce using rule 77 (native_type -> INT .)
+
+
+state 38
 
     (9) beginning_list -> beginning_list expr .
 
@@ -1440,6 +1536,8 @@ state 37
     LBRACE          reduce using rule 9 (beginning_list -> beginning_list expr .)
     FOR             reduce using rule 9 (beginning_list -> beginning_list expr .)
     VOID            reduce using rule 9 (beginning_list -> beginning_list expr .)
+    SIZE_T          reduce using rule 9 (beginning_list -> beginning_list expr .)
+    UNKNOWN         reduce using rule 9 (beginning_list -> beginning_list expr .)
     CHAR            reduce using rule 9 (beginning_list -> beginning_list expr .)
     SHORT           reduce using rule 9 (beginning_list -> beginning_list expr .)
     INT             reduce using rule 9 (beginning_list -> beginning_list expr .)
@@ -1459,91 +1557,127 @@ state 37
     RBRACE          reduce using rule 9 (beginning_list -> beginning_list expr .)
 
 
-state 38
-
-    (77) native_type -> FLOAT .
-
-    TIMES           reduce using rule 77 (native_type -> FLOAT .)
-    ID              reduce using rule 77 (native_type -> FLOAT .)
-    RBRACE          reduce using rule 77 (native_type -> FLOAT .)
-    COMMENT         reduce using rule 77 (native_type -> FLOAT .)
-    LBRACE          reduce using rule 77 (native_type -> FLOAT .)
-    FOR             reduce using rule 77 (native_type -> FLOAT .)
-    VOID            reduce using rule 77 (native_type -> FLOAT .)
-    CHAR            reduce using rule 77 (native_type -> FLOAT .)
-    SHORT           reduce using rule 77 (native_type -> FLOAT .)
-    INT             reduce using rule 77 (native_type -> FLOAT .)
-    LONG            reduce using rule 77 (native_type -> FLOAT .)
-    FLOAT           reduce using rule 77 (native_type -> FLOAT .)
-    DOUBLE          reduce using rule 77 (native_type -> FLOAT .)
-    SIGNED          reduce using rule 77 (native_type -> FLOAT .)
-    UNSIGNED        reduce using rule 77 (native_type -> FLOAT .)
-    MINUS           reduce using rule 77 (native_type -> FLOAT .)
-    LOGNOT          reduce using rule 77 (native_type -> FLOAT .)
-    INT_CONST       reduce using rule 77 (native_type -> FLOAT .)
-    FLOAT_CONST     reduce using rule 77 (native_type -> FLOAT .)
-    STRING_LITERAL  reduce using rule 77 (native_type -> FLOAT .)
-    LPAREN          reduce using rule 77 (native_type -> FLOAT .)
-    $end            reduce using rule 77 (native_type -> FLOAT .)
-
-
 state 39
 
-    (79) native_type -> SIGNED .
+    (79) native_type -> FLOAT .
 
-    TIMES           reduce using rule 79 (native_type -> SIGNED .)
-    ID              reduce using rule 79 (native_type -> SIGNED .)
-    RBRACE          reduce using rule 79 (native_type -> SIGNED .)
-    COMMENT         reduce using rule 79 (native_type -> SIGNED .)
-    LBRACE          reduce using rule 79 (native_type -> SIGNED .)
-    FOR             reduce using rule 79 (native_type -> SIGNED .)
-    VOID            reduce using rule 79 (native_type -> SIGNED .)
-    CHAR            reduce using rule 79 (native_type -> SIGNED .)
-    SHORT           reduce using rule 79 (native_type -> SIGNED .)
-    INT             reduce using rule 79 (native_type -> SIGNED .)
-    LONG            reduce using rule 79 (native_type -> SIGNED .)
-    FLOAT           reduce using rule 79 (native_type -> SIGNED .)
-    DOUBLE          reduce using rule 79 (native_type -> SIGNED .)
-    SIGNED          reduce using rule 79 (native_type -> SIGNED .)
-    UNSIGNED        reduce using rule 79 (native_type -> SIGNED .)
-    MINUS           reduce using rule 79 (native_type -> SIGNED .)
-    LOGNOT          reduce using rule 79 (native_type -> SIGNED .)
-    INT_CONST       reduce using rule 79 (native_type -> SIGNED .)
-    FLOAT_CONST     reduce using rule 79 (native_type -> SIGNED .)
-    STRING_LITERAL  reduce using rule 79 (native_type -> SIGNED .)
-    LPAREN          reduce using rule 79 (native_type -> SIGNED .)
-    $end            reduce using rule 79 (native_type -> SIGNED .)
+    TIMES           reduce using rule 79 (native_type -> FLOAT .)
+    ID              reduce using rule 79 (native_type -> FLOAT .)
+    COMMENT         reduce using rule 79 (native_type -> FLOAT .)
+    LBRACE          reduce using rule 79 (native_type -> FLOAT .)
+    FOR             reduce using rule 79 (native_type -> FLOAT .)
+    VOID            reduce using rule 79 (native_type -> FLOAT .)
+    SIZE_T          reduce using rule 79 (native_type -> FLOAT .)
+    UNKNOWN         reduce using rule 79 (native_type -> FLOAT .)
+    CHAR            reduce using rule 79 (native_type -> FLOAT .)
+    SHORT           reduce using rule 79 (native_type -> FLOAT .)
+    INT             reduce using rule 79 (native_type -> FLOAT .)
+    LONG            reduce using rule 79 (native_type -> FLOAT .)
+    FLOAT           reduce using rule 79 (native_type -> FLOAT .)
+    DOUBLE          reduce using rule 79 (native_type -> FLOAT .)
+    SIGNED          reduce using rule 79 (native_type -> FLOAT .)
+    UNSIGNED        reduce using rule 79 (native_type -> FLOAT .)
+    MINUS           reduce using rule 79 (native_type -> FLOAT .)
+    LOGNOT          reduce using rule 79 (native_type -> FLOAT .)
+    INT_CONST       reduce using rule 79 (native_type -> FLOAT .)
+    FLOAT_CONST     reduce using rule 79 (native_type -> FLOAT .)
+    STRING_LITERAL  reduce using rule 79 (native_type -> FLOAT .)
+    LPAREN          reduce using rule 79 (native_type -> FLOAT .)
+    $end            reduce using rule 79 (native_type -> FLOAT .)
+    RBRACE          reduce using rule 79 (native_type -> FLOAT .)
 
 
 state 40
 
-    (78) native_type -> DOUBLE .
+    (81) native_type -> SIGNED .
 
-    TIMES           reduce using rule 78 (native_type -> DOUBLE .)
-    ID              reduce using rule 78 (native_type -> DOUBLE .)
-    RBRACE          reduce using rule 78 (native_type -> DOUBLE .)
-    COMMENT         reduce using rule 78 (native_type -> DOUBLE .)
-    LBRACE          reduce using rule 78 (native_type -> DOUBLE .)
-    FOR             reduce using rule 78 (native_type -> DOUBLE .)
-    VOID            reduce using rule 78 (native_type -> DOUBLE .)
-    CHAR            reduce using rule 78 (native_type -> DOUBLE .)
-    SHORT           reduce using rule 78 (native_type -> DOUBLE .)
-    INT             reduce using rule 78 (native_type -> DOUBLE .)
-    LONG            reduce using rule 78 (native_type -> DOUBLE .)
-    FLOAT           reduce using rule 78 (native_type -> DOUBLE .)
-    DOUBLE          reduce using rule 78 (native_type -> DOUBLE .)
-    SIGNED          reduce using rule 78 (native_type -> DOUBLE .)
-    UNSIGNED        reduce using rule 78 (native_type -> DOUBLE .)
-    MINUS           reduce using rule 78 (native_type -> DOUBLE .)
-    LOGNOT          reduce using rule 78 (native_type -> DOUBLE .)
-    INT_CONST       reduce using rule 78 (native_type -> DOUBLE .)
-    FLOAT_CONST     reduce using rule 78 (native_type -> DOUBLE .)
-    STRING_LITERAL  reduce using rule 78 (native_type -> DOUBLE .)
-    LPAREN          reduce using rule 78 (native_type -> DOUBLE .)
-    $end            reduce using rule 78 (native_type -> DOUBLE .)
+    TIMES           reduce using rule 81 (native_type -> SIGNED .)
+    ID              reduce using rule 81 (native_type -> SIGNED .)
+    COMMENT         reduce using rule 81 (native_type -> SIGNED .)
+    LBRACE          reduce using rule 81 (native_type -> SIGNED .)
+    FOR             reduce using rule 81 (native_type -> SIGNED .)
+    VOID            reduce using rule 81 (native_type -> SIGNED .)
+    SIZE_T          reduce using rule 81 (native_type -> SIGNED .)
+    UNKNOWN         reduce using rule 81 (native_type -> SIGNED .)
+    CHAR            reduce using rule 81 (native_type -> SIGNED .)
+    SHORT           reduce using rule 81 (native_type -> SIGNED .)
+    INT             reduce using rule 81 (native_type -> SIGNED .)
+    LONG            reduce using rule 81 (native_type -> SIGNED .)
+    FLOAT           reduce using rule 81 (native_type -> SIGNED .)
+    DOUBLE          reduce using rule 81 (native_type -> SIGNED .)
+    SIGNED          reduce using rule 81 (native_type -> SIGNED .)
+    UNSIGNED        reduce using rule 81 (native_type -> SIGNED .)
+    MINUS           reduce using rule 81 (native_type -> SIGNED .)
+    LOGNOT          reduce using rule 81 (native_type -> SIGNED .)
+    INT_CONST       reduce using rule 81 (native_type -> SIGNED .)
+    FLOAT_CONST     reduce using rule 81 (native_type -> SIGNED .)
+    STRING_LITERAL  reduce using rule 81 (native_type -> SIGNED .)
+    LPAREN          reduce using rule 81 (native_type -> SIGNED .)
+    $end            reduce using rule 81 (native_type -> SIGNED .)
+    RBRACE          reduce using rule 81 (native_type -> SIGNED .)
 
 
 state 41
+
+    (80) native_type -> DOUBLE .
+
+    TIMES           reduce using rule 80 (native_type -> DOUBLE .)
+    ID              reduce using rule 80 (native_type -> DOUBLE .)
+    COMMENT         reduce using rule 80 (native_type -> DOUBLE .)
+    LBRACE          reduce using rule 80 (native_type -> DOUBLE .)
+    FOR             reduce using rule 80 (native_type -> DOUBLE .)
+    VOID            reduce using rule 80 (native_type -> DOUBLE .)
+    SIZE_T          reduce using rule 80 (native_type -> DOUBLE .)
+    UNKNOWN         reduce using rule 80 (native_type -> DOUBLE .)
+    CHAR            reduce using rule 80 (native_type -> DOUBLE .)
+    SHORT           reduce using rule 80 (native_type -> DOUBLE .)
+    INT             reduce using rule 80 (native_type -> DOUBLE .)
+    LONG            reduce using rule 80 (native_type -> DOUBLE .)
+    FLOAT           reduce using rule 80 (native_type -> DOUBLE .)
+    DOUBLE          reduce using rule 80 (native_type -> DOUBLE .)
+    SIGNED          reduce using rule 80 (native_type -> DOUBLE .)
+    UNSIGNED        reduce using rule 80 (native_type -> DOUBLE .)
+    MINUS           reduce using rule 80 (native_type -> DOUBLE .)
+    LOGNOT          reduce using rule 80 (native_type -> DOUBLE .)
+    INT_CONST       reduce using rule 80 (native_type -> DOUBLE .)
+    FLOAT_CONST     reduce using rule 80 (native_type -> DOUBLE .)
+    STRING_LITERAL  reduce using rule 80 (native_type -> DOUBLE .)
+    LPAREN          reduce using rule 80 (native_type -> DOUBLE .)
+    $end            reduce using rule 80 (native_type -> DOUBLE .)
+    RBRACE          reduce using rule 80 (native_type -> DOUBLE .)
+
+
+state 42
+
+    (73) native_type -> SIZE_T .
+
+    TIMES           reduce using rule 73 (native_type -> SIZE_T .)
+    ID              reduce using rule 73 (native_type -> SIZE_T .)
+    COMMENT         reduce using rule 73 (native_type -> SIZE_T .)
+    LBRACE          reduce using rule 73 (native_type -> SIZE_T .)
+    FOR             reduce using rule 73 (native_type -> SIZE_T .)
+    VOID            reduce using rule 73 (native_type -> SIZE_T .)
+    SIZE_T          reduce using rule 73 (native_type -> SIZE_T .)
+    UNKNOWN         reduce using rule 73 (native_type -> SIZE_T .)
+    CHAR            reduce using rule 73 (native_type -> SIZE_T .)
+    SHORT           reduce using rule 73 (native_type -> SIZE_T .)
+    INT             reduce using rule 73 (native_type -> SIZE_T .)
+    LONG            reduce using rule 73 (native_type -> SIZE_T .)
+    FLOAT           reduce using rule 73 (native_type -> SIZE_T .)
+    DOUBLE          reduce using rule 73 (native_type -> SIZE_T .)
+    SIGNED          reduce using rule 73 (native_type -> SIZE_T .)
+    UNSIGNED        reduce using rule 73 (native_type -> SIZE_T .)
+    MINUS           reduce using rule 73 (native_type -> SIZE_T .)
+    LOGNOT          reduce using rule 73 (native_type -> SIZE_T .)
+    INT_CONST       reduce using rule 73 (native_type -> SIZE_T .)
+    FLOAT_CONST     reduce using rule 73 (native_type -> SIZE_T .)
+    STRING_LITERAL  reduce using rule 73 (native_type -> SIZE_T .)
+    LPAREN          reduce using rule 73 (native_type -> SIZE_T .)
+    $end            reduce using rule 73 (native_type -> SIZE_T .)
+    RBRACE          reduce using rule 73 (native_type -> SIZE_T .)
+
+
+state 43
 
     (22) assignment_expression -> identifier . assignment_operator expr
     (64) term -> identifier .
@@ -1556,10 +1690,13 @@ state 41
     (61) subscript_list -> . subscript subscript_list
     (59) subscript -> . LBRACKET expr RBRACKET
 
+    RBRACE          reduce using rule 64 (term -> identifier .)
     COMMENT         reduce using rule 64 (term -> identifier .)
     LBRACE          reduce using rule 64 (term -> identifier .)
     FOR             reduce using rule 64 (term -> identifier .)
     VOID            reduce using rule 64 (term -> identifier .)
+    SIZE_T          reduce using rule 64 (term -> identifier .)
+    UNKNOWN         reduce using rule 64 (term -> identifier .)
     CHAR            reduce using rule 64 (term -> identifier .)
     SHORT           reduce using rule 64 (term -> identifier .)
     INT             reduce using rule 64 (term -> identifier .)
@@ -1575,7 +1712,6 @@ state 41
     FLOAT_CONST     reduce using rule 64 (term -> identifier .)
     STRING_LITERAL  reduce using rule 64 (term -> identifier .)
     LPAREN          reduce using rule 64 (term -> identifier .)
-    $end            reduce using rule 64 (term -> identifier .)
     TIMES           reduce using rule 64 (term -> identifier .)
     DIVIDE          reduce using rule 64 (term -> identifier .)
     PLUS            reduce using rule 64 (term -> identifier .)
@@ -1592,18 +1728,18 @@ state 41
     GE              reduce using rule 64 (term -> identifier .)
     EQ              reduce using rule 64 (term -> identifier .)
     NE              reduce using rule 64 (term -> identifier .)
-    RBRACE          reduce using rule 64 (term -> identifier .)
-    EQUALS          shift and go to state 64
-    PLUSEQUALS      shift and go to state 65
-    MINUSEQUALS     shift and go to state 67
-    TIMESEQUALS     shift and go to state 68
-    LBRACKET        shift and go to state 82
+    $end            reduce using rule 64 (term -> identifier .)
+    EQUALS          shift and go to state 66
+    PLUSEQUALS      shift and go to state 67
+    MINUSEQUALS     shift and go to state 69
+    TIMESEQUALS     shift and go to state 70
+    LBRACKET        shift and go to state 84
 
-    subscript                      shift and go to state 84
-    subscript_list                 shift and go to state 81
-    assignment_operator            shift and go to state 83
+    subscript                      shift and go to state 86
+    subscript_list                 shift and go to state 83
+    assignment_operator            shift and go to state 85
 
-state 42
+state 44
 
     (26) constant -> FLOAT_CONST .
 
@@ -1628,6 +1764,8 @@ state 42
     LBRACE          reduce using rule 26 (constant -> FLOAT_CONST .)
     FOR             reduce using rule 26 (constant -> FLOAT_CONST .)
     VOID            reduce using rule 26 (constant -> FLOAT_CONST .)
+    SIZE_T          reduce using rule 26 (constant -> FLOAT_CONST .)
+    UNKNOWN         reduce using rule 26 (constant -> FLOAT_CONST .)
     CHAR            reduce using rule 26 (constant -> FLOAT_CONST .)
     SHORT           reduce using rule 26 (constant -> FLOAT_CONST .)
     INT             reduce using rule 26 (constant -> FLOAT_CONST .)
@@ -1651,17 +1789,18 @@ state 42
     MINUSMINUS      reduce using rule 26 (constant -> FLOAT_CONST .)
 
 
-state 43
+state 45
 
     (32) unary_expression -> unary_token_before term .
 
     SEMI            reduce using rule 32 (unary_expression -> unary_token_before term .)
-    RBRACKET        reduce using rule 32 (unary_expression -> unary_token_before term .)
     RBRACE          reduce using rule 32 (unary_expression -> unary_token_before term .)
     COMMENT         reduce using rule 32 (unary_expression -> unary_token_before term .)
     LBRACE          reduce using rule 32 (unary_expression -> unary_token_before term .)
     FOR             reduce using rule 32 (unary_expression -> unary_token_before term .)
     VOID            reduce using rule 32 (unary_expression -> unary_token_before term .)
+    SIZE_T          reduce using rule 32 (unary_expression -> unary_token_before term .)
+    UNKNOWN         reduce using rule 32 (unary_expression -> unary_token_before term .)
     CHAR            reduce using rule 32 (unary_expression -> unary_token_before term .)
     SHORT           reduce using rule 32 (unary_expression -> unary_token_before term .)
     INT             reduce using rule 32 (unary_expression -> unary_token_before term .)
@@ -1677,14 +1816,14 @@ state 43
     FLOAT_CONST     reduce using rule 32 (unary_expression -> unary_token_before term .)
     STRING_LITERAL  reduce using rule 32 (unary_expression -> unary_token_before term .)
     LPAREN          reduce using rule 32 (unary_expression -> unary_token_before term .)
+    RBRACKET        reduce using rule 32 (unary_expression -> unary_token_before term .)
     $end            reduce using rule 32 (unary_expression -> unary_token_before term .)
 
 
-state 44
+state 46
 
     (66) term -> array_reference .
 
-    SEMI            reduce using rule 66 (term -> array_reference .)
     TIMES           reduce using rule 66 (term -> array_reference .)
     DIVIDE          reduce using rule 66 (term -> array_reference .)
     PLUS            reduce using rule 66 (term -> array_reference .)
@@ -1706,6 +1845,8 @@ state 44
     LBRACE          reduce using rule 66 (term -> array_reference .)
     FOR             reduce using rule 66 (term -> array_reference .)
     VOID            reduce using rule 66 (term -> array_reference .)
+    SIZE_T          reduce using rule 66 (term -> array_reference .)
+    UNKNOWN         reduce using rule 66 (term -> array_reference .)
     CHAR            reduce using rule 66 (term -> array_reference .)
     SHORT           reduce using rule 66 (term -> array_reference .)
     INT             reduce using rule 66 (term -> array_reference .)
@@ -1722,13 +1863,14 @@ state 44
     LPAREN          reduce using rule 66 (term -> array_reference .)
     $end            reduce using rule 66 (term -> array_reference .)
     RPAREN          reduce using rule 66 (term -> array_reference .)
+    SEMI            reduce using rule 66 (term -> array_reference .)
     RBRACE          reduce using rule 66 (term -> array_reference .)
     RBRACKET        reduce using rule 66 (term -> array_reference .)
     PLUSPLUS        reduce using rule 66 (term -> array_reference .)
     MINUSMINUS      reduce using rule 66 (term -> array_reference .)
 
 
-state 45
+state 47
 
     (64) term -> identifier .
     (62) array_reference -> identifier . subscript_list
@@ -1736,7 +1878,6 @@ state 45
     (61) subscript_list -> . subscript subscript_list
     (59) subscript -> . LBRACKET expr RBRACKET
 
-    SEMI            reduce using rule 64 (term -> identifier .)
     TIMES           reduce using rule 64 (term -> identifier .)
     DIVIDE          reduce using rule 64 (term -> identifier .)
     PLUS            reduce using rule 64 (term -> identifier .)
@@ -1758,6 +1899,8 @@ state 45
     LBRACE          reduce using rule 64 (term -> identifier .)
     FOR             reduce using rule 64 (term -> identifier .)
     VOID            reduce using rule 64 (term -> identifier .)
+    SIZE_T          reduce using rule 64 (term -> identifier .)
+    UNKNOWN         reduce using rule 64 (term -> identifier .)
     CHAR            reduce using rule 64 (term -> identifier .)
     SHORT           reduce using rule 64 (term -> identifier .)
     INT             reduce using rule 64 (term -> identifier .)
@@ -1774,16 +1917,17 @@ state 45
     LPAREN          reduce using rule 64 (term -> identifier .)
     $end            reduce using rule 64 (term -> identifier .)
     RPAREN          reduce using rule 64 (term -> identifier .)
+    SEMI            reduce using rule 64 (term -> identifier .)
     RBRACE          reduce using rule 64 (term -> identifier .)
     RBRACKET        reduce using rule 64 (term -> identifier .)
     PLUSPLUS        reduce using rule 64 (term -> identifier .)
     MINUSMINUS      reduce using rule 64 (term -> identifier .)
-    LBRACKET        shift and go to state 82
+    LBRACKET        shift and go to state 84
 
-    subscript                      shift and go to state 84
-    subscript_list                 shift and go to state 81
+    subscript                      shift and go to state 86
+    subscript_list                 shift and go to state 83
 
-state 46
+state 48
 
     (48) binary_token -> AND .
 
@@ -1794,7 +1938,7 @@ state 46
     STRING_LITERAL  reduce using rule 48 (binary_token -> AND .)
 
 
-state 47
+state 49
 
     (47) binary_token -> OR .
 
@@ -1805,7 +1949,7 @@ state 47
     STRING_LITERAL  reduce using rule 47 (binary_token -> OR .)
 
 
-state 48
+state 50
 
     (54) binary_token -> GT .
 
@@ -1816,7 +1960,7 @@ state 48
     STRING_LITERAL  reduce using rule 54 (binary_token -> GT .)
 
 
-state 49
+state 51
 
     (50) binary_token -> RSHIFT .
 
@@ -1827,7 +1971,7 @@ state 49
     STRING_LITERAL  reduce using rule 50 (binary_token -> RSHIFT .)
 
 
-state 50
+state 52
 
     (38) binop_expression -> binop_paren DIVIDE . binop_paren
     (34) binop_paren -> . LPAREN binop_expression RPAREN
@@ -1839,26 +1983,26 @@ state 50
     (64) term -> . identifier
     (65) term -> . constant
     (66) term -> . array_reference
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (25) constant -> . INT_CONST
     (26) constant -> . FLOAT_CONST
     (27) constant -> . STRING_LITERAL
     (62) array_reference -> . identifier subscript_list
 
-    LPAREN          shift and go to state 28
-    ID              shift and go to state 30
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
+    LPAREN          shift and go to state 29
+    ID              shift and go to state 31
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
 
-    term                           shift and go to state 75
+    term                           shift and go to state 77
     constant                       shift and go to state 7
-    binop_paren                    shift and go to state 85
-    array_reference                shift and go to state 44
-    binop_expression               shift and go to state 86
-    identifier                     shift and go to state 45
+    binop_paren                    shift and go to state 87
+    array_reference                shift and go to state 46
+    binop_expression               shift and go to state 88
+    identifier                     shift and go to state 47
 
-state 51
+state 53
 
     (51) binary_token -> LOGOR .
 
@@ -1869,7 +2013,7 @@ state 51
     STRING_LITERAL  reduce using rule 51 (binary_token -> LOGOR .)
 
 
-state 52
+state 54
 
     (52) binary_token -> LOGAND .
 
@@ -1880,7 +2024,7 @@ state 52
     STRING_LITERAL  reduce using rule 52 (binary_token -> LOGAND .)
 
 
-state 53
+state 55
 
     (56) binary_token -> GE .
 
@@ -1891,7 +2035,7 @@ state 53
     STRING_LITERAL  reduce using rule 56 (binary_token -> GE .)
 
 
-state 54
+state 56
 
     (37) binop_expression -> binop_paren TIMES . binop_paren
     (34) binop_paren -> . LPAREN binop_expression RPAREN
@@ -1903,26 +2047,26 @@ state 54
     (64) term -> . identifier
     (65) term -> . constant
     (66) term -> . array_reference
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (25) constant -> . INT_CONST
     (26) constant -> . FLOAT_CONST
     (27) constant -> . STRING_LITERAL
     (62) array_reference -> . identifier subscript_list
 
-    LPAREN          shift and go to state 28
-    ID              shift and go to state 30
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
+    LPAREN          shift and go to state 29
+    ID              shift and go to state 31
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
 
-    term                           shift and go to state 75
+    term                           shift and go to state 77
     constant                       shift and go to state 7
-    binop_paren                    shift and go to state 87
-    array_reference                shift and go to state 44
-    binop_expression               shift and go to state 86
-    identifier                     shift and go to state 45
+    binop_paren                    shift and go to state 89
+    array_reference                shift and go to state 46
+    binop_expression               shift and go to state 88
+    identifier                     shift and go to state 47
 
-state 55
+state 57
 
     (53) binary_token -> LT .
 
@@ -1933,7 +2077,7 @@ state 55
     STRING_LITERAL  reduce using rule 53 (binary_token -> LT .)
 
 
-state 56
+state 58
 
     (55) binary_token -> LE .
 
@@ -1944,7 +2088,7 @@ state 56
     STRING_LITERAL  reduce using rule 55 (binary_token -> LE .)
 
 
-state 57
+state 59
 
     (44) binary_token -> PLUS .
 
@@ -1955,7 +2099,7 @@ state 57
     STRING_LITERAL  reduce using rule 44 (binary_token -> PLUS .)
 
 
-state 58
+state 60
 
     (49) binary_token -> LSHIFT .
 
@@ -1966,7 +2110,7 @@ state 58
     STRING_LITERAL  reduce using rule 49 (binary_token -> LSHIFT .)
 
 
-state 59
+state 61
 
     (46) binary_token -> MOD .
 
@@ -1977,7 +2121,7 @@ state 59
     STRING_LITERAL  reduce using rule 46 (binary_token -> MOD .)
 
 
-state 60
+state 62
 
     (57) binary_token -> EQ .
 
@@ -1988,7 +2132,7 @@ state 60
     STRING_LITERAL  reduce using rule 57 (binary_token -> EQ .)
 
 
-state 61
+state 63
 
     (45) binary_token -> MINUS .
 
@@ -1999,7 +2143,7 @@ state 61
     STRING_LITERAL  reduce using rule 45 (binary_token -> MINUS .)
 
 
-state 62
+state 64
 
     (58) binary_token -> NE .
 
@@ -2010,7 +2154,7 @@ state 62
     STRING_LITERAL  reduce using rule 58 (binary_token -> NE .)
 
 
-state 63
+state 65
 
     (39) binop_expression -> binop_paren binary_token . binop_paren
     (34) binop_paren -> . LPAREN binop_expression RPAREN
@@ -2022,26 +2166,26 @@ state 63
     (64) term -> . identifier
     (65) term -> . constant
     (66) term -> . array_reference
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (25) constant -> . INT_CONST
     (26) constant -> . FLOAT_CONST
     (27) constant -> . STRING_LITERAL
     (62) array_reference -> . identifier subscript_list
 
-    LPAREN          shift and go to state 28
-    ID              shift and go to state 30
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
+    LPAREN          shift and go to state 29
+    ID              shift and go to state 31
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
 
-    term                           shift and go to state 75
+    term                           shift and go to state 77
     constant                       shift and go to state 7
-    binop_paren                    shift and go to state 88
-    array_reference                shift and go to state 44
-    binop_expression               shift and go to state 86
-    identifier                     shift and go to state 45
+    binop_paren                    shift and go to state 90
+    array_reference                shift and go to state 46
+    binop_expression               shift and go to state 88
+    identifier                     shift and go to state 47
 
-state 64
+state 66
 
     (17) assignment_operator -> EQUALS .
 
@@ -2054,7 +2198,7 @@ state 64
     LPAREN          reduce using rule 17 (assignment_operator -> EQUALS .)
 
 
-state 65
+state 67
 
     (18) assignment_operator -> PLUSEQUALS .
 
@@ -2067,7 +2211,7 @@ state 65
     LPAREN          reduce using rule 18 (assignment_operator -> PLUSEQUALS .)
 
 
-state 66
+state 68
 
     (23) assignment_expression -> array_reference assignment_operator . expr
     (41) expr -> . unary_expression
@@ -2084,7 +2228,7 @@ state 66
     (37) binop_expression -> . binop_paren TIMES binop_paren
     (38) binop_expression -> . binop_paren DIVIDE binop_paren
     (39) binop_expression -> . binop_paren binary_token binop_paren
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (25) constant -> . INT_CONST
     (26) constant -> . FLOAT_CONST
     (27) constant -> . STRING_LITERAL
@@ -2092,26 +2236,26 @@ state 66
     (34) binop_paren -> . LPAREN binop_expression RPAREN
     (35) binop_paren -> . binop_expression
 
-    MINUS           shift and go to state 17
-    LOGNOT          shift and go to state 14
-    ID              shift and go to state 30
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
-    LPAREN          shift and go to state 28
+    MINUS           shift and go to state 18
+    LOGNOT          shift and go to state 15
+    ID              shift and go to state 31
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
+    LPAREN          shift and go to state 29
 
     unary_token_before             shift and go to state 5
-    term                           shift and go to state 33
+    term                           shift and go to state 34
     constant                       shift and go to state 7
     unary_expression               shift and go to state 8
-    binop                          shift and go to state 26
-    expr                           shift and go to state 89
-    binop_paren                    shift and go to state 11
-    array_reference                shift and go to state 44
-    binop_expression               shift and go to state 12
-    identifier                     shift and go to state 45
+    binop                          shift and go to state 27
+    expr                           shift and go to state 91
+    binop_paren                    shift and go to state 12
+    array_reference                shift and go to state 46
+    binop_expression               shift and go to state 13
+    identifier                     shift and go to state 47
 
-state 67
+state 69
 
     (19) assignment_operator -> MINUSEQUALS .
 
@@ -2124,7 +2268,7 @@ state 67
     LPAREN          reduce using rule 19 (assignment_operator -> MINUSEQUALS .)
 
 
-state 68
+state 70
 
     (20) assignment_operator -> TIMESEQUALS .
 
@@ -2137,73 +2281,79 @@ state 68
     LPAREN          reduce using rule 20 (assignment_operator -> TIMESEQUALS .)
 
 
-state 69
+state 71
 
-    (82) type -> native_type TIMES .
+    (84) type -> native_type TIMES .
 
-    ID              reduce using rule 82 (type -> native_type TIMES .)
-    RBRACE          reduce using rule 82 (type -> native_type TIMES .)
-    COMMENT         reduce using rule 82 (type -> native_type TIMES .)
-    LBRACE          reduce using rule 82 (type -> native_type TIMES .)
-    FOR             reduce using rule 82 (type -> native_type TIMES .)
-    VOID            reduce using rule 82 (type -> native_type TIMES .)
-    CHAR            reduce using rule 82 (type -> native_type TIMES .)
-    SHORT           reduce using rule 82 (type -> native_type TIMES .)
-    INT             reduce using rule 82 (type -> native_type TIMES .)
-    LONG            reduce using rule 82 (type -> native_type TIMES .)
-    FLOAT           reduce using rule 82 (type -> native_type TIMES .)
-    DOUBLE          reduce using rule 82 (type -> native_type TIMES .)
-    SIGNED          reduce using rule 82 (type -> native_type TIMES .)
-    UNSIGNED        reduce using rule 82 (type -> native_type TIMES .)
-    MINUS           reduce using rule 82 (type -> native_type TIMES .)
-    LOGNOT          reduce using rule 82 (type -> native_type TIMES .)
-    INT_CONST       reduce using rule 82 (type -> native_type TIMES .)
-    FLOAT_CONST     reduce using rule 82 (type -> native_type TIMES .)
-    STRING_LITERAL  reduce using rule 82 (type -> native_type TIMES .)
-    LPAREN          reduce using rule 82 (type -> native_type TIMES .)
-    $end            reduce using rule 82 (type -> native_type TIMES .)
+    ID              reduce using rule 84 (type -> native_type TIMES .)
+    RBRACE          reduce using rule 84 (type -> native_type TIMES .)
+    COMMENT         reduce using rule 84 (type -> native_type TIMES .)
+    LBRACE          reduce using rule 84 (type -> native_type TIMES .)
+    FOR             reduce using rule 84 (type -> native_type TIMES .)
+    VOID            reduce using rule 84 (type -> native_type TIMES .)
+    SIZE_T          reduce using rule 84 (type -> native_type TIMES .)
+    UNKNOWN         reduce using rule 84 (type -> native_type TIMES .)
+    CHAR            reduce using rule 84 (type -> native_type TIMES .)
+    SHORT           reduce using rule 84 (type -> native_type TIMES .)
+    INT             reduce using rule 84 (type -> native_type TIMES .)
+    LONG            reduce using rule 84 (type -> native_type TIMES .)
+    FLOAT           reduce using rule 84 (type -> native_type TIMES .)
+    DOUBLE          reduce using rule 84 (type -> native_type TIMES .)
+    SIGNED          reduce using rule 84 (type -> native_type TIMES .)
+    UNSIGNED        reduce using rule 84 (type -> native_type TIMES .)
+    MINUS           reduce using rule 84 (type -> native_type TIMES .)
+    LOGNOT          reduce using rule 84 (type -> native_type TIMES .)
+    INT_CONST       reduce using rule 84 (type -> native_type TIMES .)
+    FLOAT_CONST     reduce using rule 84 (type -> native_type TIMES .)
+    STRING_LITERAL  reduce using rule 84 (type -> native_type TIMES .)
+    LPAREN          reduce using rule 84 (type -> native_type TIMES .)
+    $end            reduce using rule 84 (type -> native_type TIMES .)
 
 
-state 70
+state 72
 
     (63) for_loop -> FOR LPAREN . assignment_expression SEMI binop SEMI increment RPAREN compound
     (21) assignment_expression -> . typeid assignment_operator expr
     (22) assignment_expression -> . identifier assignment_operator expr
     (23) assignment_expression -> . array_reference assignment_operator expr
     (71) typeid -> . type identifier
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (62) array_reference -> . identifier subscript_list
-    (81) type -> . native_type
-    (82) type -> . native_type TIMES
+    (83) type -> . native_type
+    (84) type -> . native_type TIMES
     (72) native_type -> . VOID
-    (73) native_type -> . CHAR
-    (74) native_type -> . SHORT
-    (75) native_type -> . INT
-    (76) native_type -> . LONG
-    (77) native_type -> . FLOAT
-    (78) native_type -> . DOUBLE
-    (79) native_type -> . SIGNED
-    (80) native_type -> . UNSIGNED
+    (73) native_type -> . SIZE_T
+    (74) native_type -> . UNKNOWN
+    (75) native_type -> . CHAR
+    (76) native_type -> . SHORT
+    (77) native_type -> . INT
+    (78) native_type -> . LONG
+    (79) native_type -> . FLOAT
+    (80) native_type -> . DOUBLE
+    (81) native_type -> . SIGNED
+    (82) native_type -> . UNSIGNED
 
-    ID              shift and go to state 30
-    VOID            shift and go to state 9
-    CHAR            shift and go to state 13
+    ID              shift and go to state 31
+    VOID            shift and go to state 10
+    SIZE_T          shift and go to state 42
+    UNKNOWN         shift and go to state 9
+    CHAR            shift and go to state 14
     SHORT           shift and go to state 6
-    INT             shift and go to state 36
-    LONG            shift and go to state 22
-    FLOAT           shift and go to state 38
-    DOUBLE          shift and go to state 40
-    SIGNED          shift and go to state 39
-    UNSIGNED        shift and go to state 21
+    INT             shift and go to state 37
+    LONG            shift and go to state 23
+    FLOAT           shift and go to state 39
+    DOUBLE          shift and go to state 41
+    SIGNED          shift and go to state 40
+    UNSIGNED        shift and go to state 22
 
-    typeid                         shift and go to state 93
-    assignment_expression          shift and go to state 92
-    native_type                    shift and go to state 16
-    array_reference                shift and go to state 90
-    identifier                     shift and go to state 94
-    type                           shift and go to state 91
+    typeid                         shift and go to state 95
+    assignment_expression          shift and go to state 94
+    native_type                    shift and go to state 17
+    array_reference                shift and go to state 92
+    identifier                     shift and go to state 96
+    type                           shift and go to state 93
 
-state 71
+state 73
 
     (71) typeid -> type identifier .
 
@@ -2217,14 +2367,17 @@ state 71
     RPAREN          reduce using rule 71 (typeid -> type identifier .)
 
 
-state 72
+state 74
 
     (24) assignment_expression_semi -> assignment_expression SEMI .
 
+    RBRACE          reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
     COMMENT         reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
     LBRACE          reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
     FOR             reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
     VOID            reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
+    SIZE_T          reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
+    UNKNOWN         reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
     CHAR            reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
     SHORT           reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
     INT             reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
@@ -2241,10 +2394,9 @@ state 72
     STRING_LITERAL  reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
     LPAREN          reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
     $end            reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
-    RBRACE          reduce using rule 24 (assignment_expression_semi -> assignment_expression SEMI .)
 
 
-state 73
+state 75
 
     (67) compound -> LBRACE beginning_list . RBRACE
     (3) beginning_list -> beginning_list . comment
@@ -2258,8 +2410,8 @@ state 73
     (12) comment -> . COMMENT
     (68) function_declaration -> . typeid arglist SEMI
     (69) function_declaration -> . typeid arglist compound
-    (81) type -> . native_type
-    (82) type -> . native_type TIMES
+    (83) type -> . native_type
+    (84) type -> . native_type TIMES
     (70) declaration -> . typeid SEMI
     (67) compound -> . LBRACE beginning_list RBRACE
     (24) assignment_expression_semi -> . assignment_expression SEMI
@@ -2269,14 +2421,16 @@ state 73
     (63) for_loop -> . FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound
     (71) typeid -> . type identifier
     (72) native_type -> . VOID
-    (73) native_type -> . CHAR
-    (74) native_type -> . SHORT
-    (75) native_type -> . INT
-    (76) native_type -> . LONG
-    (77) native_type -> . FLOAT
-    (78) native_type -> . DOUBLE
-    (79) native_type -> . SIGNED
-    (80) native_type -> . UNSIGNED
+    (73) native_type -> . SIZE_T
+    (74) native_type -> . UNKNOWN
+    (75) native_type -> . CHAR
+    (76) native_type -> . SHORT
+    (77) native_type -> . INT
+    (78) native_type -> . LONG
+    (79) native_type -> . FLOAT
+    (80) native_type -> . DOUBLE
+    (81) native_type -> . SIGNED
+    (82) native_type -> . UNSIGNED
     (21) assignment_expression -> . typeid assignment_operator expr
     (22) assignment_expression -> . identifier assignment_operator expr
     (23) assignment_expression -> . array_reference assignment_operator expr
@@ -2285,7 +2439,7 @@ state 73
     (64) term -> . identifier
     (65) term -> . constant
     (66) term -> . array_reference
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (62) array_reference -> . identifier subscript_list
     (28) unary_token_before -> . MINUS
     (29) unary_token_before -> . LOGNOT
@@ -2299,49 +2453,51 @@ state 73
     (34) binop_paren -> . LPAREN binop_expression RPAREN
     (35) binop_paren -> . binop_expression
 
-    RBRACE          shift and go to state 95
-    COMMENT         shift and go to state 18
-    LBRACE          shift and go to state 27
-    FOR             shift and go to state 20
-    VOID            shift and go to state 9
-    CHAR            shift and go to state 13
+    RBRACE          shift and go to state 97
+    COMMENT         shift and go to state 19
+    LBRACE          shift and go to state 28
+    FOR             shift and go to state 21
+    VOID            shift and go to state 10
+    SIZE_T          shift and go to state 42
+    UNKNOWN         shift and go to state 9
+    CHAR            shift and go to state 14
     SHORT           shift and go to state 6
-    INT             shift and go to state 36
-    LONG            shift and go to state 22
-    FLOAT           shift and go to state 38
-    DOUBLE          shift and go to state 40
-    SIGNED          shift and go to state 39
-    UNSIGNED        shift and go to state 21
-    ID              shift and go to state 30
-    MINUS           shift and go to state 17
-    LOGNOT          shift and go to state 14
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
-    LPAREN          shift and go to state 28
+    INT             shift and go to state 37
+    LONG            shift and go to state 23
+    FLOAT           shift and go to state 39
+    DOUBLE          shift and go to state 41
+    SIGNED          shift and go to state 40
+    UNSIGNED        shift and go to state 22
+    ID              shift and go to state 31
+    MINUS           shift and go to state 18
+    LOGNOT          shift and go to state 15
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
+    LPAREN          shift and go to state 29
 
     comment                        shift and go to state 4
     unary_token_before             shift and go to state 5
     constant                       shift and go to state 7
     unary_expression               shift and go to state 8
-    compound                       shift and go to state 10
-    binop_paren                    shift and go to state 11
-    binop_expression               shift and go to state 12
-    native_type                    shift and go to state 16
-    array_reference                shift and go to state 15
-    type                           shift and go to state 23
-    for_loop                       shift and go to state 24
-    assignment_expression          shift and go to state 25
-    binop                          shift and go to state 26
-    declaration                    shift and go to state 29
-    typeid                         shift and go to state 32
-    term                           shift and go to state 33
-    assignment_expression_semi     shift and go to state 34
-    function_declaration           shift and go to state 35
-    expr                           shift and go to state 37
-    identifier                     shift and go to state 41
+    compound                       shift and go to state 11
+    binop_paren                    shift and go to state 12
+    binop_expression               shift and go to state 13
+    native_type                    shift and go to state 17
+    array_reference                shift and go to state 16
+    type                           shift and go to state 24
+    for_loop                       shift and go to state 25
+    assignment_expression          shift and go to state 26
+    binop                          shift and go to state 27
+    declaration                    shift and go to state 30
+    typeid                         shift and go to state 33
+    term                           shift and go to state 34
+    assignment_expression_semi     shift and go to state 35
+    function_declaration           shift and go to state 36
+    expr                           shift and go to state 38
+    identifier                     shift and go to state 43
 
-state 74
+state 76
 
     (11) beginning_list -> empty .
 
@@ -2350,6 +2506,8 @@ state 74
     LBRACE          reduce using rule 11 (beginning_list -> empty .)
     FOR             reduce using rule 11 (beginning_list -> empty .)
     VOID            reduce using rule 11 (beginning_list -> empty .)
+    SIZE_T          reduce using rule 11 (beginning_list -> empty .)
+    UNKNOWN         reduce using rule 11 (beginning_list -> empty .)
     CHAR            reduce using rule 11 (beginning_list -> empty .)
     SHORT           reduce using rule 11 (beginning_list -> empty .)
     INT             reduce using rule 11 (beginning_list -> empty .)
@@ -2367,10 +2525,11 @@ state 74
     LPAREN          reduce using rule 11 (beginning_list -> empty .)
 
 
-state 75
+state 77
 
     (36) binop_expression -> term .
 
+    SEMI            reduce using rule 36 (binop_expression -> term .)
     TIMES           reduce using rule 36 (binop_expression -> term .)
     DIVIDE          reduce using rule 36 (binop_expression -> term .)
     PLUS            reduce using rule 36 (binop_expression -> term .)
@@ -2388,10 +2547,13 @@ state 75
     GE              reduce using rule 36 (binop_expression -> term .)
     EQ              reduce using rule 36 (binop_expression -> term .)
     NE              reduce using rule 36 (binop_expression -> term .)
+    RPAREN          reduce using rule 36 (binop_expression -> term .)
     COMMENT         reduce using rule 36 (binop_expression -> term .)
     LBRACE          reduce using rule 36 (binop_expression -> term .)
     FOR             reduce using rule 36 (binop_expression -> term .)
     VOID            reduce using rule 36 (binop_expression -> term .)
+    SIZE_T          reduce using rule 36 (binop_expression -> term .)
+    UNKNOWN         reduce using rule 36 (binop_expression -> term .)
     CHAR            reduce using rule 36 (binop_expression -> term .)
     SHORT           reduce using rule 36 (binop_expression -> term .)
     INT             reduce using rule 36 (binop_expression -> term .)
@@ -2407,18 +2569,16 @@ state 75
     STRING_LITERAL  reduce using rule 36 (binop_expression -> term .)
     LPAREN          reduce using rule 36 (binop_expression -> term .)
     $end            reduce using rule 36 (binop_expression -> term .)
-    RPAREN          reduce using rule 36 (binop_expression -> term .)
-    SEMI            reduce using rule 36 (binop_expression -> term .)
     RBRACE          reduce using rule 36 (binop_expression -> term .)
     RBRACKET        reduce using rule 36 (binop_expression -> term .)
 
 
-state 76
+state 78
 
     (34) binop_paren -> LPAREN binop_expression . RPAREN
     (35) binop_paren -> binop_expression .
 
-    RPAREN          shift and go to state 96
+    RPAREN          shift and go to state 98
     TIMES           reduce using rule 35 (binop_paren -> binop_expression .)
     DIVIDE          reduce using rule 35 (binop_paren -> binop_expression .)
     PLUS            reduce using rule 35 (binop_paren -> binop_expression .)
@@ -2438,15 +2598,16 @@ state 76
     NE              reduce using rule 35 (binop_paren -> binop_expression .)
 
 
-state 77
+state 79
 
     (70) declaration -> typeid SEMI .
 
-    RBRACE          reduce using rule 70 (declaration -> typeid SEMI .)
     COMMENT         reduce using rule 70 (declaration -> typeid SEMI .)
     LBRACE          reduce using rule 70 (declaration -> typeid SEMI .)
     FOR             reduce using rule 70 (declaration -> typeid SEMI .)
     VOID            reduce using rule 70 (declaration -> typeid SEMI .)
+    SIZE_T          reduce using rule 70 (declaration -> typeid SEMI .)
+    UNKNOWN         reduce using rule 70 (declaration -> typeid SEMI .)
     CHAR            reduce using rule 70 (declaration -> typeid SEMI .)
     SHORT           reduce using rule 70 (declaration -> typeid SEMI .)
     INT             reduce using rule 70 (declaration -> typeid SEMI .)
@@ -2463,9 +2624,10 @@ state 77
     STRING_LITERAL  reduce using rule 70 (declaration -> typeid SEMI .)
     LPAREN          reduce using rule 70 (declaration -> typeid SEMI .)
     $end            reduce using rule 70 (declaration -> typeid SEMI .)
+    RBRACE          reduce using rule 70 (declaration -> typeid SEMI .)
 
 
-state 78
+state 80
 
     (21) assignment_expression -> typeid assignment_operator . expr
     (41) expr -> . unary_expression
@@ -2482,7 +2644,7 @@ state 78
     (37) binop_expression -> . binop_paren TIMES binop_paren
     (38) binop_expression -> . binop_paren DIVIDE binop_paren
     (39) binop_expression -> . binop_paren binary_token binop_paren
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (25) constant -> . INT_CONST
     (26) constant -> . FLOAT_CONST
     (27) constant -> . STRING_LITERAL
@@ -2490,104 +2652,86 @@ state 78
     (34) binop_paren -> . LPAREN binop_expression RPAREN
     (35) binop_paren -> . binop_expression
 
-    MINUS           shift and go to state 17
-    LOGNOT          shift and go to state 14
-    ID              shift and go to state 30
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
-    LPAREN          shift and go to state 28
+    MINUS           shift and go to state 18
+    LOGNOT          shift and go to state 15
+    ID              shift and go to state 31
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
+    LPAREN          shift and go to state 29
 
-    term                           shift and go to state 33
+    term                           shift and go to state 34
     constant                       shift and go to state 7
     unary_expression               shift and go to state 8
-    binop                          shift and go to state 26
-    expr                           shift and go to state 97
-    binop_paren                    shift and go to state 11
-    array_reference                shift and go to state 44
-    binop_expression               shift and go to state 12
-    identifier                     shift and go to state 45
+    binop                          shift and go to state 27
+    expr                           shift and go to state 99
+    binop_paren                    shift and go to state 12
+    array_reference                shift and go to state 46
+    binop_expression               shift and go to state 13
+    identifier                     shift and go to state 47
     unary_token_before             shift and go to state 5
 
-state 79
+state 81
 
     (16) arglist -> LPAREN . arg_params RPAREN
     (13) arg_params -> . typeid COMMA arg_params
     (14) arg_params -> . typeid
     (15) arg_params -> . empty
     (71) typeid -> . type identifier
-    (84) empty -> .
-    (81) type -> . native_type
-    (82) type -> . native_type TIMES
+    (86) empty -> .
+    (83) type -> . native_type
+    (84) type -> . native_type TIMES
     (72) native_type -> . VOID
-    (73) native_type -> . CHAR
-    (74) native_type -> . SHORT
-    (75) native_type -> . INT
-    (76) native_type -> . LONG
-    (77) native_type -> . FLOAT
-    (78) native_type -> . DOUBLE
-    (79) native_type -> . SIGNED
-    (80) native_type -> . UNSIGNED
+    (73) native_type -> . SIZE_T
+    (74) native_type -> . UNKNOWN
+    (75) native_type -> . CHAR
+    (76) native_type -> . SHORT
+    (77) native_type -> . INT
+    (78) native_type -> . LONG
+    (79) native_type -> . FLOAT
+    (80) native_type -> . DOUBLE
+    (81) native_type -> . SIGNED
+    (82) native_type -> . UNSIGNED
 
-    RPAREN          reduce using rule 84 (empty -> .)
-    VOID            shift and go to state 9
-    CHAR            shift and go to state 13
+    RPAREN          reduce using rule 86 (empty -> .)
+    VOID            shift and go to state 10
+    SIZE_T          shift and go to state 42
+    UNKNOWN         shift and go to state 9
+    CHAR            shift and go to state 14
     SHORT           shift and go to state 6
-    INT             shift and go to state 36
-    LONG            shift and go to state 22
-    FLOAT           shift and go to state 38
-    DOUBLE          shift and go to state 40
-    SIGNED          shift and go to state 39
-    UNSIGNED        shift and go to state 21
+    INT             shift and go to state 37
+    LONG            shift and go to state 23
+    FLOAT           shift and go to state 39
+    DOUBLE          shift and go to state 41
+    SIGNED          shift and go to state 40
+    UNSIGNED        shift and go to state 22
 
-    typeid                         shift and go to state 98
-    native_type                    shift and go to state 16
-    type                           shift and go to state 91
-    empty                          shift and go to state 99
-    arg_params                     shift and go to state 100
+    typeid                         shift and go to state 100
+    native_type                    shift and go to state 17
+    type                           shift and go to state 93
+    empty                          shift and go to state 101
+    arg_params                     shift and go to state 102
 
-state 80
+state 82
 
     (68) function_declaration -> typeid arglist . SEMI
     (69) function_declaration -> typeid arglist . compound
     (67) compound -> . LBRACE beginning_list RBRACE
 
-    SEMI            shift and go to state 101
-    LBRACE          shift and go to state 27
+    SEMI            shift and go to state 103
+    LBRACE          shift and go to state 28
 
-    compound                       shift and go to state 102
+    compound                       shift and go to state 104
 
-state 81
+state 83
 
     (62) array_reference -> identifier subscript_list .
 
-    EQUALS          reduce using rule 62 (array_reference -> identifier subscript_list .)
-    PLUSEQUALS      reduce using rule 62 (array_reference -> identifier subscript_list .)
-    MINUSEQUALS     reduce using rule 62 (array_reference -> identifier subscript_list .)
-    TIMESEQUALS     reduce using rule 62 (array_reference -> identifier subscript_list .)
-    COMMENT         reduce using rule 62 (array_reference -> identifier subscript_list .)
-    LBRACE          reduce using rule 62 (array_reference -> identifier subscript_list .)
-    FOR             reduce using rule 62 (array_reference -> identifier subscript_list .)
-    VOID            reduce using rule 62 (array_reference -> identifier subscript_list .)
-    CHAR            reduce using rule 62 (array_reference -> identifier subscript_list .)
-    SHORT           reduce using rule 62 (array_reference -> identifier subscript_list .)
-    INT             reduce using rule 62 (array_reference -> identifier subscript_list .)
-    LONG            reduce using rule 62 (array_reference -> identifier subscript_list .)
-    FLOAT           reduce using rule 62 (array_reference -> identifier subscript_list .)
-    DOUBLE          reduce using rule 62 (array_reference -> identifier subscript_list .)
-    SIGNED          reduce using rule 62 (array_reference -> identifier subscript_list .)
-    UNSIGNED        reduce using rule 62 (array_reference -> identifier subscript_list .)
-    ID              reduce using rule 62 (array_reference -> identifier subscript_list .)
-    MINUS           reduce using rule 62 (array_reference -> identifier subscript_list .)
-    LOGNOT          reduce using rule 62 (array_reference -> identifier subscript_list .)
-    INT_CONST       reduce using rule 62 (array_reference -> identifier subscript_list .)
-    FLOAT_CONST     reduce using rule 62 (array_reference -> identifier subscript_list .)
-    STRING_LITERAL  reduce using rule 62 (array_reference -> identifier subscript_list .)
-    LPAREN          reduce using rule 62 (array_reference -> identifier subscript_list .)
-    $end            reduce using rule 62 (array_reference -> identifier subscript_list .)
+    SEMI            reduce using rule 62 (array_reference -> identifier subscript_list .)
     TIMES           reduce using rule 62 (array_reference -> identifier subscript_list .)
     DIVIDE          reduce using rule 62 (array_reference -> identifier subscript_list .)
     PLUS            reduce using rule 62 (array_reference -> identifier subscript_list .)
+    MINUS           reduce using rule 62 (array_reference -> identifier subscript_list .)
     MOD             reduce using rule 62 (array_reference -> identifier subscript_list .)
     OR              reduce using rule 62 (array_reference -> identifier subscript_list .)
     AND             reduce using rule 62 (array_reference -> identifier subscript_list .)
@@ -2601,15 +2745,39 @@ state 81
     GE              reduce using rule 62 (array_reference -> identifier subscript_list .)
     EQ              reduce using rule 62 (array_reference -> identifier subscript_list .)
     NE              reduce using rule 62 (array_reference -> identifier subscript_list .)
+    EQUALS          reduce using rule 62 (array_reference -> identifier subscript_list .)
+    PLUSEQUALS      reduce using rule 62 (array_reference -> identifier subscript_list .)
+    MINUSEQUALS     reduce using rule 62 (array_reference -> identifier subscript_list .)
+    TIMESEQUALS     reduce using rule 62 (array_reference -> identifier subscript_list .)
+    COMMENT         reduce using rule 62 (array_reference -> identifier subscript_list .)
+    LBRACE          reduce using rule 62 (array_reference -> identifier subscript_list .)
+    FOR             reduce using rule 62 (array_reference -> identifier subscript_list .)
+    VOID            reduce using rule 62 (array_reference -> identifier subscript_list .)
+    SIZE_T          reduce using rule 62 (array_reference -> identifier subscript_list .)
+    UNKNOWN         reduce using rule 62 (array_reference -> identifier subscript_list .)
+    CHAR            reduce using rule 62 (array_reference -> identifier subscript_list .)
+    SHORT           reduce using rule 62 (array_reference -> identifier subscript_list .)
+    INT             reduce using rule 62 (array_reference -> identifier subscript_list .)
+    LONG            reduce using rule 62 (array_reference -> identifier subscript_list .)
+    FLOAT           reduce using rule 62 (array_reference -> identifier subscript_list .)
+    DOUBLE          reduce using rule 62 (array_reference -> identifier subscript_list .)
+    SIGNED          reduce using rule 62 (array_reference -> identifier subscript_list .)
+    UNSIGNED        reduce using rule 62 (array_reference -> identifier subscript_list .)
+    ID              reduce using rule 62 (array_reference -> identifier subscript_list .)
+    LOGNOT          reduce using rule 62 (array_reference -> identifier subscript_list .)
+    INT_CONST       reduce using rule 62 (array_reference -> identifier subscript_list .)
+    FLOAT_CONST     reduce using rule 62 (array_reference -> identifier subscript_list .)
+    STRING_LITERAL  reduce using rule 62 (array_reference -> identifier subscript_list .)
+    LPAREN          reduce using rule 62 (array_reference -> identifier subscript_list .)
+    $end            reduce using rule 62 (array_reference -> identifier subscript_list .)
     RPAREN          reduce using rule 62 (array_reference -> identifier subscript_list .)
-    SEMI            reduce using rule 62 (array_reference -> identifier subscript_list .)
     RBRACE          reduce using rule 62 (array_reference -> identifier subscript_list .)
     RBRACKET        reduce using rule 62 (array_reference -> identifier subscript_list .)
     PLUSPLUS        reduce using rule 62 (array_reference -> identifier subscript_list .)
     MINUSMINUS      reduce using rule 62 (array_reference -> identifier subscript_list .)
 
 
-state 82
+state 84
 
     (59) subscript -> LBRACKET . expr RBRACKET
     (41) expr -> . unary_expression
@@ -2626,7 +2794,7 @@ state 82
     (37) binop_expression -> . binop_paren TIMES binop_paren
     (38) binop_expression -> . binop_paren DIVIDE binop_paren
     (39) binop_expression -> . binop_paren binary_token binop_paren
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (25) constant -> . INT_CONST
     (26) constant -> . FLOAT_CONST
     (27) constant -> . STRING_LITERAL
@@ -2634,26 +2802,26 @@ state 82
     (34) binop_paren -> . LPAREN binop_expression RPAREN
     (35) binop_paren -> . binop_expression
 
-    MINUS           shift and go to state 17
-    LOGNOT          shift and go to state 14
-    ID              shift and go to state 30
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
-    LPAREN          shift and go to state 28
+    MINUS           shift and go to state 18
+    LOGNOT          shift and go to state 15
+    ID              shift and go to state 31
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
+    LPAREN          shift and go to state 29
 
     unary_token_before             shift and go to state 5
-    term                           shift and go to state 33
+    term                           shift and go to state 34
     constant                       shift and go to state 7
     unary_expression               shift and go to state 8
-    binop                          shift and go to state 26
-    expr                           shift and go to state 103
-    binop_paren                    shift and go to state 11
-    array_reference                shift and go to state 44
-    binop_expression               shift and go to state 12
-    identifier                     shift and go to state 45
+    binop                          shift and go to state 27
+    expr                           shift and go to state 105
+    binop_paren                    shift and go to state 12
+    array_reference                shift and go to state 46
+    binop_expression               shift and go to state 13
+    identifier                     shift and go to state 47
 
-state 83
+state 85
 
     (22) assignment_expression -> identifier assignment_operator . expr
     (41) expr -> . unary_expression
@@ -2670,7 +2838,7 @@ state 83
     (37) binop_expression -> . binop_paren TIMES binop_paren
     (38) binop_expression -> . binop_paren DIVIDE binop_paren
     (39) binop_expression -> . binop_paren binary_token binop_paren
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (25) constant -> . INT_CONST
     (26) constant -> . FLOAT_CONST
     (27) constant -> . STRING_LITERAL
@@ -2678,26 +2846,26 @@ state 83
     (34) binop_paren -> . LPAREN binop_expression RPAREN
     (35) binop_paren -> . binop_expression
 
-    MINUS           shift and go to state 17
-    LOGNOT          shift and go to state 14
-    ID              shift and go to state 30
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
-    LPAREN          shift and go to state 28
+    MINUS           shift and go to state 18
+    LOGNOT          shift and go to state 15
+    ID              shift and go to state 31
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
+    LPAREN          shift and go to state 29
 
     unary_token_before             shift and go to state 5
-    term                           shift and go to state 33
+    term                           shift and go to state 34
     constant                       shift and go to state 7
     unary_expression               shift and go to state 8
-    binop                          shift and go to state 26
-    expr                           shift and go to state 104
-    binop_paren                    shift and go to state 11
-    array_reference                shift and go to state 44
-    binop_expression               shift and go to state 12
-    identifier                     shift and go to state 45
+    binop                          shift and go to state 27
+    expr                           shift and go to state 106
+    binop_paren                    shift and go to state 12
+    array_reference                shift and go to state 46
+    binop_expression               shift and go to state 13
+    identifier                     shift and go to state 47
 
-state 84
+state 86
 
     (60) subscript_list -> subscript .
     (61) subscript_list -> subscript . subscript_list
@@ -2705,10 +2873,16 @@ state 84
     (61) subscript_list -> . subscript subscript_list
     (59) subscript -> . LBRACKET expr RBRACKET
 
+    EQUALS          reduce using rule 60 (subscript_list -> subscript .)
+    PLUSEQUALS      reduce using rule 60 (subscript_list -> subscript .)
+    MINUSEQUALS     reduce using rule 60 (subscript_list -> subscript .)
+    TIMESEQUALS     reduce using rule 60 (subscript_list -> subscript .)
     COMMENT         reduce using rule 60 (subscript_list -> subscript .)
     LBRACE          reduce using rule 60 (subscript_list -> subscript .)
     FOR             reduce using rule 60 (subscript_list -> subscript .)
     VOID            reduce using rule 60 (subscript_list -> subscript .)
+    SIZE_T          reduce using rule 60 (subscript_list -> subscript .)
+    UNKNOWN         reduce using rule 60 (subscript_list -> subscript .)
     CHAR            reduce using rule 60 (subscript_list -> subscript .)
     SHORT           reduce using rule 60 (subscript_list -> subscript .)
     INT             reduce using rule 60 (subscript_list -> subscript .)
@@ -2725,10 +2899,6 @@ state 84
     STRING_LITERAL  reduce using rule 60 (subscript_list -> subscript .)
     LPAREN          reduce using rule 60 (subscript_list -> subscript .)
     $end            reduce using rule 60 (subscript_list -> subscript .)
-    SEMI            reduce using rule 60 (subscript_list -> subscript .)
-    RBRACE          reduce using rule 60 (subscript_list -> subscript .)
-    RBRACKET        reduce using rule 60 (subscript_list -> subscript .)
-    RPAREN          reduce using rule 60 (subscript_list -> subscript .)
     TIMES           reduce using rule 60 (subscript_list -> subscript .)
     DIVIDE          reduce using rule 60 (subscript_list -> subscript .)
     PLUS            reduce using rule 60 (subscript_list -> subscript .)
@@ -2745,18 +2915,18 @@ state 84
     GE              reduce using rule 60 (subscript_list -> subscript .)
     EQ              reduce using rule 60 (subscript_list -> subscript .)
     NE              reduce using rule 60 (subscript_list -> subscript .)
+    RBRACE          reduce using rule 60 (subscript_list -> subscript .)
+    SEMI            reduce using rule 60 (subscript_list -> subscript .)
+    RBRACKET        reduce using rule 60 (subscript_list -> subscript .)
+    RPAREN          reduce using rule 60 (subscript_list -> subscript .)
     PLUSPLUS        reduce using rule 60 (subscript_list -> subscript .)
     MINUSMINUS      reduce using rule 60 (subscript_list -> subscript .)
-    EQUALS          reduce using rule 60 (subscript_list -> subscript .)
-    PLUSEQUALS      reduce using rule 60 (subscript_list -> subscript .)
-    MINUSEQUALS     reduce using rule 60 (subscript_list -> subscript .)
-    TIMESEQUALS     reduce using rule 60 (subscript_list -> subscript .)
-    LBRACKET        shift and go to state 82
+    LBRACKET        shift and go to state 84
 
-    subscript                      shift and go to state 84
-    subscript_list                 shift and go to state 105
+    subscript                      shift and go to state 86
+    subscript_list                 shift and go to state 107
 
-state 85
+state 87
 
     (38) binop_expression -> binop_paren DIVIDE binop_paren .
     (37) binop_expression -> binop_paren . TIMES binop_paren
@@ -2778,6 +2948,7 @@ state 85
     (57) binary_token -> . EQ
     (58) binary_token -> . NE
 
+    RBRACKET        reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     TIMES           reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     DIVIDE          reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     PLUS            reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
@@ -2795,10 +2966,14 @@ state 85
     GE              reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     EQ              reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     NE              reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
+    SEMI            reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
+    RBRACE          reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     COMMENT         reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     LBRACE          reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     FOR             reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     VOID            reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
+    SIZE_T          reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
+    UNKNOWN         reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     CHAR            reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     SHORT           reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     INT             reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
@@ -2813,33 +2988,30 @@ state 85
     FLOAT_CONST     reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     STRING_LITERAL  reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     LPAREN          reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
-    $end            reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
     RPAREN          reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
-    SEMI            reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
-    RBRACE          reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
-    RBRACKET        reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
+    $end            reduce using rule 38 (binop_expression -> binop_paren DIVIDE binop_paren .)
 
-  ! TIMES           [ shift and go to state 54 ]
-  ! DIVIDE          [ shift and go to state 50 ]
-  ! PLUS            [ shift and go to state 57 ]
-  ! MINUS           [ shift and go to state 61 ]
-  ! MOD             [ shift and go to state 59 ]
-  ! OR              [ shift and go to state 47 ]
-  ! AND             [ shift and go to state 46 ]
-  ! LSHIFT          [ shift and go to state 58 ]
-  ! RSHIFT          [ shift and go to state 49 ]
-  ! LOGOR           [ shift and go to state 51 ]
-  ! LOGAND          [ shift and go to state 52 ]
-  ! LT              [ shift and go to state 55 ]
-  ! GT              [ shift and go to state 48 ]
-  ! LE              [ shift and go to state 56 ]
-  ! GE              [ shift and go to state 53 ]
-  ! EQ              [ shift and go to state 60 ]
-  ! NE              [ shift and go to state 62 ]
+  ! TIMES           [ shift and go to state 56 ]
+  ! DIVIDE          [ shift and go to state 52 ]
+  ! PLUS            [ shift and go to state 59 ]
+  ! MINUS           [ shift and go to state 63 ]
+  ! MOD             [ shift and go to state 61 ]
+  ! OR              [ shift and go to state 49 ]
+  ! AND             [ shift and go to state 48 ]
+  ! LSHIFT          [ shift and go to state 60 ]
+  ! RSHIFT          [ shift and go to state 51 ]
+  ! LOGOR           [ shift and go to state 53 ]
+  ! LOGAND          [ shift and go to state 54 ]
+  ! LT              [ shift and go to state 57 ]
+  ! GT              [ shift and go to state 50 ]
+  ! LE              [ shift and go to state 58 ]
+  ! GE              [ shift and go to state 55 ]
+  ! EQ              [ shift and go to state 62 ]
+  ! NE              [ shift and go to state 64 ]
 
-    binary_token                   shift and go to state 63
+    binary_token                   shift and go to state 65
 
-state 86
+state 88
 
     (35) binop_paren -> binop_expression .
 
@@ -2864,6 +3036,8 @@ state 86
     LBRACE          reduce using rule 35 (binop_paren -> binop_expression .)
     FOR             reduce using rule 35 (binop_paren -> binop_expression .)
     VOID            reduce using rule 35 (binop_paren -> binop_expression .)
+    SIZE_T          reduce using rule 35 (binop_paren -> binop_expression .)
+    UNKNOWN         reduce using rule 35 (binop_paren -> binop_expression .)
     CHAR            reduce using rule 35 (binop_paren -> binop_expression .)
     SHORT           reduce using rule 35 (binop_paren -> binop_expression .)
     INT             reduce using rule 35 (binop_paren -> binop_expression .)
@@ -2885,7 +3059,7 @@ state 86
     RBRACKET        reduce using rule 35 (binop_paren -> binop_expression .)
 
 
-state 87
+state 89
 
     (37) binop_expression -> binop_paren TIMES binop_paren .
     (37) binop_expression -> binop_paren . TIMES binop_paren
@@ -2907,6 +3081,7 @@ state 87
     (57) binary_token -> . EQ
     (58) binary_token -> . NE
 
+    RBRACKET        reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     TIMES           reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     DIVIDE          reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     PLUS            reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
@@ -2924,10 +3099,14 @@ state 87
     GE              reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     EQ              reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     NE              reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
+    SEMI            reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
+    RBRACE          reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     COMMENT         reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     LBRACE          reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     FOR             reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     VOID            reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
+    SIZE_T          reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
+    UNKNOWN         reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     CHAR            reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     SHORT           reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     INT             reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
@@ -2942,33 +3121,30 @@ state 87
     FLOAT_CONST     reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     STRING_LITERAL  reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     LPAREN          reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
-    $end            reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
     RPAREN          reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
-    SEMI            reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
-    RBRACE          reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
-    RBRACKET        reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
+    $end            reduce using rule 37 (binop_expression -> binop_paren TIMES binop_paren .)
 
-  ! TIMES           [ shift and go to state 54 ]
-  ! DIVIDE          [ shift and go to state 50 ]
-  ! PLUS            [ shift and go to state 57 ]
-  ! MINUS           [ shift and go to state 61 ]
-  ! MOD             [ shift and go to state 59 ]
-  ! OR              [ shift and go to state 47 ]
-  ! AND             [ shift and go to state 46 ]
-  ! LSHIFT          [ shift and go to state 58 ]
-  ! RSHIFT          [ shift and go to state 49 ]
-  ! LOGOR           [ shift and go to state 51 ]
-  ! LOGAND          [ shift and go to state 52 ]
-  ! LT              [ shift and go to state 55 ]
-  ! GT              [ shift and go to state 48 ]
-  ! LE              [ shift and go to state 56 ]
-  ! GE              [ shift and go to state 53 ]
-  ! EQ              [ shift and go to state 60 ]
-  ! NE              [ shift and go to state 62 ]
+  ! TIMES           [ shift and go to state 56 ]
+  ! DIVIDE          [ shift and go to state 52 ]
+  ! PLUS            [ shift and go to state 59 ]
+  ! MINUS           [ shift and go to state 63 ]
+  ! MOD             [ shift and go to state 61 ]
+  ! OR              [ shift and go to state 49 ]
+  ! AND             [ shift and go to state 48 ]
+  ! LSHIFT          [ shift and go to state 60 ]
+  ! RSHIFT          [ shift and go to state 51 ]
+  ! LOGOR           [ shift and go to state 53 ]
+  ! LOGAND          [ shift and go to state 54 ]
+  ! LT              [ shift and go to state 57 ]
+  ! GT              [ shift and go to state 50 ]
+  ! LE              [ shift and go to state 58 ]
+  ! GE              [ shift and go to state 55 ]
+  ! EQ              [ shift and go to state 62 ]
+  ! NE              [ shift and go to state 64 ]
 
-    binary_token                   shift and go to state 63
+    binary_token                   shift and go to state 65
 
-state 88
+state 90
 
     (39) binop_expression -> binop_paren binary_token binop_paren .
     (37) binop_expression -> binop_paren . TIMES binop_paren
@@ -3007,10 +3183,15 @@ state 88
   ! shift/reduce conflict for GE resolved as shift
   ! shift/reduce conflict for EQ resolved as shift
   ! shift/reduce conflict for NE resolved as shift
+    RBRACKET        reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
+    SEMI            reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
+    RBRACE          reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
     COMMENT         reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
     LBRACE          reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
     FOR             reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
     VOID            reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
+    SIZE_T          reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
+    UNKNOWN         reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
     CHAR            reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
     SHORT           reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
     INT             reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
@@ -3025,28 +3206,25 @@ state 88
     FLOAT_CONST     reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
     STRING_LITERAL  reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
     LPAREN          reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
-    $end            reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
     RPAREN          reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
-    SEMI            reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
-    RBRACE          reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
-    RBRACKET        reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
-    TIMES           shift and go to state 54
-    DIVIDE          shift and go to state 50
-    PLUS            shift and go to state 57
-    MINUS           shift and go to state 61
-    MOD             shift and go to state 59
-    OR              shift and go to state 47
-    AND             shift and go to state 46
-    LSHIFT          shift and go to state 58
-    RSHIFT          shift and go to state 49
-    LOGOR           shift and go to state 51
-    LOGAND          shift and go to state 52
-    LT              shift and go to state 55
-    GT              shift and go to state 48
-    LE              shift and go to state 56
-    GE              shift and go to state 53
-    EQ              shift and go to state 60
-    NE              shift and go to state 62
+    $end            reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .)
+    TIMES           shift and go to state 56
+    DIVIDE          shift and go to state 52
+    PLUS            shift and go to state 59
+    MINUS           shift and go to state 63
+    MOD             shift and go to state 61
+    OR              shift and go to state 49
+    AND             shift and go to state 48
+    LSHIFT          shift and go to state 60
+    RSHIFT          shift and go to state 51
+    LOGOR           shift and go to state 53
+    LOGAND          shift and go to state 54
+    LT              shift and go to state 57
+    GT              shift and go to state 50
+    LE              shift and go to state 58
+    GE              shift and go to state 55
+    EQ              shift and go to state 62
+    NE              shift and go to state 64
 
   ! TIMES           [ reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .) ]
   ! DIVIDE          [ reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .) ]
@@ -3066,16 +3244,16 @@ state 88
   ! EQ              [ reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .) ]
   ! NE              [ reduce using rule 39 (binop_expression -> binop_paren binary_token binop_paren .) ]
 
-    binary_token                   shift and go to state 63
+    binary_token                   shift and go to state 65
 
-state 89
+state 91
 
     (23) assignment_expression -> array_reference assignment_operator expr .
 
     SEMI            reduce using rule 23 (assignment_expression -> array_reference assignment_operator expr .)
 
 
-state 90
+state 92
 
     (23) assignment_expression -> array_reference . assignment_operator expr
     (17) assignment_operator -> . EQUALS
@@ -3083,30 +3261,30 @@ state 90
     (19) assignment_operator -> . MINUSEQUALS
     (20) assignment_operator -> . TIMESEQUALS
 
-    EQUALS          shift and go to state 64
-    PLUSEQUALS      shift and go to state 65
-    MINUSEQUALS     shift and go to state 67
-    TIMESEQUALS     shift and go to state 68
+    EQUALS          shift and go to state 66
+    PLUSEQUALS      shift and go to state 67
+    MINUSEQUALS     shift and go to state 69
+    TIMESEQUALS     shift and go to state 70
 
-    assignment_operator            shift and go to state 66
+    assignment_operator            shift and go to state 68
 
-state 91
+state 93
 
     (71) typeid -> type . identifier
-    (83) identifier -> . ID
+    (85) identifier -> . ID
 
-    ID              shift and go to state 30
+    ID              shift and go to state 31
 
-    identifier                     shift and go to state 71
+    identifier                     shift and go to state 73
 
-state 92
+state 94
 
     (63) for_loop -> FOR LPAREN assignment_expression . SEMI binop SEMI increment RPAREN compound
 
-    SEMI            shift and go to state 106
+    SEMI            shift and go to state 108
 
 
-state 93
+state 95
 
     (21) assignment_expression -> typeid . assignment_operator expr
     (17) assignment_operator -> . EQUALS
@@ -3114,14 +3292,14 @@ state 93
     (19) assignment_operator -> . MINUSEQUALS
     (20) assignment_operator -> . TIMESEQUALS
 
-    EQUALS          shift and go to state 64
-    PLUSEQUALS      shift and go to state 65
-    MINUSEQUALS     shift and go to state 67
-    TIMESEQUALS     shift and go to state 68
+    EQUALS          shift and go to state 66
+    PLUSEQUALS      shift and go to state 67
+    MINUSEQUALS     shift and go to state 69
+    TIMESEQUALS     shift and go to state 70
 
-    assignment_operator            shift and go to state 78
+    assignment_operator            shift and go to state 80
 
-state 94
+state 96
 
     (22) assignment_expression -> identifier . assignment_operator expr
     (62) array_reference -> identifier . subscript_list
@@ -3133,17 +3311,17 @@ state 94
     (61) subscript_list -> . subscript subscript_list
     (59) subscript -> . LBRACKET expr RBRACKET
 
-    EQUALS          shift and go to state 64
-    PLUSEQUALS      shift and go to state 65
-    MINUSEQUALS     shift and go to state 67
-    TIMESEQUALS     shift and go to state 68
-    LBRACKET        shift and go to state 82
+    EQUALS          shift and go to state 66
+    PLUSEQUALS      shift and go to state 67
+    MINUSEQUALS     shift and go to state 69
+    TIMESEQUALS     shift and go to state 70
+    LBRACKET        shift and go to state 84
 
-    subscript                      shift and go to state 84
-    subscript_list                 shift and go to state 81
-    assignment_operator            shift and go to state 83
+    subscript                      shift and go to state 86
+    subscript_list                 shift and go to state 83
+    assignment_operator            shift and go to state 85
 
-state 95
+state 97
 
     (67) compound -> LBRACE beginning_list RBRACE .
 
@@ -3151,6 +3329,8 @@ state 95
     LBRACE          reduce using rule 67 (compound -> LBRACE beginning_list RBRACE .)
     FOR             reduce using rule 67 (compound -> LBRACE beginning_list RBRACE .)
     VOID            reduce using rule 67 (compound -> LBRACE beginning_list RBRACE .)
+    SIZE_T          reduce using rule 67 (compound -> LBRACE beginning_list RBRACE .)
+    UNKNOWN         reduce using rule 67 (compound -> LBRACE beginning_list RBRACE .)
     CHAR            reduce using rule 67 (compound -> LBRACE beginning_list RBRACE .)
     SHORT           reduce using rule 67 (compound -> LBRACE beginning_list RBRACE .)
     INT             reduce using rule 67 (compound -> LBRACE beginning_list RBRACE .)
@@ -3170,7 +3350,7 @@ state 95
     RBRACE          reduce using rule 67 (compound -> LBRACE beginning_list RBRACE .)
 
 
-state 96
+state 98
 
     (34) binop_paren -> LPAREN binop_expression RPAREN .
 
@@ -3195,6 +3375,8 @@ state 96
     LBRACE          reduce using rule 34 (binop_paren -> LPAREN binop_expression RPAREN .)
     FOR             reduce using rule 34 (binop_paren -> LPAREN binop_expression RPAREN .)
     VOID            reduce using rule 34 (binop_paren -> LPAREN binop_expression RPAREN .)
+    SIZE_T          reduce using rule 34 (binop_paren -> LPAREN binop_expression RPAREN .)
+    UNKNOWN         reduce using rule 34 (binop_paren -> LPAREN binop_expression RPAREN .)
     CHAR            reduce using rule 34 (binop_paren -> LPAREN binop_expression RPAREN .)
     SHORT           reduce using rule 34 (binop_paren -> LPAREN binop_expression RPAREN .)
     INT             reduce using rule 34 (binop_paren -> LPAREN binop_expression RPAREN .)
@@ -3216,37 +3398,37 @@ state 96
     RBRACKET        reduce using rule 34 (binop_paren -> LPAREN binop_expression RPAREN .)
 
 
-state 97
+state 99
 
     (21) assignment_expression -> typeid assignment_operator expr .
 
     SEMI            reduce using rule 21 (assignment_expression -> typeid assignment_operator expr .)
 
 
-state 98
+state 100
 
     (13) arg_params -> typeid . COMMA arg_params
     (14) arg_params -> typeid .
 
-    COMMA           shift and go to state 107
+    COMMA           shift and go to state 109
     RPAREN          reduce using rule 14 (arg_params -> typeid .)
 
 
-state 99
+state 101
 
     (15) arg_params -> empty .
 
     RPAREN          reduce using rule 15 (arg_params -> empty .)
 
 
-state 100
+state 102
 
     (16) arglist -> LPAREN arg_params . RPAREN
 
-    RPAREN          shift and go to state 108
+    RPAREN          shift and go to state 110
 
 
-state 101
+state 103
 
     (68) function_declaration -> typeid arglist SEMI .
 
@@ -3255,6 +3437,8 @@ state 101
     LBRACE          reduce using rule 68 (function_declaration -> typeid arglist SEMI .)
     FOR             reduce using rule 68 (function_declaration -> typeid arglist SEMI .)
     VOID            reduce using rule 68 (function_declaration -> typeid arglist SEMI .)
+    SIZE_T          reduce using rule 68 (function_declaration -> typeid arglist SEMI .)
+    UNKNOWN         reduce using rule 68 (function_declaration -> typeid arglist SEMI .)
     CHAR            reduce using rule 68 (function_declaration -> typeid arglist SEMI .)
     SHORT           reduce using rule 68 (function_declaration -> typeid arglist SEMI .)
     INT             reduce using rule 68 (function_declaration -> typeid arglist SEMI .)
@@ -3273,7 +3457,7 @@ state 101
     $end            reduce using rule 68 (function_declaration -> typeid arglist SEMI .)
 
 
-state 102
+state 104
 
     (69) function_declaration -> typeid arglist compound .
 
@@ -3282,6 +3466,8 @@ state 102
     LBRACE          reduce using rule 69 (function_declaration -> typeid arglist compound .)
     FOR             reduce using rule 69 (function_declaration -> typeid arglist compound .)
     VOID            reduce using rule 69 (function_declaration -> typeid arglist compound .)
+    SIZE_T          reduce using rule 69 (function_declaration -> typeid arglist compound .)
+    UNKNOWN         reduce using rule 69 (function_declaration -> typeid arglist compound .)
     CHAR            reduce using rule 69 (function_declaration -> typeid arglist compound .)
     SHORT           reduce using rule 69 (function_declaration -> typeid arglist compound .)
     INT             reduce using rule 69 (function_declaration -> typeid arglist compound .)
@@ -3300,28 +3486,34 @@ state 102
     $end            reduce using rule 69 (function_declaration -> typeid arglist compound .)
 
 
-state 103
+state 105
 
     (59) subscript -> LBRACKET expr . RBRACKET
 
-    RBRACKET        shift and go to state 109
+    RBRACKET        shift and go to state 111
 
 
-state 104
+state 106
 
     (22) assignment_expression -> identifier assignment_operator expr .
 
     SEMI            reduce using rule 22 (assignment_expression -> identifier assignment_operator expr .)
 
 
-state 105
+state 107
 
     (61) subscript_list -> subscript subscript_list .
 
+    EQUALS          reduce using rule 61 (subscript_list -> subscript subscript_list .)
+    PLUSEQUALS      reduce using rule 61 (subscript_list -> subscript subscript_list .)
+    MINUSEQUALS     reduce using rule 61 (subscript_list -> subscript subscript_list .)
+    TIMESEQUALS     reduce using rule 61 (subscript_list -> subscript subscript_list .)
     COMMENT         reduce using rule 61 (subscript_list -> subscript subscript_list .)
     LBRACE          reduce using rule 61 (subscript_list -> subscript subscript_list .)
     FOR             reduce using rule 61 (subscript_list -> subscript subscript_list .)
     VOID            reduce using rule 61 (subscript_list -> subscript subscript_list .)
+    SIZE_T          reduce using rule 61 (subscript_list -> subscript subscript_list .)
+    UNKNOWN         reduce using rule 61 (subscript_list -> subscript subscript_list .)
     CHAR            reduce using rule 61 (subscript_list -> subscript subscript_list .)
     SHORT           reduce using rule 61 (subscript_list -> subscript subscript_list .)
     INT             reduce using rule 61 (subscript_list -> subscript subscript_list .)
@@ -3338,10 +3530,6 @@ state 105
     STRING_LITERAL  reduce using rule 61 (subscript_list -> subscript subscript_list .)
     LPAREN          reduce using rule 61 (subscript_list -> subscript subscript_list .)
     $end            reduce using rule 61 (subscript_list -> subscript subscript_list .)
-    SEMI            reduce using rule 61 (subscript_list -> subscript subscript_list .)
-    RBRACE          reduce using rule 61 (subscript_list -> subscript subscript_list .)
-    RBRACKET        reduce using rule 61 (subscript_list -> subscript subscript_list .)
-    RPAREN          reduce using rule 61 (subscript_list -> subscript subscript_list .)
     TIMES           reduce using rule 61 (subscript_list -> subscript subscript_list .)
     DIVIDE          reduce using rule 61 (subscript_list -> subscript subscript_list .)
     PLUS            reduce using rule 61 (subscript_list -> subscript subscript_list .)
@@ -3358,15 +3546,15 @@ state 105
     GE              reduce using rule 61 (subscript_list -> subscript subscript_list .)
     EQ              reduce using rule 61 (subscript_list -> subscript subscript_list .)
     NE              reduce using rule 61 (subscript_list -> subscript subscript_list .)
+    RBRACE          reduce using rule 61 (subscript_list -> subscript subscript_list .)
+    SEMI            reduce using rule 61 (subscript_list -> subscript subscript_list .)
+    RBRACKET        reduce using rule 61 (subscript_list -> subscript subscript_list .)
+    RPAREN          reduce using rule 61 (subscript_list -> subscript subscript_list .)
     PLUSPLUS        reduce using rule 61 (subscript_list -> subscript subscript_list .)
     MINUSMINUS      reduce using rule 61 (subscript_list -> subscript subscript_list .)
-    EQUALS          reduce using rule 61 (subscript_list -> subscript subscript_list .)
-    PLUSEQUALS      reduce using rule 61 (subscript_list -> subscript subscript_list .)
-    MINUSEQUALS     reduce using rule 61 (subscript_list -> subscript subscript_list .)
-    TIMESEQUALS     reduce using rule 61 (subscript_list -> subscript subscript_list .)
 
 
-state 106
+state 108
 
     (63) for_loop -> FOR LPAREN assignment_expression SEMI . binop SEMI increment RPAREN compound
     (40) binop -> . binop_expression
@@ -3379,64 +3567,68 @@ state 106
     (66) term -> . array_reference
     (34) binop_paren -> . LPAREN binop_expression RPAREN
     (35) binop_paren -> . binop_expression
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (25) constant -> . INT_CONST
     (26) constant -> . FLOAT_CONST
     (27) constant -> . STRING_LITERAL
     (62) array_reference -> . identifier subscript_list
 
-    LPAREN          shift and go to state 28
-    ID              shift and go to state 30
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
+    LPAREN          shift and go to state 29
+    ID              shift and go to state 31
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
 
-    term                           shift and go to state 75
+    term                           shift and go to state 77
     constant                       shift and go to state 7
-    binop                          shift and go to state 110
-    binop_paren                    shift and go to state 11
-    array_reference                shift and go to state 44
-    binop_expression               shift and go to state 12
-    identifier                     shift and go to state 45
+    binop                          shift and go to state 112
+    binop_paren                    shift and go to state 12
+    array_reference                shift and go to state 46
+    binop_expression               shift and go to state 13
+    identifier                     shift and go to state 47
 
-state 107
+state 109
 
     (13) arg_params -> typeid COMMA . arg_params
     (13) arg_params -> . typeid COMMA arg_params
     (14) arg_params -> . typeid
     (15) arg_params -> . empty
     (71) typeid -> . type identifier
-    (84) empty -> .
-    (81) type -> . native_type
-    (82) type -> . native_type TIMES
+    (86) empty -> .
+    (83) type -> . native_type
+    (84) type -> . native_type TIMES
     (72) native_type -> . VOID
-    (73) native_type -> . CHAR
-    (74) native_type -> . SHORT
-    (75) native_type -> . INT
-    (76) native_type -> . LONG
-    (77) native_type -> . FLOAT
-    (78) native_type -> . DOUBLE
-    (79) native_type -> . SIGNED
-    (80) native_type -> . UNSIGNED
+    (73) native_type -> . SIZE_T
+    (74) native_type -> . UNKNOWN
+    (75) native_type -> . CHAR
+    (76) native_type -> . SHORT
+    (77) native_type -> . INT
+    (78) native_type -> . LONG
+    (79) native_type -> . FLOAT
+    (80) native_type -> . DOUBLE
+    (81) native_type -> . SIGNED
+    (82) native_type -> . UNSIGNED
 
-    RPAREN          reduce using rule 84 (empty -> .)
-    VOID            shift and go to state 9
-    CHAR            shift and go to state 13
+    RPAREN          reduce using rule 86 (empty -> .)
+    VOID            shift and go to state 10
+    SIZE_T          shift and go to state 42
+    UNKNOWN         shift and go to state 9
+    CHAR            shift and go to state 14
     SHORT           shift and go to state 6
-    INT             shift and go to state 36
-    LONG            shift and go to state 22
-    FLOAT           shift and go to state 38
-    DOUBLE          shift and go to state 40
-    SIGNED          shift and go to state 39
-    UNSIGNED        shift and go to state 21
+    INT             shift and go to state 37
+    LONG            shift and go to state 23
+    FLOAT           shift and go to state 39
+    DOUBLE          shift and go to state 41
+    SIGNED          shift and go to state 40
+    UNSIGNED        shift and go to state 22
 
-    typeid                         shift and go to state 98
-    native_type                    shift and go to state 16
-    type                           shift and go to state 91
-    empty                          shift and go to state 99
-    arg_params                     shift and go to state 111
+    typeid                         shift and go to state 100
+    native_type                    shift and go to state 17
+    type                           shift and go to state 93
+    empty                          shift and go to state 101
+    arg_params                     shift and go to state 113
 
-state 108
+state 110
 
     (16) arglist -> LPAREN arg_params RPAREN .
 
@@ -3444,19 +3636,17 @@ state 108
     LBRACE          reduce using rule 16 (arglist -> LPAREN arg_params RPAREN .)
 
 
-state 109
+state 111
 
     (59) subscript -> LBRACKET expr RBRACKET .
 
     LBRACKET        reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
-    EQUALS          reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
-    PLUSEQUALS      reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
-    MINUSEQUALS     reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
-    TIMESEQUALS     reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     COMMENT         reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     LBRACE          reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     FOR             reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     VOID            reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
+    SIZE_T          reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
+    UNKNOWN         reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     CHAR            reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     SHORT           reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     INT             reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
@@ -3473,6 +3663,10 @@ state 109
     STRING_LITERAL  reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     LPAREN          reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     $end            reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
+    SEMI            reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
+    RBRACE          reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
+    RBRACKET        reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
+    RPAREN          reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     TIMES           reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     DIVIDE          reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     PLUS            reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
@@ -3489,108 +3683,111 @@ state 109
     GE              reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     EQ              reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     NE              reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
-    RBRACE          reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
-    SEMI            reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
-    RBRACKET        reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
-    RPAREN          reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     PLUSPLUS        reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
     MINUSMINUS      reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
+    EQUALS          reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
+    PLUSEQUALS      reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
+    MINUSEQUALS     reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
+    TIMESEQUALS     reduce using rule 59 (subscript -> LBRACKET expr RBRACKET .)
 
 
-state 110
+state 112
 
     (63) for_loop -> FOR LPAREN assignment_expression SEMI binop . SEMI increment RPAREN compound
 
-    SEMI            shift and go to state 112
+    SEMI            shift and go to state 114
 
 
-state 111
+state 113
 
     (13) arg_params -> typeid COMMA arg_params .
 
     RPAREN          reduce using rule 13 (arg_params -> typeid COMMA arg_params .)
 
 
-state 112
+state 114
 
     (63) for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI . increment RPAREN compound
     (33) increment -> . term unary_token_after
     (64) term -> . identifier
     (65) term -> . constant
     (66) term -> . array_reference
-    (83) identifier -> . ID
+    (85) identifier -> . ID
     (25) constant -> . INT_CONST
     (26) constant -> . FLOAT_CONST
     (27) constant -> . STRING_LITERAL
     (62) array_reference -> . identifier subscript_list
 
-    ID              shift and go to state 30
-    INT_CONST       shift and go to state 19
-    FLOAT_CONST     shift and go to state 42
-    STRING_LITERAL  shift and go to state 31
+    ID              shift and go to state 31
+    INT_CONST       shift and go to state 20
+    FLOAT_CONST     shift and go to state 44
+    STRING_LITERAL  shift and go to state 32
 
-    term                           shift and go to state 113
+    term                           shift and go to state 115
     constant                       shift and go to state 7
-    array_reference                shift and go to state 44
-    increment                      shift and go to state 114
-    identifier                     shift and go to state 45
+    array_reference                shift and go to state 46
+    increment                      shift and go to state 116
+    identifier                     shift and go to state 47
 
-state 113
+state 115
 
     (33) increment -> term . unary_token_after
     (30) unary_token_after -> . PLUSPLUS
     (31) unary_token_after -> . MINUSMINUS
 
-    PLUSPLUS        shift and go to state 115
-    MINUSMINUS      shift and go to state 116
+    PLUSPLUS        shift and go to state 117
+    MINUSMINUS      shift and go to state 118
 
-    unary_token_after              shift and go to state 117
+    unary_token_after              shift and go to state 119
 
-state 114
+state 116
 
     (63) for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment . RPAREN compound
 
-    RPAREN          shift and go to state 118
+    RPAREN          shift and go to state 120
 
 
-state 115
+state 117
 
     (30) unary_token_after -> PLUSPLUS .
 
     RPAREN          reduce using rule 30 (unary_token_after -> PLUSPLUS .)
 
 
-state 116
+state 118
 
     (31) unary_token_after -> MINUSMINUS .
 
     RPAREN          reduce using rule 31 (unary_token_after -> MINUSMINUS .)
 
 
-state 117
+state 119
 
     (33) increment -> term unary_token_after .
 
     RPAREN          reduce using rule 33 (increment -> term unary_token_after .)
 
 
-state 118
+state 120
 
     (63) for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN . compound
     (67) compound -> . LBRACE beginning_list RBRACE
 
-    LBRACE          shift and go to state 27
+    LBRACE          shift and go to state 28
 
-    compound                       shift and go to state 119
+    compound                       shift and go to state 121
 
-state 119
+state 121
 
     (63) for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .
 
+    RBRACE          reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
     COMMENT         reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
     LBRACE          reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
     FOR             reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
     VOID            reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
+    SIZE_T          reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
+    UNKNOWN         reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
     CHAR            reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
     SHORT           reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
     INT             reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
@@ -3607,33 +3804,32 @@ state 119
     STRING_LITERAL  reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
     LPAREN          reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
     $end            reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
-    RBRACE          reduce using rule 63 (for_loop -> FOR LPAREN assignment_expression SEMI binop SEMI increment RPAREN compound .)
 
 WARNING: 
 WARNING: Conflicts:
 WARNING: 
-WARNING: shift/reduce conflict for ID in state 23 resolved as shift
-WARNING: shift/reduce conflict for TIMES in state 88 resolved as shift
-WARNING: shift/reduce conflict for DIVIDE in state 88 resolved as shift
-WARNING: shift/reduce conflict for PLUS in state 88 resolved as shift
-WARNING: shift/reduce conflict for MINUS in state 88 resolved as shift
-WARNING: shift/reduce conflict for MOD in state 88 resolved as shift
-WARNING: shift/reduce conflict for OR in state 88 resolved as shift
-WARNING: shift/reduce conflict for AND in state 88 resolved as shift
-WARNING: shift/reduce conflict for LSHIFT in state 88 resolved as shift
-WARNING: shift/reduce conflict for RSHIFT in state 88 resolved as shift
-WARNING: shift/reduce conflict for LOGOR in state 88 resolved as shift
-WARNING: shift/reduce conflict for LOGAND in state 88 resolved as shift
-WARNING: shift/reduce conflict for LT in state 88 resolved as shift
-WARNING: shift/reduce conflict for GT in state 88 resolved as shift
-WARNING: shift/reduce conflict for LE in state 88 resolved as shift
-WARNING: shift/reduce conflict for GE in state 88 resolved as shift
-WARNING: shift/reduce conflict for EQ in state 88 resolved as shift
-WARNING: shift/reduce conflict for NE in state 88 resolved as shift
+WARNING: shift/reduce conflict for ID in state 24 resolved as shift
+WARNING: shift/reduce conflict for TIMES in state 90 resolved as shift
+WARNING: shift/reduce conflict for DIVIDE in state 90 resolved as shift
+WARNING: shift/reduce conflict for PLUS in state 90 resolved as shift
+WARNING: shift/reduce conflict for MINUS in state 90 resolved as shift
+WARNING: shift/reduce conflict for MOD in state 90 resolved as shift
+WARNING: shift/reduce conflict for OR in state 90 resolved as shift
+WARNING: shift/reduce conflict for AND in state 90 resolved as shift
+WARNING: shift/reduce conflict for LSHIFT in state 90 resolved as shift
+WARNING: shift/reduce conflict for RSHIFT in state 90 resolved as shift
+WARNING: shift/reduce conflict for LOGOR in state 90 resolved as shift
+WARNING: shift/reduce conflict for LOGAND in state 90 resolved as shift
+WARNING: shift/reduce conflict for LT in state 90 resolved as shift
+WARNING: shift/reduce conflict for GT in state 90 resolved as shift
+WARNING: shift/reduce conflict for LE in state 90 resolved as shift
+WARNING: shift/reduce conflict for GE in state 90 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 90 resolved as shift
+WARNING: shift/reduce conflict for NE in state 90 resolved as shift
 WARNING: reduce/reduce conflict in state 2 resolved using rule (first -> empty)
 WARNING: rejected rule (beginning_list -> empty) in state 2
-WARNING: reduce/reduce conflict in state 12 resolved using rule (binop_paren -> binop_expression)
-WARNING: rejected rule (binop -> binop_expression) in state 12
-WARNING: reduce/reduce conflict in state 33 resolved using rule (binop_expression -> term)
-WARNING: rejected rule (expr -> term) in state 33
+WARNING: reduce/reduce conflict in state 13 resolved using rule (binop_paren -> binop_expression)
+WARNING: rejected rule (binop -> binop_expression) in state 13
+WARNING: reduce/reduce conflict in state 34 resolved using rule (binop_expression -> term)
+WARNING: rejected rule (expr -> term) in state 34
 WARNING: Rule (expr -> term) is never reduced

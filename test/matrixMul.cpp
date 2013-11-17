@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include "../src/ctemp.cpp"
 
 using namespace std;
 
@@ -64,7 +65,16 @@ int main(int argc, char** argv)
   randMat(B_mat,B_size);
   randMat(C_mat,C_size);
 
+#if 0
   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
+#else
+  matmulfunc4(
+	 A_mat, wA, hA,
+	 B_mat, wB, hB,
+	 C_mat, wC, hC,
+	 hA, wB, wA);  
+#endif
+
   printMat(C_mat,C_size);
 
   free(A_mat);

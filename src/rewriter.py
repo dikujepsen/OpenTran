@@ -1,7 +1,6 @@
 import os
 from lan_ast import *
 
-globalindices = list()
 
 class Rewriter(NodeVisitor):
     """ Rewrites a few things in the AST to increase the
@@ -19,7 +18,6 @@ class Rewriter(NodeVisitor):
         loopIndices = LoopIndices()
         loopIndices.visit(forLoopAst)
         self.index = loopIndices.index
-        globalindices = loopIndices.index
         loopIndices.end.reverse()
         print loopIndices.end
         ## subs = Subscripts()
@@ -33,7 +31,9 @@ class Rewriter(NodeVisitor):
         norm.visit(forLoopAst)
         arrays = Arrays(self.index)
         arrays.visit(ast)
-        print arrays.indices
+        print "36 " , arrays.numIndices
+        print "37 " , arrays.ids
+        print "38 " , arrays.indexIds
 
         typeIds = TypeIds()
         typeIds.visit(ast)
@@ -44,11 +44,11 @@ class Rewriter(NodeVisitor):
         print ids.ids
         otherIds = ids.ids - arrays.ids - typeIds.ids
         print otherIds
-        typeid = TypeId(['int'], Id(functionname),ast.coord)
+        typeid = TypeId(['void'], Id(functionname),ast.coord)
         arraysArg = list()
         for arrayid in arrays.ids:
             arraysArg.append(TypeId(['unknown','*'], Id(arrayid,ast.coord),ast.coord))
-            for iarg in xrange(arrays.indices[arrayid]):
+            for iarg in xrange(arrays.numIndices[arrayid]):
                 arraysArg.append(TypeId(['size_t'], Id('hst_ptr'+arrayid+'_dim'+str(iarg+1),ast.coord),ast.coord))
                 
         for arrayid in otherIds:
@@ -59,11 +59,205 @@ class Rewriter(NodeVisitor):
         ## ast.ext.insert(0,FuncDecl(typeid,arglist,compound,ast.coord))
         ast.ext = list()
         ast.ext.append(FuncDecl(typeid,arglist,compound,ast.coord))
+
+
+        
+    def rewriteToSequentialC(self, ast): 
+        loops = ForLoops()
+        loops.visit(ast)
+        forLoopAst = loops.ast
+        loopIndices = LoopIndices()
+        loopIndices.visit(forLoopAst)
+        self.index = loopIndices.index
+
+        arrays2 = Arrays(self.index)
+        arrays2.visit(ast)
+        print "36 " , arrays2.numIndices
+        print "37 " , arrays2.ids
+        print "38 " , arrays2.indexIds
+        findDim = FindDim(arrays2.numIndices)
+        findDim.visit(ast)
+        print "75 " , findDim.dimNames
+        rewriteArrayRef = RewriteArrayRef(findDim.dimNames)
+        rewriteArrayRef.visit(ast)
+
+
+    def rewriteToDeviceC(self, ast):
+        perfectForLoop = PerfectForLoop()
+        perfectForLoop.visit(ast)
+        ## print perfectForLoop.depth
+        ## print perfectForLoop.ast
+        initIds = InitIds()
+        initIds.visit(perfectForLoop.ast.init)
+        gridIds = list()
+        idMap = dict()
+        idMap[initIds.index[0]] = 'get_global_id(0)'
+        gridIds.extend(initIds.index)
+        kernel = perfectForLoop.ast.compound
+        if perfectForLoop.depth == 2:
+            initIds = InitIds()
+            initIds.visit(kernel.statements[0].init)
+            kernel = kernel.statements[0].compound
+            idMap[initIds.index[0]] = 'get_global_id(1)'
+            gridIds.extend(initIds.index)
+            (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
+        print "idmap " , idMap
+        ## print kernel
+        arrays = Arrays([])
+        arrays.visit(kernel)
+        typeIds = TypeIds()
+        typeIds.visit(kernel)
+        ## print arrays.ids
+        ## print typeIds.ids
+        ids = Ids()
+        ids.visit(kernel)
+        ## print ids.ids
+        otherIds = ids.ids  - typeIds.ids - set(gridIds)
+        print otherIds
+        findDeviceArgs = FindDeviceArgs(otherIds)
+        findDeviceArgs.visit(ast)
+        print findDeviceArgs.arglist
+        findFunction = FindFunction()
+        findFunction.visit(ast)
+        print findFunction.typeid
+        exchangeIndices = ExchangeIndices(idMap)
+        exchangeIndices.visit(kernel)
+        
+        newast =  FuncDecl(findFunction.typeid, ArgList(findDeviceArgs.arglist,ast.coord), kernel, ast.coord)
+        ast.ext = list()
+        ast.ext.append(newast)
+
+class ExchangeIndices(NodeVisitor):
+    """ Exchanges the indices that we parallelize with the threadids """
+    def __init__(self, idMap):
+        self.idMap = idMap
+
+    def visit_ArrayRef(self, node):
+        for n in node.subscript:
+            self.visit(n)
+        
+    def visit_Id(self, node):
+        if node.name in self.idMap:
+            print self.idMap[node.name]
+            node.name = self.idMap[node.name]
         
 
 
+class FindFunction(NodeVisitor):
+    """ Finds the typeid of the kernel function """
+    def __init__(self):
+        self.typeid = None
+        
+    def visit_FuncDecl(self, node):
+        self.visit_TypeId(node.typeid)
+
+    def visit_TypeId(self, node):
+        self.typeid = node
+
+        
+class FindDeviceArgs(NodeVisitor):
+    """ Finds the argument that we transfer from the C code
+    to the device. 
+    """
+    def __init__(self, argIds):
+        self.argIds = argIds
+        self.arglist = list()
+    
+    def visit_ArgList(self, node):
+        for typeid in node.arglist:
+            
+            if typeid.name.name in self.argIds:
+                self.argIds.remove(typeid.name.name)
+                ## if len(typeid.type) == 2:
+                ##     if typeid.type[1] == '*':
+                ##         typeid.name.name = 'dev_ptr'+typeid.name.name
+                self.arglist.append(typeid)
+            
+
+class PerfectForLoop(NodeVisitor):
+    """ Performs simple checks to decide if we have 1D or 2D
+    parallelism, i.e. if we have a perfect loops nest of size one
+    or two. 
+    """
+    def __init__(self):
+        self.depth = 0
+        self.ast = None
+
+    def visit_FuncDecl(self, node):
+        funcstats = node.compound.statements
+        if len(funcstats) == 1: # 
+            if isinstance(funcstats[0], ForLoop):
+                self.ast = funcstats[0]
+                self.depth += 1
+                loopstats = funcstats[0].compound.statements
+                if len(loopstats) == 1:
+                    if isinstance(loopstats[0], ForLoop):
+                        self.depth += 1
+
+
+        ## stats = node.compound.statements
+        ## if len(stats) == 1:
+        ##     if isinstance(stats[0], ForLoop):
+                
+
+
+class RewriteArrayRef(NodeVisitor):
+    """ Rewrites the arrays references of form A[i][j] to
+    A[i * JDIMSIZE + j]
+    """
+    def __init__(self, arrayDims):
+        self.arrayDims = arrayDims
+    
+    def visit_ArrayRef(self, node):
+        if len(self.arrayDims[node.name.name]) == 2:
+            leftbinop = BinOp(node.subscript[0],'*', \
+            # Id on first dimension
+            self.arrayDims[node.name.name][0], node.coord)
+            topbinop = BinOp(leftbinop,'+', \
+            node.subscript[1], node.coord)
+            print topbinop
+            node.subscript = [topbinop]
+
+class FindDim(NodeVisitor):
+    """ Finds the size of the dimNum dimension.
+    """
+    def __init__(self, arrayIds):
+        self.arrayIds = arrayIds
+        self.dimNames = dict()
+    
+    def visit_ArgList(self, node):
+        for arrayname in self.arrayIds:
+            findSpecificArrayId = FindSpecificArrayId(arrayname)
+            count = 0
+            for typeid in node.arglist:            
+                findSpecificArrayId.reset(arrayname)
+                findSpecificArrayId.visit(typeid)
+                if findSpecificArrayId.Found:
+                    self.dimNames[arrayname] = list()
+                    for n in xrange(self.arrayIds[arrayname]):
+                        self.dimNames[arrayname].append(
+                        node.arglist[count + 1 + n].name)
+                count += 1
+
+
+class FindSpecificArrayId(NodeVisitor):
+    """ Finds a specific arrayId
+    """
+    def __init__(self, arrayId):
+        self.arrayId = arrayId
+        self.Found = False
+    
+    def visit_TypeId(self, node):
+        if node.name.name == self.arrayId:
+            self.Found = True
+
+    def reset(self, arrayId):
+        self.Found = False
+        self.arrayId = arrayId
+
 class InitIds(NodeVisitor):
-    """ Finds Id's
+    """ Finds Id's in an for loop initialization.
+    More generally: Finds all Ids and adds them to a list.    
     """
     def __init__(self):
         self.index = list()
@@ -72,22 +266,11 @@ class InitIds(NodeVisitor):
         self.index.append(node.name)
 
 class Ids(NodeVisitor):
-    """ Finds all Ids """
+    """ Finds all unique Ids """
     def __init__(self):
         self.ids = set()
     def visit_Id(self, node):
         self.ids.add(node.name)
-
-
-class Ends(NodeVisitor):
-    """ Finds Id's
-    """
-    def __init__(self):
-        self.index = list()
-    
-    def visit_Id(self, node):
-        self.index.append(node.name)
-
 
 class LoopIndices(NodeVisitor):
     """ Finds loop indices
@@ -144,31 +327,22 @@ class NumIndices(NodeVisitor):
         self.firstFound = False
 
     
-class Subscripts(NodeVisitor):
-    """ Finds loop indices
-    """
-    def __init__(self):
-        self.subscript = dict()
-        self.count = 0
-    def visit_ArrayRef(self, node):
-        if len(node.subscript) == 1:
-            self.subscript[self.count] = node
-            self.count += 1
-
 class Arrays(NodeVisitor):
     """ Finds array Ids """
     def __init__(self, loopindices):
         self.ids = set()
-        self.indices = dict()
+        self.numIndices = dict()
+        self.indexIds = dict()
         self.loopindices = loopindices
     def visit_ArrayRef(self, node):
         name = node.name.name
         self.ids.add(name)
-        numIndices = NumIndices(99, self.loopindices)
+        numIndcs = NumIndices(99, self.loopindices)
         for s in node.subscript:
-            numIndices.visit(s)
-        if name not in self.indices:
-            self.indices[name] = numIndices.num
+            numIndcs.visit(s)
+        if name not in self.numIndices:
+            self.numIndices[name] = numIndcs.num
+            self.indexIds[name] = numIndcs.found
 
 class TypeIds(NodeVisitor):
     """ Finds type Ids """

@@ -2,7 +2,7 @@ from lan_lex import *
 from lan_ast import *
 from rewriter import *
 from os.path import basename
-
+import copy
 precedence = (
     ('left','PLUS','MINUS'),
     ('left','TIMES','DIVIDE'),
@@ -29,8 +29,6 @@ def p_beginning_list(p):
                         | beginning_list for_loop
                         | empty
     """
-    ## if len(p) == 3:
-    ##     print p[1], len(p), p[2]
     tmp1 =  [] if p[1] is None else p[1]
     if len(p) == 3:
         tmp2 = p[2] if isinstance(p[2], list) else [p[2]] 
@@ -218,6 +216,8 @@ def p_typeid(p):
     
 def p_native_type(p):
     """native_type : VOID
+    | SIZE_T
+    | UNKNOWN
     | CHAR
     | SHORT
     | INT
@@ -282,16 +282,37 @@ if __name__ == "__main__":
             tok = lex.token()
             if not tok: break
             print tok
-        run = 0
+        
         ast = cparser.parse(s)
         print ast
         ## print slist
-        ast.show()
+        #ast.show()
         cprint = CGenerator()
-        printres = cprint.visit(ast)
-        print printres
+        ## printres = cprint.visit(ast)
+        ## print printres
         rw = Rewriter()
         rw.rewrite(ast, funcname)
-        cprint.createTemp(ast)
-        print rw.index
+        ## ast.show()
+        ## cprint.createTemp(ast)
+
+        run = 0
+        filename = '../src/temp.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            print s
+        except EOFError:
+            break
+ 
+        ast = cparser.parse(s)
+        ast.show()
+        tempast = copy.deepcopy(ast)
+        rw.rewriteToSequentialC(ast)
+        
+        #oldast.show()
+        cprint.createTemp(ast, filename = 'ctemp.cpp')
+        rw.rewriteToDeviceC(tempast)
+        cprint.createTemp(tempast, filename = 'devtemp.cpp')
 

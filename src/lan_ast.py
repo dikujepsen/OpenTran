@@ -206,7 +206,7 @@ class ArgList(Node):
         nodelist = []
         count = 0
         for i in self.arglist:
-            nodelist.append(("arg[%r]" % count, i))
+            nodelist.append(("arglist[%r]" % count, i))
             count += 1
         return tuple(nodelist)
     attr_names = ()

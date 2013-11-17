@@ -7,8 +7,8 @@ from ply.lex import TOKEN
 ##
 keywords = (
     # Types
-    'CHAR', 'DOUBLE', 'FLOAT', 'INT', 'LONG',
-    'SHORT', 'SIGNED', 'UNSIGNED', 'VOID',
+    'CHAR', 'DOUBLE', 'FLOAT', 'INT', 'LONG', 'UNKNOWN',
+    'SHORT', 'SIGNED', 'UNSIGNED', 'VOID', 'SIZE_T',
     # Control flow
     'DO',  'WHILE', 'IF', 'ELSE', 'FOR', 'RETURN',
     
