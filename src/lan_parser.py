@@ -309,10 +309,17 @@ if __name__ == "__main__":
         ast = cparser.parse(s)
         ast.show()
         tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
         rw.rewriteToSequentialC(ast)
         
         #oldast.show()
         cprint.createTemp(ast, filename = 'ctemp.cpp')
-        rw.rewriteToDeviceC(tempast)
+
+
+        
+        rw.rewriteToDeviceC(tempast, False)
         cprint.createTemp(tempast, filename = 'devtemp.cpp')
+
+        rw.rewriteToDeviceC(tempast2, True)
+        cprint.createTemp(tempast2, filename = 'cdevtemp.cpp')
 

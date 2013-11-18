@@ -82,7 +82,8 @@ class Rewriter(NodeVisitor):
         rewriteArrayRef.visit(ast)
 
 
-    def rewriteToDeviceC(self, ast):
+    def rewriteToDeviceC(self, ast, release):
+
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
         ## print perfectForLoop.depth
@@ -102,6 +103,10 @@ class Rewriter(NodeVisitor):
             gridIds.extend(initIds.index)
             (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
         print "idmap " , idMap
+
+        if release:
+            self.rewriteToSequentialC(ast)
+
         ## print kernel
         arrays = Arrays([])
         arrays.visit(kernel)
@@ -120,12 +125,21 @@ class Rewriter(NodeVisitor):
         findFunction = FindFunction()
         findFunction.visit(ast)
         print findFunction.typeid
+
+        # add OpenCL keywords to indicate the kernel function.
+        findFunction.typeid.type.insert(0, '__kernel')
+        
         exchangeIndices = ExchangeIndices(idMap)
         exchangeIndices.visit(kernel)
-        
+
+
+
         newast =  FuncDecl(findFunction.typeid, ArgList(findDeviceArgs.arglist,ast.coord), kernel, ast.coord)
         ast.ext = list()
         ast.ext.append(newast)
+
+
+        
 
 class ExchangeIndices(NodeVisitor):
     """ Exchanges the indices that we parallelize with the threadids """
@@ -138,7 +152,7 @@ class ExchangeIndices(NodeVisitor):
         
     def visit_Id(self, node):
         if node.name in self.idMap:
-            print self.idMap[node.name]
+            ## print self.idMap[node.name]
             node.name = self.idMap[node.name]
         
 
@@ -168,9 +182,9 @@ class FindDeviceArgs(NodeVisitor):
             
             if typeid.name.name in self.argIds:
                 self.argIds.remove(typeid.name.name)
-                ## if len(typeid.type) == 2:
-                ##     if typeid.type[1] == '*':
-                ##         typeid.name.name = 'dev_ptr'+typeid.name.name
+                if len(typeid.type) == 2:
+                    if typeid.type[1] == '*':
+                        typeid.type.insert(0,'__global')
                 self.arglist.append(typeid)
             
 
@@ -215,7 +229,7 @@ class RewriteArrayRef(NodeVisitor):
             self.arrayDims[node.name.name][0], node.coord)
             topbinop = BinOp(leftbinop,'+', \
             node.subscript[1], node.coord)
-            print topbinop
+            ## print topbinop
             node.subscript = [topbinop]
 
 class FindDim(NodeVisitor):
