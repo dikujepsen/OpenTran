@@ -262,10 +262,12 @@ class Rewriter(NodeVisitor):
         fileAST.ext.append(listDevBuffers)
 
         listHostPtrs = []
+        listTypeHostPtrs = dict()       
         for n in findDeviceArgs.arglist:
             name = n.name.name
             type = n.type[-2:]
-            prefix = 'hst_ptr' if len(type) == 2 else ''                
+            prefix = 'hst_ptr' if len(type) == 2 else ''
+            listTypeHostPtrs[name] = type
             listHostPtrs.append(TypeId(type, Id(prefix + name), 0))
 
         listHostPtrs = GroupCompound(listHostPtrs)
@@ -278,7 +280,9 @@ class Rewriter(NodeVisitor):
         for n in arrays2.numSubscripts:
             prefix = 'hst_ptr'
             suffix = '_mem_size'
-            listMemSize.append(TypeId(['size_t'], Id(prefix + n + suffix)))
+            sizeName = prefix + n + suffix
+            listMemSize.append(TypeId(['size_t'], Id(sizeName)))
+            listMemSizeCalcTemp.append(sizeName)
             for i in xrange(arrays2.numSubscripts[n]):
                 suffix = '_dim' + str(i+1)
                 dimName = prefix + n + suffix
@@ -286,6 +290,7 @@ class Rewriter(NodeVisitor):
                 TypeId(['size_t'], Id(dimName)))
                 listMemSizeCalcTemp.append(dimName)
 
+            
             listMemSizeCalc[n] = listMemSizeCalcTemp
             listMemSizeCalcTemp = []
                 
@@ -296,11 +301,15 @@ class Rewriter(NodeVisitor):
         allocateBuffer = EmptyFuncDecl('AllocateBuffers')
         fileAST.ext.append(allocateBuffer)
 
+        print listMemSizeCalc
+
         listSetMemSize = []
-
-
+        for n in listMemSizeCalc:
+            lval = Id(n[0])
+            op = '='
+            
         
-        fileAST.show()
+        ## fileAST.show()
 
 
 
