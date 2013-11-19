@@ -36,6 +36,7 @@ size_t dev_ptrC_dim2 = 0;
 size_t isFirstTime = 1;
 
 void AllocateBuffers() {
+
   hst_ptrA_mem_size = hst_ptrA_dim1 * hst_ptrA_dim2 * sizeof(float);
   hst_ptrB_mem_size = hst_ptrB_dim1 * hst_ptrB_dim2 * sizeof(float);
   hst_ptrC_mem_size = hst_ptrC_dim1 * hst_ptrC_dim2 * sizeof(float);

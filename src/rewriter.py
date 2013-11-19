@@ -273,29 +273,33 @@ class Rewriter(NodeVisitor):
 
         listMemSize = []
         listDimSize = []
+        listMemSizeCalcTemp = []
+        listMemSizeCalc = dict()
         for n in arrays2.numSubscripts:
             prefix = 'hst_ptr'
             suffix = '_mem_size'
             listMemSize.append(TypeId(['size_t'], Id(prefix + n + suffix)))
             for i in xrange(arrays2.numSubscripts[n]):
                 suffix = '_dim' + str(i+1)
+                dimName = prefix + n + suffix
                 listDimSize.append(\
-                TypeId(['size_t'], Id(prefix + n + suffix)))
-                
+                TypeId(['size_t'], Id(dimName)))
+                listMemSizeCalcTemp.append(dimName)
 
+            listMemSizeCalc[n] = listMemSizeCalcTemp
+            listMemSizeCalcTemp = []
+                
         fileAST.ext.append(GroupCompound(listMemSize))
         fileAST.ext.append(GroupCompound(listDimSize))
         fileAST.ext.append(TypeId(['size_t'], Id('isFirstTime')))
 
-        allocateBufferTypeId = TypeId(['void'], Id('AllocateBuffers'))
-        allocateBufferArgList = ArgList([])
-        allocateBufferCompound = Compound([])
-        allocateBuffer = FuncDecl(allocateBufferTypeId,\
-                                  allocateBufferArgList,\
-                                  allocateBufferCompound)
-
+        allocateBuffer = EmptyFuncDecl('AllocateBuffers')
         fileAST.ext.append(allocateBuffer)
 
+        listSetMemSize = []
+
+
+        
         fileAST.show()
 
 
@@ -576,3 +580,4 @@ def EmptyFuncDecl(name, type = ['void']):
                               allocateBufferArgList,\
                               allocateBufferCompound)
 
+    return allocateBuffer
