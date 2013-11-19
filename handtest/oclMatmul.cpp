@@ -35,51 +35,7 @@ size_t dev_ptrC_dim2 = 0;
 
 size_t isFirstTime = 1;
 
-void compileKernelFromFile(int id,
-			   std::string kernel_name,
-			   const char *filename,
-			   cl_kernel* kernel,
-			   const char* options) {
-
-  cl_int err = CL_SUCCESS;
-  const char* source2 = ReadSources(filename);
-  cout << source2 << endl;
-  cl_program program = clCreateProgramWithSource(context, 1, (const char **)&source2,NULL, &err);
-  oclCheckErr(err, "clCreateProgramWithSource");
-  char buildOptions[256];
-  int ierr = snprintf(buildOptions, sizeof(buildOptions),
-		      "-cl-finite-math-only  -cl-fast-relaxed-math %s",options);
-  
-  if (ierr < 0) {
-    printf("Error in Build Options");
-    exit(-1);
-  }
-  err = clBuildProgram(program, 0, NULL, buildOptions, NULL, NULL);
-  if (err != CL_SUCCESS)
-    {
-      std::cout << "OCL Error: OpenCL Build Error. Error Code: " << err << std::endl;
-
-      size_t len;
-      char buffer[10000];
-
-      // get the build log
-      clGetProgramBuildInfo(program, device_ids[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
-
-      std::cout << "--- Build Log ---" << std::endl << buffer << std::endl;
-    }
-  oclCheckErr(err, "clBuildProgram");
-
-
-  kernel[id] = clCreateKernel(program, kernel_name.c_str(), &err);
-  oclCheckErr(err, "clCreateKernel");
-
-  err |= clReleaseProgram(program);
-  oclCheckErr(err, "clReleaseProgram");
-  free((void *)source2);
-} 
-
 void AllocateBuffers() {
-
   hst_ptrA_mem_size = hst_ptrA_dim1 * hst_ptrA_dim2 * sizeof(float);
   hst_ptrB_mem_size = hst_ptrB_dim1 * hst_ptrB_dim2 * sizeof(float);
   hst_ptrC_mem_size = hst_ptrC_dim1 * hst_ptrC_dim2 * sizeof(float);

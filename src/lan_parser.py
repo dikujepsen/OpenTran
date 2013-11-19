@@ -272,7 +272,7 @@ if __name__ == "__main__":
             f = open(filename, 'r')
             s = f.read()
             f.close()
-            print s
+            ## print s
         except EOFError:
             break
 
@@ -281,18 +281,18 @@ if __name__ == "__main__":
         while 1:
             tok = lex.token()
             if not tok: break
-            print tok
+            ## print tok
         
         ast = cparser.parse(s)
-        print ast
+        ## print ast
         ## print slist
         #ast.show()
         cprint = CGenerator()
         ## printres = cprint.visit(ast)
         ## print printres
         rw = Rewriter()
-        rw.rewrite(ast, funcname)
-        ## ast.show()
+        ## rw.rewrite(ast, funcname)
+        ## ## ast.show()
         ## cprint.createTemp(ast)
 
         run = 0
@@ -307,19 +307,18 @@ if __name__ == "__main__":
             break
  
         ast = cparser.parse(s)
-        ast.show()
-        tempast = copy.deepcopy(ast)
-        tempast2 = copy.deepcopy(ast)
-        rw.rewriteToSequentialC(ast)
+        ## ## ast.show()
+        ## tempast = copy.deepcopy(ast)
+        ## tempast2 = copy.deepcopy(ast)
+        ## ## rw.rewriteToSequentialC(ast)
+        ## ## cprint.createTemp(ast, filename = 'ctemp.cpp')
+
+        ## rw.rewriteToDeviceCTemp(tempast)
+        ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
+
+        ## ## rw.rewriteToDeviceCRelease(tempast2)
+        ## ## cprint.createTemp(tempast2, filename = 'cdevtemp.cpp')
+
+        rw.generateBoilerplateCode(ast)
         
-        #oldast.show()
-        cprint.createTemp(ast, filename = 'ctemp.cpp')
-
-
-        
-        rw.rewriteToDeviceC(tempast, False)
-        cprint.createTemp(tempast, filename = 'devtemp.cpp')
-
-        rw.rewriteToDeviceC(tempast2, True)
-        cprint.createTemp(tempast2, filename = 'cdevtemp.cpp')
 

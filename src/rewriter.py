@@ -81,8 +81,57 @@ class Rewriter(NodeVisitor):
         rewriteArrayRef = RewriteArrayRef(findDim.dimNames)
         rewriteArrayRef.visit(ast)
 
+    def rewriteToDeviceCTemp(self, ast):
 
-    def rewriteToDeviceC(self, ast, release):
+        perfectForLoop = PerfectForLoop()
+        perfectForLoop.visit(ast)
+        ## print perfectForLoop.depth
+        ## print perfectForLoop.ast
+        initIds = InitIds()
+        initIds.visit(perfectForLoop.ast.init)
+        gridIds = list()
+        idMap = dict()
+        idMap[initIds.index[0]] = 'get_global_id(0)'
+        gridIds.extend(initIds.index)
+        kernel = perfectForLoop.ast.compound
+        if perfectForLoop.depth == 2:
+            initIds = InitIds()
+            initIds.visit(kernel.statements[0].init)
+            kernel = kernel.statements[0].compound
+            idMap[initIds.index[0]] = 'get_global_id(1)'
+            gridIds.extend(initIds.index)
+            (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
+        ## print "idmap " , idMap
+
+        ## print kernel
+        arrays = Arrays([])
+        arrays.visit(kernel)
+        typeIds = TypeIds()
+        typeIds.visit(kernel)
+        ## print arrays.ids
+        ## print typeIds.ids
+        ids = Ids()
+        ids.visit(kernel)
+        ## print ids.ids
+        otherIds = ids.ids  - typeIds.ids - set(gridIds)
+        ## print otherIds
+        findDeviceArgs = FindDeviceArgs(otherIds)
+        findDeviceArgs.visit(ast)
+        ## print findDeviceArgs.arglist
+        findFunction = FindFunction()
+        findFunction.visit(ast)
+        ## print findFunction.typeid
+
+        # add OpenCL keywords to indicate the kernel function.
+        findFunction.typeid.type.insert(0, '__kernel')
+        
+        exchangeIndices = ExchangeIndices(idMap)
+        exchangeIndices.visit(kernel)
+        newast =  FuncDecl(findFunction.typeid, ArgList(findDeviceArgs.arglist,ast.coord), kernel, ast.coord)
+        ast.ext = list()
+        ast.ext.append(newast)
+
+    def rewriteToDeviceCRelease(self, ast):
 
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
@@ -104,8 +153,7 @@ class Rewriter(NodeVisitor):
             (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
         print "idmap " , idMap
 
-        if release:
-            self.rewriteToSequentialC(ast)
+        self.rewriteToSequentialC(ast)
 
         ## print kernel
         arrays = Arrays([])
@@ -132,14 +180,125 @@ class Rewriter(NodeVisitor):
         exchangeIndices = ExchangeIndices(idMap)
         exchangeIndices.visit(kernel)
 
-
-
         newast =  FuncDecl(findFunction.typeid, ArgList(findDeviceArgs.arglist,ast.coord), kernel, ast.coord)
         ast.ext = list()
         ast.ext.append(newast)
 
 
-        
+    def generateBoilerplateCode(self, ast):
+
+        loops = ForLoops()
+        loops.visit(ast)
+        forLoopAst = loops.ast
+        loopIndices = LoopIndices()
+        loopIndices.visit(forLoopAst)
+        self.index = loopIndices.index
+
+        arrays2 = Arrays(self.index)
+        arrays2.visit(ast)
+        print "36 " , arrays2.numIndices
+        print "36s " , arrays2.numSubscripts
+        print "37 " , arrays2.ids
+        print "38 " , arrays2.indexIds
+        findDim = FindDim(arrays2.numIndices)
+        findDim.visit(ast)
+        print "75 " , findDim.dimNames
+
+
+        perfectForLoop = PerfectForLoop()
+        perfectForLoop.visit(ast)
+        ## print perfectForLoop.depth
+        ## print perfectForLoop.ast
+        initIds = InitIds()
+        initIds.visit(perfectForLoop.ast.init)
+        gridIds = list()
+        idMap = dict()
+        idMap[initIds.index[0]] = 'get_global_id(0)'
+        gridIds.extend(initIds.index)
+        kernel = perfectForLoop.ast.compound
+        if perfectForLoop.depth == 2:
+            initIds = InitIds()
+            initIds.visit(kernel.statements[0].init)
+            kernel = kernel.statements[0].compound
+            idMap[initIds.index[0]] = 'get_global_id(1)'
+            gridIds.extend(initIds.index)
+            (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
+        print "GENidmap " , idMap
+
+        ## print kernel
+        arrays = Arrays([])
+        arrays.visit(kernel)
+        typeIds = TypeIds()
+        typeIds.visit(kernel)
+        ## print arrays.ids
+        ## print typeIds.ids
+        ids = Ids()
+        ids.visit(kernel)
+        ## print ids.ids
+        otherIds = ids.ids  - typeIds.ids - set(gridIds)
+        print otherIds
+        findDeviceArgs = FindDeviceArgs(otherIds)
+        findDeviceArgs.visit(ast)
+        print "findDeviceArgs " , findDeviceArgs.arglist
+        findFunction = FindFunction()
+        findFunction.visit(ast)
+        print findFunction.typeid
+        kernelId = findFunction.typeid.name
+        kernelId.name = kernelId.name + 'Kernel'
+        kernelTypeid = TypeId(['cl_kernel'], kernelId, 0)
+        print kernelTypeid
+
+        fileAST = FileAST([])
+        fileAST.ext.append(kernelTypeid)
+        fileAST.show()
+
+        listDevBuffers = []
+        for n in arrays2.ids:
+            listDevBuffers.append(TypeId(['cl_mem'], Id('dev_ptr' + n), 0))
+
+        listDevBuffers = GroupCompound(listDevBuffers)
+        ## print listDevBuffers
+
+        fileAST.ext.append(listDevBuffers)
+
+        listHostPtrs = []
+        for n in findDeviceArgs.arglist:
+            name = n.name.name
+            type = n.type[-2:]
+            prefix = 'hst_ptr' if len(type) == 2 else ''                
+            listHostPtrs.append(TypeId(type, Id(prefix + name), 0))
+
+        listHostPtrs = GroupCompound(listHostPtrs)
+        fileAST.ext.append(listHostPtrs)
+
+        listMemSize = []
+        listDimSize = []
+        for n in arrays2.numSubscripts:
+            prefix = 'hst_ptr'
+            suffix = '_mem_size'
+            listMemSize.append(TypeId(['size_t'], Id(prefix + n + suffix)))
+            for i in xrange(arrays2.numSubscripts[n]):
+                suffix = '_dim' + str(i+1)
+                listDimSize.append(\
+                TypeId(['size_t'], Id(prefix + n + suffix)))
+                
+
+        fileAST.ext.append(GroupCompound(listMemSize))
+        fileAST.ext.append(GroupCompound(listDimSize))
+        fileAST.ext.append(TypeId(['size_t'], Id('isFirstTime')))
+
+        allocateBufferTypeId = TypeId(['void'], Id('AllocateBuffers'))
+        allocateBufferArgList = ArgList([])
+        allocateBufferCompound = Compound([])
+        allocateBuffer = FuncDecl(allocateBufferTypeId,\
+                                  allocateBufferArgList,\
+                                  allocateBufferCompound)
+
+        fileAST.ext.append(allocateBuffer)
+
+        fileAST.show()
+
+
 
 class ExchangeIndices(NodeVisitor):
     """ Exchanges the indices that we parallelize with the threadids """
@@ -348,10 +507,12 @@ class Arrays(NodeVisitor):
         self.numIndices = dict()
         self.indexIds = dict()
         self.loopindices = loopindices
+        self.numSubscripts = dict()
     def visit_ArrayRef(self, node):
         name = node.name.name
         self.ids.add(name)
         numIndcs = NumIndices(99, self.loopindices)
+        self.numSubscripts[name] = len(node.subscript)
         for s in node.subscript:
             numIndcs.visit(s)
         if name not in self.numIndices:
@@ -406,3 +567,12 @@ class Norm(NodeVisitor):
                         node.subscript = [Id(binop.lval.lval.name,node.coord),\
                                           binop.rval]
                 
+def EmptyFuncDecl(name, type = ['void']):
+    """ Returns a FuncDecl with no arguments or body """
+    allocateBufferTypeId = TypeId(type, Id(name))
+    allocateBufferArgList = ArgList([])
+    allocateBufferCompound = Compound([])
+    allocateBuffer = FuncDecl(allocateBufferTypeId,\
+                              allocateBufferArgList,\
+                              allocateBufferCompound)
+
