@@ -302,15 +302,30 @@ class Rewriter(NodeVisitor):
         fileAST.ext.append(allocateBuffer)
 
         print listMemSizeCalc
-
+        print "Types " , listTypeHostPtrs
         listSetMemSize = []
-        for n in listMemSizeCalc:
+        for entry in listMemSizeCalc:
+            n = listMemSizeCalc[entry]
             lval = Id(n[0])
             op = '='
-            
-        
-        ## fileAST.show()
+            rval = BinOp(Id(n[1]),'*', Id('sizeof('+\
+                listTypeHostPtrs[entry][0]+')'))
+            if len(n) == 3:
+                rval = BinOp(Id(n[2]),'*', rval)
+            listSetMemSize.append(Assignment(lval,op,rval))
 
+        print "listSetMemSize " , listSetMemSize
+        allocateBuffer.compound.statements.extend([GroupCompound(listSetMemSize)])
+        #fileAST.ext.append(GroupCompound(listSetMemSize))
+
+        lval = TypeId(['cl_int'], Id('oclErrNum'))
+        op = '='
+        rval = Id('CL_SUCCESS')
+        allocateBuffer.compound.statements.extend(\
+            [GroupCompound([Assignment(lval,op,rval)])])
+        fileAST.show()
+
+        return fileAST
 
 
 class ExchangeIndices(NodeVisitor):

@@ -73,7 +73,15 @@ class CGenerator(object):
     def visit_GlobalCompound(self, n):
         s =  ''
         for stat in n.statements:
-            s += self.visit(stat) 
+           s += self.visit(stat)
+        s += '\n'
+        return s
+
+
+    def visit_GroupCompound(self, n):
+        s =  ''
+        for stat in n.statements:
+           s += self.visit(stat) + self._make_indent()
         s += '\n'
         return s
 
@@ -124,7 +132,7 @@ class CGenerator(object):
             count += 1
         if n.arglist:
             s = s[:-2]
-        if (count-1) % 3 == 0:
+        if (count-1) % 3 == 0 and count != 1:
             s = s[:-2]
         return s + ')'
 
