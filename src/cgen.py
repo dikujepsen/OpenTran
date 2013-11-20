@@ -170,5 +170,7 @@ class CGenerator(object):
         return n.name
         
     def visit_Constant(self, n):
+        if isinstance(n.value,str):
+            n.value = '\"'+n.value+'\"'
         return n.value
         

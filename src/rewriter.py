@@ -253,8 +253,11 @@ class Rewriter(NodeVisitor):
         fileAST.show()
 
         listDevBuffers = []
+        dictNToDevPtr = dict()
         for n in arrays2.ids:
-            listDevBuffers.append(TypeId(['cl_mem'], Id('dev_ptr' + n), 0))
+            name = 'dev_ptr' + n
+            dictNToDevPtr[n] = name
+            listDevBuffers.append(TypeId(['cl_mem'], Id(name), 0))
 
         listDevBuffers = GroupCompound(listDevBuffers)
         ## print listDevBuffers
@@ -262,13 +265,18 @@ class Rewriter(NodeVisitor):
         fileAST.ext.append(listDevBuffers)
 
         listHostPtrs = []
-        listTypeHostPtrs = dict()       
+        listTypeHostPtrs = dict()
+        dictNToHstPtr = dict()
         for n in findDeviceArgs.arglist:
             name = n.name.name
             type = n.type[-2:]
             prefix = 'hst_ptr' if len(type) == 2 else ''
+            
             listTypeHostPtrs[name] = type
-            listHostPtrs.append(TypeId(type, Id(prefix + name), 0))
+            ptrname = prefix + name
+            if len(type) == 2:
+                dictNToHstPtr[name] = ptrname
+            listHostPtrs.append(TypeId(type, Id(ptrname), 0))
 
         listHostPtrs = GroupCompound(listHostPtrs)
         fileAST.ext.append(listHostPtrs)
@@ -277,10 +285,12 @@ class Rewriter(NodeVisitor):
         listDimSize = []
         listMemSizeCalcTemp = []
         listMemSizeCalc = dict()
+        dictNToSize = dict()
         for n in arrays2.numSubscripts:
             prefix = 'hst_ptr'
             suffix = '_mem_size'
             sizeName = prefix + n + suffix
+            dictNToSize[n] = sizeName
             listMemSize.append(TypeId(['size_t'], Id(sizeName)))
             listMemSizeCalcTemp.append(sizeName)
             for i in xrange(arrays2.numSubscripts[n]):
@@ -318,12 +328,32 @@ class Rewriter(NodeVisitor):
         allocateBuffer.compound.statements.extend([GroupCompound(listSetMemSize)])
         #fileAST.ext.append(GroupCompound(listSetMemSize))
 
-        lval = TypeId(['cl_int'], Id('oclErrNum'))
+        ErrName = 'oclErrNum'
+        lval = TypeId(['cl_int'], Id(ErrName))
         op = '='
         rval = Id('CL_SUCCESS')
         allocateBuffer.compound.statements.extend(\
             [GroupCompound([Assignment(lval,op,rval)])])
-        fileAST.show()
+
+        print "dictNToDevPtr " , dictNToDevPtr
+        print "dictNToHstPtr " , dictNToHstPtr
+        print "dictNToSize " , dictNToSize
+        
+        for n in dictNToDevPtr:
+            lval = Id(dictNToDevPtr[n])
+            op = '='
+            arglist = ArgList([Id('context'),\
+                               Id('CL_MEM_COPY_HOST_PTR'),\
+                               Id(dictNToSize[n]),\
+                               Id(dictNToHstPtr[n]),\
+                               Id('&'+ErrName)])
+            rval = FuncDecl(Id('clCreateBuffer'), arglist, Compound([]))
+            allocateBuffer.compound.statements.append(\
+                Assignment(lval,op,rval))
+            arglist = ArgList([Id(ErrName), Constant("clCreateBuffer " + lval.name)])
+            ErrCheck = FuncDecl(Id('oclCheckErr'),arglist, Compound([]))
+            allocateBuffer.compound.statements.append(\
+                ErrCheck)
 
         return fileAST
 
