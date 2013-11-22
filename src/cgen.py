@@ -14,6 +14,7 @@ class CGenerator(object):
         #
         self.indent_level = 0
         self.inside_ArgList = False
+        self.inside_Assignment = False
         
     def createTemp(self, ast, filename = 'temp.cpp'):
         code = self.visit(ast)
@@ -81,8 +82,7 @@ class CGenerator(object):
     def visit_GroupCompound(self, n):
         s =  ''
         for stat in n.statements:
-           s += self.visit(stat) + self._make_indent()
-        s += '\n'
+           s += self.visit(stat) + '\n' + self._make_indent() 
         return s
 
     def visit_Comment(self, n):
@@ -101,21 +101,23 @@ class CGenerator(object):
         s1 = ' '.join(n.type)
         s1 += ' ' + s
         if not self.inside_ArgList:
-            s1 += ';\n'
+            s1 += ';'
         return s1
 
     def visit_Assignment(self, n):
         self.inside_ArgList = True
         lval = self.visit(n.lval)
         self.inside_ArgList = False
+        self.inside_Assignment = True
         rval = self.visit(n.rval)
-        return lval + ' ' + n.op + ' ' + rval + ';'+ '\n'
+        self.inside_Assignment = False
+        return lval + ' ' + n.op + ' ' + rval + ';'
 
     def visit_Compound(self, n):
         s = '\n' + self._make_indent() + '{\n'
         self.indent_level += 2
         for stat in n.statements:
-            s += self._make_indent() + self.visit(stat) 
+            s += self._make_indent() + self.visit(stat) + '\n'
         self.indent_level -= 2
         s += self._make_indent() + '}\n'
         return s
@@ -152,8 +154,15 @@ class CGenerator(object):
         typeid = self.visit(n.typeid) 
         arglist = self.visit(n.arglist) 
         self.inside_ArgList = False
-        compound = self.visit(n.compound) if n.compound.statements else ';'
-        self.indent_level = 0
+        if self.inside_Assignment:
+            compound = ''
+            end = ''
+        elif n.compound.statements:
+            typeid = '\n' + typeid
+            compound = self.visit(n.compound)
+        else:
+            compound = ';'
+        
         return typeid + arglist + compound
 
     def visit_ForLoop(self, n):
@@ -171,6 +180,7 @@ class CGenerator(object):
         
     def visit_Constant(self, n):
         if isinstance(n.value,str):
-            n.value = '\"'+n.value+'\"'
-        return n.value
+            return '\"'+n.value+'\"'
+        else:
+            return str(n.value)
         

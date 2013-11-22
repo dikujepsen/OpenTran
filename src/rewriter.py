@@ -196,13 +196,16 @@ class Rewriter(NodeVisitor):
 
         arrays2 = Arrays(self.index)
         arrays2.visit(ast)
+
         print "36 " , arrays2.numIndices
-        print "36s " , arrays2.numSubscripts
+        dictNToNumScripts = arrays2.numSubscripts
+        print "dictNToNumScripts " , dictNToNumScripts
         print "37 " , arrays2.ids
         print "38 " , arrays2.indexIds
         findDim = FindDim(arrays2.numIndices)
         findDim.visit(ast)
-        print "75 " , findDim.dimNames
+        dictNToDimNames = findDim.dimNames
+        print "dictNToDimNames " , dictNToDimNames
 
 
         perfectForLoop = PerfectForLoop()
@@ -236,21 +239,23 @@ class Rewriter(NodeVisitor):
         ids.visit(kernel)
         ## print ids.ids
         otherIds = ids.ids  - typeIds.ids - set(gridIds)
-        print otherIds
+        NonArrayIds = otherIds - set(dictNToNumScripts.keys())
+        
         findDeviceArgs = FindDeviceArgs(otherIds)
         findDeviceArgs.visit(ast)
         print "findDeviceArgs " , findDeviceArgs.arglist
         findFunction = FindFunction()
         findFunction.visit(ast)
-        print findFunction.typeid
+        ## print findFunction.typeid
         kernelId = findFunction.typeid.name
-        kernelId.name = kernelId.name + 'Kernel'
+        kernelName = kernelId.name
+        kernelId.name = kernelName + 'Kernel'
         kernelTypeid = TypeId(['cl_kernel'], kernelId, 0)
-        print kernelTypeid
+        ## print kernelTypeid
 
         fileAST = FileAST([])
         fileAST.ext.append(kernelTypeid)
-        fileAST.show()
+        ## fileAST.show()
 
         listDevBuffers = []
         dictNToDevPtr = dict()
@@ -265,14 +270,14 @@ class Rewriter(NodeVisitor):
         fileAST.ext.append(listDevBuffers)
 
         listHostPtrs = []
-        listTypeHostPtrs = dict()
+        dictTypeHostPtrs = dict()
         dictNToHstPtr = dict()
         for n in findDeviceArgs.arglist:
             name = n.name.name
             type = n.type[-2:]
             prefix = 'hst_ptr' if len(type) == 2 else ''
             
-            listTypeHostPtrs[name] = type
+            dictTypeHostPtrs[name] = type
             ptrname = prefix + name
             if len(type) == 2:
                 dictNToHstPtr[name] = ptrname
@@ -312,19 +317,19 @@ class Rewriter(NodeVisitor):
         fileAST.ext.append(allocateBuffer)
 
         print listMemSizeCalc
-        print "Types " , listTypeHostPtrs
+        print "Types " , dictTypeHostPtrs
         listSetMemSize = []
         for entry in listMemSizeCalc:
             n = listMemSizeCalc[entry]
             lval = Id(n[0])
             op = '='
             rval = BinOp(Id(n[1]),'*', Id('sizeof('+\
-                listTypeHostPtrs[entry][0]+')'))
+                dictTypeHostPtrs[entry][0]+')'))
             if len(n) == 3:
                 rval = BinOp(Id(n[2]),'*', rval)
             listSetMemSize.append(Assignment(lval,op,rval))
 
-        print "listSetMemSize " , listSetMemSize
+        ## print "listSetMemSize " , listSetMemSize
         allocateBuffer.compound.statements.extend([GroupCompound(listSetMemSize)])
         #fileAST.ext.append(GroupCompound(listSetMemSize))
 
@@ -332,12 +337,17 @@ class Rewriter(NodeVisitor):
         lval = TypeId(['cl_int'], Id(ErrName))
         op = '='
         rval = Id('CL_SUCCESS')
+        clSuc = Assignment(lval,op,rval)
         allocateBuffer.compound.statements.extend(\
-            [GroupCompound([Assignment(lval,op,rval)])])
+            [GroupCompound([clSuc])])
 
+        print "otherIds " , otherIds
+        print "Non-array Ids ", NonArrayIds
         print "dictNToDevPtr " , dictNToDevPtr
         print "dictNToHstPtr " , dictNToHstPtr
         print "dictNToSize " , dictNToSize
+        print "dictNToNumScripts " , dictNToNumScripts
+        print "dictNToDimNames " , dictNToDimNames
         
         for n in dictNToDevPtr:
             lval = Id(dictNToDevPtr[n])
@@ -352,8 +362,64 @@ class Rewriter(NodeVisitor):
                 Assignment(lval,op,rval))
             arglist = ArgList([Id(ErrName), Constant("clCreateBuffer " + lval.name)])
             ErrCheck = FuncDecl(Id('oclCheckErr'),arglist, Compound([]))
-            allocateBuffer.compound.statements.append(\
-                ErrCheck)
+            allocateBuffer.compound.statements.append(ErrCheck)
+        print "kernelName " , kernelName
+
+        setArgumentsKernel = EmptyFuncDecl('SetArguments'+kernelName)
+        fileAST.ext.append(setArgumentsKernel)
+        ArgBody = setArgumentsKernel.compound.statements
+        ArgBody.append(clSuc)
+        cntName = Id('counter')
+        lval = TypeId(['int'], cntName)
+        op = '='
+        rval = Constant(0)
+        ArgBody.append(Assignment(lval,op,rval))
+        ## add dim arguments
+        for n in dictNToDimNames:
+            NonArrayIds.add(dictNToDimNames[n][0])
+            # base type for size arguments
+            dictTypeHostPtrs[dictNToDimNames[n][0].name] = ['unsigned']
+        print "Types " , dictTypeHostPtrs
+
+        ## clSetKernelArg for Arrays
+        for n in dictTypeHostPtrs:
+            lval = Id(ErrName)
+            op = '|='
+            type = dictTypeHostPtrs[n]
+            if len(type) == 2:
+                arglist = ArgList([kernelId,\
+                                   Increment(cntName,'++'),\
+                                   Id('sizeof(cl_mem)'),\
+                                   Id('(void *) &' + dictNToDevPtr[n])])
+                rval = FuncDecl(Id('clSetKernelArg'),arglist, Compound([]))
+                ArgBody.append(Assignment(lval,op,rval))
+            else:
+                type = type[0]
+                if type == 'size_t' or type == 'unsigned':
+                    cl_type = 'cl_uint'
+                arglist = ArgList([kernelId,\
+                                   Increment(cntName,'++'),\
+                                   Id('sizeof('+cl_type+')'),\
+                                   Id('(void *) &' + n)])
+                rval = FuncDecl(Id('clSetKernelArg'),arglist, Compound([]))
+                ArgBody.append(Assignment(lval,op,rval))
+        
+        arglist = ArgList([Id(ErrName), Constant("clSetKernelArg")])
+        ErrCheck = FuncDecl(Id('oclCheckErr'), arglist, Compound([]))
+        ArgBody.append(ErrCheck)
+            
+        ## clSetKernelArg for Non-Arrays arguments
+        ## for n in dictNToDevPtr:
+        ##     lval = Id(ErrName)
+        ##     op = '|='
+        ##     arglist = ArgList([kernelId,\
+        ##                        Increment(cntName,'++'),\
+        ##                        Id('sizeof(cl_mem)'),\
+        ##                        Id('(void *) &' + dictNToDevPtr[n])])
+        ##     rval = FuncDecl(Id('clSetKernelArg'),arglist, Compound([]))
+        ##     ArgBody.append(Assignment(lval,op,rval))
+            
+        
 
         return fileAST
 
