@@ -407,18 +407,15 @@ class Rewriter(NodeVisitor):
         arglist = ArgList([Id(ErrName), Constant("clSetKernelArg")])
         ErrCheck = FuncDecl(Id('oclCheckErr'), arglist, Compound([]))
         ArgBody.append(ErrCheck)
-            
-        ## clSetKernelArg for Non-Arrays arguments
-        ## for n in dictNToDevPtr:
-        ##     lval = Id(ErrName)
-        ##     op = '|='
-        ##     arglist = ArgList([kernelId,\
-        ##                        Increment(cntName,'++'),\
-        ##                        Id('sizeof(cl_mem)'),\
-        ##                        Id('(void *) &' + dictNToDevPtr[n])])
-        ##     rval = FuncDecl(Id('clSetKernelArg'),arglist, Compound([]))
-        ##     ArgBody.append(Assignment(lval,op,rval))
-            
+
+        
+        execKernel = EmptyFuncDecl('ExecMatmulKernel')
+        fileAST.ext.append(execKernel)
+        execBody = execKernel.compound.statements
+        execBody.append(clSuc)
+        eventName = Id('GPUExecution')
+        event = TypeId(['cl_event'], eventName)
+        execBody.append(event)
         
 
         return fileAST
