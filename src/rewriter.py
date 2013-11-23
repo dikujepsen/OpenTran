@@ -3,37 +3,47 @@ from lan_ast import *
 
 
 class Rewriter(NodeVisitor):
-    """ Rewrites a few things in the AST to increase the
-    	abstraction level.
+    """ Class for rewriting of the original AST. Includes:
+    1. the initial small rewritings,
+    2. transformation into our representation,
+    3. transforming from our representation to C-executable code,
+    4. creating our representation of the device kernel code,
+    5. creating a C-executable kernel code,
+    6. Creating the host code (boilerplate code) 
     """
+
+    
     def __init__(self):
         self.index = list()
+        self.UpperLimit = list()
+        self.numDims = dict()
+        self.ArrayIds = dict()
+        self.IndexInSubscript = dict()
 
     def rewrite(self, ast, functionname = 'FunctionName'):
+        """ Rewrites a few things in the AST to increase the
+    	abstraction level.
+        """
         loops = ForLoops()
         loops.visit(ast)
-        ## loops.reset()
-        ## loops.visit(loops.ast.compound)
         forLoopAst = loops.ast
         loopIndices = LoopIndices()
         loopIndices.visit(forLoopAst)
         self.index = loopIndices.index
         loopIndices.end.reverse()
-        print loopIndices.end
-        ## subs = Subscripts()
-        ## subs.visit(forLoopAst)
-        ## tmp = subs.subscript[0]
-        ## subs.subscript[0] = subs.subscript[1]
-        ## subs.subscript[1] = tmp
-        ## for i in subs.subscript.values():
-        ##     i.show()
+        self.UpperLimit = loopIndices.end
+
         norm = Norm(self.index)
         norm.visit(forLoopAst)
         arrays = Arrays(self.index)
         arrays.visit(ast)
         print "36 " , arrays.numIndices
+        print "36s " , arrays.numSubscripts
+        self.numDims = arrays.numSubscripts
         print "37 " , arrays.ids
+        self.ArrayIds = arrays.ids
         print "38 " , arrays.indexIds
+        self.IndexInSubscript = arrays.indexIds
 
         typeIds = TypeIds()
         typeIds.visit(ast)
@@ -404,7 +414,7 @@ class Rewriter(NodeVisitor):
                 rval = FuncDecl(Id('clSetKernelArg'),arglist, Compound([]))
                 ArgBody.append(Assignment(lval,op,rval))
         
-        arglist = ArgList([Id(ErrName), Constant("clSetKernelArg")])
+        arglist = ArgList([Id(ErrName), Constant('clSetKernelArg')])
         ErrCheck = FuncDecl(Id('oclCheckErr'), arglist, Compound([]))
         ArgBody.append(ErrCheck)
 

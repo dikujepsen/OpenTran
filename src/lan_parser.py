@@ -291,9 +291,8 @@ if __name__ == "__main__":
         ## printres = cprint.visit(ast)
         ## print printres
         rw = Rewriter()
-        ## rw.rewrite(ast, funcname)
-        ## ## ast.show()
-        ## cprint.createTemp(ast)
+        rw.rewrite(ast, funcname)
+        cprint.createTemp(ast, filename = 'data.cpp')
 
         run = 0
         filename = '../src/temp.cpp'
@@ -302,7 +301,7 @@ if __name__ == "__main__":
             f = open(filename, 'r')
             s = f.read()
             f.close()
-            print s
+            ## print s
         except EOFError:
             break
  
@@ -319,7 +318,7 @@ if __name__ == "__main__":
         ## ## rw.rewriteToDeviceCRelease(tempast2)
         ## ## cprint.createTemp(tempast2, filename = 'cdevtemp.cpp')
 
-        boilerast = rw.generateBoilerplateCode(ast)
-        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+        ## boilerast = rw.generateBoilerplateCode(ast)
+        ## cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
         
 

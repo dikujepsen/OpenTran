@@ -179,8 +179,13 @@ class CGenerator(object):
         return n.name
         
     def visit_Constant(self, n):
-        if isinstance(n.value,str):
-            return '\"'+n.value+'\"'
+        try:
+            s = float(n.value)
+        except ValueError:
+            if n.value[0] == '"':
+                return n.value
+            else:
+                return '\"' + n.value + '\"'
         else:
             return str(n.value)
         
