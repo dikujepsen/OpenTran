@@ -291,8 +291,9 @@ if __name__ == "__main__":
         ## printres = cprint.visit(ast)
         ## print printres
         rw = Rewriter()
-        rw.rewrite(ast, funcname)
-        cprint.createTemp(ast, filename = 'data.cpp')
+        rw.initOriginal(ast)
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = 'data.cpp')
 
         run = 0
         filename = '../src/temp.cpp'
@@ -307,12 +308,12 @@ if __name__ == "__main__":
  
         ast = cparser.parse(s)
         ## ## ast.show()
-        ## tempast = copy.deepcopy(ast)
-        ## tempast2 = copy.deepcopy(ast)
+        tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
         ## ## rw.rewriteToSequentialC(ast)
         ## ## cprint.createTemp(ast, filename = 'ctemp.cpp')
-
-        ## rw.rewriteToDeviceCTemp(tempast)
+        rw.initNewRepr(tempast)
+        ## rw.rewriteToDeviceCTemp(tempast, False)
         ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
         ## ## rw.rewriteToDeviceCRelease(tempast2)

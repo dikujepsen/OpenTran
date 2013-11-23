@@ -119,7 +119,7 @@ class CGenerator(object):
         for stat in n.statements:
             s += self._make_indent() + self.visit(stat) + '\n'
         self.indent_level -= 2
-        s += self._make_indent() + '}\n'
+        s += self._make_indent() + '}'
         return s
 
     def visit_ArgList(self, n):
@@ -166,8 +166,7 @@ class CGenerator(object):
         return typeid + arglist + compound
 
     def visit_ForLoop(self, n):
-        init = self.visit(n.init) # already has a semi and \n at end
-        init = init[:-1] # remove newline
+        init = self.visit(n.init) # already has a semi at the end
         cond = self.visit(n.cond)
         inc = self.visit(n.inc)
         self.indent_level += 2

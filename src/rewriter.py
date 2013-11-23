@@ -14,62 +14,104 @@ class Rewriter(NodeVisitor):
 
     
     def __init__(self):
+        # List of loop indices
         self.index = list()
+        # list of the upper limit of the loop indices
         self.UpperLimit = list()
-        self.numDims = dict()
-        self.ArrayIds = dict()
+        # The number of dimensions of each array 
+        self.NumDims = dict()
+        # The Ids of arrays, or pointers
+        self.ArrayIds = set()
+        # The indices that appear in the subscript of each array
         self.IndexInSubscript = dict()
+        # All Ids that are not arrays, or pointers
+        self.NonArrayIds = set()
+        # Ids that we remove due to parallelization of loops
+        self.RemovedIds = set()
+        # The mapping from the indices that we parallelize
+        # to their function returning their global id
+        self.IndexToGlobalId = dict()
+        # The indices that we parallelize
+        self.GridIndices = list()
+        # The OpenCl kernel before anything
+        self.Kernel = None
+        # The mapping from the array ids to a list of 
+        # the names of their dimensions
+        self.ArrayIdToDimName = dict()
 
-    def rewrite(self, ast, functionname = 'FunctionName'):
-        """ Rewrites a few things in the AST to increase the
-    	abstraction level.
-        """
+
+    def initOriginal(self, ast):
         loops = ForLoops()
         loops.visit(ast)
         forLoopAst = loops.ast
         loopIndices = LoopIndices()
         loopIndices.visit(forLoopAst)
         self.index = loopIndices.index
-        loopIndices.end.reverse()
         self.UpperLimit = loopIndices.end
 
         norm = Norm(self.index)
         norm.visit(forLoopAst)
         arrays = Arrays(self.index)
         arrays.visit(ast)
-        print "36 " , arrays.numIndices
-        print "36s " , arrays.numSubscripts
-        self.numDims = arrays.numSubscripts
-        print "37 " , arrays.ids
+        self.NumDims = arrays.numSubscripts
         self.ArrayIds = arrays.ids
-        print "38 " , arrays.indexIds
         self.IndexInSubscript = arrays.indexIds
 
         typeIds = TypeIds()
         typeIds.visit(ast)
-        print typeIds.ids
 
         ids = Ids()
         ids.visit(ast)
-        print ids.ids
         otherIds = ids.ids - arrays.ids - typeIds.ids
-        print otherIds
+        self.NonArrayIds = otherIds
+
+
+    def initNewRepr(self, ast):
+        perfectForLoop = PerfectForLoop()
+        perfectForLoop.visit(ast)
+        initIds = InitIds()
+        initIds.visit(perfectForLoop.ast.init)
+        gridIds = list()
+        idMap = dict()
+        idMap[initIds.index[0]] = 'get_global_id(0)'
+        gridIds.extend(initIds.index)
+        kernel = perfectForLoop.ast.compound
+        if perfectForLoop.depth == 2:
+            initIds = InitIds()
+            initIds.visit(kernel.statements[0].init)
+            kernel = kernel.statements[0].compound
+            idMap[initIds.index[0]] = 'get_global_id(1)'
+            gridIds.extend(initIds.index)
+            (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
+        self.IndexToGlobalId = idMap
+        self.GridIndices = gridIds
+        self.Kernel = kernel
+        findDim = FindDim(self.NumDims)
+        findDim.visit(ast)
+        self.ArrayIdToDimName = findDim.dimNames
+        self.RemovedIds = set(self.UpperLimit[i] for i in self.GridIndices)
+        print self.RemovedIds
+
+    def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
+        """ Rewrites a few things in the AST to increase the
+    	abstraction level.
+        """
+
         typeid = TypeId(['void'], Id(functionname),ast.coord)
         arraysArg = list()
-        for arrayid in arrays.ids:
+        for arrayid in self.ArrayIds:
             arraysArg.append(TypeId(['unknown','*'], Id(arrayid,ast.coord),ast.coord))
-            for iarg in xrange(arrays.numIndices[arrayid]):
+            for iarg in xrange(self.NumDims[arrayid]):
                 arraysArg.append(TypeId(['size_t'], Id('hst_ptr'+arrayid+'_dim'+str(iarg+1),ast.coord),ast.coord))
                 
-        for arrayid in otherIds:
+        for arrayid in self.NonArrayIds:
              arraysArg.append(TypeId(['unknown'], Id(arrayid,ast.coord),ast.coord))
             
         arglist = ArgList([] + arraysArg,ast.coord)
         compound = Compound(ast.ext,ast.coord)
-        ## ast.ext.insert(0,FuncDecl(typeid,arglist,compound,ast.coord))
-        ast.ext = list()
-        ast.ext.append(FuncDecl(typeid,arglist,compound,ast.coord))
-
+        if changeAST:
+            ast.ext = list()
+            ast.ext.append(FuncDecl(typeid,arglist,compound,ast.coord))
 
         
     def rewriteToSequentialC(self, ast): 
@@ -91,41 +133,11 @@ class Rewriter(NodeVisitor):
         rewriteArrayRef = RewriteArrayRef(findDim.dimNames)
         rewriteArrayRef.visit(ast)
 
-    def rewriteToDeviceCTemp(self, ast):
+    def rewriteToDeviceCTemp(self, ast, changeAST = True):
 
-        perfectForLoop = PerfectForLoop()
-        perfectForLoop.visit(ast)
-        ## print perfectForLoop.depth
-        ## print perfectForLoop.ast
-        initIds = InitIds()
-        initIds.visit(perfectForLoop.ast.init)
-        gridIds = list()
-        idMap = dict()
-        idMap[initIds.index[0]] = 'get_global_id(0)'
-        gridIds.extend(initIds.index)
-        kernel = perfectForLoop.ast.compound
-        if perfectForLoop.depth == 2:
-            initIds = InitIds()
-            initIds.visit(kernel.statements[0].init)
-            kernel = kernel.statements[0].compound
-            idMap[initIds.index[0]] = 'get_global_id(1)'
-            gridIds.extend(initIds.index)
-            (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
-        ## print "idmap " , idMap
 
-        ## print kernel
-        arrays = Arrays([])
-        arrays.visit(kernel)
-        typeIds = TypeIds()
-        typeIds.visit(kernel)
-        ## print arrays.ids
-        ## print typeIds.ids
-        ids = Ids()
-        ids.visit(kernel)
-        ## print ids.ids
-        otherIds = ids.ids  - typeIds.ids - set(gridIds)
         ## print otherIds
-        findDeviceArgs = FindDeviceArgs(otherIds)
+        findDeviceArgs = FindDeviceArgs(self.NonArrayIds)
         findDeviceArgs.visit(ast)
         ## print findDeviceArgs.arglist
         findFunction = FindFunction()
@@ -135,12 +147,13 @@ class Rewriter(NodeVisitor):
         # add OpenCL keywords to indicate the kernel function.
         findFunction.typeid.type.insert(0, '__kernel')
         
-        exchangeIndices = ExchangeIndices(idMap)
-        exchangeIndices.visit(kernel)
-        newast =  FuncDecl(findFunction.typeid, ArgList(findDeviceArgs.arglist,ast.coord), kernel, ast.coord)
-        ast.ext = list()
-        ast.ext.append(newast)
-
+        exchangeIndices = ExchangeIndices(self.IndexToGlobalId)
+        exchangeIndices.visit(self.Kernel)
+        newast =  FuncDecl(findFunction.typeid, ArgList(findDeviceArgs.arglist,ast.coord), self.Kernel, ast.coord)
+        if changeAST:
+            ast.ext = list()
+            ast.ext.append(newast)
+        
     def rewriteToDeviceCRelease(self, ast):
 
         perfectForLoop = PerfectForLoop()
@@ -197,47 +210,15 @@ class Rewriter(NodeVisitor):
 
     def generateBoilerplateCode(self, ast):
 
-        loops = ForLoops()
-        loops.visit(ast)
-        forLoopAst = loops.ast
-        loopIndices = LoopIndices()
-        loopIndices.visit(forLoopAst)
-        self.index = loopIndices.index
 
-        arrays2 = Arrays(self.index)
-        arrays2.visit(ast)
-
-        print "36 " , arrays2.numIndices
-        dictNToNumScripts = arrays2.numSubscripts
-        print "dictNToNumScripts " , dictNToNumScripts
-        print "37 " , arrays2.ids
-        print "38 " , arrays2.indexIds
-        findDim = FindDim(arrays2.numIndices)
-        findDim.visit(ast)
-        dictNToDimNames = findDim.dimNames
+        dictNToNumScripts = self.NumDims
+        dictNToDimNames = self.ArrayIdToDimName
         print "dictNToDimNames " , dictNToDimNames
 
 
-        perfectForLoop = PerfectForLoop()
-        perfectForLoop.visit(ast)
-        ## print perfectForLoop.depth
-        ## print perfectForLoop.ast
-        initIds = InitIds()
-        initIds.visit(perfectForLoop.ast.init)
-        gridIds = list()
-        idMap = dict()
-        idMap[initIds.index[0]] = 'get_global_id(0)'
-        gridIds.extend(initIds.index)
-        kernel = perfectForLoop.ast.compound
-        if perfectForLoop.depth == 2:
-            initIds = InitIds()
-            initIds.visit(kernel.statements[0].init)
-            kernel = kernel.statements[0].compound
-            idMap[initIds.index[0]] = 'get_global_id(1)'
-            gridIds.extend(initIds.index)
-            (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
-        print "GENidmap " , idMap
-
+        kernel = self.Kernel
+        idMap = self.IndexToGlobalId
+        gridIds = self.GridIndices
         ## print kernel
         arrays = Arrays([])
         arrays.visit(kernel)
@@ -250,7 +231,8 @@ class Rewriter(NodeVisitor):
         ## print ids.ids
         otherIds = ids.ids  - typeIds.ids - set(gridIds)
         NonArrayIds = otherIds - set(dictNToNumScripts.keys())
-        
+        otherIds = self.ArrayIds.union(self.NonArrayIds)
+        print "otherIds 123" , otherIds
         findDeviceArgs = FindDeviceArgs(otherIds)
         findDeviceArgs.visit(ast)
         print "findDeviceArgs " , findDeviceArgs.arglist
@@ -269,7 +251,7 @@ class Rewriter(NodeVisitor):
 
         listDevBuffers = []
         dictNToDevPtr = dict()
-        for n in arrays2.ids:
+        for n in self.ArrayIds:
             name = 'dev_ptr' + n
             dictNToDevPtr[n] = name
             listDevBuffers.append(TypeId(['cl_mem'], Id(name), 0))
@@ -301,14 +283,14 @@ class Rewriter(NodeVisitor):
         listMemSizeCalcTemp = []
         listMemSizeCalc = dict()
         dictNToSize = dict()
-        for n in arrays2.numSubscripts:
+        for n in self.NumDims:
             prefix = 'hst_ptr'
             suffix = '_mem_size'
             sizeName = prefix + n + suffix
             dictNToSize[n] = sizeName
             listMemSize.append(TypeId(['size_t'], Id(sizeName)))
             listMemSizeCalcTemp.append(sizeName)
-            for i in xrange(arrays2.numSubscripts[n]):
+            for i in xrange(self.NumDims[n]):
                 suffix = '_dim' + str(i+1)
                 dimName = prefix + n + suffix
                 listDimSize.append(\
@@ -569,6 +551,16 @@ class InitIds(NodeVisitor):
     def visit_Id(self, node):
         self.index.append(node.name)
 
+class FindUpperLimit(NodeVisitor):
+    """ Finds Id's in an for loop initialization.
+    More generally: Finds all Ids and adds them to a list.    
+    """
+    def __init__(self):
+        self.index = list()
+    
+    def visit_Id(self, node):
+        self.index.append(node.name)
+        
 class Ids(NodeVisitor):
     """ Finds all unique Ids """
     def __init__(self):
@@ -581,16 +573,16 @@ class LoopIndices(NodeVisitor):
     """
     def __init__(self):
         self.index = list()
-        self.end = list()
+        self.end = dict()
     def visit_ForLoop(self, node):
         IdVis = InitIds()
         IdVis.visit(node.init)
         self.index.extend(IdVis.index)
         self.visit(node.compound)
         try:
-            self.end.append(node.cond.rval.name)
+            self.end[IdVis.index[0]] = (node.cond.rval.name)
         except AttributeError:
-            self.end.append('Unknown')
+            self.end[IdVis.index[0]] = 'Unknown'
             
 
 class ForLoops(NodeVisitor):
