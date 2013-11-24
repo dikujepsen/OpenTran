@@ -1,3 +1,4 @@
+import copy
 import os
 from lan_ast import *
 
@@ -35,6 +36,8 @@ class Rewriter(NodeVisitor):
         self.GridIndices = list()
         # The OpenCl kernel before anything
         self.Kernel = None
+        # The name of the kernel, i.e. the FuncName + Kernel
+        self.KernelName = None
         # The mapping from the array ids to a list of 
         # the names of their dimensions
         self.ArrayIdToDimName = dict()
@@ -42,6 +45,8 @@ class Rewriter(NodeVisitor):
         self.DevArgList = list()
         # The name and type of the kernel function.
         self.DevFuncTypeId = None
+        # The name of the kernel function.
+        self.DevFuncId = None
         # The device names of the pointers in the boilerplate code
         self.DevId = dict()
         # The host names of the pointers in the boilerplate code
@@ -56,7 +61,11 @@ class Rewriter(NodeVisitor):
         self.Worksize = dict()
         # The dimension that the index indexes
         self.IdxToDim = dict()
-        
+        # Whether an array is read, write or both
+        self.ReadWrite = dict()
+        # List of arrays that are write only
+        self.WriteOnly = list()
+
         
     def initOriginal(self, ast):
         loops = ForLoops()
@@ -123,7 +132,8 @@ class Rewriter(NodeVisitor):
         self.DevArgList = findDeviceArgs.arglist
         findFunction = FindFunction()
         findFunction.visit(ast)
-        self.DevFuncTypeId =  findFunction.typeid
+        self.DevFuncTypeId = findFunction.typeid
+        self.DevFuncId = self.DevFuncTypeId.name.name
 
         for n in self.ArrayIds:
             self.DevId[n] = 'dev_ptr' + n
@@ -136,10 +146,18 @@ class Rewriter(NodeVisitor):
             self.Type[name] = type
 
         kernelName = self.DevFuncTypeId.name.name
+        
+        self.KernelName = kernelName + 'Kernel'
         self.Worksize['local'] = kernelName + '_local_worksize'
         self.Worksize['global'] = kernelName + '_global_worksize'
+        findReadWrite = FindReadWrite(self.ArrayIds)
+        findReadWrite.visit(ast)
+        self.ReadWrite = findReadWrite.ReadWrite
 
-        
+        for n in self.ReadWrite:
+            pset = self.ReadWrite[n]
+            if len(pset) == 1 and 'write' in pset:
+                self.WriteOnly.append(n)
 
             
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
@@ -270,9 +288,7 @@ class Rewriter(NodeVisitor):
         NonArrayIds = self.NonArrayIds
         otherIds = self.ArrayIds.union(self.NonArrayIds) - self.RemovedIds
 
-        kernelId = self.DevFuncTypeId.name
-        kernelName = kernelId.name
-        kernelId.name = kernelName + 'Kernel'
+        kernelId = Id(self.KernelName)
         kernelTypeid = TypeId(['cl_kernel'], kernelId, 0)
 
         fileAST = FileAST([])
@@ -366,7 +382,7 @@ class Rewriter(NodeVisitor):
             ErrCheck = FuncDecl(Id('oclCheckErr'),arglist, Compound([]))
             allocateBuffer.compound.statements.append(ErrCheck)
 
-        setArgumentsKernel = EmptyFuncDecl('SetArguments'+kernelName)
+        setArgumentsKernel = EmptyFuncDecl('SetArguments'+self.DevFuncId)
         fileAST.ext.append(setArgumentsKernel)
         ArgBody = setArgumentsKernel.compound.statements
         ArgBody.append(clSuc)
@@ -409,7 +425,8 @@ class Rewriter(NodeVisitor):
                 ArgBody.append(Assignment(lval,op,rval))
         
         arglist = ArgList([Id(ErrName), Constant('clSetKernelArg')])
-        ErrCheck = FuncDecl(Id('oclCheckErr'), arglist, Compound([]))
+        ErrId = Id('oclCheckErr')
+        ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
         ArgBody.append(ErrCheck)
 
         
@@ -432,7 +449,42 @@ class Rewriter(NodeVisitor):
                     initlist.append(Id(self.UpperLimit[m]))
                 rval = ArrayInit(initlist)
             execBody.append(Assignment(lval,op,rval))
+
+        lval = ErrId
+        op = '='
+        arglist = ArgList([Id('command_queue'),\
+                           Id(self.KernelName),\
+                           Constant(self.ParDim),\
+                           Constant(0),\
+                           Id(self.Worksize['global']),\
+                           Id(self.Worksize['local']),\
+                           Constant(0), Id('NULL'), \
+                           Id('&' + eventName.name)])
+        rval = FuncDecl(Id('clEnqueueNDRangeKernel'),arglist, Compound([]))
+        execBody.append(Assignment(lval,op,rval))
         
+        arglist = ArgList([Id(ErrName), Constant('clEnqueueNDRangeKernel')])
+        ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
+        execBody.append(ErrCheck)
+
+
+        for n in self.WriteOnly:
+            lval = ErrId
+            op = '='
+            arglist = ArgList([Id('command_queue'),\
+                               Id(self.DevId[n]),\
+                               Id('CL_TRUE'),\
+                               Constant(0),\
+                               Id(self.Mem[n]),\
+                               Id(self.HstId[n]),\
+                               Constant(1),
+                               Id('&' + eventName.name),Id('NULL')])
+            rval = FuncDecl(Id('clEnqueueReadBuffer'),arglist, Compound([]))
+            execBody.append(Assignment(lval,op,rval))
+            
+        arglist = ArgList([Id(ErrName), Constant('clEnqueueReadBuffer')])
+        ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
+        execBody.append(ErrCheck)
 
         print "self.index " , self.index
         print "self.UpperLimit " , self.UpperLimit
@@ -454,9 +506,37 @@ class Rewriter(NodeVisitor):
         print "self.ParDim " , self.ParDim
         print "self.Worksize " , self.Worksize
         print "self.IdxToDim " , self.IdxToDim
+        print "self.WriteOnly " , self.WriteOnly
 
         return fileAST
 
+class FindReadWrite(NodeVisitor):
+    """ Returns a mapping of arrays to either
+    'read'-only, 'write'-only, or 'readwrite'
+    """
+    def __init__(self, ArrayIds):
+        self.ReadWrite = dict()
+        self.ArrayIds = ArrayIds
+        self.left = True
+        for n in self.ArrayIds:
+            self.ReadWrite[n] = set()
+        
+    def visit_Assignment(self, node):
+        self.left = True
+        self.visit(node.lval)
+        self.left = False
+        self.visit(node.rval)
+
+    def visit_Id(self, node):
+        name = node.name
+        if name in self.ArrayIds:
+            if self.left:
+                self.ReadWrite[name].add('write')
+            else:
+                self.ReadWrite[name].add('read')
+
+                
+                
 
 class ExchangeIndices(NodeVisitor):
     """ Exchanges the indices that we parallelize with the threadids """
