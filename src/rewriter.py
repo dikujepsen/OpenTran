@@ -50,6 +50,13 @@ class Rewriter(NodeVisitor):
         self.Type = dict()
         # The name of the variable denoting the memory size 
         self.Mem = dict()
+        # Dimension of the parallelization
+        self.ParDim = None
+        # VarName of the global/local worksize array.
+        self.Worksize = dict()
+        # The dimension that the index indexes
+        self.IdxToDim = dict()
+        
         
     def initOriginal(self, ast):
         loops = ForLoops()
@@ -80,29 +87,35 @@ class Rewriter(NodeVisitor):
     def initNewRepr(self, ast):
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
-        print "depth " , perfectForLoop.depth
+        self.ParDim = perfectForLoop.depth
         initIds = InitIds()
         initIds.visit(perfectForLoop.ast.init)
         gridIds = list()
         idMap = dict()
-        idMap[initIds.index[0]] = 'get_global_id(0)'
+        firstIdx = initIds.index[0]
+        idMap[firstIdx] = 'get_global_id(0)'
         gridIds.extend(initIds.index)
         kernel = perfectForLoop.ast.compound
         if perfectForLoop.depth == 2:
             initIds = InitIds()
             initIds.visit(kernel.statements[0].init)
             kernel = kernel.statements[0].compound
-            idMap[initIds.index[0]] = 'get_global_id(1)'
+            secondIdx = initIds.index[0]
+            idMap[secondIdx] = 'get_global_id(1)'
             gridIds.extend(initIds.index)
             (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
+
         self.IndexToGlobalId = idMap
         self.GridIndices = gridIds
         self.Kernel = kernel
+        for i, n in enumerate(reversed(self.GridIndices)):
+            self.IdxToDim[i] = n
+            
+            
         findDim = FindDim(self.NumDims)
         findDim.visit(ast)
         self.ArrayIdToDimName = findDim.dimNames
         self.RemovedIds = set(self.UpperLimit[i] for i in self.GridIndices)
-        print self.RemovedIds
 
         otherIds = self.ArrayIds.union(self.NonArrayIds)
         findDeviceArgs = FindDeviceArgs(otherIds)
@@ -122,7 +135,12 @@ class Rewriter(NodeVisitor):
             type = n.type[-2:]
             self.Type[name] = type
 
-        print "Type " , self.Type
+        kernelName = self.DevFuncTypeId.name.name
+        self.Worksize['local'] = kernelName + '_local_worksize'
+        self.Worksize['global'] = kernelName + '_global_worksize'
+
+        
+
             
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
@@ -245,8 +263,6 @@ class Rewriter(NodeVisitor):
 
         dictNToNumScripts = self.NumDims
         dictNToDimNames = self.ArrayIdToDimName
-        print "dictNToDimNames " , dictNToDimNames
-
 
         kernel = self.Kernel
         idMap = self.IndexToGlobalId
@@ -368,7 +384,6 @@ class Rewriter(NodeVisitor):
         
         for n in self.RemovedIds:
             dictTypeHostPtrs.pop(n,None)
-        ## print "Types " , dictTypeHostPtrs
 
         ## clSetKernelArg for Arrays
         for n in dictTypeHostPtrs:
@@ -405,7 +420,32 @@ class Rewriter(NodeVisitor):
         eventName = Id('GPUExecution')
         event = TypeId(['cl_event'], eventName)
         execBody.append(event)
+
         
+        globalsize = TypeId(['size_t'], Id(self.Worksize['global'] + '[]'))
+        localsize = TypeId(['size_t'], Id(self.Worksize['local'] + '[]'))
+        
+
+        print "self.index " , self.index
+        print "self.UpperLimit " , self.UpperLimit
+        print "self.NumDims " , self.NumDims
+        print "self.ArrayIds " , self.ArrayIds
+        print "self.IndexInSubscript " , self.IndexInSubscript
+        print "self.NonArrayIds " , self.NonArrayIds
+        print "self.RemovedIds " , self.RemovedIds
+        print "self.IndexToGlobalId " , self.IndexToGlobalId
+        print "self.GridIndices " , self.GridIndices
+        print "self.Kernel " , self.Kernel
+        print "self.ArrayIdToDimName " , self.ArrayIdToDimName
+        print "self.DevArgList " , self.DevArgList
+        print "self.DevFuncTypeId " , self.DevFuncTypeId
+        print "self.DevId " , self.DevId
+        print "self.HstId " , self.HstId
+        print "self.Type " , self.Type
+        print "self.Mem " , self.Mem
+        print "self.ParDim " , self.ParDim
+        print "self.Worksize " , self.Worksize
+        print "self.IdxToDim " , self.IdxToDim
 
         return fileAST
 
