@@ -80,6 +80,7 @@ class Rewriter(NodeVisitor):
     def initNewRepr(self, ast):
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
+        print "depth " , perfectForLoop.depth
         initIds = InitIds()
         initIds.visit(perfectForLoop.ast.init)
         gridIds = list()
