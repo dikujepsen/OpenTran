@@ -285,7 +285,7 @@ class Rewriter(NodeVisitor):
         kernel = self.Kernel
         idMap = self.IndexToGlobalId
         gridIds = self.GridIndices
-        NonArrayIds = self.NonArrayIds
+        NonArrayIds = copy.deepcopy(self.NonArrayIds)
         otherIds = self.ArrayIds.union(self.NonArrayIds) - self.RemovedIds
 
         kernelId = Id(self.KernelName)
@@ -319,7 +319,7 @@ class Rewriter(NodeVisitor):
             listHostPtrs.append(TypeId(type, Id(name), 0))
 
         dictNToHstPtr = self.HstId
-        dictTypeHostPtrs = self.Type
+        dictTypeHostPtrs = copy.deepcopy(self.Type)
         listHostPtrs = GroupCompound(listHostPtrs)
         fileAST.ext.append(listHostPtrs)
 
@@ -445,7 +445,7 @@ class Rewriter(NodeVisitor):
                 rval = ArrayInit([Id('LSIZE'), Id('LSIZE')])
             else:
                 initlist = []
-                for m in self.GridIndices:
+                for m in reversed(self.GridIndices):
                     initlist.append(Id(self.UpperLimit[m]))
                 rval = ArrayInit(initlist)
             execBody.append(Assignment(lval,op,rval))
@@ -485,6 +485,26 @@ class Rewriter(NodeVisitor):
         arglist = ArgList([Id(ErrName), Constant('clEnqueueReadBuffer')])
         ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
         execBody.append(ErrCheck)
+
+
+        runOCL = EmptyFuncDecl('RunOCL' + self.KernelName)
+        fileAST.ext.append(runOCL)
+        runOCLBody = runOCL.compound.statements
+
+        argIds = self.NonArrayIds.union(self.ArrayIds)
+        typeIdList = []
+        for n in argIds:
+            type = self.Type[n]
+            typeIdList.append(TypeId(type,Id(n)))
+            try:
+                for m in self.ArrayIdToDimName[n]:
+                    type = ['size_t']
+                    typeIdList.append(TypeId(type, Id(m)))
+            except KeyError:
+                pass
+        
+        arglist = ArgList(typeIdList)
+        runOCL.arglist = arglist
 
         print "self.index " , self.index
         print "self.UpperLimit " , self.UpperLimit
