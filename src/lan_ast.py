@@ -86,6 +86,20 @@ class Comment(Node):
         return tuple(nodelist)
     attr_names = ('value',)
 
+class ArrayInit(Node):
+    def __init__(self, values, coord = None):
+        self.values = values
+        self.coord = coord
+    def __repr__(self):
+        return "ArrayInit(%r)" % ( self.values)
+    def children(self):
+        nodelist = []
+        for n in self.values:
+            nodelist.append(n)
+        return tuple(nodelist)
+    attr_names = ()
+
+
 class Constant(Node):
     def __init__(self,value,coord = None):
         self.value = value

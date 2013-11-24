@@ -113,6 +113,14 @@ class CGenerator(object):
         self.inside_Assignment = False
         return lval + ' ' + n.op + ' ' + rval + ';'
 
+    def visit_ArrayInit(self, n):
+        s = '{'
+        for stat in n.values:
+            s += self.visit(stat) + ', '
+        s = s[:-2]
+        s += '}'
+        return s
+
     def visit_Compound(self, n):
         s = '\n' + self._make_indent() + '{\n'
         self.indent_level += 2

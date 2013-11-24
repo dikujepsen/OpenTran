@@ -421,9 +421,17 @@ class Rewriter(NodeVisitor):
         event = TypeId(['cl_event'], eventName)
         execBody.append(event)
 
-        
-        globalsize = TypeId(['size_t'], Id(self.Worksize['global'] + '[]'))
-        localsize = TypeId(['size_t'], Id(self.Worksize['local'] + '[]'))
+        for n in self.Worksize:
+            lval = TypeId(['size_t'], Id(self.Worksize[n] + '[]'))
+            op = '='
+            if n == 'local':
+                rval = ArrayInit([Id('LSIZE'), Id('LSIZE')])
+            else:
+                initlist = []
+                for m in self.GridIndices:
+                    initlist.append(Id(self.UpperLimit[m]))
+                rval = ArrayInit(initlist)
+            execBody.append(Assignment(lval,op,rval))
         
 
         print "self.index " , self.index
