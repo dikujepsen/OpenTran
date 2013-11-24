@@ -413,7 +413,7 @@ class Rewriter(NodeVisitor):
         ArgBody.append(ErrCheck)
 
         
-        execKernel = EmptyFuncDecl('ExecMatmulKernel')
+        execKernel = EmptyFuncDecl('Exec' + self.DevFuncTypeId.name.name)
         fileAST.ext.append(execKernel)
         execBody = execKernel.compound.statements
         execBody.append(clSuc)
