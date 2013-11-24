@@ -38,8 +38,19 @@ class Rewriter(NodeVisitor):
         # The mapping from the array ids to a list of 
         # the names of their dimensions
         self.ArrayIdToDimName = dict()
-
-
+        # The argument list in our ER
+        self.DevArgList = list()
+        # The name and type of the kernel function.
+        self.DevFuncTypeId = None
+        # The device names of the pointers in the boilerplate code
+        self.DevId = dict()
+        # The host names of the pointers in the boilerplate code
+        self.HstId = dict()
+        # The types of the arguments for the kernel
+        self.Type = dict()
+        # The name of the variable denoting the memory size 
+        self.Mem = dict()
+        
     def initOriginal(self, ast):
         loops = ForLoops()
         loops.visit(ast)
@@ -92,6 +103,26 @@ class Rewriter(NodeVisitor):
         self.RemovedIds = set(self.UpperLimit[i] for i in self.GridIndices)
         print self.RemovedIds
 
+        otherIds = self.ArrayIds.union(self.NonArrayIds)
+        findDeviceArgs = FindDeviceArgs(otherIds)
+        findDeviceArgs.visit(ast)
+        self.DevArgList = findDeviceArgs.arglist
+        findFunction = FindFunction()
+        findFunction.visit(ast)
+        self.DevFuncTypeId =  findFunction.typeid
+
+        for n in self.ArrayIds:
+            self.DevId[n] = 'dev_ptr' + n
+            self.HstId[n] = 'hst_ptr' + n
+            self.Mem[n] = 'hst_ptr' + n + '_mem_size'
+            
+        for n in self.DevArgList:
+            name = n.name.name
+            type = n.type[-2:]
+            self.Type[name] = type
+
+        print "Type " , self.Type
+            
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
     	abstraction level.
@@ -219,109 +250,79 @@ class Rewriter(NodeVisitor):
         kernel = self.Kernel
         idMap = self.IndexToGlobalId
         gridIds = self.GridIndices
-        ## print kernel
-        arrays = Arrays([])
-        arrays.visit(kernel)
-        typeIds = TypeIds()
-        typeIds.visit(kernel)
-        ## print arrays.ids
-        ## print typeIds.ids
-        ids = Ids()
-        ids.visit(kernel)
-        ## print ids.ids
-        otherIds = ids.ids  - typeIds.ids - set(gridIds)
-        NonArrayIds = otherIds - set(dictNToNumScripts.keys())
-        otherIds = self.ArrayIds.union(self.NonArrayIds)
-        print "otherIds 123" , otherIds
-        findDeviceArgs = FindDeviceArgs(otherIds)
-        findDeviceArgs.visit(ast)
-        print "findDeviceArgs " , findDeviceArgs.arglist
-        findFunction = FindFunction()
-        findFunction.visit(ast)
-        ## print findFunction.typeid
-        kernelId = findFunction.typeid.name
+        NonArrayIds = self.NonArrayIds
+        otherIds = self.ArrayIds.union(self.NonArrayIds) - self.RemovedIds
+
+        kernelId = self.DevFuncTypeId.name
         kernelName = kernelId.name
         kernelId.name = kernelName + 'Kernel'
         kernelTypeid = TypeId(['cl_kernel'], kernelId, 0)
-        ## print kernelTypeid
 
         fileAST = FileAST([])
         fileAST.ext.append(kernelTypeid)
         ## fileAST.show()
 
         listDevBuffers = []
-        dictNToDevPtr = dict()
+
         for n in self.ArrayIds:
             name = 'dev_ptr' + n
-            dictNToDevPtr[n] = name
             listDevBuffers.append(TypeId(['cl_mem'], Id(name), 0))
 
+        dictNToDevPtr = self.DevId
         listDevBuffers = GroupCompound(listDevBuffers)
-        ## print listDevBuffers
 
         fileAST.ext.append(listDevBuffers)
 
         listHostPtrs = []
         dictTypeHostPtrs = dict()
         dictNToHstPtr = dict()
-        for n in findDeviceArgs.arglist:
+        for n in self.DevArgList:
             name = n.name.name
-            type = n.type[-2:]
-            prefix = 'hst_ptr' if len(type) == 2 else ''
-            
-            dictTypeHostPtrs[name] = type
-            ptrname = prefix + name
-            if len(type) == 2:
-                dictNToHstPtr[name] = ptrname
-            listHostPtrs.append(TypeId(type, Id(ptrname), 0))
+            type = self.Type[name]
+            try:
+                name = self.HstId[name]
+            except KeyError:
+                pass
+            listHostPtrs.append(TypeId(type, Id(name), 0))
 
+        dictNToHstPtr = self.HstId
+        dictTypeHostPtrs = self.Type
         listHostPtrs = GroupCompound(listHostPtrs)
         fileAST.ext.append(listHostPtrs)
 
         listMemSize = []
         listDimSize = []
         listMemSizeCalcTemp = []
-        listMemSizeCalc = dict()
-        dictNToSize = dict()
+        dictMemSizeCalc = dict()
+        dictNToSize = self.Mem
         for n in self.NumDims:
-            prefix = 'hst_ptr'
-            suffix = '_mem_size'
-            sizeName = prefix + n + suffix
-            dictNToSize[n] = sizeName
+            sizeName = self.Mem[n]
             listMemSize.append(TypeId(['size_t'], Id(sizeName)))
-            listMemSizeCalcTemp.append(sizeName)
-            for i in xrange(self.NumDims[n]):
-                suffix = '_dim' + str(i+1)
-                dimName = prefix + n + suffix
+            for dimName in self.ArrayIdToDimName[n]:
                 listDimSize.append(\
                 TypeId(['size_t'], Id(dimName)))
-                listMemSizeCalcTemp.append(dimName)
-
-            
-            listMemSizeCalc[n] = listMemSizeCalcTemp
-            listMemSizeCalcTemp = []
                 
         fileAST.ext.append(GroupCompound(listMemSize))
         fileAST.ext.append(GroupCompound(listDimSize))
-        fileAST.ext.append(TypeId(['size_t'], Id('isFirstTime')))
+        lval = TypeId(['size_t'], Id('isFirstTime'))
+        op = '='
+        rval = Constant(1)
+        fileAST.ext.append(Assignment(lval,op,rval))
 
         allocateBuffer = EmptyFuncDecl('AllocateBuffers')
         fileAST.ext.append(allocateBuffer)
 
-        print listMemSizeCalc
-        print "Types " , dictTypeHostPtrs
         listSetMemSize = []
-        for entry in listMemSizeCalc:
-            n = listMemSizeCalc[entry]
-            lval = Id(n[0])
+        for entry in self.ArrayIdToDimName:
+            n = self.ArrayIdToDimName[entry]
+            lval = Id(self.Mem[entry])
             op = '='
-            rval = BinOp(Id(n[1]),'*', Id('sizeof('+\
+            rval = BinOp(Id(n[0]),'*', Id('sizeof('+\
                 dictTypeHostPtrs[entry][0]+')'))
-            if len(n) == 3:
-                rval = BinOp(Id(n[2]),'*', rval)
+            if len(n) == 2:
+                rval = BinOp(Id(n[1]),'*', rval)
             listSetMemSize.append(Assignment(lval,op,rval))
 
-        ## print "listSetMemSize " , listSetMemSize
         allocateBuffer.compound.statements.extend([GroupCompound(listSetMemSize)])
         #fileAST.ext.append(GroupCompound(listSetMemSize))
 
@@ -332,14 +333,6 @@ class Rewriter(NodeVisitor):
         clSuc = Assignment(lval,op,rval)
         allocateBuffer.compound.statements.extend(\
             [GroupCompound([clSuc])])
-
-        print "otherIds " , otherIds
-        print "Non-array Ids ", NonArrayIds
-        print "dictNToDevPtr " , dictNToDevPtr
-        print "dictNToHstPtr " , dictNToHstPtr
-        print "dictNToSize " , dictNToSize
-        print "dictNToNumScripts " , dictNToNumScripts
-        print "dictNToDimNames " , dictNToDimNames
         
         for n in dictNToDevPtr:
             lval = Id(dictNToDevPtr[n])
@@ -355,7 +348,6 @@ class Rewriter(NodeVisitor):
             arglist = ArgList([Id(ErrName), Constant("clCreateBuffer " + lval.name)])
             ErrCheck = FuncDecl(Id('oclCheckErr'),arglist, Compound([]))
             allocateBuffer.compound.statements.append(ErrCheck)
-        print "kernelName " , kernelName
 
         setArgumentsKernel = EmptyFuncDecl('SetArguments'+kernelName)
         fileAST.ext.append(setArgumentsKernel)
@@ -366,12 +358,16 @@ class Rewriter(NodeVisitor):
         op = '='
         rval = Constant(0)
         ArgBody.append(Assignment(lval,op,rval))
-        ## add dim arguments
+        
         for n in dictNToDimNames:
+            ## add dim arguments to set of ids
             NonArrayIds.add(dictNToDimNames[n][0])
-            # base type for size arguments
-            dictTypeHostPtrs[dictNToDimNames[n][0].name] = ['unsigned']
-        print "Types " , dictTypeHostPtrs
+            # Add types of dimensions for size arguments
+            dictTypeHostPtrs[dictNToDimNames[n][0]] = ['size_t']
+        
+        for n in self.RemovedIds:
+            dictTypeHostPtrs.pop(n,None)
+        ## print "Types " , dictTypeHostPtrs
 
         ## clSetKernelArg for Arrays
         for n in dictTypeHostPtrs:
@@ -522,7 +518,7 @@ class FindDim(NodeVisitor):
                     self.dimNames[arrayname] = list()
                     for n in xrange(self.arrayIds[arrayname]):
                         self.dimNames[arrayname].append(
-                        node.arglist[count + 1 + n].name)
+                        node.arglist[count + 1 + n].name.name)
                 count += 1
 
 

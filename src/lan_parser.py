@@ -319,7 +319,7 @@ if __name__ == "__main__":
         ## ## rw.rewriteToDeviceCRelease(tempast2)
         ## ## cprint.createTemp(tempast2, filename = 'cdevtemp.cpp')
 
-        ## boilerast = rw.generateBoilerplateCode(ast)
-        ## cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
         
 
