@@ -516,8 +516,8 @@ class Rewriter(NodeVisitor):
         ifThenList.append(FuncDecl(Id('compileKernelFromFile'), arglist, Compound([])))
         
         runOCLBody.append(IfThen(Id('isFirstTime'), Compound(ifThenList)))
-        
-
+        arglist = ArgList([])
+        runOCLBody.append(FuncDecl(Id('Exec' + self.KernelName), arglist, Compound([])))
 
         print "self.index " , self.index
         print "self.UpperLimit " , self.UpperLimit
