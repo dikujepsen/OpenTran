@@ -111,8 +111,7 @@ void StartUpGPU() {
 }
 
 
-void compileKernelFromFile(int id,
-			   std::string kernel_name,
+void compileKernelFromFile(std::string kernel_name,
 			   const char *filename,
 			   cl_kernel* kernel,
 			   const char* options) {
@@ -146,7 +145,7 @@ void compileKernelFromFile(int id,
   oclCheckErr(err, "clBuildProgram");
 
 
-  kernel[id] = clCreateKernel(program, kernel_name.c_str(), &err);
+  kernel = clCreateKernel(program, kernel_name.c_str(), &err);
   oclCheckErr(err, "clCreateKernel");
 
   err |= clReleaseProgram(program);

@@ -181,6 +181,14 @@ class CGenerator(object):
         compound = self.visit(n.compound)
         self.indent_level -= 2
         return 'for (' + init + ' ' + cond + '; ' + inc + ')' + compound
+
+    def visit_IfThen(self, n):
+        cond = self.visit(n.cond)
+        self.indent_level += 2
+        compound = self.visit(n.compound)
+        self.indent_level -= 2
+        return 'if (' + cond + ')' + compound
+
         
     def visit_Id(self, n):
         return n.name

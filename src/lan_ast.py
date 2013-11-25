@@ -164,7 +164,7 @@ class TypeId(Node):
     attr_names = ('type',)
 
 class Assignment(Node):
-    def __init__(self,lval,op,rval,coord = None):
+    def __init__(self, lval, rval, op = '=', coord = None):
         self.lval = lval
         self.op = op
         self.rval = rval
@@ -295,3 +295,18 @@ class ForLoop(Node):
         nodelist.append(("compound", self.compound))
         return tuple(nodelist)
     attr_names = ()
+
+class IfThen(Node):
+    def __init__(self, cond, compound, coord = None):
+        self.cond = cond
+        self.compound = compound
+    def __repr__(self):
+        return "If(%r) then {%r}" % ( self.cond, \
+                                      self.compound )
+    def children(self):
+        nodelist = []
+        nodelist.append(("cond", self.cond))
+        nodelist.append(("compound", self.compound))
+        return tuple(nodelist)
+    attr_names = ()
+

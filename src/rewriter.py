@@ -338,9 +338,8 @@ class Rewriter(NodeVisitor):
         fileAST.ext.append(GroupCompound(listMemSize))
         fileAST.ext.append(GroupCompound(listDimSize))
         lval = TypeId(['size_t'], Id('isFirstTime'))
-        op = '='
         rval = Constant(1)
-        fileAST.ext.append(Assignment(lval,op,rval))
+        fileAST.ext.append(Assignment(lval,rval))
 
         allocateBuffer = EmptyFuncDecl('AllocateBuffers')
         fileAST.ext.append(allocateBuffer)
@@ -349,21 +348,19 @@ class Rewriter(NodeVisitor):
         for entry in self.ArrayIdToDimName:
             n = self.ArrayIdToDimName[entry]
             lval = Id(self.Mem[entry])
-            op = '='
             rval = BinOp(Id(n[0]),'*', Id('sizeof('+\
                 dictTypeHostPtrs[entry][0]+')'))
             if len(n) == 2:
                 rval = BinOp(Id(n[1]),'*', rval)
-            listSetMemSize.append(Assignment(lval,op,rval))
+            listSetMemSize.append(Assignment(lval,rval))
 
         allocateBuffer.compound.statements.extend([GroupCompound(listSetMemSize)])
         #fileAST.ext.append(GroupCompound(listSetMemSize))
 
         ErrName = 'oclErrNum'
         lval = TypeId(['cl_int'], Id(ErrName))
-        op = '='
         rval = Id('CL_SUCCESS')
-        clSuc = Assignment(lval,op,rval)
+        clSuc = Assignment(lval,rval)
         allocateBuffer.compound.statements.extend(\
             [GroupCompound([clSuc])])
         
@@ -377,7 +374,7 @@ class Rewriter(NodeVisitor):
                                Id('&'+ErrName)])
             rval = FuncDecl(Id('clCreateBuffer'), arglist, Compound([]))
             allocateBuffer.compound.statements.append(\
-                Assignment(lval,op,rval))
+                Assignment(lval,rval))
             arglist = ArgList([Id(ErrName), Constant("clCreateBuffer " + lval.name)])
             ErrCheck = FuncDecl(Id('oclCheckErr'),arglist, Compound([]))
             allocateBuffer.compound.statements.append(ErrCheck)
@@ -388,9 +385,8 @@ class Rewriter(NodeVisitor):
         ArgBody.append(clSuc)
         cntName = Id('counter')
         lval = TypeId(['int'], cntName)
-        op = '='
         rval = Constant(0)
-        ArgBody.append(Assignment(lval,op,rval))
+        ArgBody.append(Assignment(lval,rval))
         
         for n in dictNToDimNames:
             ## add dim arguments to set of ids
@@ -412,7 +408,7 @@ class Rewriter(NodeVisitor):
                                    Id('sizeof(cl_mem)'),\
                                    Id('(void *) &' + dictNToDevPtr[n])])
                 rval = FuncDecl(Id('clSetKernelArg'),arglist, Compound([]))
-                ArgBody.append(Assignment(lval,op,rval))
+                ArgBody.append(Assignment(lval,rval,op))
             else:
                 type = type[0]
                 if type == 'size_t' or type == 'unsigned':
@@ -422,7 +418,7 @@ class Rewriter(NodeVisitor):
                                    Id('sizeof('+cl_type+')'),\
                                    Id('(void *) &' + n)])
                 rval = FuncDecl(Id('clSetKernelArg'),arglist, Compound([]))
-                ArgBody.append(Assignment(lval,op,rval))
+                ArgBody.append(Assignment(lval,rval,op))
         
         arglist = ArgList([Id(ErrName), Constant('clSetKernelArg')])
         ErrId = Id('oclCheckErr')
@@ -440,7 +436,6 @@ class Rewriter(NodeVisitor):
 
         for n in self.Worksize:
             lval = TypeId(['size_t'], Id(self.Worksize[n] + '[]'))
-            op = '='
             if n == 'local':
                 rval = ArrayInit([Id('LSIZE'), Id('LSIZE')])
             else:
@@ -448,10 +443,9 @@ class Rewriter(NodeVisitor):
                 for m in reversed(self.GridIndices):
                     initlist.append(Id(self.UpperLimit[m]))
                 rval = ArrayInit(initlist)
-            execBody.append(Assignment(lval,op,rval))
+            execBody.append(Assignment(lval,rval))
 
         lval = ErrId
-        op = '='
         arglist = ArgList([Id('command_queue'),\
                            Id(self.KernelName),\
                            Constant(self.ParDim),\
@@ -461,7 +455,7 @@ class Rewriter(NodeVisitor):
                            Constant(0), Id('NULL'), \
                            Id('&' + eventName.name)])
         rval = FuncDecl(Id('clEnqueueNDRangeKernel'),arglist, Compound([]))
-        execBody.append(Assignment(lval,op,rval))
+        execBody.append(Assignment(lval,rval))
         
         arglist = ArgList([Id(ErrName), Constant('clEnqueueNDRangeKernel')])
         ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
@@ -470,7 +464,6 @@ class Rewriter(NodeVisitor):
 
         for n in self.WriteOnly:
             lval = ErrId
-            op = '='
             arglist = ArgList([Id('command_queue'),\
                                Id(self.DevId[n]),\
                                Id('CL_TRUE'),\
@@ -480,7 +473,7 @@ class Rewriter(NodeVisitor):
                                Constant(1),
                                Id('&' + eventName.name),Id('NULL')])
             rval = FuncDecl(Id('clEnqueueReadBuffer'),arglist, Compound([]))
-            execBody.append(Assignment(lval,op,rval))
+            execBody.append(Assignment(lval,rval))
             
         arglist = ArgList([Id(ErrName), Constant('clEnqueueReadBuffer')])
         ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
@@ -493,18 +486,38 @@ class Rewriter(NodeVisitor):
 
         argIds = self.NonArrayIds.union(self.ArrayIds)
         typeIdList = []
+        ifThenList = []
         for n in argIds:
             type = self.Type[n]
-            typeIdList.append(TypeId(type,Id(n)))
+            argn = Id('arg_'+n)
+            typeIdList.append(TypeId(type,argn))
+            lval = Id(n)
+            rval = argn
+            ifThenList.append(Assignment(lval,rval))
             try:
                 for m in self.ArrayIdToDimName[n]:
                     type = ['size_t']
-                    typeIdList.append(TypeId(type, Id(m)))
+                    argm = Id('arg_'+m)
+                    lval = Id(m)
+                    rval = argm
+                    ifThenList.append(Assignment(lval,rval))
+                    typeIdList.append(TypeId(type, argm))
             except KeyError:
                 pass
         
         arglist = ArgList(typeIdList)
         runOCL.arglist = arglist
+
+        arglist = ArgList([])
+        ifThenList.append(FuncDecl(Id('StartUpGPU'), arglist, Compound([])))
+        ifThenList.append(FuncDecl(Id('AllocateBuffers'), arglist, Compound([])))
+        arglist = ArgList([Id("\""+self.DevFuncId+"\""),
+                           Id("\""+self.DevFuncId+'.cl\"'), Id(self.KernelName)])
+        ifThenList.append(FuncDecl(Id('compileKernelFromFile'), arglist, Compound([])))
+        
+        runOCLBody.append(IfThen(Id('isFirstTime'), Compound(ifThenList)))
+        
+
 
         print "self.index " , self.index
         print "self.UpperLimit " , self.UpperLimit

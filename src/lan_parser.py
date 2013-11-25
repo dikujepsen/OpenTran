@@ -69,7 +69,7 @@ def p_assignment_expression(p):
     				| identifier assignment_operator expr
     				| array_reference assignment_operator expr
                                 """
-    p[0] = Assignment(p[1], p[2], p[3],p.lineno(1))
+    p[0] = Assignment(p[1], p[3],p.lineno(1))
 
 def p_assignment_expression_semi(p):
     """assignment_expression_semi : assignment_expression SEMI """

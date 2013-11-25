@@ -138,7 +138,7 @@ void RunOCLMatmulKernel(float* arg_hst_ptrA, 	size_t arg_hst_ptrA_dim1,
 
     StartUpGPU();
     AllocateBuffers();
-    compileKernelFromFile(0, "matmul", "matmul.cl", matmulKernel, "");
+    compileKernelFromFile("matmul", "matmul.cl", matmulKernel, "");
     SetArgumentsMatmul();
   }
   ExecMatmulKernel();
