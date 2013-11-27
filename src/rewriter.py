@@ -65,7 +65,22 @@ class Rewriter(NodeVisitor):
         self.ReadWrite = dict()
         # List of arrays that are write only
         self.WriteOnly = list()
+        # List of arguments for the kernel
+        self.KernelArgs = list()
+        ########################################################
+        # Datastructures used when performing transformations  #
+        ########################################################
+        # Holds the sub-AST in AllocateBuffers
+        # that we add transposition to.
+        self.Transposition = None
+        # Holds information about which indices have been swapped
+        # in a transposition
+        self.IdxSwap = dict()
+        # Holds information about which dimensions have been swapped
+        # in a transposition
+        self.DimSwap = dict()
 
+        
         
     def initOriginal(self, ast):
         loops = ForLoops()
@@ -159,6 +174,41 @@ class Rewriter(NodeVisitor):
             if len(pset) == 1 and 'write' in pset:
                 self.WriteOnly.append(n)
 
+        argIds = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
+
+        for n in argIds:
+            tmplist = [n]
+            try:
+                if self.ParDim == 2:
+                    tmplist.append(self.ArrayIdToDimName[n][0])
+            except KeyError:
+                pass
+            for m in tmplist:
+                self.KernelArgs.append(m)
+
+
+        print "self.index " , self.index
+        print "self.UpperLimit " , self.UpperLimit
+        print "self.NumDims " , self.NumDims
+        print "self.ArrayIds " , self.ArrayIds
+        print "self.IndexInSubscript " , self.IndexInSubscript
+        print "self.NonArrayIds " , self.NonArrayIds
+        print "self.RemovedIds " , self.RemovedIds
+        print "self.IndexToGlobalId " , self.IndexToGlobalId
+        print "self.GridIndices " , self.GridIndices
+        print "self.Kernel " , self.Kernel
+        print "self.ArrayIdToDimName " , self.ArrayIdToDimName
+        print "self.DevArgList " , self.DevArgList
+        print "self.DevFuncTypeId " , self.DevFuncTypeId
+        print "self.DevId " , self.DevId
+        print "self.HstId " , self.HstId
+        print "self.Type " , self.Type
+        print "self.Mem " , self.Mem
+        print "self.ParDim " , self.ParDim
+        print "self.Worksize " , self.Worksize
+        print "self.IdxToDim " , self.IdxToDim
+        print "self.WriteOnly " , self.WriteOnly
+        print "self.KernelArgs " , self.KernelArgs
             
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
@@ -192,25 +242,18 @@ class Rewriter(NodeVisitor):
 
         arrays2 = Arrays(self.index)
         arrays2.visit(ast)
-        print "36 " , arrays2.numIndices
-        print "37 " , arrays2.ids
-        print "38 " , arrays2.indexIds
         findDim = FindDim(arrays2.numIndices)
         findDim.visit(ast)
-        print "75 " , findDim.dimNames
-        rewriteArrayRef = RewriteArrayRef(findDim.dimNames)
+        rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName)
         rewriteArrayRef.visit(ast)
 
     def rewriteToDeviceCTemp(self, ast, changeAST = True):
 
 
-        ## print otherIds
         findDeviceArgs = FindDeviceArgs(self.NonArrayIds)
         findDeviceArgs.visit(ast)
-        ## print findDeviceArgs.arglist
         findFunction = FindFunction()
         findFunction.visit(ast)
-        ## print findFunction.typeid
 
         # add OpenCL keywords to indicate the kernel function.
         findFunction.typeid.type.insert(0, '__kernel')
@@ -224,54 +267,32 @@ class Rewriter(NodeVisitor):
         
     def rewriteToDeviceCRelease(self, ast):
 
-        perfectForLoop = PerfectForLoop()
-        perfectForLoop.visit(ast)
-        ## print perfectForLoop.depth
-        ## print perfectForLoop.ast
-        initIds = InitIds()
-        initIds.visit(perfectForLoop.ast.init)
-        gridIds = list()
-        idMap = dict()
-        idMap[initIds.index[0]] = 'get_global_id(0)'
-        gridIds.extend(initIds.index)
-        kernel = perfectForLoop.ast.compound
-        if perfectForLoop.depth == 2:
-            initIds = InitIds()
-            initIds.visit(kernel.statements[0].init)
-            kernel = kernel.statements[0].compound
-            idMap[initIds.index[0]] = 'get_global_id(1)'
-            gridIds.extend(initIds.index)
-            (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
-        print "idmap " , idMap
+        arglist = list()
+        argIds = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
+        # The list of arguments for the kernel
+        dictTypeHostPtrs = copy.deepcopy(self.Type)
+        for n in self.ArrayIds:
+            dictTypeHostPtrs[self.ArrayIdToDimName[n][0]] = ['size_t']
 
-        self.rewriteToSequentialC(ast)
+        for n in self.KernelArgs:
+            type = dictTypeHostPtrs[n]
+            if type[0] == 'size_t':
+                type[0] = 'unsigned'
+            if len(type) == 2:
+                type.insert(0, '__global')
+            arglist.append(TypeId(type, Id(n)))
 
-        ## print kernel
-        arrays = Arrays([])
-        arrays.visit(kernel)
-        typeIds = TypeIds()
-        typeIds.visit(kernel)
-        ## print arrays.ids
-        ## print typeIds.ids
-        ids = Ids()
-        ids.visit(kernel)
-        ## print ids.ids
-        otherIds = ids.ids  - typeIds.ids - set(gridIds)
-        print otherIds
-        findDeviceArgs = FindDeviceArgs(otherIds)
-        findDeviceArgs.visit(ast)
-        print findDeviceArgs.arglist
-        findFunction = FindFunction()
-        findFunction.visit(ast)
-        print findFunction.typeid
 
-        # add OpenCL keywords to indicate the kernel function.
-        findFunction.typeid.type.insert(0, '__kernel')
+        rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName)
+        rewriteArrayRef.visit(self.Kernel)
+
+        exchangeIndices = ExchangeIndices(self.IndexToGlobalId)
+        exchangeIndices.visit(self.Kernel)
+
+        typeid = copy.deepcopy(self.DevFuncTypeId)
+        typeid.type.insert(0, '__kernel')
         
-        exchangeIndices = ExchangeIndices(idMap)
-        exchangeIndices.visit(kernel)
-
-        newast =  FuncDecl(findFunction.typeid, ArgList(findDeviceArgs.arglist,ast.coord), kernel, ast.coord)
+        newast =  FuncDecl(typeid, ArgList(arglist), self.Kernel)
         ast.ext = list()
         ast.ext.append(newast)
 
@@ -288,11 +309,18 @@ class Rewriter(NodeVisitor):
         NonArrayIds = copy.deepcopy(self.NonArrayIds)
         otherIds = self.ArrayIds.union(self.NonArrayIds) - self.RemovedIds
 
-        kernelId = Id(self.KernelName)
-        kernelTypeid = TypeId(['cl_kernel'], kernelId, 0)
 
         fileAST = FileAST([])
+
+        fileAST.ext.append(Id('#include \"StartUtil.cpp\"'))
+        fileAST.ext.append(Id('using namespace std;'))
+        fileAST.ext.append(Id('#define LSIZE 4'))
+
+
+        kernelId = Id(self.KernelName)
+        kernelTypeid = TypeId(['cl_kernel'], kernelId, 0)
         fileAST.ext.append(kernelTypeid)
+
         ## fileAST.show()
 
         listDevBuffers = []
@@ -354,7 +382,12 @@ class Rewriter(NodeVisitor):
                 rval = BinOp(Id(n[1]),'*', rval)
             listSetMemSize.append(Assignment(lval,rval))
 
-        allocateBuffer.compound.statements.extend([GroupCompound(listSetMemSize)])
+        allocateBuffer.compound.statements.append(\
+            GroupCompound(listSetMemSize))
+
+        allocateBuffer.compound.statements.append(\
+            GroupCompound([Comment('// Transposition')]))
+
         #fileAST.ext.append(GroupCompound(listSetMemSize))
 
         ErrName = 'oclErrNum'
@@ -396,9 +429,9 @@ class Rewriter(NodeVisitor):
         
         for n in self.RemovedIds:
             dictTypeHostPtrs.pop(n,None)
-
+        
         ## clSetKernelArg for Arrays
-        for n in dictTypeHostPtrs:
+        for n in self.KernelArgs:
             lval = Id(ErrName)
             op = '|='
             type = dictTypeHostPtrs[n]
@@ -408,17 +441,14 @@ class Rewriter(NodeVisitor):
                                    Id('sizeof(cl_mem)'),\
                                    Id('(void *) &' + dictNToDevPtr[n])])
                 rval = FuncDecl(Id('clSetKernelArg'),arglist, Compound([]))
-                ArgBody.append(Assignment(lval,rval,op))
             else:
-                type = type[0]
-                if type == 'size_t' or type == 'unsigned':
-                    cl_type = 'cl_uint'
+                cl_type = type[0]
                 arglist = ArgList([kernelId,\
                                    Increment(cntName,'++'),\
                                    Id('sizeof('+cl_type+')'),\
                                    Id('(void *) &' + n)])
                 rval = FuncDecl(Id('clSetKernelArg'),arglist, Compound([]))
-                ArgBody.append(Assignment(lval,rval,op))
+            ArgBody.append(Assignment(lval,rval,op))
         
         arglist = ArgList([Id(ErrName), Constant('clSetKernelArg')])
         ErrId = Id('oclCheckErr')
@@ -445,7 +475,7 @@ class Rewriter(NodeVisitor):
                 rval = ArrayInit(initlist)
             execBody.append(Assignment(lval,rval))
 
-        lval = ErrId
+        lval = Id(ErrName)
         arglist = ArgList([Id('command_queue'),\
                            Id(self.KernelName),\
                            Constant(self.ParDim),\
@@ -463,7 +493,7 @@ class Rewriter(NodeVisitor):
 
 
         for n in self.WriteOnly:
-            lval = ErrId
+            lval = Id(ErrName)
             arglist = ArgList([Id('command_queue'),\
                                Id(self.DevId[n]),\
                                Id('CL_TRUE'),\
@@ -491,7 +521,11 @@ class Rewriter(NodeVisitor):
             type = self.Type[n]
             argn = Id('arg_'+n)
             typeIdList.append(TypeId(type,argn))
-            lval = Id(n)
+            try:
+                newn = self.HstId[n]
+            except KeyError:
+                newn = n
+            lval = Id(newn)
             rval = argn
             ifThenList.append(Assignment(lval,rval))
             try:
@@ -511,35 +545,18 @@ class Rewriter(NodeVisitor):
         arglist = ArgList([])
         ifThenList.append(FuncDecl(Id('StartUpGPU'), arglist, Compound([])))
         ifThenList.append(FuncDecl(Id('AllocateBuffers'), arglist, Compound([])))
-        arglist = ArgList([Id("\""+self.DevFuncId+"\""),
-                           Id("\""+self.DevFuncId+'.cl\"'), Id(self.KernelName)])
+        arglist = ArgList([Constant(self.DevFuncId),
+                           Constant(self.DevFuncId+'.cl'),
+                           Id('&' + self.KernelName),
+                           Constant('')])
         ifThenList.append(FuncDecl(Id('compileKernelFromFile'), arglist, Compound([])))
-        
+
+        ifThenList.append(FuncDecl(Id('SetArguments'+self.DevFuncId), ArgList([]), Compound([])))
+
         runOCLBody.append(IfThen(Id('isFirstTime'), Compound(ifThenList)))
         arglist = ArgList([])
-        runOCLBody.append(FuncDecl(Id('Exec' + self.KernelName), arglist, Compound([])))
+        runOCLBody.append(FuncDecl(Id('Exec' + self.DevFuncId), arglist, Compound([])))
 
-        print "self.index " , self.index
-        print "self.UpperLimit " , self.UpperLimit
-        print "self.NumDims " , self.NumDims
-        print "self.ArrayIds " , self.ArrayIds
-        print "self.IndexInSubscript " , self.IndexInSubscript
-        print "self.NonArrayIds " , self.NonArrayIds
-        print "self.RemovedIds " , self.RemovedIds
-        print "self.IndexToGlobalId " , self.IndexToGlobalId
-        print "self.GridIndices " , self.GridIndices
-        print "self.Kernel " , self.Kernel
-        print "self.ArrayIdToDimName " , self.ArrayIdToDimName
-        print "self.DevArgList " , self.DevArgList
-        print "self.DevFuncTypeId " , self.DevFuncTypeId
-        print "self.DevId " , self.DevId
-        print "self.HstId " , self.HstId
-        print "self.Type " , self.Type
-        print "self.Mem " , self.Mem
-        print "self.ParDim " , self.ParDim
-        print "self.Worksize " , self.Worksize
-        print "self.IdxToDim " , self.IdxToDim
-        print "self.WriteOnly " , self.WriteOnly
 
         return fileAST
 
@@ -582,7 +599,6 @@ class ExchangeIndices(NodeVisitor):
         
     def visit_Id(self, node):
         if node.name in self.idMap:
-            ## print self.idMap[node.name]
             node.name = self.idMap[node.name]
         
 
@@ -649,16 +665,17 @@ class RewriteArrayRef(NodeVisitor):
     """ Rewrites the arrays references of form A[i][j] to
     A[i * JDIMSIZE + j]
     """
-    def __init__(self, arrayDims):
-        self.arrayDims = arrayDims
+    def __init__(self, NumDims, ArrayIdToDimName):
+        self.NumDims = NumDims
+        self.ArrayIdToDimName = ArrayIdToDimName
     
     def visit_ArrayRef(self, node):
-        if len(self.arrayDims[node.name.name]) == 2:
+        if self.NumDims[node.name.name] == 2:
             leftbinop = BinOp(node.subscript[0],'*', \
             # Id on first dimension
-            self.arrayDims[node.name.name][0], node.coord)
+            Id(self.ArrayIdToDimName[node.name.name][0]))
             topbinop = BinOp(leftbinop,'+', \
-            node.subscript[1], node.coord)
+            node.subscript[1])
             ## print topbinop
             node.subscript = [topbinop]
 

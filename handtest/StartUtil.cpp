@@ -13,7 +13,7 @@ cl_platform_id platform_id;
 cl_platform_id* platform_ids;
 cl_device_id *device_ids;
 cl_context context;
-cl_command_queue command_queue[NUMDEVS];
+cl_command_queue command_queue;
 
 char * ReadSources(const char *fileName) {
 
@@ -103,11 +103,9 @@ void StartUpGPU() {
   context = clCreateContext(0, num_devices, device_ids, NULL, NULL, &err);
   oclCheckErr(err, "clCreateContext");
 
-  for (size_t i = 0; i < num_devices; i++){
-    command_queue[i] = clCreateCommandQueue(context, device_ids[i],
+    command_queue = clCreateCommandQueue(context, device_ids[0],
 					    CL_QUEUE_PROFILING_ENABLE, &err);
     oclCheckErr(err, "clCreateCommandQueue");
-  }
 }
 
 
@@ -145,7 +143,7 @@ void compileKernelFromFile(std::string kernel_name,
   oclCheckErr(err, "clBuildProgram");
 
 
-  kernel = clCreateKernel(program, kernel_name.c_str(), &err);
+  kernel[0] = clCreateKernel(program, kernel_name.c_str(), &err);
   oclCheckErr(err, "clCreateKernel");
 
   err |= clReleaseProgram(program);

@@ -197,6 +197,8 @@ class CGenerator(object):
         try:
             s = float(n.value)
         except ValueError:
+            if len(n.value) == 0:
+                return '\"\"'
             if n.value[0] == '"':
                 return n.value
             else:

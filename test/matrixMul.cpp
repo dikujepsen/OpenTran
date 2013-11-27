@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
-#include "../src/ctemp.cpp"
+#include "boilerplate.cpp"
 
 using namespace std;
 
@@ -68,11 +68,11 @@ int main(int argc, char** argv)
 #if 0
   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
 #else
-  matmulfunc4(
+  RunOCLmatmulfunc4Kernel(
 	 A_mat, wA, hA,
-	 B_mat, wB, hB,
 	 C_mat, wC, hC,
-	 hA, wB, wA);  
+	 B_mat, wB, hB,
+	 wB, wA, hA);  
 #endif
 
   printMat(C_mat,C_size);
