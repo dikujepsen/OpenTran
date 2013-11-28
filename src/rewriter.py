@@ -73,6 +73,12 @@ class Rewriter(NodeVisitor):
         # Holds the sub-AST in AllocateBuffers
         # that we add transposition to.
         self.Transposition = None
+        # Holds the sub-AST in AllocateBuffers
+        # that we add transposition to.
+        self.Transposition = None
+        # Holds information about which names have been swapped
+        # in a transposition
+        self.NameSwap = dict()
         # Holds information about which indices have been swapped
         # in a transposition
         self.IdxSwap = dict()
@@ -186,6 +192,7 @@ class Rewriter(NodeVisitor):
             for m in tmplist:
                 self.KernelArgs.append(m)
 
+        self.NameSwap['A'] = 'A_trans'
 
         print "self.index " , self.index
         print "self.UpperLimit " , self.UpperLimit
@@ -209,7 +216,7 @@ class Rewriter(NodeVisitor):
         print "self.IdxToDim " , self.IdxToDim
         print "self.WriteOnly " , self.WriteOnly
         print "self.KernelArgs " , self.KernelArgs
-            
+        print "self.NameSwap " , self.NameSwap
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
     	abstraction level.
@@ -385,25 +392,29 @@ class Rewriter(NodeVisitor):
         allocateBuffer.compound.statements.append(\
             GroupCompound(listSetMemSize))
 
+        self.Transposition = GroupCompound([Comment('// Transposition')])
         allocateBuffer.compound.statements.append(\
-            GroupCompound([Comment('// Transposition')]))
-
-        #fileAST.ext.append(GroupCompound(listSetMemSize))
-
+            self.Transposition)
+        
         ErrName = 'oclErrNum'
         lval = TypeId(['cl_int'], Id(ErrName))
         rval = Id('CL_SUCCESS')
         clSuc = Assignment(lval,rval)
         allocateBuffer.compound.statements.extend(\
             [GroupCompound([clSuc])])
-        
+
         for n in dictNToDevPtr:
             lval = Id(dictNToDevPtr[n])
             op = '='
+            
+            try:
+                arrayn = self.NameSwap[n]
+            except KeyError:
+                arrayn = dictNToHstPtr[n]
             arglist = ArgList([Id('context'),\
                                Id('CL_MEM_COPY_HOST_PTR'),\
                                Id(dictNToSize[n]),\
-                               Id(dictNToHstPtr[n]),\
+                               Id(arrayn),\
                                Id('&'+ErrName)])
             rval = FuncDecl(Id('clCreateBuffer'), arglist, Compound([]))
             allocateBuffer.compound.statements.append(\
@@ -557,6 +568,8 @@ class Rewriter(NodeVisitor):
         arglist = ArgList([])
         runOCLBody.append(FuncDecl(Id('Exec' + self.DevFuncId), arglist, Compound([])))
 
+        print "TRANSFORMATIONS"
+        print "self.Transposition " , self.Transposition
 
         return fileAST
 
