@@ -1,11 +1,10 @@
 Transpose an array A:
 -- In host code
- + Change argument for the dimension.
- + Create a A_transposed variable
- + Code for transposing A into A_transposed
+ + Change argument for the dimension. -> In SetArguments dict
+ + Code for transposing A into A_transposed -> In the transposition AST
 
 -- In device code
- + Change the subscript in A to match the transposed data in A_transposed
+ + Change the subscript in A to match the transposed data in A_transposed -> In the AST, but check that it is correct, i.e. that we have 2-dimed subscripts in the AST.
 
 -- Must run transpose before generating any boilerplate code, otherwise we need to make changes to the generated AST, which is more troublesome.
 
@@ -14,3 +13,10 @@ First step try to swap array name at the correct places
 
 First step try to swap dimension at the correct places
  + only in SetArguments?
+
+-- hold certain Dicts for each Function. Share where necessary.
+
+# DONE
+-- One Dict KernelArg for SetArguments  
+ + Create a A_transposed variable     -> In hstptrs dict, in the global addr space
+ + Done by Adding GlobalVars dict

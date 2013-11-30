@@ -73,9 +73,9 @@ class Rewriter(NodeVisitor):
         # Holds the sub-AST in AllocateBuffers
         # that we add transposition to.
         self.Transposition = None
-        # Holds the sub-AST in AllocateBuffers
-        # that we add transposition to.
-        self.Transposition = None
+        # Dict containing the name and type for each kernel argument
+        # set in SetArguments
+        self.KernelArgs = dict()
         # Holds information about which names have been swapped
         # in a transposition
         self.NameSwap = dict()
@@ -85,7 +85,9 @@ class Rewriter(NodeVisitor):
         # Holds information about which dimensions have been swapped
         # in a transposition
         self.DimSwap = dict()
-
+        # Holds additional variables that we add
+        # when we to perform transformations       
+        self.GlobalVars = dict()
         
         
     def initOriginal(self, ast):
@@ -166,6 +168,11 @@ class Rewriter(NodeVisitor):
             type = n.type[-2:]
             self.Type[name] = type
 
+        for n in self.ArrayIdToDimName:
+            for m in self.ArrayIdToDimName[n]:
+                self.Type[m] = ['size_t']
+            
+            
         kernelName = self.DevFuncTypeId.name.name
         
         self.KernelName = kernelName + 'Kernel'
@@ -190,7 +197,7 @@ class Rewriter(NodeVisitor):
             except KeyError:
                 pass
             for m in tmplist:
-                self.KernelArgs.append(m)
+                self.KernelArgs[m] = self.Type[m]
 
         self.NameSwap['A'] = 'A_trans'
 
@@ -217,6 +224,8 @@ class Rewriter(NodeVisitor):
         print "self.WriteOnly " , self.WriteOnly
         print "self.KernelArgs " , self.KernelArgs
         print "self.NameSwap " , self.NameSwap
+
+
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
     	abstraction level.
@@ -304,6 +313,14 @@ class Rewriter(NodeVisitor):
         ast.ext.append(newast)
 
 
+    def transpose(self, arrName):
+        hstName = self.HstId[arrName]
+        hstTransName = hstName + '_trans'
+        self.GlobalVars[hstTransName] = ''
+        self.Type[hstTransName] = self.Type[arrName]
+        
+
+
     def generateBoilerplateCode(self, ast):
 
 
@@ -353,6 +370,10 @@ class Rewriter(NodeVisitor):
                 pass
             listHostPtrs.append(TypeId(type, Id(name), 0))
 
+        for n in self.GlobalVars:
+            type = self.Type[n]
+            listHostPtrs.append(TypeId(type, Id(n), 0))
+
         dictNToHstPtr = self.HstId
         dictTypeHostPtrs = copy.deepcopy(self.Type)
         listHostPtrs = GroupCompound(listHostPtrs)
@@ -384,7 +405,7 @@ class Rewriter(NodeVisitor):
             n = self.ArrayIdToDimName[entry]
             lval = Id(self.Mem[entry])
             rval = BinOp(Id(n[0]),'*', Id('sizeof('+\
-                dictTypeHostPtrs[entry][0]+')'))
+                self.Type[entry][0]+')'))
             if len(n) == 2:
                 rval = BinOp(Id(n[1]),'*', rval)
             listSetMemSize.append(Assignment(lval,rval))
@@ -408,7 +429,7 @@ class Rewriter(NodeVisitor):
             op = '='
             
             try:
-                arrayn = self.NameSwap[n]
+                arrayn = self.NameSwap['notakey']
             except KeyError:
                 arrayn = dictNToHstPtr[n]
             arglist = ArgList([Id('context'),\
@@ -445,7 +466,7 @@ class Rewriter(NodeVisitor):
         for n in self.KernelArgs:
             lval = Id(ErrName)
             op = '|='
-            type = dictTypeHostPtrs[n]
+            type = self.Type[n]
             if len(type) == 2:
                 arglist = ArgList([kernelId,\
                                    Increment(cntName,'++'),\

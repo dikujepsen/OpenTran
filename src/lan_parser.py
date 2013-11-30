@@ -319,6 +319,7 @@ if __name__ == "__main__":
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = 'matmulfunc4.cl')
 
+        rw.transpose('A')
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
         
