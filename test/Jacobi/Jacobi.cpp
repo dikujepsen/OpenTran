@@ -1,21 +1,18 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
-#include "oclMatmul.cpp"
 
 using namespace std;
 
 void
-matmul(float* A, float* B, float* C, unsigned hA, unsigned wA, unsigned wB)
+matmul(float* B, float* X1, float* X2, unsigned hA, unsigned wA)
 {
-    for (unsigned i = 0; i < hA; ++i)
-        for (unsigned j = 0; j < wB; ++j) {
-            float sum = 0;
-            for (unsigned k = 0; k < wA; ++k) {
-                sum += A[i * wA + k] * B[k * wB + j];
-            }
-            C[i * wB + j] = sum;
-        }
+  for (unsigned i = 1; i < (hA+1); ++i) {
+    for (unsigned j = 1; j < (wB+1); ++j) {
+      X2[i*wA + j] = B[(i-1) * wA + (j-1)] - 
+    }
+  }
+    
 }
 
 void

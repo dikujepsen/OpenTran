@@ -318,6 +318,8 @@ if __name__ == "__main__":
 
 
         rw.transpose('A')
+        rw.transpose('B')
+        rw.transpose('C')
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = 'matmulfunc4.cl')
