@@ -79,6 +79,10 @@ class Rewriter(NodeVisitor):
         # Holds information about which names have been swapped
         # in a transposition
         self.NameSwap = dict()
+        # Holds information about which subscripts have been swapped
+        # in a transposition
+        self.SubSwap = dict()
+
         # Holds information about which indices have been swapped
         # in a transposition
         self.IdxSwap = dict()
@@ -199,8 +203,9 @@ class Rewriter(NodeVisitor):
             for m in tmplist:
                 self.KernelArgs[m] = self.Type[m]
 
-        self.NameSwap['A'] = 'A_trans'
+        self.Transposition = GroupCompound([Comment('// Transposition')])
 
+    def dataStructures(self):
         print "self.index " , self.index
         print "self.UpperLimit " , self.UpperLimit
         print "self.NumDims " , self.NumDims
@@ -222,6 +227,8 @@ class Rewriter(NodeVisitor):
         print "self.Worksize " , self.Worksize
         print "self.IdxToDim " , self.IdxToDim
         print "self.WriteOnly " , self.WriteOnly
+        print "TRANSFORMATIONS"
+        print "self.Transposition " , self.Transposition
         print "self.KernelArgs " , self.KernelArgs
         print "self.NameSwap " , self.NameSwap
 
@@ -298,8 +305,9 @@ class Rewriter(NodeVisitor):
                 type.insert(0, '__global')
             arglist.append(TypeId(type, Id(n)))
 
+        
 
-        rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName)
+        rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName,self)
         rewriteArrayRef.visit(self.Kernel)
 
         exchangeIndices = ExchangeIndices(self.IndexToGlobalId)
@@ -314,12 +322,32 @@ class Rewriter(NodeVisitor):
 
 
     def transpose(self, arrName):
+        if self.NumDims[arrName] != 2:
+            print "Array ", arrName , "of dimension " , \
+                  self.NumDims[arrName], "cannot be transposed"
+            return
         hstName = self.HstId[arrName]
         hstTransName = hstName + '_trans'
         self.GlobalVars[hstTransName] = ''
         self.Type[hstTransName] = self.Type[arrName]
-        
+        # Swap the hst ptr
+        self.NameSwap[hstName] = hstTransName
+        # Swap the dimension argument
+        dimName = self.ArrayIdToDimName[arrName]
+        self.NameSwap[dimName[0]] = dimName[1]
 
+        lval = Id(hstTransName)
+        natType = self.Type[arrName][0]
+        rval = Id('new ' + natType + '['\
+                  + self.Mem[arrName] + ']')
+        self.Transposition.statements.append(Assignment(lval,rval))
+        arglist = ArgList([Id(hstName),\
+                   Id(hstTransName),\
+                   Id(dimName[0]),\
+                   Id(dimName[1])])
+        trans = FuncDecl(Id('transpose<'+natType+'>'), arglist, Compound([]))
+        self.Transposition.statements.append(trans)
+        self.SubSwap[arrName] = True
 
     def generateBoilerplateCode(self, ast):
 
@@ -413,7 +441,6 @@ class Rewriter(NodeVisitor):
         allocateBuffer.compound.statements.append(\
             GroupCompound(listSetMemSize))
 
-        self.Transposition = GroupCompound([Comment('// Transposition')])
         allocateBuffer.compound.statements.append(\
             self.Transposition)
         
@@ -427,11 +454,11 @@ class Rewriter(NodeVisitor):
         for n in dictNToDevPtr:
             lval = Id(dictNToDevPtr[n])
             op = '='
-            
+            arrayn = dictNToHstPtr[n]
             try:
-                arrayn = self.NameSwap['notakey']
+                arrayn = self.NameSwap[arrayn]
             except KeyError:
-                arrayn = dictNToHstPtr[n]
+                pass
             arglist = ArgList([Id('context'),\
                                Id('CL_MEM_COPY_HOST_PTR'),\
                                Id(dictNToSize[n]),\
@@ -474,6 +501,10 @@ class Rewriter(NodeVisitor):
                                    Id('(void *) &' + dictNToDevPtr[n])])
                 rval = FuncDecl(Id('clSetKernelArg'),arglist, Compound([]))
             else:
+                try:
+                    n = self.NameSwap[n]
+                except KeyError:
+                    pass
                 cl_type = type[0]
                 arglist = ArgList([kernelId,\
                                    Increment(cntName,'++'),\
@@ -589,8 +620,6 @@ class Rewriter(NodeVisitor):
         arglist = ArgList([])
         runOCLBody.append(FuncDecl(Id('Exec' + self.DevFuncId), arglist, Compound([])))
 
-        print "TRANSFORMATIONS"
-        print "self.Transposition " , self.Transposition
 
         return fileAST
 
@@ -699,15 +728,23 @@ class RewriteArrayRef(NodeVisitor):
     """ Rewrites the arrays references of form A[i][j] to
     A[i * JDIMSIZE + j]
     """
-    def __init__(self, NumDims, ArrayIdToDimName):
+    def __init__(self, NumDims, ArrayIdToDimName, data):
+        self.data = data
         self.NumDims = NumDims
         self.ArrayIdToDimName = ArrayIdToDimName
     
     def visit_ArrayRef(self, node):
-        if self.NumDims[node.name.name] == 2:
+        n = node.name.name
+        if self.data.NumDims[n] == 2:
+            try:
+                if self.data.SubSwap[n]:
+                    (node.subscript[0], node.subscript[1]) = \
+                    (node.subscript[1], node.subscript[0])
+            except KeyError:
+                pass
             leftbinop = BinOp(node.subscript[0],'*', \
             # Id on first dimension
-            Id(self.ArrayIdToDimName[node.name.name][0]))
+            Id(self.ArrayIdToDimName[n][0]))
             topbinop = BinOp(leftbinop,'+', \
             node.subscript[1])
             ## print topbinop

@@ -1,8 +1,4 @@
 Transpose an array A:
--- In host code
- + Change argument for the dimension. -> In SetArguments dict
- + Code for transposing A into A_transposed -> In the transposition AST
-
 -- In device code
  + Change the subscript in A to match the transposed data in A_transposed -> In the AST, but check that it is correct, i.e. that we have 2-dimed subscripts in the AST.
 
@@ -18,5 +14,8 @@ First step try to swap dimension at the correct places
 
 # DONE
 -- One Dict KernelArg for SetArguments  
+-- In host code
+ + Change argument for the dimension. -> In SetArguments dict
+ + Code for transposing A into A_transposed -> In the transposition AST
  + Create a A_transposed variable     -> In hstptrs dict, in the global addr space
  + Done by Adding GlobalVars dict

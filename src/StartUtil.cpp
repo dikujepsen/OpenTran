@@ -156,7 +156,7 @@ void transpose(T * sink, T* source, size_t source_dim1, size_t source_dim2) {
 
   for (size_t i = 0; i < source_dim2; i++) {
     for (size_t j = 0; j < source_dim1; j++) {
-      sink[j * source_dim2 + i] = source[i * source_dim1 + j];
+      source[j * source_dim2 + i] = sink[i * source_dim1 + j];
     }
   }
 

@@ -66,13 +66,13 @@ int main(int argc, char** argv)
   randMat(B_mat,B_size);
   randMat(C_mat,C_size);
 
-  transpose(A_mattrans, A_mat, wA, hA);
+  // transpose(A_mat, A_mattrans, wA, hA);
   
 #if 0
   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
 #else
   RunOCLmatmulfunc4Kernel(
-	 A_mattrans, wA, hA,
+	 A_mat, wA, hA,
 	 C_mat, wC, hC,
 	 B_mat, wB, hB,
 	 wB, wA, hA);  
