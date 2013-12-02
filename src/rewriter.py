@@ -110,7 +110,6 @@ class Rewriter(NodeVisitor):
         self.NumDims = arrays.numSubscripts
         self.ArrayIds = arrays.ids
         self.IndexInSubscript = arrays.indexIds
-
         typeIds = TypeIds()
         typeIds.visit(ast)
 
@@ -267,7 +266,9 @@ class Rewriter(NodeVisitor):
         arrays2.visit(ast)
         findDim = FindDim(arrays2.numIndices)
         findDim.visit(ast)
-        rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName)
+        rewriteArrayRef = RewriteArrayRef(self.NumDims,
+                                          self.ArrayIdToDimName,
+                                          self)
         rewriteArrayRef.visit(ast)
 
     def rewriteToDeviceCTemp(self, ast, changeAST = True):
@@ -881,12 +882,13 @@ class Arrays(NodeVisitor):
         name = node.name.name
         self.ids.add(name)
         numIndcs = NumIndices(99, self.loopindices)
-        self.numSubscripts[name] = len(node.subscript)
         for s in node.subscript:
             numIndcs.visit(s)
         if name not in self.numIndices:
             self.numIndices[name] = numIndcs.num
+            self.numSubscripts[name] = numIndcs.num
             self.indexIds[name] = numIndcs.found
+        self.numSubscripts[name] = max(len(node.subscript),self.numIndices[name])
 
 class TypeIds(NodeVisitor):
     """ Finds type Ids """

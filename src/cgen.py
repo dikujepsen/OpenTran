@@ -31,7 +31,7 @@ class CGenerator(object):
         except IOError:
             print "Unable to write file"
        
-    def not_simple_node(self, n):
+    def simple_node(self, n):
         """ Returns True for nodes that are "simple"
         """
         return not isinstance(n, (Constant, Id, ArrayRef))
@@ -153,8 +153,8 @@ class CGenerator(object):
         return s
 
     def visit_BinOp(self, n):
-        lval = self.parenthesize_if(n.lval,self.not_simple_node)
-        rval = self.parenthesize_if(n.rval,self.not_simple_node)
+        lval = self.parenthesize_if(n.lval,self.simple_node)
+        rval = self.parenthesize_if(n.rval,self.simple_node)
         return lval + ' ' + n.op + ' ' + rval
 
     def visit_FuncDecl(self, n):

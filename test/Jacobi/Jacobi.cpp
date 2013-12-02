@@ -1,27 +1,51 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <cmath>
+#include "../../src/ctemp.cpp"
+#include "../../src/boilerplate.cpp"
+
 
 using namespace std;
 
 void
-matmul(float* B, float* X1, float* X2, unsigned hA, unsigned wA)
+jacobi(float* B, float* X1, float* X2, unsigned wA, unsigned wB)
 {
-  for (unsigned i = 1; i < (hA+1); ++i) {
-    for (unsigned j = 1; j < (wB+1); ++j) {
-      X2[i*wA + j] = B[(i-1) * wA + (j-1)] - 
+  for (unsigned i = 1; i < wB; i++) {
+    for (unsigned j = 1; j < wB; j++) {
+      X2[i*wA + j] = -0.25 * (B[i * wB + j] -
+			      (X1[(i-1) * wA + j] + X1[(i+1) * wA + j]) -
+			      (X1[i * wA + (j-1)] + X1[i * wA + (j+1)]));
     }
   }
     
 }
 
 void
-randMat(float* mat, unsigned mat_size)
+createB(float* B, unsigned wB, unsigned hB)
 {
-  for (unsigned i = 0; i < mat_size; ++i) {
-    mat[i] = (float)((rand() % 10)/10.0);
+  float fwB = (float) wB;
+  float fhB = (float) hB;
+  float h_x = 1/(fwB);
+  float h_y = 1/(fhB);
+  float h_sq = 1/((fhB)*(fhB));
+  for (unsigned i = 1; i < (hB); i++) {
+    for (unsigned j = 1; j < (wB); j++) {
+      B[i * wB + j] = -2*(M_PI * M_PI)*sin(M_PI*(j)*h_x) * sin(M_PI*(i)*h_y) * h_sq;
+    }
   }
 }
+
+void
+zeroMatrix(float* B, unsigned wB, unsigned hB)
+{
+  for (unsigned i = 0; i < (hB); i++) {
+    for (unsigned j = 0; j < (wB); j++) {
+      B[i * wB + j] = 0;
+    }
+  }
+}
+
 
 void
 printMat(float* mat, unsigned mat_size)
@@ -35,42 +59,71 @@ printMat(float* mat, unsigned mat_size)
   cout << endl;
 }
 
+void
+printMat2(float* mat, unsigned wMat, unsigned hMat)
+{
+  for (unsigned i = 0; i < (hMat); i++) {
+    for (unsigned j = 0; j < (wMat); j++) {
+      cout << mat[i * wMat + j] << " ";
+    }
+    cout << endl;
+  }
+  cout << endl;
+}
 
-#define matsize 8
+void
+copyMat(float* mat1, float* mat2, unsigned wMat, unsigned hMat)
+{
+  for (unsigned i = 0; i < hMat; i++) {
+    for (unsigned j = 0; j < wMat; j++) {
+      mat1[i * wMat + j] = mat2[i * wMat + j];
+    }
+  }
+}
+
+
+#define matsize 7
 
 int main(int argc, char** argv)
 {
-  unsigned hA = matsize;
-  unsigned hB = matsize;
-  unsigned hC = matsize;
-  unsigned wA = matsize;
-  unsigned wB = matsize;
-  unsigned wC = matsize;
+  unsigned hA = matsize+2;
+  unsigned hB = matsize+1;
+  unsigned hC = matsize+2;
+  unsigned wA = matsize+2;
+  unsigned wB = matsize+1;
+  unsigned wC = matsize+2;
 
   unsigned A_size = hA*wA;
   unsigned B_size = hB*wB;
   unsigned C_size = hC*wC;
   
   float* A_mat = new float[A_size];
-  hst_ptrA_dim1 = wA;
-  hst_ptrA_dim2 = hA;
   float* B_mat = new float[B_size];
   float* C_mat = new float[C_size];
 
-  srand(2013);
-
-  randMat(A_mat,A_size);
-  randMat(B_mat,B_size);
-  randMat(C_mat,C_size);
-#define GPU 1
+  zeroMatrix(A_mat, wA, hA);
+  zeroMatrix(C_mat, wC, hC);
+  
+#define GPU 0
 #if GPU
-  RunOCLMatmulKernel(A_mat,wA,hA,
+  RunOCLJacobiKernel(C_mat,wC,hC,
 		     B_mat,wB,hB,
-		     C_mat,wC,hC);
+		     A_mat,wA,hA,
+		     wB, wA
+		     );
 #else
-  matmul(A_mat, B_mat, C_mat, hA, wA, wB);
+  createB(B_mat, wB, hB);
+  for (int i = 2; i < 1000; i++) {
+    // jacobi(B_mat, A_mat, C_mat, wA, wB);
+    Jacobi(C_mat, wC, hC,
+	   A_mat, wA, hA,
+	   B_mat, wB, hB,
+	   wB);
+    copyMat(A_mat, C_mat, wA, hA);
+    
+  }
 #endif
-  printMat(C_mat,C_size);
+  printMat2(C_mat, wC, hC);
 
   free(A_mat);
   free(B_mat);

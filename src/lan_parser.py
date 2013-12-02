@@ -12,7 +12,6 @@ precedence = (
 
 def p_first(p):
     """ first : beginning_list
-    		| empty
     """
     p[0] =  FileAST([]) if p[1] is None else FileAST(p[1])
 
@@ -83,30 +82,16 @@ def p_constant(p):
     """
     p[0] = Constant(p[1],p.lineno(1))
     
-def p_unary_token_before(p):
-    """unary_token_before :  MINUS 
-    | LOGNOT
-    """
-    p[0] = p[1]
-
-def p_unary_token_after(p):
-    """unary_token_after :   PLUSPLUS
-    | MINUSMINUS
-    """
-    p[0] = p[1]
-
-def p_unary_expression(p):
-    """ unary_expression : unary_token_before term"""    
-    p[0] = UnaryBefore(p[1],p[2],p.lineno(1))
-
 def p_increment(p):
     """ increment : term unary_token_after  """    
     p[0] = Increment(p[1],p[2],p.lineno(1))
 
 
+
 def p_binop_paren(p):
-    """binop_paren : LPAREN binop_expression RPAREN
-    | binop_expression"""
+    """binop : LPAREN binop_expression RPAREN
+    | binop_expression
+    """
     if len(p) == 2:
         p[0] = p[1]
     else:
@@ -115,48 +100,31 @@ def p_binop_paren(p):
 
 def p_binop_expression(p):
     """ binop_expression : term
-    | binop_paren TIMES binop_paren
-    | binop_paren DIVIDE binop_paren
-    | binop_paren binary_token binop_paren   """
+    | binop DIVIDE binop
+    | binop TIMES binop
+    | binop PLUS  binop
+    | binop MINUS binop
+    | binop MOD binop
+    | binop OR binop
+    | binop AND binop
+    | binop LSHIFT binop
+    | binop RSHIFT binop
+    | binop LOGOR binop
+    | binop LOGAND binop
+    | binop LT binop
+    | binop GT binop
+    | binop LE binop
+    | binop GE binop
+    | binop EQ binop
+    | binop NE binop
+
+
+    """
     if len(p) == 2:
         p[0] = p[1]
     else:
         p[0] = BinOp(p[1], p[2], p[3], p.lineno(1))
 
-def p_binop(p):
-    """ binop : binop_expression
-    """
-    if len(p) == 4:
-        p[0] = p[2]
-    else:
-        p[0] = p[1]
-
-def p_expr(p):
-    """ expr : unary_expression
-    | binop
-    | term
-    """
-    p[0] = p[1]
-
-
-def p_binary_token(p):
-    """binary_token : PLUS
-    | MINUS
-    | MOD
-    | OR
-    | AND
-    | LSHIFT
-    | RSHIFT
-    | LOGOR
-    | LOGAND
-    | LT
-    | GT
-    | LE
-    | GE
-    | EQ
-    | NE
-    """
-    p[0] = p[1]
 
 
 def p_subscript(p):
@@ -183,12 +151,29 @@ def p_for_loop(p):
     """
     p[0] = ForLoop(p[3], p[5], p[7], p[9], p.lineno(1))
 
+def p_unary_token_before(p):
+    """unary_token_before :  MINUS 
+    | LOGNOT
+    """
+    p[0] = p[1]
+
+def p_unary_token_after(p):
+    """unary_token_after :   PLUSPLUS
+    | MINUSMINUS
+    """
+    p[0] = p[1]
+
+def p_unary_expression(p):
+    """ unary_expression : unary_token_before term"""    
+    p[0] = UnaryBefore(p[1],p[2],p.lineno(1))
+
 
 
 def p_term(p):
     """term : identifier
     | constant
     | array_reference
+    | unary_expression
     """
     p[0] = p[1]
 
@@ -229,6 +214,12 @@ def p_native_type(p):
     """
     p[0] = p[1]
 
+def p_expr(p):
+    """ expr : binop
+    """
+    p[0] = p[1]
+
+
 def p_type(p):
     """type : native_type
 	| native_type TIMES """
@@ -263,11 +254,11 @@ if __name__ == "__main__":
 
     run = 1
     while run:
-        filename = '../test/matmulfunc4.cpp'
+        filename = '../test/Jacobi.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             ## f = open('../test/matmulfunc2.cpp', 'r')
-            ##f = open('../test/matrixMul.cpp', 'r')
+            ## f = open('../test/matrixMul.cpp', 'r')
             ## f = open('../test/matmulfunc3.cpp', 'r')
             f = open(filename, 'r')
             s = f.read()
@@ -284,19 +275,19 @@ if __name__ == "__main__":
             ## print tok
         
         ast = cparser.parse(s)
+        ## ast.show()
         ## print ast
         ## print slist
-        #ast.show()
         cprint = CGenerator()
         ## printres = cprint.visit(ast)
         ## print printres
         rw = Rewriter()
         rw.initOriginal(ast)
         ## rw.rewrite(ast, funcname, changeAST = True)
-        ## cprint.createTemp(ast, filename = 'data.cpp')
+        ## cprint.createTemp(ast, filename = 'tempjacobi.cpp')
 
         run = 0
-        filename = '../src/temp.cpp'
+        filename = '../src/tempjacobi.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -310,19 +301,20 @@ if __name__ == "__main__":
         ## ## ast.show()
         tempast = copy.deepcopy(ast)
         tempast2 = copy.deepcopy(ast)
-        ## ## rw.rewriteToSequentialC(ast)
-        ## ## cprint.createTemp(ast, filename = 'ctemp.cpp')
         rw.initNewRepr(tempast)
+
+        ## rw.rewriteToSequentialC(ast)
+        ## cprint.createTemp(ast, filename = 'ctemp.cpp')
         ## rw.rewriteToDeviceCTemp(tempast, False)
         ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
 
-        rw.transpose('A')
-        rw.transpose('B')
-        rw.transpose('C')
+        ## rw.transpose('A')
+        ## rw.transpose('B')
+        ## rw.transpose('C')
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
-        cprint.createTemp(tempast2, filename = 'matmulfunc4.cl')
+        cprint.createTemp(tempast2, filename = '../test/Jacobi/Jacobi.cl')
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
         

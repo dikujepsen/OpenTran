@@ -6,7 +6,7 @@ CC = g++
 
 OPTS = -O3 -Wall
 
-matrixMul: Jacobi.cpp 
+Jacobi: Jacobi.cpp 
 	$(CC) $(OPTS) $@.cpp -o $@ $(LNK_LIB)
 
 
