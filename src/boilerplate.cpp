@@ -86,11 +86,12 @@ void ExecJacobi()
 {
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
-  size_t Jacobi_global_worksize[] = {wB, wB};
+  size_t Jacobi_global_worksize[] = {wB - 1, wB - 1};
   size_t Jacobi_local_worksize[] = {LSIZE, LSIZE};
+  size_t Jacobi_global_offset[] = {1, 1};
   oclErrNum = clEnqueueNDRangeKernel(
 	command_queue, JacobiKernel, 2, 
-	0, Jacobi_global_worksize, Jacobi_local_worksize, 
+	Jacobi_global_offset, Jacobi_global_worksize, Jacobi_local_worksize, 
 	0, NULL, &GPUExecution);
   oclCheckErr(
 	oclErrNum, "clEnqueueNDRangeKernel");

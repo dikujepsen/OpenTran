@@ -303,8 +303,8 @@ if __name__ == "__main__":
         tempast2 = copy.deepcopy(ast)
         rw.initNewRepr(tempast)
 
-        ## rw.rewriteToSequentialC(ast)
-        ## cprint.createTemp(ast, filename = 'ctemp.cpp')
+        rw.rewriteToSequentialC(ast)
+        cprint.createTemp(ast, filename = 'ctemp.cpp')
         ## rw.rewriteToDeviceCTemp(tempast, False)
         ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 

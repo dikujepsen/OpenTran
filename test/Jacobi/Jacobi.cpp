@@ -82,7 +82,7 @@ copyMat(float* mat1, float* mat2, unsigned wMat, unsigned hMat)
 }
 
 
-#define matsize 7
+#define matsize 8
 
 int main(int argc, char** argv)
 {
@@ -104,7 +104,10 @@ int main(int argc, char** argv)
   zeroMatrix(A_mat, wA, hA);
   zeroMatrix(C_mat, wC, hC);
   
-#define GPU 0
+  createB(B_mat, wB, hB);
+  printMat2(B_mat, wB, hB);
+
+#define GPU 1
 #if GPU
   RunOCLJacobiKernel(C_mat,wC,hC,
 		     B_mat,wB,hB,
@@ -112,15 +115,13 @@ int main(int argc, char** argv)
 		     wB, wA
 		     );
 #else
-  createB(B_mat, wB, hB);
-  for (int i = 2; i < 1000; i++) {
+  for (int i = 2; i < 3; i++) {
     // jacobi(B_mat, A_mat, C_mat, wA, wB);
     Jacobi(C_mat, wC, hC,
 	   A_mat, wA, hA,
 	   B_mat, wB, hB,
-	   wB);
-    copyMat(A_mat, C_mat, wA, hA);
-    
+	   wB, wA);
+    copyMat(A_mat, C_mat, wA, hA);    
   }
 #endif
   printMat2(C_mat, wC, hC);

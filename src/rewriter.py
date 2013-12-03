@@ -17,8 +17,12 @@ class Rewriter(NodeVisitor):
     def __init__(self):
         # List of loop indices
         self.index = list()
-        # list of the upper limit of the loop indices
-        self.UpperLimit = list()
+        # dict of the upper limit of the loop indices
+        self.UpperLimit = dict()
+        # dict of the lower limit of the loop indices
+        self.LowerLimit = dict()
+        # The local work group size
+        self.Local = 4
         # The number of dimensions of each array 
         self.NumDims = dict()
         # The Ids of arrays, or pointers
@@ -102,6 +106,7 @@ class Rewriter(NodeVisitor):
         loopIndices.visit(forLoopAst)
         self.index = loopIndices.index
         self.UpperLimit = loopIndices.end
+        self.LowerLimit = loopIndices.start
 
         norm = Norm(self.index)
         norm.visit(forLoopAst)
@@ -181,6 +186,7 @@ class Rewriter(NodeVisitor):
         self.KernelName = kernelName + 'Kernel'
         self.Worksize['local'] = kernelName + '_local_worksize'
         self.Worksize['global'] = kernelName + '_global_worksize'
+        self.Worksize['offset'] = kernelName + '_global_offset'
         findReadWrite = FindReadWrite(self.ArrayIds)
         findReadWrite.visit(ast)
         self.ReadWrite = findReadWrite.ReadWrite
@@ -207,6 +213,7 @@ class Rewriter(NodeVisitor):
     def dataStructures(self):
         print "self.index " , self.index
         print "self.UpperLimit " , self.UpperLimit
+        print "self.LowerLimit " , self.LowerLimit
         print "self.NumDims " , self.NumDims
         print "self.ArrayIds " , self.ArrayIds
         print "self.IndexInSubscript " , self.IndexInSubscript
@@ -306,7 +313,6 @@ class Rewriter(NodeVisitor):
                 type.insert(0, '__global')
             arglist.append(TypeId(type, Id(n)))
 
-        
 
         rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName,self)
         rewriteArrayRef.visit(self.Kernel)
@@ -319,8 +325,12 @@ class Rewriter(NodeVisitor):
         
         newast =  FuncDecl(typeid, ArgList(arglist), self.Kernel)
         ast.ext = list()
+        ast.ext.append(Id('#define LSIZE ' + str(self.Local)))
         ast.ext.append(newast)
 
+
+    def localMemory(self, arrName, ):
+        pass
 
     def transpose(self, arrName):
         if self.NumDims[arrName] != 2:
@@ -367,7 +377,7 @@ class Rewriter(NodeVisitor):
 
         fileAST.ext.append(Id('#include \"StartUtil.cpp\"'))
         fileAST.ext.append(Id('using namespace std;'))
-        fileAST.ext.append(Id('#define LSIZE 4'))
+        fileAST.ext.append(Id('#define LSIZE ' + str(self.Local)))
 
 
         kernelId = Id(self.KernelName)
@@ -532,18 +542,25 @@ class Rewriter(NodeVisitor):
             lval = TypeId(['size_t'], Id(self.Worksize[n] + '[]'))
             if n == 'local':
                 rval = ArrayInit([Id('LSIZE'), Id('LSIZE')])
+            elif n == 'global':
+                initlist = []
+                for m in reversed(self.GridIndices):
+                    initlist.append(Id(self.UpperLimit[m]\
+                                       +' - '+ self.LowerLimit[m]))
+                rval = ArrayInit(initlist)
             else:
                 initlist = []
                 for m in reversed(self.GridIndices):
-                    initlist.append(Id(self.UpperLimit[m]))
+                    initlist.append(Id(self.LowerLimit[m]))
                 rval = ArrayInit(initlist)
+                
             execBody.append(Assignment(lval,rval))
 
         lval = Id(ErrName)
         arglist = ArgList([Id('command_queue'),\
                            Id(self.KernelName),\
                            Constant(self.ParDim),\
-                           Constant(0),\
+                           Id(self.Worksize['offset']),\
                            Id(self.Worksize['global']),\
                            Id(self.Worksize['local']),\
                            Constant(0), Id('NULL'), \
@@ -821,6 +838,7 @@ class LoopIndices(NodeVisitor):
     def __init__(self):
         self.index = list()
         self.end = dict()
+        self.start = dict()
     def visit_ForLoop(self, node):
         IdVis = InitIds()
         IdVis.visit(node.init)
@@ -828,8 +846,10 @@ class LoopIndices(NodeVisitor):
         self.visit(node.compound)
         try:
             self.end[IdVis.index[0]] = (node.cond.rval.name)
+            self.start[IdVis.index[0]] = (node.init.rval.value)
         except AttributeError:
             self.end[IdVis.index[0]] = 'Unknown'
+            self.start[IdVis.index[0]] = 'Unknown'
             
 
 class ForLoops(NodeVisitor):
