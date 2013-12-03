@@ -226,10 +226,12 @@ class ArgList(Node):
     attr_names = ()
 
 class ArrayRef(Node):
-    def __init__(self, name, subscript, coord  = None):
+    def __init__(self, name, subscript, coord  = None, extra = dict()):
         self.name = name
         self.subscript = subscript
         self.coord = coord
+        self.extra = extra
+        
     def __repr__(self):
         return "ArrayRef(%r[%r])" % ( self.name , self.subscript )
     def children(self):

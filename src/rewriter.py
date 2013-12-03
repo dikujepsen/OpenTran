@@ -326,9 +326,16 @@ class Rewriter(NodeVisitor):
         rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName,self)
         rewriteArrayRef.visit(self.Kernel)
 
-        exchangeIndices = ExchangeIndices(self.IndexToThreadId)
+        arrays = self.NumDims.keys()
+        arrays.remove('X1')
+
+        exchangeIndices = ExchangeIndices(self.IndexToThreadId, arrays)
+        exchangeIndices.visit(self.Kernel)
+        exchangeIndices = ExchangeIndices(self.IndexToLocalId,  ['X1'])
         exchangeIndices.visit(self.Kernel)
 
+        exchangeArrayId = ExchangeArrayId({'X1' : 'X1_local'})
+        exchangeArrayId.visit(self.Kernel)
         typeid = copy.deepcopy(self.DevFuncTypeId)
         typeid.type.insert(0, '__kernel')
         
@@ -352,11 +359,12 @@ class Rewriter(NodeVisitor):
         arraySubscriptGlobal = []
         arraySubscriptLocal = []
         for n in self.GridIndices:
-            arraySubscriptGlobal.append(Id(self.IndexToThreadId[n]))
+            arraySubscriptGlobal.append(Id(n))
             arraySubscriptLocal.append(Id(self.IndexToLocalId[n]))
-        
+
+        ## del self.IndexToThreadId['i']
         lval = ArrayRef(Id(localName), arraySubscriptLocal)
-        rval = ArrayRef(arrayId, arraySubscriptGlobal)
+        rval = ArrayRef(arrayId, arraySubscriptGlobal, extra = {'localMemory' : True})
         self.Kernel.statements.insert(1, Assignment(lval,rval))
 
     def transpose(self, arrName):
@@ -694,22 +702,52 @@ class FindReadWrite(NodeVisitor):
                 self.ReadWrite[name].add('read')
 
                 
-                
+
+class ExchangeId(NodeVisitor):
+    """ Exchanges the Ids that we parallelize with the threadids,
+    (or whatever is given in idMap)
+    """
+    def __init__(self, idMap):
+        self.idMap = idMap
+
+    def visit_Id(self, node):
+        if node.name in self.idMap:
+            node.name = self.idMap[node.name]
+
 
 class ExchangeIndices(NodeVisitor):
-    """ Exchanges the indices that we parallelize with the threadids """
+    """ Exchanges the indices that we parallelize with the threadids,
+    (or whatever is given in idMap)
+    """
+    def __init__(self, idMap, arrays):
+        self.idMap = idMap
+        self.arrays = arrays
+
+    def visit_ArrayRef(self, node):
+        exchangeId = ExchangeId(self.idMap)
+        if node.name.name in self.arrays:
+            for n in node.subscript:
+                exchangeId.visit(n)
+
+class ExchangeArrayId(NodeVisitor):
+    """ Exchanges the id of arrays in ArrayRefs with
+    what is given in idMap)
+    """
     def __init__(self, idMap):
         self.idMap = idMap
 
     def visit_ArrayRef(self, node):
-        for n in node.subscript:
-            self.visit(n)
-        
-    def visit_Id(self, node):
-        if node.name in self.idMap:
-            node.name = self.idMap[node.name]
-        
+        try:
+            if node.extra['localMemory']:
+                return
+        except KeyError:
+            pass
 
+        try:
+            node.name.name = self.idMap[node.name.name]
+        except KeyError:
+            pass
+ 
 
 class FindFunction(NodeVisitor):
     """ Finds the typeid of the kernel function """

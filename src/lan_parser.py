@@ -312,7 +312,7 @@ if __name__ == "__main__":
         ## rw.transpose('A')
         ## rw.transpose('B')
         ## rw.transpose('C')
-        rw.localMemory('X2')
+        rw.localMemory('X1')
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = '../test/Jacobi/Jacobi.cl')
