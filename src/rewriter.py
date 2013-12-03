@@ -22,7 +22,9 @@ class Rewriter(NodeVisitor):
         # dict of the lower limit of the loop indices
         self.LowerLimit = dict()
         # The local work group size
-        self.Local = 4
+        self.Local = dict()
+        self.Local['name'] = 'LSIZE'
+        self.Local['size'] = '4'
         # The number of dimensions of each array 
         self.NumDims = dict()
         # The Ids of arrays, or pointers
@@ -34,8 +36,9 @@ class Rewriter(NodeVisitor):
         # Ids that we remove due to parallelization of loops
         self.RemovedIds = set()
         # The mapping from the indices that we parallelize
-        # to their function returning their global id
-        self.IndexToGlobalId = dict()
+        # to their function returning their thread id in the kernel
+        self.IndexToThreadId = dict()
+        self.IndexToLocalId = dict()
         # The indices that we parallelize
         self.GridIndices = list()
         # The OpenCl kernel before anything
@@ -132,8 +135,10 @@ class Rewriter(NodeVisitor):
         initIds.visit(perfectForLoop.ast.init)
         gridIds = list()
         idMap = dict()
+        localMap = dict()
         firstIdx = initIds.index[0]
         idMap[firstIdx] = 'get_global_id(0)'
+        localMap[firstIdx] = 'get_local_id(0)'
         gridIds.extend(initIds.index)
         kernel = perfectForLoop.ast.compound
         if perfectForLoop.depth == 2:
@@ -142,10 +147,13 @@ class Rewriter(NodeVisitor):
             kernel = kernel.statements[0].compound
             secondIdx = initIds.index[0]
             idMap[secondIdx] = 'get_global_id(1)'
+            localMap[secondIdx] = 'get_local_id(1)'
             gridIds.extend(initIds.index)
             (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
+            (localMap[gridIds[0]], localMap[gridIds[1]]) = (localMap[gridIds[1]], localMap[gridIds[0]])
 
-        self.IndexToGlobalId = idMap
+        self.IndexToLocalId = localMap
+        self.IndexToThreadId = idMap
         self.GridIndices = gridIds
         self.Kernel = kernel
         for i, n in enumerate(reversed(self.GridIndices)):
@@ -219,7 +227,8 @@ class Rewriter(NodeVisitor):
         print "self.IndexInSubscript " , self.IndexInSubscript
         print "self.NonArrayIds " , self.NonArrayIds
         print "self.RemovedIds " , self.RemovedIds
-        print "self.IndexToGlobalId " , self.IndexToGlobalId
+        print "self.IndexToThreadId " , self.IndexToThreadId
+        print "self.IndexToLocalId " , self.IndexToLocalId
         print "self.GridIndices " , self.GridIndices
         print "self.Kernel " , self.Kernel
         print "self.ArrayIdToDimName " , self.ArrayIdToDimName
@@ -289,7 +298,7 @@ class Rewriter(NodeVisitor):
         # add OpenCL keywords to indicate the kernel function.
         findFunction.typeid.type.insert(0, '__kernel')
         
-        exchangeIndices = ExchangeIndices(self.IndexToGlobalId)
+        exchangeIndices = ExchangeIndices(self.IndexToThreadId)
         exchangeIndices.visit(self.Kernel)
         newast =  FuncDecl(findFunction.typeid, ArgList(findDeviceArgs.arglist,ast.coord), self.Kernel, ast.coord)
         if changeAST:
@@ -317,7 +326,7 @@ class Rewriter(NodeVisitor):
         rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName,self)
         rewriteArrayRef.visit(self.Kernel)
 
-        exchangeIndices = ExchangeIndices(self.IndexToGlobalId)
+        exchangeIndices = ExchangeIndices(self.IndexToThreadId)
         exchangeIndices.visit(self.Kernel)
 
         typeid = copy.deepcopy(self.DevFuncTypeId)
@@ -325,12 +334,30 @@ class Rewriter(NodeVisitor):
         
         newast =  FuncDecl(typeid, ArgList(arglist), self.Kernel)
         ast.ext = list()
-        ast.ext.append(Id('#define LSIZE ' + str(self.Local)))
+        ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
         ast.ext.append(newast)
 
 
-    def localMemory(self, arrName, ):
-        pass
+    def localMemory(self, arrName, west = 0, north = 0, east = 0, south = 0):
+        localName = arrName + '_local'
+        arrayinit = '[' + self.Local['size'] + ']' + '[' + self.Local['size'] + ']'
+        
+        localId = Id(localName + arrayinit)
+        localTypeId = TypeId(['__local'] + [self.Type[arrName][0]], localId)
+        ## self.NumDims[localName] = self.NumDims[arrName]
+
+        self.Kernel.statements.insert(0,localTypeId)
+        
+        arrayId = Id(arrName)
+        arraySubscriptGlobal = []
+        arraySubscriptLocal = []
+        for n in self.GridIndices:
+            arraySubscriptGlobal.append(Id(self.IndexToThreadId[n]))
+            arraySubscriptLocal.append(Id(self.IndexToLocalId[n]))
+        
+        lval = ArrayRef(Id(localName), arraySubscriptLocal)
+        rval = ArrayRef(arrayId, arraySubscriptGlobal)
+        self.Kernel.statements.insert(1, Assignment(lval,rval))
 
     def transpose(self, arrName):
         if self.NumDims[arrName] != 2:
@@ -367,7 +394,7 @@ class Rewriter(NodeVisitor):
         dictNToDimNames = self.ArrayIdToDimName
 
         kernel = self.Kernel
-        idMap = self.IndexToGlobalId
+        idMap = self.IndexToThreadId
         gridIds = self.GridIndices
         NonArrayIds = copy.deepcopy(self.NonArrayIds)
         otherIds = self.ArrayIds.union(self.NonArrayIds) - self.RemovedIds
@@ -377,7 +404,7 @@ class Rewriter(NodeVisitor):
 
         fileAST.ext.append(Id('#include \"StartUtil.cpp\"'))
         fileAST.ext.append(Id('using namespace std;'))
-        fileAST.ext.append(Id('#define LSIZE ' + str(self.Local)))
+        fileAST.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
 
 
         kernelId = Id(self.KernelName)
@@ -753,20 +780,25 @@ class RewriteArrayRef(NodeVisitor):
     
     def visit_ArrayRef(self, node):
         n = node.name.name
-        if self.data.NumDims[n] == 2:
-            try:
-                if self.data.SubSwap[n]:
-                    (node.subscript[0], node.subscript[1]) = \
-                    (node.subscript[1], node.subscript[0])
-            except KeyError:
-                pass
-            leftbinop = BinOp(node.subscript[0],'*', \
-            # Id on first dimension
-            Id(self.ArrayIdToDimName[n][0]))
-            topbinop = BinOp(leftbinop,'+', \
-            node.subscript[1])
-            ## print topbinop
-            node.subscript = [topbinop]
+        try:
+            if self.data.NumDims[n] == 2:
+                try:
+                    if self.data.SubSwap[n]:
+                        (node.subscript[0], node.subscript[1]) = \
+                        (node.subscript[1], node.subscript[0])
+                except KeyError:
+                    pass
+                leftbinop = BinOp(node.subscript[0],'*', \
+                # Id on first dimension
+
+                Id(self.ArrayIdToDimName[n][0]))
+
+                topbinop = BinOp(leftbinop,'+', \
+                node.subscript[1])
+                ## print topbinop
+                node.subscript = [topbinop]
+        except KeyError:
+            pass
 
 class FindDim(NodeVisitor):
     """ Finds the size of the dimNum dimension.
