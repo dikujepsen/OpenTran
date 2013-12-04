@@ -39,6 +39,7 @@ class Rewriter(NodeVisitor):
         # to their function returning their thread id in the kernel
         self.IndexToThreadId = dict()
         self.IndexToLocalId = dict()
+        self.IndexToLocalVar = dict()
         # The indices that we parallelize
         self.GridIndices = list()
         # The OpenCl kernel before anything
@@ -99,6 +100,8 @@ class Rewriter(NodeVisitor):
         # Holds additional variables that we add
         # when we to perform transformations       
         self.GlobalVars = dict()
+        # Name swap in relation to local memory transformation
+        self.LocalSwap = dict()
         
         
     def initOriginal(self, ast):
@@ -136,9 +139,11 @@ class Rewriter(NodeVisitor):
         gridIds = list()
         idMap = dict()
         localMap = dict()
+        localVarMap = dict()
         firstIdx = initIds.index[0]
         idMap[firstIdx] = 'get_global_id(0)'
         localMap[firstIdx] = 'get_local_id(0)'
+        localVarMap[firstIdx] = 'l' + firstIdx
         gridIds.extend(initIds.index)
         kernel = perfectForLoop.ast.compound
         if perfectForLoop.depth == 2:
@@ -148,11 +153,14 @@ class Rewriter(NodeVisitor):
             secondIdx = initIds.index[0]
             idMap[secondIdx] = 'get_global_id(1)'
             localMap[secondIdx] = 'get_local_id(1)'
+            localVarMap[secondIdx] = 'l' + secondIdx
             gridIds.extend(initIds.index)
             (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
             (localMap[gridIds[0]], localMap[gridIds[1]]) = (localMap[gridIds[1]], localMap[gridIds[0]])
+            (localVarMap[gridIds[0]], localVarMap[gridIds[1]]) = (localVarMap[gridIds[1]], localVarMap[gridIds[0]])
 
         self.IndexToLocalId = localMap
+        self.IndexToLocalVar = localVarMap
         self.IndexToThreadId = idMap
         self.GridIndices = gridIds
         self.Kernel = kernel
@@ -229,6 +237,7 @@ class Rewriter(NodeVisitor):
         print "self.RemovedIds " , self.RemovedIds
         print "self.IndexToThreadId " , self.IndexToThreadId
         print "self.IndexToLocalId " , self.IndexToLocalId
+        print "self.IndexToLocalVar " , self.IndexToLocalVar
         print "self.GridIndices " , self.GridIndices
         print "self.Kernel " , self.Kernel
         print "self.ArrayIdToDimName " , self.ArrayIdToDimName
@@ -246,7 +255,7 @@ class Rewriter(NodeVisitor):
         print "self.Transposition " , self.Transposition
         print "self.KernelArgs " , self.KernelArgs
         print "self.NameSwap " , self.NameSwap
-
+        print "self.LocalSwap " , self.LocalSwap
 
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
@@ -323,19 +332,18 @@ class Rewriter(NodeVisitor):
             arglist.append(TypeId(type, Id(n)))
 
 
-        rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName,self)
+        exchangeArrayId = ExchangeArrayId(self.LocalSwap)
+        exchangeArrayId.visit(self.Kernel)
+        rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName, self)
         rewriteArrayRef.visit(self.Kernel)
 
-        arrays = self.NumDims.keys()
-        arrays.remove('X1')
+        arrays = self.ArrayIds
 
         exchangeIndices = ExchangeIndices(self.IndexToThreadId, arrays)
         exchangeIndices.visit(self.Kernel)
-        exchangeIndices = ExchangeIndices(self.IndexToLocalId,  ['X1'])
+        exchangeIndices = ExchangeIndices(self.IndexToLocalVar,  self.LocalSwap.values())
         exchangeIndices.visit(self.Kernel)
 
-        exchangeArrayId = ExchangeArrayId({'X1' : 'X1_local'})
-        exchangeArrayId.visit(self.Kernel)
         typeid = copy.deepcopy(self.DevFuncTypeId)
         typeid.type.insert(0, '__kernel')
         
@@ -346,26 +354,70 @@ class Rewriter(NodeVisitor):
 
 
     def localMemory(self, arrName, west = 0, north = 0, east = 0, south = 0):
+
+        direction = [west, north, east, south]
+        dirname = [(0,-1), (1,0), (0,1), (-1,0)]
+        loadings = [elem for i, elem in enumerate(dirname)
+                    if direction[i] == 1]
+        if not loadings:
+            loadings = [(0,0)]
+
+
+        ## finding the correct local memory size
+        localDims = [int(self.Local['size'])\
+                     for i in xrange(self.NumDims[arrName])]
+        arrIdx = self.IndexInSubscript[arrName]
+        localOffset = [int(self.LowerLimit[i])\
+                     for i in arrIdx]
+
+        for (x,y) in loadings:
+            localDims[0] += abs(x)
+            localDims[1] += abs(y)
+            
         localName = arrName + '_local'
-        arrayinit = '[' + self.Local['size'] + ']' + '[' + self.Local['size'] + ']'
+        arrayinit = '[' + str(localDims[0]) + '*' + str(localDims[1]) + ']'
         
         localId = Id(localName + arrayinit)
         localTypeId = TypeId(['__local'] + [self.Type[arrName][0]], localId)
-        ## self.NumDims[localName] = self.NumDims[arrName]
+        self.NumDims[localName] = self.NumDims[arrName]
+        self.LocalSwap[arrName] = localName
+        self.ArrayIdToDimName[localName] = [self.Local['size'], self.Local['size']]
+        stats = []
+        groupComp = GroupCompound(stats)
+        stats.append(localTypeId)
 
-        self.Kernel.statements.insert(0,localTypeId)
+        ## Insert local id with offset
+        for i, offset in enumerate(localOffset):
+            if offset != 0:
+                lval = TypeId(['unsigned'], Id('l'+self.GridIndices[i]))
+                rval = BinOp(Id('get_local_id('+str(i)+')'), '+', \
+                             Constant(offset))
+                stats.append(Assignment(lval,rval))
+
+            
+        ## Creating the loading of values into the local array.
+        for l in loadings:
+            arrayId = Id(arrName)
+            arraySubscriptGlobal = []
+            arraySubscriptLocal = []
+            for i,n in enumerate(self.GridIndices):
+                sub1 = Id(n)
+                sub2 = Id(n)
+                if l[i] != 0:
+                    sub1 = BinOp(sub1,'+',Constant(l[i]))
+                    sub2 = BinOp(sub2,'+',Constant(l[i]))
+                arraySubscriptGlobal.append(sub1)
+                arraySubscriptLocal.append(sub2)
+
+            lval = ArrayRef(Id(localName), arraySubscriptLocal)
+            rval = ArrayRef(arrayId, arraySubscriptGlobal, extra = {'localMemory' : True})
+            stats.append(Assignment(lval,rval))
+        self.Kernel.statements.insert(0, groupComp)
+
+        exchangeIndices = ExchangeIndices({'i' : 'li', 'j' : 'lj'} , [localName])
+        exchangeIndices.visit(self.Kernel)
+        print self.Kernel
         
-        arrayId = Id(arrName)
-        arraySubscriptGlobal = []
-        arraySubscriptLocal = []
-        for n in self.GridIndices:
-            arraySubscriptGlobal.append(Id(n))
-            arraySubscriptLocal.append(Id(self.IndexToLocalId[n]))
-
-        ## del self.IndexToThreadId['i']
-        lval = ArrayRef(Id(localName), arraySubscriptLocal)
-        rval = ArrayRef(arrayId, arraySubscriptGlobal, extra = {'localMemory' : True})
-        self.Kernel.statements.insert(1, Assignment(lval,rval))
 
     def transpose(self, arrName):
         if self.NumDims[arrName] != 2:
@@ -458,7 +510,7 @@ class Rewriter(NodeVisitor):
         listMemSizeCalcTemp = []
         dictMemSizeCalc = dict()
         dictNToSize = self.Mem
-        for n in self.NumDims:
+        for n in self.ArrayIds:
             sizeName = self.Mem[n]
             listMemSize.append(TypeId(['size_t'], Id(sizeName)))
             for dimName in self.ArrayIdToDimName[n]:
@@ -475,7 +527,7 @@ class Rewriter(NodeVisitor):
         fileAST.ext.append(allocateBuffer)
 
         listSetMemSize = []
-        for entry in self.ArrayIdToDimName:
+        for entry in self.ArrayIds:
             n = self.ArrayIdToDimName[entry]
             lval = Id(self.Mem[entry])
             rval = BinOp(Id(n[0]),'*', Id('sizeof('+\
@@ -718,6 +770,8 @@ class ExchangeId(NodeVisitor):
 class ExchangeIndices(NodeVisitor):
     """ Exchanges the indices that we parallelize with the threadids,
     (or whatever is given in idMap)
+    ARGS: idMap: a dictionary of Id changes
+    	  arrays: A list/set of array names that we change
     """
     def __init__(self, idMap, arrays):
         self.idMap = idMap

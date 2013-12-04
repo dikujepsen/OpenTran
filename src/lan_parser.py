@@ -254,7 +254,8 @@ if __name__ == "__main__":
 
     run = 1
     while run:
-        filename = '../test/Jacobi.cpp'
+        filename = '../test/Jacobi/JacobiFor.cpp'
+        ## filename = '../test/matmulfunc4.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             ## f = open('../test/matmulfunc2.cpp', 'r')
@@ -288,6 +289,7 @@ if __name__ == "__main__":
 
         run = 0
         filename = '../src/tempjacobi.cpp'
+        ## filename = '../src/temp.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -312,7 +314,7 @@ if __name__ == "__main__":
         ## rw.transpose('A')
         ## rw.transpose('B')
         ## rw.transpose('C')
-        rw.localMemory('X1')
+        rw.localMemory('X1', west = 1, north = 1, east = 1, south = 1)
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = '../test/Jacobi/Jacobi.cl')
