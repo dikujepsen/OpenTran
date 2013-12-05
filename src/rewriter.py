@@ -355,6 +355,17 @@ class Rewriter(NodeVisitor):
 
     def localMemory(self, arrName, west = 0, north = 0, east = 0, south = 0):
 
+        # Find out if arrName is inside a loop
+        forLoops = ForLoops()
+        forLoops.visit(self.Kernel)
+        forLoopAst = forLoops.ast
+        arrays = Arrays([])
+        arrays.visit(forLoopAst)
+        if arrName in arrays.ids:
+            print "INSIDE LOOP"
+
+
+
         direction = [west, north, east, south]
         dirname = [(0,-1), (1,0), (0,1), (-1,0)]
         loadings = [elem for i, elem in enumerate(dirname)
@@ -389,10 +400,12 @@ class Rewriter(NodeVisitor):
         ## Insert local id with offset
         for i, offset in enumerate(localOffset):
             if offset != 0:
-                lval = TypeId(['unsigned'], Id('l'+self.GridIndices[i]))
                 rval = BinOp(Id('get_local_id('+str(i)+')'), '+', \
                              Constant(offset))
-                stats.append(Assignment(lval,rval))
+            else:
+                rval = Id('get_local_id('+str(i)+')')
+            lval = TypeId(['unsigned'], Id('l'+self.GridIndices[i]))
+            stats.append(Assignment(lval,rval))
 
             
         ## Creating the loading of values into the local array.
@@ -412,11 +425,19 @@ class Rewriter(NodeVisitor):
             lval = ArrayRef(Id(localName), arraySubscriptLocal)
             rval = ArrayRef(arrayId, arraySubscriptGlobal, extra = {'localMemory' : True})
             stats.append(Assignment(lval,rval))
+
+        # Must also create the barrier
+        arglist = ArgList([Id('CLK_LOCAL_MEM_FENCE')])
+        func = EmptyFuncDecl('barrier', type = [])
+        func.arglist = arglist
+        stats.append(func)
+        
         self.Kernel.statements.insert(0, groupComp)
+
+
 
         exchangeIndices = ExchangeIndices({'i' : 'li', 'j' : 'lj'} , [localName])
         exchangeIndices.visit(self.Kernel)
-        print self.Kernel
         
 
     def transpose(self, arrName):
@@ -930,7 +951,7 @@ class FindSpecificArrayId(NodeVisitor):
         self.arrayId = arrayId
 
 class InitIds(NodeVisitor):
-    """ Finds Id's in an for loop initialization.
+    """ Finds Id's in a for loop initialization.
     More generally: Finds all Ids and adds them to a list.    
     """
     def __init__(self):
@@ -1090,5 +1111,6 @@ def EmptyFuncDecl(name, type = ['void']):
     allocateBuffer = FuncDecl(allocateBufferTypeId,\
                               allocateBufferArgList,\
                               allocateBufferCompound)
+
 
     return allocateBuffer
