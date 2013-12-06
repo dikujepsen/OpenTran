@@ -133,6 +133,9 @@ class CGenerator(object):
     def visit_ArgList(self, n):
         s = '('
         count = 1
+        if len(n.arglist) == 1:
+            return '(' + self.visit(n.arglist[0]) + ')'
+            
         for arg in n.arglist:
             if count == 1:
                 s += '\n\t'

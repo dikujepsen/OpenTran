@@ -134,6 +134,8 @@ class Rewriter(NodeVisitor):
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
         self.ParDim = perfectForLoop.depth
+
+        
         initIds = InitIds()
         initIds.visit(perfectForLoop.ast.init)
         gridIds = list()
@@ -226,6 +228,10 @@ class Rewriter(NodeVisitor):
 
         self.Transposition = GroupCompound([Comment('// Transposition')])
 
+        arrays = Arrays(self.index)
+        arrays.visit(ast)
+        self.Subscript = arrays.Subscript
+
     def dataStructures(self):
         print "self.index " , self.index
         print "self.UpperLimit " , self.UpperLimit
@@ -251,6 +257,7 @@ class Rewriter(NodeVisitor):
         print "self.Worksize " , self.Worksize
         print "self.IdxToDim " , self.IdxToDim
         print "self.WriteOnly " , self.WriteOnly
+        print "self.Subscript " , self.Subscript
         print "TRANSFORMATIONS"
         print "self.Transposition " , self.Transposition
         print "self.KernelArgs " , self.KernelArgs
@@ -361,10 +368,27 @@ class Rewriter(NodeVisitor):
         forLoopAst = forLoops.ast
         arrays = Arrays([])
         arrays.visit(forLoopAst)
+        isInsideLoop = False
         if arrName in arrays.ids:
+            isInsideLoop = True
             print "INSIDE LOOP"
 
 
+        if isInsideLoop:
+            # find loop index
+            loopIndices = LoopIndices()
+            loopIndices.visit(forLoopAst)
+            outeridx = loopIndices.index[0]
+            print outeridx
+            forLoopAst.inc = Increment(Id(outeridx), '+='+self.Local['size'])
+            inneridx = outeridx*2
+            cond = BinOp(Id(inneridx), '<' , Constant(self.Local['size']))
+            innerinc = Increment(Id(inneridx), '++')
+            innercomp = copy.copy(forLoopAst.compound)
+            innerloop = ForLoop(ConstantAssignment(inneridx), cond, \
+                                innerinc, innercomp)
+            forLoopAst.compound = Compound([innerloop])
+            ## forLoopAst.compound.statements.insert(0,innerloop)
 
         direction = [west, north, east, south]
         dirname = [(0,-1), (1,0), (0,1), (-1,0)]
@@ -1043,10 +1067,15 @@ class Arrays(NodeVisitor):
         self.indexIds = dict()
         self.loopindices = loopindices
         self.numSubscripts = dict()
+        self.Subscript = dict()
+            
     def visit_ArrayRef(self, node):
         name = node.name.name
         self.ids.add(name)
         numIndcs = NumIndices(99, self.loopindices)
+        self.Subscript[name] = self.Subscript[name].append(node.subscript)\
+                               if name in self.Subscript else \
+                               self.Subscript.get(name, [node.subscript])
         for s in node.subscript:
             numIndcs.visit(s)
         if name not in self.numIndices:
@@ -1114,3 +1143,8 @@ def EmptyFuncDecl(name, type = ['void']):
 
 
     return allocateBuffer
+
+def ConstantAssignment(name, constant = 0, type = ['unsigned']):
+    lval = TypeId(type, Id(name))
+    rval = Constant(constant)
+    return Assignment(lval,rval)
