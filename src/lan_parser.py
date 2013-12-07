@@ -245,17 +245,17 @@ def p_error(p):
 
 from cgen import *
 
-import ply.yacc as yacc
-cparser = yacc.yacc()
 
-if __name__ == "__main__":
+def jacobi():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
     # Build the lexer
     lex.lex()
 
     run = 1
     while run:
-        ## filename = '../test/Jacobi/JacobiFor.cpp'
-        filename = '../test/matmulfunc4.cpp'
+        filename = '../test/Jacobi/JacobiFor.cpp'
+        ## filename = '../test/matmulfunc4.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             ## f = open('../test/matmulfunc2.cpp', 'r')
@@ -288,7 +288,79 @@ if __name__ == "__main__":
         ## cprint.createTemp(ast, filename = 'tempjacobi.cpp')
 
         run = 0
-        ## filename = '../src/tempjacobi.cpp'
+        filename = '../src/tempjacobi.cpp'
+        ## filename = '../src/temp.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+ 
+        ast = cparser.parse(s)
+        ## ## ast.show()
+        tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
+        rw.initNewRepr(tempast)
+
+        rw.rewriteToSequentialC(ast)
+        cprint.createTemp(ast, filename = 'ctemp.cpp')
+        ## rw.rewriteToDeviceCTemp(tempast, False)
+        ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
+
+
+        ## rw.transpose('A')
+        ## rw.transpose('B')
+        ## rw.transpose('C')
+        rw.localMemory('X1', west = 1, north = 1, east = 1, south = 1)
+        ## rw.localMemory('A')
+        rw.dataStructures()
+        rw.rewriteToDeviceCRelease(tempast2)
+        ## cprint.createTemp(tempast2, filename = 'matmulfunc4.cl')
+        cprint.createTemp(tempast2, filename = '../test/Jacobi/Jacobi.cl')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+
+def matmul():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
+    # Build the lexer
+    lex.lex()
+
+    run = 1
+    while run:
+        filename = '../test/matmulfunc4.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+
+        
+        lex.input(s)
+        while 1:
+            tok = lex.token()
+            if not tok: break
+            ## print tok
+        
+        ast = cparser.parse(s)
+        ## ast.show()
+        ## print ast
+        ## print slist
+        cprint = CGenerator()
+        ## printres = cprint.visit(ast)
+        ## print printres
+        rw = Rewriter()
+        rw.initOriginal(ast)
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = 'tempjacobi.cpp')
+
+        run = 0
         filename = '../src/temp.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
@@ -314,13 +386,14 @@ if __name__ == "__main__":
         ## rw.transpose('A')
         ## rw.transpose('B')
         ## rw.transpose('C')
-        ## rw.localMemory('X1', west = 1, north = 1, east = 1, south = 1)
-        rw.dataStructures()
         rw.localMemory('A')
+        rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = 'matmulfunc4.cl')
-        ## cprint.createTemp(tempast2, filename = '../test/Jacobi/Jacobi.cl')
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
-        
 
+
+if __name__ == "__main__":
+    ## jacobi()
+    matmul()
