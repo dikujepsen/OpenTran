@@ -386,7 +386,7 @@ def matmul():
         ## rw.transpose('A')
         ## rw.transpose('B')
         ## rw.transpose('C')
-        rw.localMemory('A')
+        rw.localMemory(['A', 'B'])
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = 'matmulfunc4.cl')

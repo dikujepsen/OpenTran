@@ -100,8 +100,10 @@ class Rewriter(NodeVisitor):
         # Holds additional variables that we add
         # when we to perform transformations       
         self.GlobalVars = dict()
-        # Name swap in relation to local memory transformation
+        # Name swap in relation to [local memory]
         self.LocalSwap = dict()
+        # Extra things that we add to ids [local memory]
+        self.Add = dict()
         
         
     def initOriginal(self, ast):
@@ -268,6 +270,7 @@ class Rewriter(NodeVisitor):
         print "self.KernelArgs " , self.KernelArgs
         print "self.NameSwap " , self.NameSwap
         print "self.LocalSwap " , self.LocalSwap
+        print "self.Add ", self.Add
 
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
@@ -347,6 +350,9 @@ class Rewriter(NodeVisitor):
         exchangeArrayId = ExchangeArrayId(self.LocalSwap)
         exchangeArrayId.visit(self.Kernel)
 
+        for n in self.Add:
+            addToIds = AddToId(n, self.Add[n])
+            addToIds.visit(self.Kernel)
 
         rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName, self)
         rewriteArrayRef.visit(self.Kernel)
@@ -355,6 +361,7 @@ class Rewriter(NodeVisitor):
         
         exchangeIndices = ExchangeIndices(self.IndexToThreadId, arrays)
         exchangeIndices.visit(self.Kernel)
+
         
         typeid = copy.deepcopy(self.DevFuncTypeId)
         typeid.type.insert(0, '__kernel')
@@ -365,7 +372,7 @@ class Rewriter(NodeVisitor):
         ast.ext.append(newast)
 
 
-    def localMemory(self, arrName, west = 0, north = 0, east = 0, south = 0):
+    def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0):
 
         isInsideLoop = False
         try: 
@@ -375,9 +382,10 @@ class Rewriter(NodeVisitor):
             forLoopAst = forLoops.ast
             arrays = Arrays([])
             arrays.visit(forLoopAst)
-            if arrName in arrays.ids:
-                isInsideLoop = True
-                print "INSIDE LOOP"
+            for arrName in arrNames:
+                if arrName in arrays.ids:
+                    isInsideLoop = True
+                    print "INSIDE LOOP"
         except AttributeError:
             print "NOT INSIDE LOOP"
 
@@ -388,14 +396,15 @@ class Rewriter(NodeVisitor):
             outeridx = loopIndices.index[0]
             print outeridx
             forLoopAst.inc = Increment(Id(outeridx), '+='+self.Local['size'])
+            
             inneridx = outeridx*2
+            self.Add[outeridx] = inneridx
             cond = BinOp(Id(inneridx), '<' , Constant(self.Local['size']))
             innerinc = Increment(Id(inneridx), '++')
             innercomp = copy.copy(forLoopAst.compound)
             innerloop = ForLoop(ConstantAssignment(inneridx), cond, \
                                 innerinc, innercomp)
             forLoopAst.compound = Compound([innerloop])
-            ## forLoopAst.compound.statements.insert(0,innerloop)
 
         direction = [west, north, east, south]
         dirname = [(0,-1), (1,0), (0,1), (-1,0)]
@@ -406,6 +415,7 @@ class Rewriter(NodeVisitor):
 
 
         ## finding the correct local memory size
+        arrName = arrNames[0]
         localDims = [int(self.Local['size'])\
                      for i in xrange(self.NumDims[arrName])]
         arrIdx = self.IndexInSubscript[arrName]
@@ -415,18 +425,20 @@ class Rewriter(NodeVisitor):
         for (x,y) in loadings:
             localDims[0] += abs(x)
             localDims[1] += abs(y)
-            
-        localName = arrName + '_local'
-        arrayinit = '[' + str(localDims[0]) + '*' + str(localDims[1]) + ']'
-        
-        localId = Id(localName + arrayinit)
-        localTypeId = TypeId(['__local'] + [self.Type[arrName][0]], localId)
-        self.NumDims[localName] = self.NumDims[arrName]
-        self.LocalSwap[arrName] = localName
-        self.ArrayIdToDimName[localName] = [self.Local['size'], self.Local['size']]
+
         stats = []
+        for arrName in arrNames:
+            localName = arrName + '_local'
+            arrayinit = '[' + str(localDims[0]) + '*' + str(localDims[1]) + ']'
+
+            localId = Id(localName + arrayinit)
+            localTypeId = TypeId(['__local'] + [self.Type[arrName][0]], localId)
+            self.NumDims[localName] = self.NumDims[arrName]
+            self.LocalSwap[arrName] = localName
+            self.ArrayIdToDimName[localName] = [self.Local['size'], self.Local['size']]
+            stats.append(localTypeId)
+
         InitComp = GroupCompound(stats)
-        stats.append(localTypeId)
         stats2 = []
         LoadComp = GroupCompound(stats2)
 
@@ -443,53 +455,55 @@ class Rewriter(NodeVisitor):
             
         exchangeIndices = ExchangeIndices(self.IndexToLocalVar,  self.LocalSwap.values())
         ## Creating the loading of values into the local array.
-        for k, l in enumerate(loadings):
-            arrayId = Id(arrName)
+        for arrName in arrNames:
+            for k, l in enumerate(loadings):
+                arrayId = Id(arrName)
 
-            lsub = copy.deepcopy(self.Subscript[arrName][k])
-            lval = ArrayRef(Id(localName), lsub)
-            rsub = copy.deepcopy(self.Subscript[arrName][k])
-            rval = ArrayRef(arrayId, rsub, extra = {'localMemory' : True})
-            load = Assignment(lval,rval)
-            if isInsideLoop:
+                lsub = copy.deepcopy(self.Subscript[arrName][k])
+                lval = ArrayRef(Id(self.LocalSwap[arrName]), lsub)
+                rsub = copy.deepcopy(self.Subscript[arrName][k])
+                rval = ArrayRef(arrayId, rsub, extra = {'localMemory' : True})
+                load = Assignment(lval,rval)
                 exchangeId = ExchangeId(self.IndexToLocalVar)
                 orisub = self.Subscript[arrName][k]
                 for m in orisub:
                     exchangeId.visit(m)
-                for i, n in enumerate(orisub):
-                    addToId = Ids()
-                    addToId.visit(n)
-                    if outeridx in addToId.ids:
-                        orisub[i] = BinOp(orisub[i],'+',\
-                        Id(inneridx))
-                
-                print "outeridx ", outeridx
-                for i, n in enumerate(rsub):
-                    locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
-                    addToId = Ids()
-                    addToId.visit(n)
-                    if outeridx in addToId.ids:
-                        rsub[i] = BinOp(rsub[i],'+',\
-                        Id(locIdx))
-                for i, n in enumerate(lsub):
-                    locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
-                    exchangeId = ExchangeId({'k' : locIdx})
-                    exchangeId.visit(n)                    
-                
-            ##     forLoopAst.compound.statements.insert(0,load)
-            ## else:
-            stats2.append(load)
+                if isInsideLoop:
+                    for i, n in enumerate(orisub):
+                        addToId = Ids()
+                        addToId.visit(n)
+                        # REMEMBER: orisub[i] might not simply be an Id
+                        # might need to do something more complicated here
+                        if outeridx in addToId.ids:
+                            orisub[i] = Id(inneridx)
+
+                    print "outeridx ", outeridx
+                    for i, n in enumerate(rsub):
+                        locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
+                        addToId = Ids()
+                        addToId.visit(n)
+                        if outeridx in addToId.ids:
+                            rsub[i] = BinOp(rsub[i],'+',\
+                            Id(locIdx))
+                    for i, n in enumerate(lsub):
+                        locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
+                        exchangeId = ExchangeId({'k' : locIdx})
+                        exchangeId.visit(n)                    
+
+                stats2.append(load)
 
         # Must also create the barrier
         arglist = ArgList([Id('CLK_LOCAL_MEM_FENCE')])
         func = EmptyFuncDecl('barrier', type = [])
         func.arglist = arglist
-        stats.append(func)
+        stats2.append(func)
 
         exchangeIndices.visit(InitComp)
         exchangeIndices.visit(LoadComp)
-        
-        forLoopAst.compound.statements.insert(0,LoadComp)
+        if isInsideLoop:
+            forLoopAst.compound.statements.insert(0,LoadComp)
+        else:
+            self.Kernel.statements.insert(0, LoadComp)
         self.Kernel.statements.insert(0, InitComp)
         
         
@@ -810,10 +824,18 @@ class AddToId(NodeVisitor):
         self.id = id
         self.variable = variable
 
-    def visit_Id(self, node):
-        n = node.name
-        if self.id == n:
-            node = BinOp(Id(n), '+', Id(self.variable))
+    def visit_ArrayRef(self, node):
+        for i, n in enumerate(node.subscript):
+            addToId = Ids()
+            addToId.visit(n)
+            if self.id in addToId.ids:
+                sub = node.subscript[i]
+                try:
+                    if node.extra['localMemory']:
+                        return
+                except KeyError:
+                    pass 
+                node.subscript[i] = BinOp(sub, '+', Id(self.variable))
 
 
 class FindReadWrite(NodeVisitor):
