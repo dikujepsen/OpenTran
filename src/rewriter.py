@@ -457,12 +457,11 @@ class Rewriter(NodeVisitor):
                 for m in orisub:
                     exchangeId.visit(m)
                 for i, n in enumerate(orisub):
-                    locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
                     addToId = Ids()
                     addToId.visit(n)
                     if outeridx in addToId.ids:
                         orisub[i] = BinOp(orisub[i],'+',\
-                        Id(locIdx))
+                        Id(inneridx))
                 
                 print "outeridx ", outeridx
                 for i, n in enumerate(rsub):
