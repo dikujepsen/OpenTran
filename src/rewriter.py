@@ -425,39 +425,61 @@ class Rewriter(NodeVisitor):
         self.LocalSwap[arrName] = localName
         self.ArrayIdToDimName[localName] = [self.Local['size'], self.Local['size']]
         stats = []
-        groupComp = GroupCompound(stats)
+        InitComp = GroupCompound(stats)
         stats.append(localTypeId)
+        stats2 = []
+        LoadComp = GroupCompound(stats2)
 
         ## Insert local id with offset
         for i, offset in enumerate(localOffset):
             if offset != 0:
-                rval = BinOp(Id('get_local_id('+str(i)+')'), '+', \
+                rval = BinOp(Id('get_local_id('+str(self.ReverseIdx[i])+')'), '+', \
                              Constant(offset))
             else:
-                rval = Id('get_local_id('+str(i)+')')
+                rval = Id('get_local_id('+str(self.ReverseIdx[i])+')')
             lval = TypeId(['unsigned'], Id('l'+self.GridIndices[i]))
             stats.append(Assignment(lval,rval))
 
             
+        exchangeIndices = ExchangeIndices(self.IndexToLocalVar,  self.LocalSwap.values())
         ## Creating the loading of values into the local array.
         for k, l in enumerate(loadings):
             arrayId = Id(arrName)
 
-            lval = ArrayRef(Id(localName), self.Subscript[arrName][k])
+            lsub = copy.deepcopy(self.Subscript[arrName][k])
+            lval = ArrayRef(Id(localName), lsub)
             rsub = copy.deepcopy(self.Subscript[arrName][k])
             rval = ArrayRef(arrayId, rsub, extra = {'localMemory' : True})
             load = Assignment(lval,rval)
             if isInsideLoop:
+                exchangeId = ExchangeId(self.IndexToLocalVar)
+                orisub = self.Subscript[arrName][k]
+                for m in orisub:
+                    exchangeId.visit(m)
+                for i, n in enumerate(orisub):
+                    locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
+                    addToId = Ids()
+                    addToId.visit(n)
+                    if outeridx in addToId.ids:
+                        orisub[i] = BinOp(orisub[i],'+',\
+                        Id(locIdx))
+                
                 print "outeridx ", outeridx
                 for i, n in enumerate(rsub):
+                    locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
                     addToId = Ids()
                     addToId.visit(n)
                     if outeridx in addToId.ids:
                         rsub[i] = BinOp(rsub[i],'+',\
-                        Id('get_local_id('+str(self.ReverseIdx[i])+')'))
-                forLoopAst.compound.statements.insert(0,load)
-            else:
-                stats.append(load)
+                        Id(locIdx))
+                for i, n in enumerate(lsub):
+                    locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
+                    exchangeId = ExchangeId({'k' : locIdx})
+                    exchangeId.visit(n)                    
+                
+            ##     forLoopAst.compound.statements.insert(0,load)
+            ## else:
+            stats2.append(load)
 
         # Must also create the barrier
         arglist = ArgList([Id('CLK_LOCAL_MEM_FENCE')])
@@ -465,11 +487,11 @@ class Rewriter(NodeVisitor):
         func.arglist = arglist
         stats.append(func)
 
-        exchangeIndices = ExchangeIndices(self.IndexToLocalVar,  self.LocalSwap.values())
-        exchangeIndices.visit(groupComp)
+        exchangeIndices.visit(InitComp)
+        exchangeIndices.visit(LoadComp)
         
-        
-        self.Kernel.statements.insert(0, groupComp)
+        forLoopAst.compound.statements.insert(0,LoadComp)
+        self.Kernel.statements.insert(0, InitComp)
         
         
 
