@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <iostream>
 #include <cmath>
-#include "../../src/ctemp.cpp"
+// #include "../../src/ctemp.cpp"
 #include "../../src/boilerplate.cpp"
 
 
@@ -175,13 +175,14 @@ int main(int argc, char** argv)
   float dt = 0.015;
   
 
-#define GPU 0
+#define GPU 1
 #if GPU
-  // RunOCLJacobiKernel(C_mat,wC,hC,
-  // 		     B_mat,wB,hB,
-  // 		     A_mat,wA,hA,
-  // 		     wB, wA
-  // 		     );
+  
+  RunOCLNBodyForKernel(M_mat, wM,
+		       Pos, wPos, 2,
+		       Forces, wVel, 2,
+		       N);
+  
 #else
   for (unsigned i = 0; i < 1; i++) {
     VelStorVer(Forces, Pos, Vel,

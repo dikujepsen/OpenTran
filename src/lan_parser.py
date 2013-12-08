@@ -44,6 +44,8 @@ def p_comment(p):
 def p_arg_params(p):
     """arg_params : typeid COMMA arg_params
     | typeid
+    | identifier
+    | binop
     | empty
     """
     if len(p) == 4:
@@ -173,6 +175,7 @@ def p_term(p):
     """term : identifier
     | constant
     | array_reference
+    | function_call
     | unary_expression
     """
     p[0] = p[1]
@@ -182,6 +185,10 @@ def p_compound(p):
     """compound : LBRACE beginning_list RBRACE """
     p[0] = Compound([] if p[2] is None else p[2],p.lineno(1))
 
+def p_func_call(p):
+    """ function_call : identifier arglist """
+    p[0] = FuncDecl(p[1], p[2], Compound([]), p.lineno(1))
+
 def p_func_decl_1(p):
     """function_declaration : typeid arglist SEMI"""
     p[0] = FuncDecl(p[1], p[2], Compound([],p.lineno(1)),p.lineno(1))
@@ -189,6 +196,13 @@ def p_func_decl_1(p):
 def p_func_decl_2(p):
     """function_declaration : typeid arglist compound """
     p[0] = FuncDecl(p[1], p[2], p[3], p.lineno(1))
+
+def p_func_decl_3(p):
+    """function_declaration : function_call SEMI """
+    p[0] = p[1]
+
+    
+
 
 def p_decl(p):
     """declaration : typeid SEMI"""
@@ -393,7 +407,74 @@ def matmul():
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
 
+def nbody():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
+    lex.lex()
+
+    run = 1
+    while run:
+        filename = '../test/NBody/NBodyFor.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+
+        
+        lex.input(s)
+        while 1:
+            tok = lex.token()
+            if not tok: break
+            ## print tok
+        
+        ast = cparser.parse(s)
+        ## ast.show()
+        ## print ast
+        ## print slist
+        cprint = CGenerator()
+        ## printres = cprint.visit(ast)
+        ## print printres
+        rw = Rewriter()
+        rw.initOriginal(ast)
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = 'tempnbody.cpp')
+
+        run = 0
+        filename = '../src/tempnbody.cpp'
+        ## funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+        except EOFError:
+            break
+ 
+        ast = cparser.parse(s)
+        ## ## ast.show()
+        tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
+        rw.initNewRepr(tempast)
+
+        rw.rewriteToSequentialC(ast)
+        cprint.createTemp(ast, filename = 'ctemp.cpp')
+        ## rw.rewriteToDeviceCTemp(tempast, False)
+        ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
+
+
+        ## rw.transpose('A')
+        ## rw.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1)
+        ## rw.localMemory('A')
+        rw.dataStructures()
+        rw.rewriteToDeviceCRelease(tempast2)
+        cprint.createTemp(tempast2, filename = '../test/NBody/'+funcname + '.cl')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
 
 if __name__ == "__main__":
-    jacobi()
+    ## jacobi()
     ## matmul()
+    nbody()

@@ -74,7 +74,7 @@ class Rewriter(NodeVisitor):
         # List of arrays that are write only
         self.WriteOnly = list()
         # List of arguments for the kernel
-        self.KernelArgs = list()
+        ## self.KernelArgs = list()
         ########################################################
         # Datastructures used when performing transformations  #
         ########################################################
@@ -175,11 +175,15 @@ class Rewriter(NodeVisitor):
         for i, n in enumerate(reversed(self.GridIndices)):
             self.IdxToDim[i] = n
             
-            
+        
         findDim = FindDim(self.NumDims)
         findDim.visit(ast)
         self.ArrayIdToDimName = findDim.dimNames
         self.RemovedIds = set(self.UpperLimit[i] for i in self.GridIndices)
+
+        idsStillInKernel = Ids()
+        idsStillInKernel.visit(self.Kernel)
+        self.RemovedIds = self.RemovedIds - idsStillInKernel.ids
 
         otherIds = self.ArrayIds.union(self.NonArrayIds)
         findDeviceArgs = FindDeviceArgs(otherIds)
@@ -225,7 +229,7 @@ class Rewriter(NodeVisitor):
         for n in argIds:
             tmplist = [n]
             try:
-                if self.ParDim == 2:
+                if self.NumDims[n] == 2:
                     tmplist.append(self.ArrayIdToDimName[n][0])
             except KeyError:
                 pass
@@ -252,7 +256,7 @@ class Rewriter(NodeVisitor):
         print "self.IndexToLocalVar " , self.IndexToLocalVar
         print "self.ReverseIdx ", self.ReverseIdx
         print "self.GridIndices " , self.GridIndices
-        print "self.Kernel " , self.Kernel
+        ## print "self.Kernel " , self.Kernel
         print "self.ArrayIdToDimName " , self.ArrayIdToDimName
         print "self.DevArgList " , self.DevArgList
         print "self.DevFuncTypeId " , self.DevFuncTypeId
@@ -359,9 +363,9 @@ class Rewriter(NodeVisitor):
 
         arrays = self.ArrayIds
         
-        exchangeIndices = ExchangeIndices(self.IndexToThreadId, arrays)
+        exchangeIndices = ExchangeId(self.IndexToThreadId)
         exchangeIndices.visit(self.Kernel)
-
+        
         
         typeid = copy.deepcopy(self.DevFuncTypeId)
         typeid.type.insert(0, '__kernel')
@@ -716,7 +720,8 @@ class Rewriter(NodeVisitor):
         for n in self.Worksize:
             lval = TypeId(['size_t'], Id(self.Worksize[n] + '[]'))
             if n == 'local':
-                rval = ArrayInit([Id('LSIZE'), Id('LSIZE')])
+                local_worksize = [Id('LSIZE') for i in xrange(self.ParDim)]
+                rval = ArrayInit(local_worksize)
             elif n == 'global':
                 initlist = []
                 for m in reversed(self.GridIndices):
@@ -893,6 +898,8 @@ class ExchangeIndices(NodeVisitor):
             for n in node.subscript:
                 exchangeId.visit(n)
 
+
+
 class ExchangeArrayId(NodeVisitor):
     """ Exchanges the id of arrays in ArrayRefs with
     what is given in idMap)
@@ -935,14 +942,13 @@ class FindDeviceArgs(NodeVisitor):
     
     def visit_ArgList(self, node):
         for typeid in node.arglist:
-            
-            if typeid.name.name in self.argIds:
-                self.argIds.remove(typeid.name.name)
-                if len(typeid.type) == 2:
-                    if typeid.type[1] == '*':
-                        typeid.type.insert(0,'__global')
-                self.arglist.append(typeid)
-            
+            if isinstance(typeid, TypeId):
+                if typeid.name.name in self.argIds:
+                    self.argIds.remove(typeid.name.name)
+                    if len(typeid.type) == 2:
+                        if typeid.type[1] == '*':
+                            typeid.type.insert(0,'__global')
+                    self.arglist.append(typeid)
 
 class PerfectForLoop(NodeVisitor):
     """ Performs simple checks to decide if we have 1D or 2D
@@ -1060,9 +1066,12 @@ class FindUpperLimit(NodeVisitor):
         self.index.append(node.name)
         
 class Ids(NodeVisitor):
-    """ Finds all unique Ids """
+    """ Finds all unique Ids, excluding functions"""
     def __init__(self):
         self.ids = set()
+    def visit_FuncDecl(self, node):
+        pass
+        
     def visit_Id(self, node):
         self.ids.add(node.name)
 
@@ -1091,7 +1100,8 @@ class ForLoops(NodeVisitor):
     """
     def __init__(self):
         self.isFirst = True
-
+        self.ast = None
+        
     def reset(self):
         self.isFirst = True
         
