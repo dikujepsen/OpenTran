@@ -314,7 +314,7 @@ def jacobi():
         ## rw.transpose('A')
         ## rw.transpose('B')
         ## rw.transpose('C')
-        rw.localMemory('X1', west = 1, north = 1, east = 1, south = 1)
+        rw.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1)
         ## rw.localMemory('A')
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
@@ -395,5 +395,5 @@ def matmul():
 
 
 if __name__ == "__main__":
-    ## jacobi()
-    matmul()
+    jacobi()
+    ## matmul()
