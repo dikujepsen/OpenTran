@@ -233,7 +233,7 @@ class ArrayRef(Node):
         self.extra = extra
         
     def __repr__(self):
-        return "ArrayRef(%r[%r])" % ( self.name , self.subscript )
+        return "ArrayRef(%r%r)" % ( self.name , self.subscript )
     def children(self):
         nodelist = []
         nodelist.append(("name", self.name))

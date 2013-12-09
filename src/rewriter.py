@@ -44,11 +44,16 @@ class Rewriter(NodeVisitor):
         self.GridIndices = list()
         # The OpenCl kernel before anything
         self.Kernel = None
+        # The "inside" of the OpenCl kernel after parallelization
+        self.InsideKernel = None
         # The name of the kernel, i.e. the FuncName + Kernel
         self.KernelName = None
         # The mapping from the array ids to a list of 
         # the names of their dimensions
         self.ArrayIdToDimName = dict()
+        # ArrayRef inside a loop in the kernel
+        # Mapping from Id to AST ArrayRef node
+        self.LoopArray = dict()
         # The argument list in our ER
         self.DevArgList = list()
         # The name and type of the kernel function.
@@ -132,11 +137,23 @@ class Rewriter(NodeVisitor):
         self.NonArrayIds = otherIds
 
 
+
     def initNewRepr(self, ast):
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
         self.ParDim = perfectForLoop.depth
 
+        innerbody = perfectForLoop.inner
+        firstLoop = ForLoops()
+        firstLoop.visit(innerbody.compound)
+        self.InsideKernel = firstLoop.ast
+        arrays = Arrays([])
+        if firstLoop.ast is None: # No inner loop
+            arrays.visit(innerbody.compound)
+        else:
+            arrays.visit(firstLoop.ast)
+
+        self.LoopArrays = arrays.LoopArrays
         
         initIds = InitIds()
         initIds.visit(perfectForLoop.ast.init)
@@ -274,6 +291,7 @@ class Rewriter(NodeVisitor):
         print "self.KernelArgs " , self.KernelArgs
         print "self.NameSwap " , self.NameSwap
         print "self.LocalSwap " , self.LocalSwap
+        print "self.LoopArrays " , self.LoopArrays
         print "self.Add ", self.Add
 
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
@@ -352,11 +370,14 @@ class Rewriter(NodeVisitor):
 
 
         exchangeArrayId = ExchangeArrayId(self.LocalSwap)
-        exchangeArrayId.visit(self.Kernel)
+
+        for n in self.LoopArrays.values():
+            for m in n:
+                exchangeArrayId.visit(m)
 
         for n in self.Add:
             addToIds = AddToId(n, self.Add[n])
-            addToIds.visit(self.Kernel)
+            addToIds.visit(self.InsideKernel.compound)
 
         rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName, self)
         rewriteArrayRef.visit(self.Kernel)
@@ -376,7 +397,9 @@ class Rewriter(NodeVisitor):
         ast.ext.append(newast)
 
 
-    def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0):
+    def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0, occurence = 1):
+
+        occurence -= 1
 
         isInsideLoop = False
         try: 
@@ -428,12 +451,21 @@ class Rewriter(NodeVisitor):
 
         for (x,y) in loadings:
             localDims[0] += abs(x)
-            localDims[1] += abs(y)
+            if self.NumDims[arrName] == 2:
+                localDims[1] += abs(y)
+
+        print "localDims " , localDims
+        print "localOffset " , localOffset
 
         stats = []
         for arrName in arrNames:
             localName = arrName + '_local'
-            arrayinit = '[' + str(localDims[0]) + '*' + str(localDims[1]) + ']'
+            arrayinit = '['
+            for i, d in enumerate(localDims):
+                arrayinit += str(d)
+                if i == 0 and len(localDims) == 2:
+                    arrayinit += '*'
+            arrayinit += ']'
 
             localId = Id(localName + arrayinit)
             localTypeId = TypeId(['__local'] + [self.Type[arrName][0]], localId)
@@ -456,20 +488,24 @@ class Rewriter(NodeVisitor):
             lval = TypeId(['unsigned'], Id('l'+self.GridIndices[i]))
             stats.append(Assignment(lval,rval))
 
-            
+        print "loadings " , loadings
         exchangeIndices = ExchangeIndices(self.IndexToLocalVar,  self.LocalSwap.values())
         ## Creating the loading of values into the local array.
+        
         for arrName in arrNames:
             for k, l in enumerate(loadings):
                 arrayId = Id(arrName)
-
-                lsub = copy.deepcopy(self.Subscript[arrName][k])
+                # get first ArrayRef
+                aref = self.LoopArrays[arrName][k]
+                subscript = aref.subscript
+                lsub = copy.deepcopy(subscript)
                 lval = ArrayRef(Id(self.LocalSwap[arrName]), lsub)
-                rsub = copy.deepcopy(self.Subscript[arrName][k])
+                rsub = copy.deepcopy(subscript)
+                print "lsub ", lsub
                 rval = ArrayRef(arrayId, rsub, extra = {'localMemory' : True})
                 load = Assignment(lval,rval)
                 exchangeId = ExchangeId(self.IndexToLocalVar)
-                orisub = self.Subscript[arrName][k]
+                orisub = subscript
                 for m in orisub:
                     exchangeId.visit(m)
                 if isInsideLoop:
@@ -480,7 +516,6 @@ class Rewriter(NodeVisitor):
                         # might need to do something more complicated here
                         if outeridx in addToId.ids:
                             orisub[i] = Id(inneridx)
-
                     print "outeridx ", outeridx
                     for i, n in enumerate(rsub):
                         locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
@@ -491,7 +526,8 @@ class Rewriter(NodeVisitor):
                             Id(locIdx))
                     for i, n in enumerate(lsub):
                         locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
-                        exchangeId = ExchangeId({'k' : locIdx})
+                        
+                        exchangeId = ExchangeId({''+outeridx : locIdx})
                         exchangeId.visit(n)                    
 
                 stats2.append(load)
@@ -829,6 +865,27 @@ class AddToId(NodeVisitor):
         self.id = id
         self.variable = variable
 
+
+    def changeIdNode(self, node):
+        if isinstance(node, Id):
+            if node.name == self.id:
+                return BinOp(node, '+', Id(self.variable))
+            else:
+                return node
+        else:
+            return node
+    def visit_BinOp(self, node):
+        self.visit(node.lval)
+        node.lval = self.changeIdNode(node.lval)
+        self.visit(node.rval)
+        node.rval = self.changeIdNode(node.rval)
+
+    def visit_Assignment(self, node):
+        self.visit(node.lval)
+        node.lval = self.changeIdNode(node.lval)
+        self.visit(node.rval)
+        node.rval = self.changeIdNode(node.rval)
+
     def visit_ArrayRef(self, node):
         for i, n in enumerate(node.subscript):
             addToId = Ids()
@@ -958,18 +1015,20 @@ class PerfectForLoop(NodeVisitor):
     def __init__(self):
         self.depth = 0
         self.ast = None
+        self.inner = None
 
     def visit_FuncDecl(self, node):
         funcstats = node.compound.statements
         if len(funcstats) == 1: # 
             if isinstance(funcstats[0], ForLoop):
                 self.ast = funcstats[0]
+                self.inner = funcstats[0]
                 self.depth += 1
                 loopstats = funcstats[0].compound.statements
                 if len(loopstats) == 1:
                     if isinstance(loopstats[0], ForLoop):
                         self.depth += 1
-
+                        self.inner = loopstats[0]
 
         ## stats = node.compound.statements
         ## if len(stats) == 1:
@@ -1000,10 +1059,9 @@ class RewriteArrayRef(NodeVisitor):
                 # Id on first dimension
 
                 Id(self.ArrayIdToDimName[n][0]))
-
+                
                 topbinop = BinOp(leftbinop,'+', \
                 node.subscript[1])
-                ## print topbinop
                 node.subscript = [topbinop]
         except KeyError:
             pass
@@ -1143,6 +1201,7 @@ class Arrays(NodeVisitor):
         self.loopindices = loopindices
         self.numSubscripts = dict()
         self.Subscript = dict()
+        self.LoopArrays = dict()
             
     def visit_ArrayRef(self, node):
         name = node.name.name
@@ -1150,9 +1209,11 @@ class Arrays(NodeVisitor):
         numIndcs = NumIndices(99, self.loopindices)
         if name in self.Subscript:
             self.Subscript[name].append(node.subscript)
+            self.LoopArrays[name].append(node)
         else:
             self.Subscript[name] = [node.subscript]
-            
+            self.LoopArrays[name] = [node]
+        
         for s in node.subscript:
             numIndcs.visit(s)
         if name not in self.numIndices:

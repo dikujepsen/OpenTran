@@ -2,7 +2,6 @@
 #include <cstdio>
 #include <iostream>
 #include <cmath>
-#include "../../src/ctemp.cpp"
 #include "../../src/boilerplate.cpp"
 
 

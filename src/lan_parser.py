@@ -320,7 +320,7 @@ def jacobi():
         rw.initNewRepr(tempast)
 
         rw.rewriteToSequentialC(ast)
-        cprint.createTemp(ast, filename = 'ctemp.cpp')
+        cprint.createTemp(ast, filename = 'cmattemp.cpp')
         ## rw.rewriteToDeviceCTemp(tempast, False)
         ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
@@ -372,10 +372,10 @@ def matmul():
         rw = Rewriter()
         rw.initOriginal(ast)
         ## rw.rewrite(ast, funcname, changeAST = True)
-        ## cprint.createTemp(ast, filename = 'tempjacobi.cpp')
+        ## cprint.createTemp(ast, filename = 'tempmatmul.cpp')
 
         run = 0
-        filename = '../src/temp.cpp'
+        filename = '../src/tempmatmul.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -391,8 +391,8 @@ def matmul():
         tempast2 = copy.deepcopy(ast)
         rw.initNewRepr(tempast)
 
-        rw.rewriteToSequentialC(ast)
-        cprint.createTemp(ast, filename = 'ctemp.cpp')
+        ## rw.rewriteToSequentialC(ast)
+        ## cprint.createTemp(ast, filename = 'ctemp.cpp')
         ## rw.rewriteToDeviceCTemp(tempast, False)
         ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
@@ -400,7 +400,7 @@ def matmul():
         ## rw.transpose('A')
         ## rw.transpose('B')
         ## rw.transpose('C')
-        rw.localMemory(['A', 'B'])
+        rw.localMemory(['A','B'])
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = 'matmulfunc4.cl')
@@ -467,7 +467,7 @@ def nbody():
 
         ## rw.transpose('A')
         ## rw.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1)
-        ## rw.localMemory('A')
+        rw.localMemory(['Mas'])
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = '../test/NBody/'+funcname + '.cl')
