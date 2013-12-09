@@ -166,9 +166,10 @@ class Rewriter(NodeVisitor):
         localMap[firstIdx] = 'get_local_id(0)'
         localVarMap[firstIdx] = 'l' + firstIdx
         self.ReverseIdx = dict()
-        self.ReverseIdx[0] = 0
+        self.ReverseIdx[0] = 1
         gridIds.extend(initIds.index)
         kernel = perfectForLoop.ast.compound
+        self.ReverseIdx[1] = 0
         if perfectForLoop.depth == 2:
             initIds = InitIds()
             initIds.visit(kernel.statements[0].init)
@@ -177,11 +178,9 @@ class Rewriter(NodeVisitor):
             idMap[secondIdx] = 'get_global_id(1)'
             localMap[secondIdx] = 'get_local_id(1)'
             localVarMap[secondIdx] = 'l' + secondIdx
-            self.ReverseIdx[1] = 1
             gridIds.extend(initIds.index)
             (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
             (localMap[gridIds[0]], localMap[gridIds[1]]) = (localMap[gridIds[1]], localMap[gridIds[0]])
-            (self.ReverseIdx[1], self.ReverseIdx[0]) = (self.ReverseIdx[0], self.ReverseIdx[1])
             ## (localVarMap[gridIds[0]], localVarMap[gridIds[1]]) = (localVarMap[gridIds[1]], localVarMap[gridIds[0]])
 
         self.IndexToLocalId = localMap
@@ -397,9 +396,7 @@ class Rewriter(NodeVisitor):
         ast.ext.append(newast)
 
 
-    def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0, occurence = 1):
-
-        occurence -= 1
+    def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0, middle = 1):
 
         isInsideLoop = False
         try: 
@@ -433,8 +430,8 @@ class Rewriter(NodeVisitor):
                                 innerinc, innercomp)
             forLoopAst.compound = Compound([innerloop])
 
-        direction = [west, north, east, south]
-        dirname = [(0,-1), (1,0), (0,1), (-1,0)]
+        direction = [west, north, east, south, middle]
+        dirname = [(0,-1), (1,0), (0,1), (-1,0), (0,0)]
         loadings = [elem for i, elem in enumerate(dirname)
                     if direction[i] == 1]
         if not loadings:
@@ -445,6 +442,8 @@ class Rewriter(NodeVisitor):
         arrName = arrNames[0]
         localDims = [int(self.Local['size'])\
                      for i in xrange(self.NumDims[arrName])]
+        if self.ParDim == 1 and len(localDims) == 2:
+            localDims[0] = 1;
         arrIdx = self.IndexInSubscript[arrName]
         localOffset = [int(self.LowerLimit[i])\
                      for i in arrIdx]
@@ -480,18 +479,20 @@ class Rewriter(NodeVisitor):
 
         ## Insert local id with offset
         for i, offset in enumerate(localOffset):
+            idd = self.ReverseIdx[i] if len(localOffset) == 2 else i
             if offset != 0:
-                rval = BinOp(Id('get_local_id('+str(self.ReverseIdx[i])+')'), '+', \
+                
+                rval = BinOp(Id('get_local_id('+str(idd)+')'), '+', \
                              Constant(offset))
             else:
-                rval = Id('get_local_id('+str(self.ReverseIdx[i])+')')
+                rval = Id('get_local_id('+str(idd)+')')
             lval = TypeId(['unsigned'], Id('l'+self.GridIndices[i]))
             stats.append(Assignment(lval,rval))
 
         print "loadings " , loadings
         exchangeIndices = ExchangeIndices(self.IndexToLocalVar,  self.LocalSwap.values())
-        ## Creating the loading of values into the local array.
         
+        ## Creating the loading of values into the local array.
         for arrName in arrNames:
             for k, l in enumerate(loadings):
                 arrayId = Id(arrName)
@@ -517,16 +518,18 @@ class Rewriter(NodeVisitor):
                         if outeridx in addToId.ids:
                             orisub[i] = Id(inneridx)
                     print "outeridx ", outeridx
-                    for i, n in enumerate(rsub):
-                        locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
+
+                    for i, n in enumerate(rsub): # GlobalLoad
+                        idd = self.ReverseIdx[i] if self.NumDims[arrName] == 2 else i
+                        locIdx = 'get_local_id('+str(idd)+')'
                         addToId = Ids()
                         addToId.visit(n)
                         if outeridx in addToId.ids:
                             rsub[i] = BinOp(rsub[i],'+',\
                             Id(locIdx))
-                    for i, n in enumerate(lsub):
-                        locIdx = 'get_local_id('+str(self.ReverseIdx[i])+')'
-                        
+                    for i, n in enumerate(lsub): # Local Write
+                        idd = self.ReverseIdx[i] if self.NumDims[arrName] == 2 else i
+                        locIdx = 'get_local_id('+str(idd)+')'
                         exchangeId = ExchangeId({''+outeridx : locIdx})
                         exchangeId.visit(n)                    
 
