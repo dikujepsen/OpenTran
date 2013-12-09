@@ -396,6 +396,9 @@ class Rewriter(NodeVisitor):
 
 
     def constantMemory(self, arrNames):
+
+        
+        
         for name in arrNames:
             for n in self.Subscript[name]:
                 ids = Ids()
@@ -403,9 +406,11 @@ class Rewriter(NodeVisitor):
                     ids.visit(s)
                 
                 for i in self.GridIndices:
-                    if i not in ids.ids:
-                        print "SUBSCRIPT " , n
-                            
+                    if i in ids.ids:
+                        print "EXCLUDE " , n
+                    else:
+                        print "INCLUDE " , n
+                        
                 
 
         
