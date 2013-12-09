@@ -1,7 +1,6 @@
 import copy
 import os
-from lan_ast import *
-
+from visitor import *
 
 class Rewriter(NodeVisitor):
     """ Class for rewriting of the original AST. Includes:
@@ -395,6 +394,21 @@ class Rewriter(NodeVisitor):
         ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
         ast.ext.append(newast)
 
+
+    def constantMemory(self, arrNames):
+        for name in arrNames:
+            for n in self.Subscript[name]:
+                ids = Ids()
+                for s in n:
+                    ids.visit(s)
+                
+                for i in self.GridIndices:
+                    if i not in ids.ids:
+                        print "SUBSCRIPT " , n
+                            
+                
+
+        
 
     def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0, middle = 1):
 

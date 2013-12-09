@@ -1,3 +1,4 @@
+from lan_ast import *
 class AddToId(NodeVisitor):
     """ Finds the Id and replaces it with a binop that
     adds another variable to the id.
