@@ -85,6 +85,9 @@ class Rewriter(NodeVisitor):
         # Holds the sub-AST in AllocateBuffers
         # that we add transposition to.
         self.Transposition = None
+        # Holds the sub-AST in AllocateBuffers
+        # that we add constant memory pointer initializations to.
+        self.ConstantMemory = None
         # Dict containing the name and type for each kernel argument
         # set in SetArguments
         self.KernelArgs = dict()
@@ -101,9 +104,12 @@ class Rewriter(NodeVisitor):
         # Holds information about which dimensions have been swapped
         # in a transposition
         self.DimSwap = dict()
-        # Holds additional variables that we add
+        # Holds additional global variables such as pointers that we add
         # when we to perform transformations       
         self.GlobalVars = dict()
+        # Holds additional cl_mem variables that we add
+        # when we to perform Constant Memory transformation       
+        self.ConstantMem = dict()
         # Name swap in relation to [local memory]
         self.LocalSwap = dict()
         # Extra things that we add to ids [local memory]
@@ -252,7 +258,7 @@ class Rewriter(NodeVisitor):
                 self.KernelArgs[m] = self.Type[m]
 
         self.Transposition = GroupCompound([Comment('// Transposition')])
-
+        self.ConstantMemory = GroupCompound([Comment('// Constant Memory')])
         arrays = Arrays(self.index)
         arrays.visit(ast)
         self.Subscript = arrays.Subscript
@@ -286,11 +292,13 @@ class Rewriter(NodeVisitor):
         print "self.Subscript " , self.Subscript
         print "TRANSFORMATIONS"
         print "self.Transposition " , self.Transposition
+        print "self.ConstantMemory " , self.ConstantMemory
         print "self.KernelArgs " , self.KernelArgs
         print "self.NameSwap " , self.NameSwap
         print "self.LocalSwap " , self.LocalSwap
         print "self.LoopArrays " , self.LoopArrays
         print "self.Add ", self.Add
+        print "self.GlobalVars ", self.GlobalVars
 
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
@@ -359,7 +367,7 @@ class Rewriter(NodeVisitor):
             dictTypeHostPtrs[self.ArrayIdToDimName[n][0]] = ['size_t']
 
         for n in self.KernelArgs:
-            type = dictTypeHostPtrs[n]
+            type = copy.deepcopy(self.KernelArgs[n])
             if type[0] == 'size_t':
                 type[0] = 'unsigned'
             if len(type) == 2:
@@ -398,8 +406,10 @@ class Rewriter(NodeVisitor):
     def constantMemory(self, arrNames):
 
         
-        
+        split = dict()
         for name in arrNames:
+            globalarr = set()
+            constantarr = set()
             for n in self.Subscript[name]:
                 ids = Ids()
                 for s in n:
@@ -407,13 +417,99 @@ class Rewriter(NodeVisitor):
                 
                 for i in self.GridIndices:
                     if i in ids.ids:
-                        print "EXCLUDE " , n
+                        globalarr.add(name)
                     else:
-                        print "INCLUDE " , n
+                        constantarr.add(name)
                         
-                
+                if name in globalarr and name in constantarr:
+                    split[name] = True
 
+        print "split ", split
+
+        # Add new constant pointer
+        ptrname = 'constant' + ''.join(arrNames)
+        hst_ptrname = 'hst_ptr_' + ptrname
+        dev_ptrname = 'dev_ptr_' + ptrname
+        print ptrname
+        typeset = set()
+        for name in arrNames:
+            typeset.add(self.Type[name][0])
+
+        if len(typeset) > 1:
+            print "Conflicting types in constant memory transformation... Aborting"
+            return
+
+        ptrtype = [typeset.pop(), '*']
+        # Add the ptr to central data structures
+        self.Type[ptrname] = ptrtype
+        self.DevId[ptrname] = dev_ptrname
+        self.HstId[ptrname] = hst_ptrname
+        self.Mem[ptrname] = self.HstId[ptrname]+'_mem_size'
+
+        # Add the ptr to be a kernel argument
+        self.KernelArgs[ptrname] = ['__constant'] +  ptrtype
+        self.GlobalVars[ptrname] = ''
+        self.ConstantMem[ptrname] = arrNames
+
+
+        # Add pointer allocation to AllocateBuffers
+        lval = Id(self.HstId[ptrname])
+        rval = Id('new ' + self.Type[ptrname][0] + '['\
+                  + self.Mem[ptrname] + ']')
         
+        self.ConstantMemory.statements.append(Assignment(lval, rval))
+        forloop = copy.deepcopy(self.InsideKernel)
+        newcomp = []
+        forcomp = []
+        groupComp = GroupCompound(newcomp)
+        forloop.compound = Compound(forcomp)
+        loopcount = forloop.init.lval.name.name
+        idcount = Id('counter')
+        lval = TypeId(['size_t'], idcount)
+        count = Assignment(lval, Constant(0))
+        # Add index of the constant ptr
+        newcomp.append(count)
+        # Add the for loop from the kernel
+        newcomp.append(forloop)
+        # Add the array reads to the loop body
+        constantdim = sum([ (len(n)) for n in [self.LoopArrays[m] for m in arrNames]])
+        constantcount = constantdim
+        for n in arrNames:
+            aref = self.LoopArrays[n]
+            
+            for a in aref:
+                acopy = copy.deepcopy(a)
+                
+                rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName, self)
+                rewriteArrayRef.visit(acopy)
+
+                sub = acopy.subscript
+                name = ptrname
+                a.name.name = name
+                lsub = [Id(str(constantdim) + '*' + loopcount + '-' + str(constantcount) )]
+                lval = ArrayRef(Id(self.HstId[ptrname]), lsub)
+                constantcount -= 1
+                rval = ArrayRef(Id(self.HstId[n]), sub)
+                a.subscript = lsub
+                ass = Assignment(lval, rval)
+                forcomp.append(ass)
+                ## For exchanges array ids, does not seem useful atm.
+                ## if self.HstId[n] in self.LoopArrays:
+                ##     self.LoopArrays[self.HstId[n]].append(rval)
+                ## else:
+                ##     self.LoopArrays[self.HstId[n]] = [rval]
+                                        
+
+        # Add dimensions to ptrname
+        print "constantdim ", constantdim
+        
+        
+        #self.ArrayIdToDimName
+        self.ConstantMemory.statements.append(groupComp)
+        
+        # now add the code for splitting of array.
+        for name in split:
+            pass
 
     def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0, middle = 1):
 
@@ -626,8 +722,12 @@ class Rewriter(NodeVisitor):
         listDevBuffers = []
 
         for n in self.ArrayIds:
-            name = 'dev_ptr' + n
-            listDevBuffers.append(TypeId(['cl_mem'], Id(name), 0))
+            name = self.DevId[n]
+            listDevBuffers.append(TypeId(['cl_mem'], Id(name)))
+
+        for n in self.ConstantMem:
+            name = self.DevId[n]
+            listDevBuffers.append(TypeId(['cl_mem'], Id(name)))
 
         dictNToDevPtr = self.DevId
         listDevBuffers = GroupCompound(listDevBuffers)
@@ -648,7 +748,8 @@ class Rewriter(NodeVisitor):
 
         for n in self.GlobalVars:
             type = self.Type[n]
-            listHostPtrs.append(TypeId(type, Id(n), 0))
+            name = self.HstId[n]
+            listHostPtrs.append(TypeId(type, Id(name), 0))
 
         dictNToHstPtr = self.HstId
         dictTypeHostPtrs = copy.deepcopy(self.Type)
@@ -660,12 +761,15 @@ class Rewriter(NodeVisitor):
         listMemSizeCalcTemp = []
         dictMemSizeCalc = dict()
         dictNToSize = self.Mem
-        for n in self.ArrayIds:
+        for n in self.Mem:
             sizeName = self.Mem[n]
             listMemSize.append(TypeId(['size_t'], Id(sizeName)))
+
+        for n in self.ArrayIds:
             for dimName in self.ArrayIdToDimName[n]:
                 listDimSize.append(\
                 TypeId(['size_t'], Id(dimName)))
+
                 
         fileAST.ext.append(GroupCompound(listMemSize))
         fileAST.ext.append(GroupCompound(listDimSize))
@@ -686,11 +790,23 @@ class Rewriter(NodeVisitor):
                 rval = BinOp(Id(n[1]),'*', rval)
             listSetMemSize.append(Assignment(lval,rval))
 
+        for n in self.ConstantMem:
+            terms = self.ConstantMem[n] + ['sizeof(' + self.Type[n][0]+')']
+            rval = Id(self.Mem[terms[0]])
+            for s in terms[1:]:
+                rval = BinOp(rval, '*', Id(s))
+
+            lval = Id(self.Mem[n])
+            listSetMemSize.append(Assignment(lval,rval))
+            
         allocateBuffer.compound.statements.append(\
             GroupCompound(listSetMemSize))
 
         allocateBuffer.compound.statements.append(\
             self.Transposition)
+
+        allocateBuffer.compound.statements.append(\
+            self.ConstantMemory)
         
         ErrName = 'oclErrNum'
         lval = TypeId(['cl_int'], Id(ErrName))

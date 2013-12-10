@@ -467,10 +467,10 @@ def nbody():
 
         ## rw.transpose('A')
         ## rw.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1)
-        rw.dataStructures()
         ## rw.localMemory(['Pos'], south = 1)
         ## rw.localMemory(['Mas'])
         rw.constantMemory(['Pos'])
+        rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = '../test/NBody/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
