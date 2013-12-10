@@ -299,6 +299,7 @@ class Rewriter(NodeVisitor):
         print "self.LoopArrays " , self.LoopArrays
         print "self.Add ", self.Add
         print "self.GlobalVars ", self.GlobalVars
+        print "self.ConstantMem " , self.ConstantMem
 
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
@@ -423,6 +424,8 @@ class Rewriter(NodeVisitor):
                         
                 if name in globalarr and name in constantarr:
                     split[name] = True
+                else:
+                    split[name] = False
 
         print "split ", split
 
@@ -451,7 +454,10 @@ class Rewriter(NodeVisitor):
         self.GlobalVars[ptrname] = ''
         self.ConstantMem[ptrname] = arrNames
 
-
+        for n in split:
+            if not split[n]:
+                self.KernelArgs.pop(n)
+                self.DevId.pop(n)
         # Add pointer allocation to AllocateBuffers
         lval = Id(self.HstId[ptrname])
         rval = Id('new ' + self.Type[ptrname][0] + '['\
@@ -464,16 +470,12 @@ class Rewriter(NodeVisitor):
         groupComp = GroupCompound(newcomp)
         forloop.compound = Compound(forcomp)
         loopcount = forloop.init.lval.name.name
-        idcount = Id('counter')
-        lval = TypeId(['size_t'], idcount)
-        count = Assignment(lval, Constant(0))
-        # Add index of the constant ptr
-        newcomp.append(count)
         # Add the for loop from the kernel
         newcomp.append(forloop)
         # Add the array reads to the loop body
         constantdim = sum([ (len(n)) for n in [self.LoopArrays[m] for m in arrNames]])
         constantcount = constantdim
+        constantcount = 0
         for n in arrNames:
             aref = self.LoopArrays[n]
             
@@ -486,10 +488,10 @@ class Rewriter(NodeVisitor):
                 sub = acopy.subscript
                 name = ptrname
                 a.name.name = name
-                lsub = [Id(str(constantdim) + '*' + loopcount + '-' + str(constantcount) )]
+                lsub = [Id(str(constantdim) + '*' + loopcount + '+' + str(constantcount) )]
                 lval = ArrayRef(Id(self.HstId[ptrname]), lsub)
-                constantcount -= 1
                 rval = ArrayRef(Id(self.HstId[n]), sub)
+                constantcount += 1
                 a.subscript = lsub
                 ass = Assignment(lval, rval)
                 forcomp.append(ass)
@@ -507,9 +509,6 @@ class Rewriter(NodeVisitor):
         #self.ArrayIdToDimName
         self.ConstantMemory.statements.append(groupComp)
         
-        # now add the code for splitting of array.
-        for name in split:
-            pass
 
     def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0, middle = 1):
 
@@ -722,8 +721,11 @@ class Rewriter(NodeVisitor):
         listDevBuffers = []
 
         for n in self.ArrayIds:
-            name = self.DevId[n]
-            listDevBuffers.append(TypeId(['cl_mem'], Id(name)))
+            try:
+                name = self.DevId[n]
+                listDevBuffers.append(TypeId(['cl_mem'], Id(name)))
+            except KeyError:
+                pass
 
         for n in self.ConstantMem:
             name = self.DevId[n]
@@ -791,10 +793,10 @@ class Rewriter(NodeVisitor):
             listSetMemSize.append(Assignment(lval,rval))
 
         for n in self.ConstantMem:
-            terms = self.ConstantMem[n] + ['sizeof(' + self.Type[n][0]+')']
+            terms = self.ConstantMem[n]
             rval = Id(self.Mem[terms[0]])
             for s in terms[1:]:
-                rval = BinOp(rval, '*', Id(s))
+                rval = BinOp(rval, '+', Id(self.Mem[s]))
 
             lval = Id(self.Mem[n])
             listSetMemSize.append(Assignment(lval,rval))

@@ -5,18 +5,18 @@ cl_kernel NBodyForKernel;
 cl_mem dev_ptrMas;
 cl_mem dev_ptrPos;
 cl_mem dev_ptrForces;
-cl_mem dev_ptr_constantPos;
+cl_mem dev_ptr_constantPosMas;
 
 float * hst_ptrMas;
 float * hst_ptrPos;
 float * hst_ptrForces;
 size_t N;
-float * hst_ptr_constantPos;
+float * hst_ptr_constantPosMas;
 
-size_t hst_ptr_constantPos_mem_size;
 size_t hst_ptrMas_mem_size;
 size_t hst_ptrPos_mem_size;
 size_t hst_ptrForces_mem_size;
+size_t hst_ptr_constantPosMas_mem_size;
 
 size_t hst_ptrMas_dim1;
 size_t hst_ptrPos_dim1;
@@ -31,29 +31,24 @@ void AllocateBuffers()
   hst_ptrMas_mem_size = hst_ptrMas_dim1 * sizeof(float);
   hst_ptrPos_mem_size = hst_ptrPos_dim2 * (hst_ptrPos_dim1 * sizeof(float));
   hst_ptrForces_mem_size = hst_ptrForces_dim2 * (hst_ptrForces_dim1 * sizeof(float));
-  hst_ptr_constantPos_mem_size = hst_ptrPos_mem_size * sizeof(float);
+  hst_ptr_constantPosMas_mem_size = hst_ptrPos_mem_size + hst_ptrMas_mem_size;
   
   // Transposition
 
   
   // Constant Memory
 
-  hst_ptr_constantPos = new float[hst_ptr_constantPos_mem_size];
-  size_t counter = 0;
+  hst_ptr_constantPosMas = new float[hst_ptr_constantPosMas_mem_size];
   for (unsigned j = 0; j < N; j++)
     {
-      hst_ptr_constantPos[2*j-2] = hst_ptrPos[(0 * hst_ptrPos_dim1) + j];
-      hst_ptr_constantPos[2*j-1] = hst_ptrPos[(1 * hst_ptrPos_dim1) + j];
+      hst_ptr_constantPosMas[3*j+0] = hst_ptrPos[(0 * hst_ptrPos_dim1) + j];
+      hst_ptr_constantPosMas[3*j+1] = hst_ptrPos[(1 * hst_ptrPos_dim1) + j];
+      hst_ptr_constantPosMas[3*j+2] = hst_ptrMas[j];
     }
   
   
   cl_int oclErrNum = CL_SUCCESS;
   
-  dev_ptr_constantPos = clCreateBuffer(
-	context, CL_MEM_COPY_HOST_PTR, hst_ptr_constantPos_mem_size, 
-	hst_ptr_constantPos, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptr_constantPos");
   dev_ptrMas = clCreateBuffer(
 	context, CL_MEM_COPY_HOST_PTR, hst_ptrMas_mem_size, 
 	hst_ptrMas, &oclErrNum);
@@ -69,6 +64,11 @@ void AllocateBuffers()
 	hst_ptrForces, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrForces");
+  dev_ptr_constantPosMas = clCreateBuffer(
+	context, CL_MEM_COPY_HOST_PTR, hst_ptr_constantPosMas_mem_size, 
+	hst_ptr_constantPosMas, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptr_constantPosMas");
 }
 
 void SetArgumentsNBodyFor()
@@ -80,9 +80,6 @@ void SetArgumentsNBodyFor()
 	(void *) &hst_ptrForces_dim1);
   oclErrNum |= clSetKernelArg(
 	NBodyForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptr_constantPos);
-  oclErrNum |= clSetKernelArg(
-	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrMas);
   oclErrNum |= clSetKernelArg(
 	NBodyForKernel, counter++, sizeof(cl_mem), 
@@ -90,6 +87,9 @@ void SetArgumentsNBodyFor()
   oclErrNum |= clSetKernelArg(
 	NBodyForKernel, counter++, sizeof(size_t), 
 	(void *) &N);
+  oclErrNum |= clSetKernelArg(
+	NBodyForKernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptr_constantPosMas);
   oclErrNum |= clSetKernelArg(
 	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrForces);
