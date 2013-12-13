@@ -11,4 +11,4 @@ matrixMul: matrixMul.cpp
 
 
 clean: 
-	rm *~ *.o matrixMul
+	rm -f *~ *.o matrixMul

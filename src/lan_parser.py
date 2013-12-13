@@ -12,7 +12,6 @@ precedence = (
 
 def p_first(p):
     """ first : beginning_list
-    		| empty
     """
     p[0] =  FileAST([]) if p[1] is None else FileAST(p[1])
 
@@ -45,6 +44,8 @@ def p_comment(p):
 def p_arg_params(p):
     """arg_params : typeid COMMA arg_params
     | typeid
+    | identifier
+    | binop
     | empty
     """
     if len(p) == 4:
@@ -69,7 +70,7 @@ def p_assignment_expression(p):
     				| identifier assignment_operator expr
     				| array_reference assignment_operator expr
                                 """
-    p[0] = Assignment(p[1], p[2], p[3],p.lineno(1))
+    p[0] = Assignment(p[1], p[3], p[2], p.lineno(1))
 
 def p_assignment_expression_semi(p):
     """assignment_expression_semi : assignment_expression SEMI """
@@ -83,30 +84,16 @@ def p_constant(p):
     """
     p[0] = Constant(p[1],p.lineno(1))
     
-def p_unary_token_before(p):
-    """unary_token_before :  MINUS 
-    | LOGNOT
-    """
-    p[0] = p[1]
-
-def p_unary_token_after(p):
-    """unary_token_after :   PLUSPLUS
-    | MINUSMINUS
-    """
-    p[0] = p[1]
-
-def p_unary_expression(p):
-    """ unary_expression : unary_token_before term"""    
-    p[0] = UnaryBefore(p[1],p[2],p.lineno(1))
-
 def p_increment(p):
     """ increment : term unary_token_after  """    
     p[0] = Increment(p[1],p[2],p.lineno(1))
 
 
+
 def p_binop_paren(p):
-    """binop_paren : LPAREN binop_expression RPAREN
-    | binop_expression"""
+    """binop : LPAREN binop_expression RPAREN
+    | binop_expression
+    """
     if len(p) == 2:
         p[0] = p[1]
     else:
@@ -115,48 +102,31 @@ def p_binop_paren(p):
 
 def p_binop_expression(p):
     """ binop_expression : term
-    | binop_paren TIMES binop_paren
-    | binop_paren DIVIDE binop_paren
-    | binop_paren binary_token binop_paren   """
+    | binop DIVIDE binop
+    | binop TIMES binop
+    | binop PLUS  binop
+    | binop MINUS binop
+    | binop MOD binop
+    | binop OR binop
+    | binop AND binop
+    | binop LSHIFT binop
+    | binop RSHIFT binop
+    | binop LOGOR binop
+    | binop LOGAND binop
+    | binop LT binop
+    | binop GT binop
+    | binop LE binop
+    | binop GE binop
+    | binop EQ binop
+    | binop NE binop
+
+
+    """
     if len(p) == 2:
         p[0] = p[1]
     else:
         p[0] = BinOp(p[1], p[2], p[3], p.lineno(1))
 
-def p_binop(p):
-    """ binop : binop_expression
-    """
-    if len(p) == 4:
-        p[0] = p[2]
-    else:
-        p[0] = p[1]
-
-def p_expr(p):
-    """ expr : unary_expression
-    | binop
-    | term
-    """
-    p[0] = p[1]
-
-
-def p_binary_token(p):
-    """binary_token : PLUS
-    | MINUS
-    | MOD
-    | OR
-    | AND
-    | LSHIFT
-    | RSHIFT
-    | LOGOR
-    | LOGAND
-    | LT
-    | GT
-    | LE
-    | GE
-    | EQ
-    | NE
-    """
-    p[0] = p[1]
 
 
 def p_subscript(p):
@@ -183,12 +153,30 @@ def p_for_loop(p):
     """
     p[0] = ForLoop(p[3], p[5], p[7], p[9], p.lineno(1))
 
+def p_unary_token_before(p):
+    """unary_token_before :  MINUS 
+    | LOGNOT
+    """
+    p[0] = p[1]
+
+def p_unary_token_after(p):
+    """unary_token_after :   PLUSPLUS
+    | MINUSMINUS
+    """
+    p[0] = p[1]
+
+def p_unary_expression(p):
+    """ unary_expression : unary_token_before term"""    
+    p[0] = UnaryBefore(p[1],p[2],p.lineno(1))
+
 
 
 def p_term(p):
     """term : identifier
     | constant
     | array_reference
+    | function_call
+    | unary_expression
     """
     p[0] = p[1]
 
@@ -197,6 +185,10 @@ def p_compound(p):
     """compound : LBRACE beginning_list RBRACE """
     p[0] = Compound([] if p[2] is None else p[2],p.lineno(1))
 
+def p_func_call(p):
+    """ function_call : identifier arglist """
+    p[0] = FuncDecl(p[1], p[2], Compound([]), p.lineno(1))
+
 def p_func_decl_1(p):
     """function_declaration : typeid arglist SEMI"""
     p[0] = FuncDecl(p[1], p[2], Compound([],p.lineno(1)),p.lineno(1))
@@ -204,6 +196,13 @@ def p_func_decl_1(p):
 def p_func_decl_2(p):
     """function_declaration : typeid arglist compound """
     p[0] = FuncDecl(p[1], p[2], p[3], p.lineno(1))
+
+def p_func_decl_3(p):
+    """function_declaration : function_call SEMI """
+    p[0] = p[1]
+
+    
+
 
 def p_decl(p):
     """declaration : typeid SEMI"""
@@ -228,6 +227,12 @@ def p_native_type(p):
     | UNSIGNED
     """
     p[0] = p[1]
+
+def p_expr(p):
+    """ expr : binop
+    """
+    p[0] = p[1]
+
 
 def p_type(p):
     """type : native_type
@@ -254,25 +259,26 @@ def p_error(p):
 
 from cgen import *
 
-import ply.yacc as yacc
-cparser = yacc.yacc()
 
-if __name__ == "__main__":
+def jacobi():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
     # Build the lexer
     lex.lex()
 
     run = 1
     while run:
-        filename = '../test/matmulfunc4.cpp'
+        filename = '../test/Jacobi/JacobiFor.cpp'
+        ## filename = '../test/matmulfunc4.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             ## f = open('../test/matmulfunc2.cpp', 'r')
-            ##f = open('../test/matrixMul.cpp', 'r')
+            ## f = open('../test/matrixMul.cpp', 'r')
             ## f = open('../test/matmulfunc3.cpp', 'r')
             f = open(filename, 'r')
             s = f.read()
             f.close()
-            print s
+            ## print s
         except EOFError:
             break
 
@@ -281,45 +287,330 @@ if __name__ == "__main__":
         while 1:
             tok = lex.token()
             if not tok: break
-            print tok
+            ## print tok
         
         ast = cparser.parse(s)
-        print ast
+        ## ast.show()
+        ## print ast
         ## print slist
-        #ast.show()
         cprint = CGenerator()
         ## printres = cprint.visit(ast)
         ## print printres
         rw = Rewriter()
-        rw.rewrite(ast, funcname)
-        ## ast.show()
-        ## cprint.createTemp(ast)
+        rw.initOriginal(ast)
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = 'tempjacobi.cpp')
 
         run = 0
-        filename = '../src/temp.cpp'
+        filename = '../src/tempjacobi.cpp'
+        ## filename = '../src/temp.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
             s = f.read()
             f.close()
-            print s
+            ## print s
         except EOFError:
             break
  
         ast = cparser.parse(s)
-        ast.show()
+        ## ## ast.show()
         tempast = copy.deepcopy(ast)
         tempast2 = copy.deepcopy(ast)
+        rw.initNewRepr(tempast)
+
         rw.rewriteToSequentialC(ast)
+        cprint.createTemp(ast, filename = 'cmattemp.cpp')
+        ## rw.rewriteToDeviceCTemp(tempast, False)
+        ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
+
+
+        ## rw.transpose('A')
+        ## rw.transpose('B')
+        ## rw.transpose('C')
+        rw.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1)
+        ## rw.localMemory('A')
+        rw.dataStructures()
+        rw.rewriteToDeviceCRelease(tempast2)
+        ## cprint.createTemp(tempast2, filename = 'matmulfunc4.cl')
+        cprint.createTemp(tempast2, filename = '../test/Jacobi/Jacobi.cl')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+
+def matmul():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
+    # Build the lexer
+    lex.lex()
+
+    run = 1
+    while run:
+        filename = '../test/matmulfunc4.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+
         
-        #oldast.show()
+        lex.input(s)
+        while 1:
+            tok = lex.token()
+            if not tok: break
+            ## print tok
+        
+        ast = cparser.parse(s)
+        ## ast.show()
+        ## print ast
+        ## print slist
+        cprint = CGenerator()
+        ## printres = cprint.visit(ast)
+        ## print printres
+        rw = Rewriter()
+        rw.initOriginal(ast)
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = 'tempmatmul.cpp')
+
+        run = 0
+        filename = '../src/tempmatmul.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+ 
+        ast = cparser.parse(s)
+        ## ## ast.show()
+        tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
+        rw.initNewRepr(tempast)
+
+        ## rw.rewriteToSequentialC(ast)
+        ## cprint.createTemp(ast, filename = 'ctemp.cpp')
+        ## rw.rewriteToDeviceCTemp(tempast, False)
+        ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
+
+
+        ## rw.transpose('A')
+        ## rw.transpose('B')
+        ## rw.transpose('C')
+        rw.localMemory(['A','B'])
+        rw.dataStructures()
+        rw.rewriteToDeviceCRelease(tempast2)
+        cprint.createTemp(tempast2, filename = 'matmulfunc4.cl')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+
+def nbody():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
+    lex.lex()
+
+    run = 1
+    while run:
+        filename = '../test/NBody/NBodyFor.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+
+        
+        lex.input(s)
+        while 1:
+            tok = lex.token()
+            if not tok: break
+            ## print tok
+        
+        ast = cparser.parse(s)
+        ## ast.show()
+        ## print ast
+        ## print slist
+        cprint = CGenerator()
+        ## printres = cprint.visit(ast)
+        ## print printres
+        rw = Rewriter()
+        rw.initOriginal(ast)
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = 'tempnbody.cpp')
+
+        run = 0
+        filename = '../src/tempnbody.cpp'
+        ## funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+        except EOFError:
+            break
+ 
+        ast = cparser.parse(s)
+        ## ## ast.show()
+        tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
+        rw.initNewRepr(tempast)
+
+        rw.rewriteToSequentialC(ast)
         cprint.createTemp(ast, filename = 'ctemp.cpp')
+        ## rw.rewriteToDeviceCTemp(tempast, False)
+        ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
+
+        ## rw.transpose('A')
+        ## rw.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1)
+        ## rw.localMemory(['Pos'], south = 1)
+        ## rw.localMemory(['Mas'])
+        ## rw.constantMemory(['Pos'])
+        ## rw.constantMemory(['Mas'])
+        rw.constantMemory(['Pos', 'Mas'])
+        rw.dataStructures()
+        rw.rewriteToDeviceCRelease(tempast2)
+        cprint.createTemp(tempast2, filename = '../test/NBody/'+funcname + '.cl')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+
+def nbody2():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
+    lex.lex()
+
+    run = 1
+    while run:
+        filename = '../test/NBody2/NBody2For.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
 
         
-        rw.rewriteToDeviceC(tempast, False)
-        cprint.createTemp(tempast, filename = 'devtemp.cpp')
+        lex.input(s)
+        while 1:
+            tok = lex.token()
+            if not tok: break
+            ## print tok
+        
+        ast = cparser.parse(s)
+        ## ast.show()
+        ## print ast
+        ## print slist
+        cprint = CGenerator()
+        ## printres = cprint.visit(ast)
+        ## print printres
+        rw = Rewriter()
+        rw.initOriginal(ast)
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = 'tempnbody2.cpp')
 
-        rw.rewriteToDeviceC(tempast2, True)
-        cprint.createTemp(tempast2, filename = 'cdevtemp.cpp')
+        run = 0
+        filename = '../src/tempnbody2.cpp'
+        ## funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+        except EOFError:
+            break
+ 
+        ast = cparser.parse(s)
+        ## ## ast.show()
+        tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
+        rw.initNewRepr(tempast)
 
+
+        rw.localMemory(['Pos'], south = 1, middle = 1)
+        ## rw.constantMemory(['Pos'])
+        rw.dataStructures()
+        rw.rewriteToDeviceCRelease(tempast2)
+        cprint.createTemp(tempast2, filename = '../test/NBody2/'+funcname + '.cl')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+
+def knearest():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
+    lex.lex()
+
+    run = 1
+    while run:
+        filename = '../test/KNearest/KNearestFor.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+
+        
+        lex.input(s)
+        while 1:
+            tok = lex.token()
+            if not tok: break
+            ## print tok
+        
+        ast = cparser.parse(s)
+        ## ast.show()
+        ## print ast
+        ## print slist
+        cprint = CGenerator()
+        ## printres = cprint.visit(ast)
+        ## print printres
+        rw = Rewriter()
+        rw.initOriginal(ast)
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = 'tempknearest.cpp')
+
+        run = 0
+        filename = '../src/tempknearest.cpp'
+        ## funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+        except EOFError:
+            break
+ 
+        ast = cparser.parse(s)
+        ## ## ast.show()
+        tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
+        rw.initNewRepr(tempast)
+
+# train_patterns[(get_global_id(0) * hst_ptrtrain_patterns_dim1) + k];
+# test_patterns[((k + kk) * hst_ptrtest_patterns_dim1) + get_global_id(1)]
+        ## rw.constantMemory(['Pos']) 
+        rw.transpose('train_patterns')
+        ## rw.transpose('test_patterns')
+        ## rw.localMemory(['test_patterns'])
+        ## rw.localMemory(['train_patterns'])
+        
+        rw.localMemory(['test_patterns','train_patterns']) # 'test_patterns', , 'train_patterns'
+        rw.transpose('dist_matrix')
+        rw.dataStructures()
+        rw.rewriteToDeviceCRelease(tempast2)
+        cprint.createTemp(tempast2, filename = '../test/KNearest/'+funcname + '.cl')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+
+
+if __name__ == "__main__":
+    ## jacobi()
+    ## matmul()
+    ## nbody()
+    ## nbody2()
+    knearest()

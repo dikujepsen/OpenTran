@@ -6,9 +6,9 @@ CC = g++
 
 OPTS = -O3 -Wall
 
-matrixMul: matrixMul.cpp 
+NBody: NBody.cpp 
 	$(CC) $(OPTS) $@.cpp -o $@ $(LNK_LIB)
 
 
 clean: 
-	rm *~ *.o matrixMul
+	rm -f *~ *.o NBody

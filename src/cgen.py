@@ -14,6 +14,7 @@ class CGenerator(object):
         #
         self.indent_level = 0
         self.inside_ArgList = False
+        self.inside_Assignment = False
         
     def createTemp(self, ast, filename = 'temp.cpp'):
         code = self.visit(ast)
@@ -30,7 +31,7 @@ class CGenerator(object):
         except IOError:
             print "Unable to write file"
        
-    def not_simple_node(self, n):
+    def simple_node(self, n):
         """ Returns True for nodes that are "simple"
         """
         return not isinstance(n, (Constant, Id, ArrayRef))
@@ -73,8 +74,15 @@ class CGenerator(object):
     def visit_GlobalCompound(self, n):
         s =  ''
         for stat in n.statements:
-            s += self.visit(stat) 
+           s += self.visit(stat)
         s += '\n'
+        return s
+
+
+    def visit_GroupCompound(self, n):
+        s =  ''
+        for stat in n.statements:
+           s += self.visit(stat) + '\n' + self._make_indent() 
         return s
 
     def visit_Comment(self, n):
@@ -93,28 +101,41 @@ class CGenerator(object):
         s1 = ' '.join(n.type)
         s1 += ' ' + s
         if not self.inside_ArgList:
-            s1 += ';\n'
+            s1 += ';'
         return s1
 
     def visit_Assignment(self, n):
         self.inside_ArgList = True
         lval = self.visit(n.lval)
         self.inside_ArgList = False
+        self.inside_Assignment = True
         rval = self.visit(n.rval)
-        return lval + ' ' + n.op + ' ' + rval + ';'+ '\n'
+        self.inside_Assignment = False
+        return lval + ' ' + n.op + ' ' + rval + ';'
+
+    def visit_ArrayInit(self, n):
+        s = '{'
+        for stat in n.values:
+            s += self.visit(stat) + ', '
+        s = s[:-2]
+        s += '}'
+        return s
 
     def visit_Compound(self, n):
         s = '\n' + self._make_indent() + '{\n'
         self.indent_level += 2
         for stat in n.statements:
-            s += self._make_indent() + self.visit(stat) 
+            s += self._make_indent() + self.visit(stat) + '\n'
         self.indent_level -= 2
-        s += self._make_indent() + '}\n'
+        s += self._make_indent() + '}'
         return s
 
     def visit_ArgList(self, n):
         s = '('
         count = 1
+        if len(n.arglist) == 1:
+            return '(' + self.visit(n.arglist[0]) + ')'
+            
         for arg in n.arglist:
             if count == 1:
                 s += '\n\t'
@@ -124,7 +145,7 @@ class CGenerator(object):
             count += 1
         if n.arglist:
             s = s[:-2]
-        if (count-1) % 3 == 0:
+        if (count-1) % 3 == 0 and count != 1:
             s = s[:-2]
         return s + ')'
 
@@ -135,8 +156,8 @@ class CGenerator(object):
         return s
 
     def visit_BinOp(self, n):
-        lval = self.parenthesize_if(n.lval,self.not_simple_node)
-        rval = self.parenthesize_if(n.rval,self.not_simple_node)
+        lval = self.parenthesize_if(n.lval,self.simple_node)
+        rval = self.parenthesize_if(n.rval,self.simple_node)
         return lval + ' ' + n.op + ' ' + rval
 
     def visit_FuncDecl(self, n):
@@ -144,23 +165,47 @@ class CGenerator(object):
         typeid = self.visit(n.typeid) 
         arglist = self.visit(n.arglist) 
         self.inside_ArgList = False
-        compound = self.visit(n.compound) if n.compound.statements else ';'
-        self.indent_level = 0
+        if self.inside_Assignment:
+            compound = ''
+            end = ''
+        elif n.compound.statements:
+            typeid = '\n' + typeid
+            compound = self.visit(n.compound)
+        else:
+            compound = ';'
+        
         return typeid + arglist + compound
 
     def visit_ForLoop(self, n):
-        init = self.visit(n.init) # already has a semi and \n at end
-        init = init[:-1] # remove newline
+        init = self.visit(n.init) # already has a semi at the end
         cond = self.visit(n.cond)
         inc = self.visit(n.inc)
         self.indent_level += 2
         compound = self.visit(n.compound)
         self.indent_level -= 2
         return 'for (' + init + ' ' + cond + '; ' + inc + ')' + compound
+
+    def visit_IfThen(self, n):
+        cond = self.visit(n.cond)
+        self.indent_level += 2
+        compound = self.visit(n.compound)
+        self.indent_level -= 2
+        return 'if (' + cond + ')' + compound
+
         
     def visit_Id(self, n):
         return n.name
         
     def visit_Constant(self, n):
-        return n.value
+        try:
+            s = float(n.value)
+        except ValueError:
+            if len(n.value) == 0:
+                return '\"\"'
+            if n.value[0] == '"':
+                return n.value
+            else:
+                return '\"' + n.value + '\"'
+        else:
+            return str(n.value)
         

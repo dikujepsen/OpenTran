@@ -11,3 +11,6 @@ OPTS = -O3 -Wall
 matrixMul: matrixMul.cpp oclMatmul.cpp
 	$(CC) $(OPTS) -I$(INC_LIB) $@.cpp -o $@ $(LNK_LIB)
 
+
+clean: 
+	rm *~ *.o matrixMul

@@ -86,6 +86,20 @@ class Comment(Node):
         return tuple(nodelist)
     attr_names = ('value',)
 
+class ArrayInit(Node):
+    def __init__(self, values, coord = None):
+        self.values = values
+        self.coord = coord
+    def __repr__(self):
+        return "ArrayInit(%r)" % ( self.values)
+    def children(self):
+        nodelist = []
+        for n in self.values:
+            nodelist.append(n)
+        return tuple(nodelist)
+    attr_names = ()
+
+
 class Constant(Node):
     def __init__(self,value,coord = None):
         self.value = value
@@ -150,7 +164,7 @@ class TypeId(Node):
     attr_names = ('type',)
 
 class Assignment(Node):
-    def __init__(self,lval,op,rval,coord = None):
+    def __init__(self, lval, rval, op = '=', coord = None):
         self.lval = lval
         self.op = op
         self.rval = rval
@@ -212,12 +226,14 @@ class ArgList(Node):
     attr_names = ()
 
 class ArrayRef(Node):
-    def __init__(self, name, subscript, coord  = None):
+    def __init__(self, name, subscript, coord  = None, extra = dict()):
         self.name = name
         self.subscript = subscript
         self.coord = coord
+        self.extra = extra
+        
     def __repr__(self):
-        return "ArrayRef(%r[%r])" % ( self.name , self.subscript )
+        return "ArrayRef(%r%r)" % ( self.name , self.subscript )
     def children(self):
         nodelist = []
         nodelist.append(("name", self.name))
@@ -281,3 +297,18 @@ class ForLoop(Node):
         nodelist.append(("compound", self.compound))
         return tuple(nodelist)
     attr_names = ()
+
+class IfThen(Node):
+    def __init__(self, cond, compound, coord = None):
+        self.cond = cond
+        self.compound = compound
+    def __repr__(self):
+        return "If(%r) then {%r}" % ( self.cond, \
+                                      self.compound )
+    def children(self):
+        nodelist = []
+        nodelist.append(("cond", self.cond))
+        nodelist.append(("compound", self.compound))
+        return tuple(nodelist)
+    attr_names = ()
+
