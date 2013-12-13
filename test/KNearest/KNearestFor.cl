@@ -21,28 +21,20 @@ __kernel void KNearestFor(			  unsigned dim, unsigned hst_ptrtest_patterns_dim1,
       /*   { */
           float tmp = test_patterns_local[(li * 8) + 0] - train_patterns_local[(0 * 8) + lj];
           d += tmp * tmp;
-          d += tmp * tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp;
           tmp = test_patterns_local[(li * 8) + 1] - train_patterns_local[(1 * 8) + lj];
           d += tmp * tmp;
-          d += tmp * tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp;
           tmp = test_patterns_local[(li * 8) + 2] - train_patterns_local[(2 * 8) + lj];
           d += tmp * tmp;
-          d += tmp * tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp;
           tmp = test_patterns_local[(li * 8) + 3] - train_patterns_local[(3 * 8) + lj];
           d += tmp * tmp;
-          d += tmp * tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp;
           tmp = test_patterns_local[(li * 8) + 4] - train_patterns_local[(4 * 8) + lj];
           d += tmp * tmp;
-          d += tmp * tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp;
           tmp = test_patterns_local[(li * 8) + 5] - train_patterns_local[(5 * 8) + lj];
           d += tmp * tmp;
-          d += tmp * tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp;
           tmp = test_patterns_local[(li * 8) + 6] - train_patterns_local[(6 * 8) + lj];
           d += tmp * tmp;
-          d += tmp * tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp;
           tmp = test_patterns_local[(li * 8) + 7] - train_patterns_local[(7 * 8) + lj];
           d += tmp * tmp;
-          d += tmp * tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp* tmp;
         /* } */
       barrier(CLK_LOCAL_MEM_FENCE);
     }
