@@ -44,9 +44,9 @@ DEFINE_TIMER(1);
 int main( int argc, char* argv[] )
 {
   // problem parameters
-  size_t NTRAIN = 8;
-  size_t NTEST = 4*8;
-  size_t dim = 20;
+  size_t NTRAIN = 2048;
+  size_t NTEST = 4*NTRAIN;
+  size_t dim = 16;
 
   size_t i,j,k;
 

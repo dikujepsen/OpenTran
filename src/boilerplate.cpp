@@ -1,6 +1,6 @@
 #include "StartUtil.cpp"
 using namespace std;
-#define LSIZE 4
+#define LSIZE 8
 cl_kernel KNearestForKernel;
 cl_mem dev_ptrtrain_patterns;
 cl_mem dev_ptrtest_patterns;
@@ -12,6 +12,8 @@ float * hst_ptrdist_matrix;
 size_t dim;
 size_t NTRAIN;
 size_t NTEST;
+float * hst_ptrdist_matrix_trans;
+float * hst_ptrtrain_patterns_trans;
 
 size_t hst_ptrtrain_patterns_mem_size;
 size_t hst_ptrtest_patterns_mem_size;
@@ -34,6 +36,14 @@ void AllocateBuffers()
   
   // Transposition
 
+  hst_ptrtrain_patterns_trans = new float[hst_ptrtrain_patterns_mem_size];
+  transpose<float>(
+	hst_ptrtrain_patterns, hst_ptrtrain_patterns_trans, hst_ptrtrain_patterns_dim1, 
+	hst_ptrtrain_patterns_dim2);
+  hst_ptrdist_matrix_trans = new float[hst_ptrdist_matrix_mem_size];
+  transpose<float>(
+	hst_ptrdist_matrix, hst_ptrdist_matrix_trans, hst_ptrdist_matrix_dim1, 
+	hst_ptrdist_matrix_dim2);
   
   // Constant Memory
 
@@ -42,7 +52,7 @@ void AllocateBuffers()
   
   dev_ptrtrain_patterns = clCreateBuffer(
 	context, CL_MEM_COPY_HOST_PTR, hst_ptrtrain_patterns_mem_size, 
-	hst_ptrtrain_patterns, &oclErrNum);
+	hst_ptrtrain_patterns_trans, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrtrain_patterns");
   dev_ptrtest_patterns = clCreateBuffer(
@@ -52,7 +62,7 @@ void AllocateBuffers()
 	oclErrNum, "clCreateBuffer dev_ptrtest_patterns");
   dev_ptrdist_matrix = clCreateBuffer(
 	context, CL_MEM_COPY_HOST_PTR, hst_ptrdist_matrix_mem_size, 
-	hst_ptrdist_matrix, &oclErrNum);
+	hst_ptrdist_matrix_trans, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrdist_matrix");
 }
@@ -75,13 +85,13 @@ void SetArgumentsKNearestFor()
 	(void *) &dev_ptrtrain_patterns);
   oclErrNum |= clSetKernelArg(
 	KNearestForKernel, counter++, sizeof(size_t), 
-	(void *) &hst_ptrtrain_patterns_dim1);
+	(void *) &hst_ptrtrain_patterns_dim2);
   oclErrNum |= clSetKernelArg(
 	KNearestForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrtest_patterns);
   oclErrNum |= clSetKernelArg(
 	KNearestForKernel, counter++, sizeof(size_t), 
-	(void *) &hst_ptrdist_matrix_dim1);
+	(void *) &hst_ptrdist_matrix_dim2);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }

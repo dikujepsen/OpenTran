@@ -591,10 +591,16 @@ def knearest():
         tempast2 = copy.deepcopy(ast)
         rw.initNewRepr(tempast)
 
-
-        ## rw.localMemory(['Pos'], south = 1, middle = 1)
-        ## rw.constantMemory(['Pos'])
-        ## rw.transpose('dist_matrix')
+# train_patterns[(get_global_id(0) * hst_ptrtrain_patterns_dim1) + k];
+# test_patterns[((k + kk) * hst_ptrtest_patterns_dim1) + get_global_id(1)]
+        ## rw.constantMemory(['Pos']) 
+        rw.transpose('train_patterns')
+        ## rw.transpose('test_patterns')
+        ## rw.localMemory(['test_patterns'])
+        ## rw.localMemory(['train_patterns'])
+        
+        rw.localMemory(['test_patterns','train_patterns']) # 'test_patterns', , 'train_patterns'
+        rw.transpose('dist_matrix')
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = '../test/KNearest/'+funcname + '.cl')

@@ -202,3 +202,47 @@ int main(int argc, char** argv)
 }
 
 // 1620.000000 670.000000 4660.000000 13590.000000 27460.000000 46270.000000 70020.000000 98710.000000 0.000000 0.000000
+
+      train_patterns_local[(li * 4) + get_local_id(0)] = train_patterns[((k + get_local_id(1)) * hst_ptrtrain_patterns_dim1) + get_global_id(0)];
+       barrier(CLK_LOCAL_MEM_FENCE);
+      
+      for (unsigned kk = 0; kk < 4; kk++)
+        {
+          float tmp = test_patterns[((k + kk) * hst_ptrtest_patterns_dim1) + get_global_id(1)] - train_patterns_local[(kk * 4) + lj];
+          d += tmp * tmp;
+        }
+    }
+
+      test_patterns_local[(lj * 4) + get_local_id(1)] = test_patterns[((k + get_local_id(0)) * hst_ptrtest_patterns_dim1) + get_global_id(1)];
+       barrier(CLK_LOCAL_MEM_FENCE);
+      
+      for (unsigned kk = 0; kk < 4; kk++)
+        {
+          float tmp = test_patterns_local[(kk * 4) + li] - train_patterns[((k + kk) * hst_ptrtrain_patterns_dim1) + get_global_id(0)];
+          d += tmp * tmp;
+        }
+    }
+
+
+      test_patterns_local[(lj * 4) + get_local_id(1)] = test_patterns[((k + get_local_id(0)) * hst_ptrtest_patterns_dim1) + get_global_id(1)];
+       train_patterns_local[(li * 4) + get_local_id(0)] = train_patterns[((k + get_local_id(1)) * hst_ptrtrain_patterns_dim1) + get_global_id(0)];
+       barrier(CLK_LOCAL_MEM_FENCE);
+      
+      for (unsigned kk = 0; kk < 4; kk++)
+        {
+          float tmp = test_patterns_local[(kk * 4) + li] - train_patterns_local[(kk * 4) + lj];
+          d += tmp * tmp;
+        }
+    }
+
+
+      test_patterns_local[(li * 4) + get_local_id(0)] = test_patterns[(get_global_id(1) * hst_ptrtest_patterns_dim1) + (k + get_local_id(0))];
+      train_patterns_local[(li * 4) + get_local_id(0)] = train_patterns[((k + get_local_id(1)) * hst_ptrtrain_patterns_dim1) + get_global_id(0)];
+       barrier(CLK_LOCAL_MEM_FENCE);
+      
+      for (unsigned kk = 0; kk < 4; kk++)
+        {
+          float tmp = test_patterns_local[(li * 4) + kk] - train_patterns_local[(kk * 4) + lj];
+          d += tmp * tmp;
+        }
+    }
