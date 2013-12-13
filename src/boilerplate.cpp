@@ -41,9 +41,9 @@ void AllocateBuffers()
 	hst_ptrtrain_patterns, hst_ptrtrain_patterns_trans, hst_ptrtrain_patterns_dim1, 
 	hst_ptrtrain_patterns_dim2);
   hst_ptrdist_matrix_trans = new float[hst_ptrdist_matrix_mem_size];
-  transpose<float>(
-	hst_ptrdist_matrix, hst_ptrdist_matrix_trans, hst_ptrdist_matrix_dim1, 
-	hst_ptrdist_matrix_dim2);
+  // transpose<float>(
+  // 	hst_ptrdist_matrix, hst_ptrdist_matrix_trans, hst_ptrdist_matrix_dim1, 
+  // 	hst_ptrdist_matrix_dim2);
   
   // Constant Memory
 
@@ -51,18 +51,27 @@ void AllocateBuffers()
   cl_int oclErrNum = CL_SUCCESS;
   
   dev_ptrtrain_patterns = clCreateBuffer(
-	context, CL_MEM_COPY_HOST_PTR, hst_ptrtrain_patterns_mem_size, 
-	hst_ptrtrain_patterns_trans, &oclErrNum);
+	context, CL_MEM_READ_ONLY, hst_ptrtrain_patterns_mem_size, 
+	NULL, &oclErrNum);
+  // dev_ptrtrain_patterns = clCreateBuffer(
+  // 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrtrain_patterns_mem_size, 
+  // 	hst_ptrtrain_patterns_trans, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrtrain_patterns");
+  // dev_ptrtest_patterns = clCreateBuffer(
+  // 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrtest_patterns_mem_size, 
+  // 	hst_ptrtest_patterns, &oclErrNum);
   dev_ptrtest_patterns = clCreateBuffer(
-	context, CL_MEM_COPY_HOST_PTR, hst_ptrtest_patterns_mem_size, 
-	hst_ptrtest_patterns, &oclErrNum);
+	context, CL_MEM_READ_ONLY, hst_ptrtest_patterns_mem_size, 
+	NULL, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrtest_patterns");
   dev_ptrdist_matrix = clCreateBuffer(
-	context, CL_MEM_COPY_HOST_PTR, hst_ptrdist_matrix_mem_size, 
-	hst_ptrdist_matrix_trans, &oclErrNum);
+  	context, CL_MEM_WRITE_ONLY, hst_ptrdist_matrix_mem_size, 
+  	NULL, &oclErrNum);
+  // dev_ptrdist_matrix = clCreateBuffer(
+  // 	context, CL_MEM_USE_HOST_PTR, hst_ptrdist_matrix_mem_size, 
+  // 	hst_ptrdist_matrix_trans, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrdist_matrix");
 }
@@ -72,10 +81,10 @@ void SetArgumentsKNearestFor()
   cl_int oclErrNum = CL_SUCCESS;
   int counter = 0;
   oclErrNum |= clSetKernelArg(
-	KNearestForKernel, counter++, sizeof(size_t), 
+	KNearestForKernel, counter++, sizeof(unsigned), 
 	(void *) &dim);
   oclErrNum |= clSetKernelArg(
-	KNearestForKernel, counter++, sizeof(size_t), 
+	KNearestForKernel, counter++, sizeof(unsigned), 
 	(void *) &hst_ptrtest_patterns_dim1);
   oclErrNum |= clSetKernelArg(
 	KNearestForKernel, counter++, sizeof(cl_mem), 
@@ -84,13 +93,13 @@ void SetArgumentsKNearestFor()
 	KNearestForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrtrain_patterns);
   oclErrNum |= clSetKernelArg(
-	KNearestForKernel, counter++, sizeof(size_t), 
+	KNearestForKernel, counter++, sizeof(unsigned), 
 	(void *) &hst_ptrtrain_patterns_dim2);
   oclErrNum |= clSetKernelArg(
 	KNearestForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrtest_patterns);
   oclErrNum |= clSetKernelArg(
-	KNearestForKernel, counter++, sizeof(size_t), 
+	KNearestForKernel, counter++, sizeof(unsigned), 
 	(void *) &hst_ptrdist_matrix_dim2);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
@@ -109,12 +118,17 @@ void ExecKNearestFor()
 	0, NULL, &GPUExecution);
   oclCheckErr(
 	oclErrNum, "clEnqueueNDRangeKernel");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrdist_matrix, CL_TRUE, 
-	0, hst_ptrdist_matrix_mem_size, hst_ptrdist_matrix, 
-	1, &GPUExecution, NULL);
+  oclErrNum = clFinish(command_queue);
   oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
+  	oclErrNum, "clEnqueueReadBuffer");
+  // oclErrNum = clEnqueueReadBuffer(
+  // 	command_queue, dev_ptrdist_matrix, CL_TRUE, 
+  // 	0, hst_ptrdist_matrix_mem_size, hst_ptrdist_matrix, 
+  // 	1, &GPUExecution, NULL);
+  // oclCheckErr(
+  // 	oclErrNum, "clEnqueueReadBuffer");
+
+
 }
 
 void RunOCLKNearestForKernel(
@@ -144,5 +158,8 @@ void RunOCLKNearestForKernel(
 	"");
       SetArgumentsKNearestFor();
     }
+  START_TIMER(1);
   ExecKNearestFor();
+  STOP_TIMER(1);
+
 }
