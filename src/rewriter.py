@@ -673,6 +673,7 @@ class Rewriter(NodeVisitor):
         hstName = self.HstId[arrName]
         hstTransName = hstName + '_trans'
         self.GlobalVars[hstTransName] = ''
+        self.HstId[hstTransName] = hstTransName
         self.Type[hstTransName] = self.Type[arrName]
         # Swap the hst ptr
         self.NameSwap[hstName] = hstTransName

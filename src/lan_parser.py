@@ -478,7 +478,133 @@ def nbody():
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
 
+def nbody2():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
+    lex.lex()
+
+    run = 1
+    while run:
+        filename = '../test/NBody2/NBody2For.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+
+        
+        lex.input(s)
+        while 1:
+            tok = lex.token()
+            if not tok: break
+            ## print tok
+        
+        ast = cparser.parse(s)
+        ## ast.show()
+        ## print ast
+        ## print slist
+        cprint = CGenerator()
+        ## printres = cprint.visit(ast)
+        ## print printres
+        rw = Rewriter()
+        rw.initOriginal(ast)
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = 'tempnbody2.cpp')
+
+        run = 0
+        filename = '../src/tempnbody2.cpp'
+        ## funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+        except EOFError:
+            break
+ 
+        ast = cparser.parse(s)
+        ## ## ast.show()
+        tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
+        rw.initNewRepr(tempast)
+
+
+        rw.localMemory(['Pos'], south = 1, middle = 1)
+        ## rw.constantMemory(['Pos'])
+        rw.dataStructures()
+        rw.rewriteToDeviceCRelease(tempast2)
+        cprint.createTemp(tempast2, filename = '../test/NBody2/'+funcname + '.cl')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+
+def knearest():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
+    lex.lex()
+
+    run = 1
+    while run:
+        filename = '../test/KNearest/KNearestFor.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+
+        
+        lex.input(s)
+        while 1:
+            tok = lex.token()
+            if not tok: break
+            ## print tok
+        
+        ast = cparser.parse(s)
+        ## ast.show()
+        ## print ast
+        ## print slist
+        cprint = CGenerator()
+        ## printres = cprint.visit(ast)
+        ## print printres
+        rw = Rewriter()
+        rw.initOriginal(ast)
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = 'tempknearest.cpp')
+
+        run = 0
+        filename = '../src/tempknearest.cpp'
+        ## funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+        except EOFError:
+            break
+ 
+        ast = cparser.parse(s)
+        ## ## ast.show()
+        tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
+        rw.initNewRepr(tempast)
+
+
+        ## rw.localMemory(['Pos'], south = 1, middle = 1)
+        ## rw.constantMemory(['Pos'])
+        ## rw.transpose('dist_matrix')
+        rw.dataStructures()
+        rw.rewriteToDeviceCRelease(tempast2)
+        cprint.createTemp(tempast2, filename = '../test/KNearest/'+funcname + '.cl')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+
+
 if __name__ == "__main__":
     ## jacobi()
     ## matmul()
-    nbody()
+    ## nbody()
+    ## nbody2()
+    knearest()

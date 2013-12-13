@@ -178,7 +178,7 @@ int main(int argc, char** argv)
 #define GPU 1
 #if GPU
   
-  RunOCLNBodyForKernel(M_mat, wM,
+  RunOCLNBody2ForKernel(M_mat, wM,
 		       Pos, wPos, 2,
 		       Forces, wVel, 2,
 		       N);
@@ -200,5 +200,3 @@ int main(int argc, char** argv)
   free(Forces);
   
 }
-
-// 1620.000000 670.000000 4660.000000 13590.000000 27460.000000 46270.000000 70020.000000 98710.000000 0.000000 0.000000
