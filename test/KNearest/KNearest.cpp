@@ -14,7 +14,6 @@
 #include <pthread.h>
 #include <sched.h>
 #include <string.h>
-#include "../../src/boilerplate.cpp"
 
 
 long get_system_time_in_microseconds(void){
@@ -41,11 +40,13 @@ long get_system_time_in_microseconds(void){
 
 DEFINE_TIMER(1); 
  
+#include "../../src/boilerplate.cpp"
+
 int main( int argc, char* argv[] )
 {
   // problem parameters
-  size_t NTRAIN = 2048;
-  size_t NTEST = 4*NTRAIN;
+  size_t NTRAIN = 28672;
+  size_t NTEST = NTRAIN;
   size_t dim = 16;
 
   size_t i,j,k;
@@ -66,7 +67,6 @@ int main( int argc, char* argv[] )
       test_patterns[i*dim + k] = (float)i;
     }
   }
-  START_TIMER(1);
   // for each test pattern
   /////////////////////////////////////////////////////// FIXME ///////////////////////////////////////////////////////
   // @Jacob: You could try to parallelize these computations here (maybe the first loop?)
@@ -79,6 +79,7 @@ int main( int argc, char* argv[] )
 			  train_patterns, dim, NTRAIN, NTEST, NTRAIN);
   
 #else
+   START_TIMER(1);
   float d,tmp;
   for (i=0;i<NTEST;i++) {
     // compute distances to all training patterns
@@ -89,11 +90,11 @@ int main( int argc, char* argv[] )
 	tmp = test_patterns[i*dim+k]-train_patterns[j*dim+k];
 	d += tmp*tmp;
       }
-      dist_matrix[j*NTEST + i] = d;
+      dist_matrix[i*NTRAIN + j] = d;
     }
   }
-#endif
   STOP_TIMER(1);
+#endif
   printf("Computation done.\n");
 
   // print matrix
