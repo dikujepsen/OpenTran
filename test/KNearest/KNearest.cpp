@@ -85,7 +85,7 @@ int main( int argc, char* argv[] )
     for (j=0;j<NTRAIN;j++) {
       d = 0.0;
       // for each feature
-      for (k=0;k<dim;k++){
+      for (k=0;k<dim;k++) {
 	tmp = test_patterns[i*dim+k]-train_patterns[j*dim+k];
 	d += tmp*tmp;
       }

@@ -246,3 +246,14 @@ int main(int argc, char** argv)
           d += tmp * tmp;
         }
     }
+
+test_patterns_local[(li * 8) + get_local_id(0)] = test_patterns[(get_global_id(1) * hst_ptrtest_patterns_dim1) + (k + get_local_id(0))];
+      train_patterns_local[(li * 8) + get_local_id(0)] = train_patterns[((k + get_local_id(1)) * hst_ptrtrain_patterns_dim1) + get_global_id(0)];
+       barrier(CLK_LOCAL_MEM_FENCE);
+      
+      for (unsigned kk = 0; kk < 8; kk++)
+        {
+          float tmp = test_patterns_local[(li * 8) + kk] - train_patterns_local[(kk * 8) + lj];
+          d += tmp * tmp;
+        }
+    }
