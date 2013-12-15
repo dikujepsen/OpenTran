@@ -77,6 +77,9 @@ class Rewriter(NodeVisitor):
         self.ReadWrite = dict()
         # List of arrays that are write only
         self.WriteOnly = list()
+        # dict of indices to loops in the kernel
+        self.Loops = dict()
+        
         # List of arguments for the kernel
         ## self.KernelArgs = list()
         ########################################################
@@ -120,7 +123,7 @@ class Rewriter(NodeVisitor):
         loops = ForLoops()
         loops.visit(ast)
         forLoopAst = loops.ast
-        loopIndices = LoopIndices()
+        loopIndices = LoopIndices()        
         loopIndices.visit(forLoopAst)
         self.index = loopIndices.index
         self.UpperLimit = loopIndices.end
@@ -151,7 +154,14 @@ class Rewriter(NodeVisitor):
         innerbody = perfectForLoop.inner
         firstLoop = ForLoops()
         firstLoop.visit(innerbody.compound)
+        loopIndices = LoopIndices()
+        loopIndices.visit(firstLoop.ast)
+        self.Loops = loopIndices.Loops
+
+
         self.InsideKernel = firstLoop.ast
+
+
         arrays = Arrays([])
         if firstLoop.ast is None: # No inner loop
             arrays.visit(innerbody.compound)
@@ -300,6 +310,7 @@ class Rewriter(NodeVisitor):
         print "self.Add ", self.Add
         print "self.GlobalVars ", self.GlobalVars
         print "self.ConstantMem " , self.ConstantMem
+        print "self.Loops " , self.Loops
 
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
@@ -393,10 +404,16 @@ class Rewriter(NodeVisitor):
         
         exchangeIndices = ExchangeId(self.IndexToThreadId)
         exchangeIndices.visit(self.Kernel)
+
+
+        exchangeTypes = ExchangeTypes()
+        exchangeTypes.visit(self.Kernel)
         
         
         typeid = copy.deepcopy(self.DevFuncTypeId)
         typeid.type.insert(0, '__kernel')
+
+
         
         newast =  FuncDecl(typeid, ArgList(arglist), self.Kernel)
         ast.ext = list()
@@ -509,6 +526,30 @@ class Rewriter(NodeVisitor):
         #self.ArrayIdToDimName
         self.ConstantMemory.statements.append(groupComp)
         
+
+    def localMemory2(self, arrNames):
+        # Find the subscripts that would be suitable to have in local memory
+        local = dict()
+        for name in arrNames:
+            for sub in self.Subscript[name]:
+                for s in sub:
+                    ids = LoopIds(self.Loops.keys())
+                    ids.visit(s)
+                    iset = ids.ids
+                    if len(iset) > 1:
+                        print "More than one loop index in a subscript?"
+                        return
+                    if len(iset) == 1:
+                        if name in local:
+                            local[name].append(sub)
+                        else:
+                            local[name] = [sub]
+
+
+        for n in local:
+            print local[n]
+
+        ## local[arrNames[0]][0][1].name = 'lll'
 
     def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0, middle = 1):
 
@@ -681,18 +722,26 @@ class Rewriter(NodeVisitor):
         dimName = self.ArrayIdToDimName[arrName]
         self.NameSwap[dimName[0]] = dimName[1]
 
-        lval = Id(hstTransName)
-        natType = self.Type[arrName][0]
-        rval = Id('new ' + natType + '['\
-                  + self.Mem[arrName] + ']')
-        self.Transposition.statements.append(Assignment(lval,rval))
-        arglist = ArgList([Id(hstName),\
-                   Id(hstTransName),\
-                   Id(dimName[0]),\
-                   Id(dimName[1])])
-        trans = FuncDecl(Id('transpose<'+natType+'>'), arglist, Compound([]))
-        self.Transposition.statements.append(trans)
-        self.SubSwap[arrName] = True
+        if arrName not in self.WriteOnly:
+            lval = Id(hstTransName)
+            natType = self.Type[arrName][0]
+            rval = Id('new ' + natType + '['\
+                      + self.Mem[arrName] + ']')
+            self.Transposition.statements.append(Assignment(lval,rval))
+            arglist = ArgList([Id(hstName),\
+                       Id(hstTransName),\
+                       Id(dimName[0]),\
+                       Id(dimName[1])])
+            trans = FuncDecl(Id('transpose<'+natType+'>'), arglist, Compound([]))
+            self.Transposition.statements.append(trans)
+
+        # Forget this and just swap subscripts immediately
+        ## self.SubSwap[arrName] = True
+
+        for sub in self.Subscript[arrName]:
+            (sub[0], sub[1]) = \
+                     (sub[1], sub[0])
+
 
     def generateBoilerplateCode(self, ast):
 
@@ -826,10 +875,16 @@ class Rewriter(NodeVisitor):
                 arrayn = self.NameSwap[arrayn]
             except KeyError:
                 pass
+            if n in self.WriteOnly:
+                flag = Id('CL_MEM_WRITE_ONLY')
+                arraynId = Id('NULL')
+            else:
+                flag = Id('CL_MEM_USE_HOST_PTR')
+                arraynId = Id(arrayn)
             arglist = ArgList([Id('context'),\
-                               Id('CL_MEM_COPY_HOST_PTR'),\
+                               flag,\
                                Id(dictNToSize[n]),\
-                               Id(arrayn),\
+                               arraynId,\
                                Id('&'+ErrName)])
             rval = FuncDecl(Id('clCreateBuffer'), arglist, Compound([]))
             allocateBuffer.compound.statements.append(\
@@ -873,6 +928,8 @@ class Rewriter(NodeVisitor):
                 except KeyError:
                     pass
                 cl_type = type[0]
+                if cl_type == 'size_t':
+                    cl_type = 'unsigned'
                 arglist = ArgList([kernelId,\
                                    Increment(cntName,'++'),\
                                    Id('sizeof('+cl_type+')'),\
@@ -944,6 +1001,15 @@ class Rewriter(NodeVisitor):
             execBody.append(Assignment(lval,rval))
             
         arglist = ArgList([Id(ErrName), Constant('clEnqueueReadBuffer')])
+        ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
+        execBody.append(ErrCheck)
+
+        # add clFinish statement
+        arglist = ArgList([Id('command_queue')])
+        finish = FuncDecl(Id('clFinish'), arglist, Compound([]))
+        execBody.append(Assignment(Id(ErrName), finish))
+        
+        arglist = ArgList([Id(ErrName), Constant('clFinish')])
         ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
         execBody.append(ErrCheck)
 

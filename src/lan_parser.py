@@ -531,9 +531,10 @@ def nbody2():
         rw.initNewRepr(tempast)
 
 
-        rw.localMemory(['Pos'], south = 1, middle = 1)
-        ## rw.constantMemory(['Pos'])
+        ## rw.localMemory(['Pos'], south = 1, middle = 1)
         rw.dataStructures()
+        rw.localMemory2(['Pos'])
+        ## rw.constantMemory(['Pos'])
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = '../test/NBody2/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
@@ -561,7 +562,7 @@ def knearest():
         while 1:
             tok = lex.token()
             if not tok: break
-            ## print tok
+            print tok
         
         ast = cparser.parse(s)
         ## ast.show()
@@ -595,11 +596,10 @@ def knearest():
 # test_patterns[((k + kk) * hst_ptrtest_patterns_dim1) + get_global_id(1)]
         ## rw.constantMemory(['Pos']) 
         rw.transpose('train_patterns')
-        ## rw.transpose('test_patterns')
         ## rw.localMemory(['test_patterns'])
         ## rw.localMemory(['train_patterns'])
         
-        rw.localMemory(['test_patterns','train_patterns']) # 'test_patterns', , 'train_patterns'
+        rw.localMemory(['test_patterns','train_patterns'])
         rw.transpose('dist_matrix')
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
@@ -612,5 +612,5 @@ if __name__ == "__main__":
     ## jacobi()
     ## matmul()
     ## nbody()
-    ## nbody2()
-    knearest()
+    nbody2()
+    ## knearest()

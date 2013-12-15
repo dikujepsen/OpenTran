@@ -144,9 +144,14 @@ t_ignore = " \t"
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += t.value.count("\n")
-    
+
+def t_returnnewline(t):
+    r'\r\n+'
+    t.lexer.lineno += t.value.count("\n")
+
 def t_error(t):
-    print("Illegal character '%s'" % t.value[0])
+    print ' Illegal character \'%s\'' % t.value[0]
+    print t
     t.lexer.skip(1)
     
 if __name__ == "__main__":

@@ -97,6 +97,16 @@ class ExchangeIndices(NodeVisitor):
             for n in node.subscript:
                 exchangeId.visit(n)
 
+class ExchangeTypes(NodeVisitor):
+    """ Exchanges the size_t to unsigned for every TypeId
+    """
+    def __init__(self):
+        pass
+    
+    def visit_TypeId(self, node):
+        if node.type:
+            if node.type[0] == 'size_t':
+                node.type[0] = 'unsigned'
 
 
 class ExchangeArrayId(NodeVisitor):
@@ -275,6 +285,20 @@ class Ids(NodeVisitor):
     def visit_Id(self, node):
         self.ids.add(node.name)
 
+class LoopIds(NodeVisitor):
+    """ Finds all unique LoopIndices
+        -- Used in localMemory2
+    """
+    def __init__(self, LoopIds):
+        self.LoopIds = LoopIds
+        self.ids = set()
+        
+    def visit_Id(self, node):
+        name = node.name
+        if name in self.LoopIds:
+            self.ids.add(name)
+
+
 class LoopIndices(NodeVisitor):
     """ Finds loop indices
     """
@@ -282,7 +306,9 @@ class LoopIndices(NodeVisitor):
         self.index = list()
         self.end = dict()
         self.start = dict()
+        self.Loops = dict()
     def visit_ForLoop(self, node):
+        self.Loops[node.init.lval.name.name] = node
         IdVis = InitIds()
         IdVis.visit(node.init)
         self.index.extend(IdVis.index)

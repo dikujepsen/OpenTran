@@ -285,10 +285,11 @@ class ForLoop(Node):
         self.inc = inc
         self.compound = compound
     def __repr__(self):
-        return "ForLoop(%r %r %r) {%r}" % ( self.init, \
-                                            self.cond, \
-                                            self.inc, \
-                                            self.compound )
+        return "ForLoop(%r) " % ( self.init.lval.name#, \
+                                            #self.cond, \
+                                            #self.inc#, \
+                                            #self.compound
+                                        )
     def children(self):
         nodelist = []
         nodelist.append(("init", self.init))
