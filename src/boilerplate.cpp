@@ -1,6 +1,6 @@
 #include "StartUtil.cpp"
 using namespace std;
-#define LSIZE 8
+#define LSIZE 16
 cl_kernel NBody2ForKernel;
 cl_mem dev_ptrMas;
 cl_mem dev_ptrPos;

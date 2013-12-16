@@ -1,12 +1,11 @@
 // problem parameters
-int NTRAIN = 8192;
-int NTEST = 10*4096;
-int dim = 20;
+int NTRAIN = 16384;
+int NTEST = 3*NTRAIN;
+int dim = 16;
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <CL/opencl.h>
 
 #include <assert.h>
 #include <float.h>
@@ -66,20 +65,20 @@ int main( int argc, char* argv[] )
     int jdim, idim;
     /********************************* SPEED UP THESE COMPUTATIONS *********************************/
     // for each test pattern
-    for (i=0;i<NTEST;i++){
-        idim = i*dim;
-        // compute distances to all training patterns
-        for (j=0;j<NTRAIN;j++){
-            d = 0.0;
-            jdim = j*dim;
-            // for each feature
-            for (k=0;k<dim;k++){
-                tmp = test_patterns[idim+k]-train_patterns[jdim+k];
-                d += tmp*tmp;
-            }
-            dist_matrix[i*NTRAIN + j] = d;
-        }
+    for (i=0;i<NTEST;i++) {
+      // compute distances to all training patterns    
+      for (j=0;j<NTRAIN;j++) {
+	d = 0.0;
+	// for each feature                                                       
+	for (k=0;k<dim;k++) {
+	  tmp = test_patterns[i*dim+k]-train_patterns[j*dim+k];
+	  d += tmp*tmp;
+	}
+	dist_matrix[i*NTRAIN + j] = d;
+      }
     }
+
+
     /********************************* SPEED UP THESE COMPUTATIONS *********************************/
     STOP_TIMER(1);
     printf("Computation done.\n");

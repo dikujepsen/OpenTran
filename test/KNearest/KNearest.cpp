@@ -45,8 +45,8 @@ DEFINE_TIMER(1);
 int main( int argc, char* argv[] )
 {
   // problem parameters
-  size_t NTRAIN = 8;
-  size_t NTEST = 4*NTRAIN;
+  size_t NTRAIN = 16384;
+  size_t NTEST = 3*NTRAIN;
   size_t dim = 16;
 
   size_t i,j,k;
@@ -59,12 +59,12 @@ int main( int argc, char* argv[] )
   // initialize with some values ...
   for (i=0;i<NTRAIN;i++){
     for (k=0;k<dim;k++){
-      train_patterns[i*dim + k] = (float)i*k;
+      train_patterns[i*dim + k] = (float)sin(i);
     }
   }
   for (i=0;i<NTEST;i++){
     for (k=0;k<dim;k++){
-      test_patterns[i*dim + k] = (float)i;
+      test_patterns[i*dim + k] = (float)cos(i);
     }
   }
   // for each test pattern
