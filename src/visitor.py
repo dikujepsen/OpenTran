@@ -387,7 +387,10 @@ class Arrays(NodeVisitor):
         if name not in self.numIndices:
             self.numIndices[name] = numIndcs.num
             self.numSubscripts[name] = numIndcs.num
-            self.indexIds[name] = numIndcs.found
+            self.indexIds[name] = (numIndcs.found)
+        else:
+            self.indexIds[name].update((numIndcs.found))
+            
         self.numSubscripts[name] = max(len(node.subscript),self.numIndices[name])
 
 class TypeIds(NodeVisitor):

@@ -393,9 +393,9 @@ class Rewriter(NodeVisitor):
             for m in n:
                 exchangeArrayId.visit(m)
 
-        for n in self.Add:
-            addToIds = AddToId(n, self.Add[n])
-            addToIds.visit(self.InsideKernel.compound)
+        ## for n in self.Add:
+        ##     addToIds = AddToId(n, self.Add[n])
+        ##     addToIds.visit(self.InsideKernel.compound)
 
         rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName, self)
         rewriteArrayRef.visit(self.Kernel)
@@ -528,10 +528,20 @@ class Rewriter(NodeVisitor):
         
 
     def localMemory2(self, arrNames):
+        # Loops that must be extended, contains list of array for which loadings must be created.
+        loopext = dict()
+        # The dimensions of the loading
+        localDim = dict()
+        # Index of the array that we put in local
+        localIdx = dict()
         # Find the subscripts that would be suitable to have in local memory
+        # that means they are inside a loop, and their subscript contains
+        # a loop index
         local = dict()
         for name in arrNames:
+            count = 0
             for sub in self.Subscript[name]:
+                localDim[name] = 0
                 for s in sub:
                     ids = LoopIds(self.Loops.keys())
                     ids.visit(s)
@@ -539,16 +549,104 @@ class Rewriter(NodeVisitor):
                     if len(iset) > 1:
                         print "More than one loop index in a subscript?"
                         return
+                    loopindex = None
                     if len(iset) == 1:
+                        
                         if name in local:
                             local[name].append(sub)
                         else:
                             local[name] = [sub]
+                        loopindex = iset.pop()
+                        if loopindex in loopext:
+                            loopext[loopindex].append((name,count))
+                            localIdx[name].append(loopindex)
+                            count += 1
+                        else:
+                            loopext[loopindex] = [(name, count)]
+                            localIdx[name] = [loopindex]
+                            count += 1
+                                                    
+                    ids = LoopIds(self.GridIndices)
+                    ids.visit(s)
+                    gset = ids.ids
+                    if len(gset) > 1:
+                        print "More than one Grid index in a subscript?"
+                        return
+                    
+                    if loopindex is not None or len(gset) == 1:
+                        localDim[name] += 1
+                    if len(gset) == 1:
+                        loopindex = gset.pop()
+                        if loopindex in loopext:
+                            localIdx[name].append(loopindex)
+                        else:
+                            localIdx[name] = [loopindex]
+                    
+                        
+        # Print built structures
+        print "localIdx ", localIdx
+        arrName = arrNames[0]
 
+        setIdx = set(localIdx[arrName])
+        print "setIdx " , setIdx
+        localOffset = [int(self.LowerLimit[i]) for i in setIdx]
+        print "localOffset ", localOffset
 
-        for n in local:
-            print local[n]
+        print "localDim " , localDim
 
+        print "loopext ", loopext
+
+        
+        print "local ", local
+
+        # do the extending
+        for n in loopext:
+            outerloop = self.Loops[n]
+            outeridx = n
+            compound = outerloop.compound
+            outerloop.compound = Compound([])
+            innerloop = copy.deepcopy(outerloop)
+            innerloop.compound = compound
+            outerstats = outerloop.compound.statements
+            outerstats.insert(0,innerloop)
+            loadstats = []
+            loadComp = GroupCompound(loadstats)
+            outerstats.insert(0, loadComp)
+            # change increment of outer loop
+            outerloop.inc = Increment(Id(outeridx), '+='+self.Local['size'])
+            
+            inneridx = outeridx*2
+            # For adding to this index in other subscripts
+            self.Add[outeridx] = inneridx
+
+            # new inner loop
+            innerloop.cond = BinOp(Id(inneridx), '<' , Constant(self.Local['size']))
+            innerloop.inc = Increment(Id(inneridx), '++')
+            innerloop.init = ConstantAssignment(inneridx)
+            self.Loops[inneridx] = innerloop
+            array = set(loopext[n])
+            getlocals = set()
+            for a, i in array:
+                for l in xrange(localDim[a]):
+                    getlocals.add((self.IdxToDim[l], localOffset[l]))
+
+            # Now add loadings
+            for n, offset in getlocals:
+                lval = TypeId(['unsigned'], Id(self.IndexToLocalVar[n]))
+                idloc = Id(self.IndexToLocalId[n])
+                if offset != 0:
+                    rval = BinOp(idloc, '+', Constant(offset))
+                else:
+                    rval = idloc
+                loadstats.append(Assignment(lval, rval))
+                
+            
+            loc_load = loopext
+            
+            
+            
+
+        print getlocals
         ## local[arrNames[0]][0][1].name = 'lll'
 
     def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0, middle = 1):
