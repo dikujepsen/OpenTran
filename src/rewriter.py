@@ -538,9 +538,11 @@ class Rewriter(NodeVisitor):
         # that means they are inside a loop, and their subscript contains
         # a loop index
         local = dict()
+        localsubdict = dict()
         for name in arrNames:
             count = 0
-            for sub in self.Subscript[name]:
+            localsub = []
+            for k, sub in enumerate(self.Subscript[name]):
                 localDim[name] = 0
                 for s in sub:
                     ids = LoopIds(self.Loops.keys())
@@ -552,6 +554,7 @@ class Rewriter(NodeVisitor):
                     loopindex = None
                     if len(iset) == 1:
                         
+                        localsub.append(self.LoopArrays[name][k])
                         if name in local:
                             local[name].append(sub)
                         else:
@@ -565,7 +568,6 @@ class Rewriter(NodeVisitor):
                             loopext[loopindex] = [(name, count)]
                             localIdx[name] = [loopindex]
                             count += 1
-                                                    
                     ids = LoopIds(self.GridIndices)
                     ids.visit(s)
                     gset = ids.ids
@@ -581,7 +583,9 @@ class Rewriter(NodeVisitor):
                             localIdx[name].append(loopindex)
                         else:
                             localIdx[name] = [loopindex]
-                    
+            localsubdict[name] = localsub
+        print "localsubdict " , localsubdict
+
                         
         # Print built structures
         print "localIdx ", localIdx
@@ -596,9 +600,33 @@ class Rewriter(NodeVisitor):
 
         print "loopext ", loopext
 
-        
         print "local ", local
 
+        # find indices in local subscripts
+        loopIds = LoopIds(self.index)
+        subIdx = dict()
+        for name in local:
+            subIdx[name] = []
+            subs = local[name]
+            for s in subs:
+                IdxList = []
+                for i in s:
+                    loopIds.visit(i)
+                    if len(loopIds.ids) > 1:
+                        print "More than one idx in a subscript"
+                    if loopIds.ids:
+                        IdxList.extend(loopIds.ids)
+                    else:
+                        IdxList.append(None)
+                    loopIds.reset()
+                subIdx[name].append(IdxList)
+
+        print "subIdx ", subIdx
+            
+        
+        initstats = []
+        initComp = GroupCompound(initstats)
+        self.Kernel.statements.insert(0, initComp)
         # do the extending
         for n in loopext:
             outerloop = self.Loops[n]
@@ -631,20 +659,66 @@ class Rewriter(NodeVisitor):
                     getlocals.add((self.IdxToDim[l], localOffset[l]))
 
             # Now add loadings
-            for n, offset in getlocals:
-                lval = TypeId(['unsigned'], Id(self.IndexToLocalVar[n]))
-                idloc = Id(self.IndexToLocalId[n])
+            for m, offset in getlocals:
+                lval = TypeId(['unsigned'], Id(self.IndexToLocalVar[m]))
+                idloc = Id(self.IndexToLocalId[m])
                 if offset != 0:
                     rval = BinOp(idloc, '+', Constant(offset))
                 else:
                     rval = idloc
-                loadstats.append(Assignment(lval, rval))
+                initstats.append(Assignment(lval, rval))
                 
             
-            loc_load = loopext
+
+            # Add array allocations
+            for m in local:
+                dim = len(local[m])
+                localName = m + '_local'
+                arrayinit = '['
+                arrayinit += str(dim)
+                arrayinit += '*' + self.Local['size'] + ']'
+
+                localId = Id(localName + arrayinit)
+                localTypeId = TypeId(['__local'] + [self.Type[m][0]], localId)
+                initstats.append(localTypeId)
+                
+                
+            loc_load = loopext[n]
+            # Add the loadings
+            # we only change array names and rewrite indices
+            for m,i in loc_load:
+                loc_subs = copy.deepcopy(local[m][i])
+                loc_name = m+'_local'
+                
+                loc_ref = ArrayRef(Id(loc_name), loc_subs)
+                if localDim[m] == 1:
+                    exchangeId = ExchangeId({n : 'get_local_id(0)'})
+                exchangeId.visit(loc_ref)
+                                        
+                self.ArrayIdToDimName[loc_name] = self.Local['size']
+                self.NumDims[loc_name] = self.NumDims[m]
+
+                glo_subs = copy.deepcopy(local[m][i])
+                glo_ref = ArrayRef(Id(m), glo_subs)
+                exchangeId = ExchangeId({n : n*2})
+                for ss  in local[m][i]:
+                    exchangeId.visit(ss)
+
+                if localDim[m] == 1:
+                    exchangeId = ExchangeId({n : n + ' + get_local_id(0)'})
+                exchangeId.visit(glo_ref)
+
+                loadstats.append(Assignment(loc_ref, glo_ref))
+
+                exchangeId = ExchangeId({m : loc_name})
+                for ss  in localsubdict[m]:
+                    exchangeId.visit(ss)
+
             
-            
-            
+            exchangeId = ExchangeId({n : n + ' + ' + n*2})
+            exchangeId.visit(innerloop.compound)
+
+                
 
         print getlocals
         ## local[arrNames[0]][0][1].name = 'lll'

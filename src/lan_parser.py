@@ -533,7 +533,7 @@ def nbody2():
 
         ## rw.localMemory(['Pos'], south = 1, middle = 1)
         rw.dataStructures()
-        rw.localMemory2(['Pos'])
+        rw.localMemory2(['Mas', 'Pos'])
         ## rw.constantMemory(['Pos'])
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = '../test/NBody2/'+funcname + '.cl')

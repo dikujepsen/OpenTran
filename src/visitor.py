@@ -200,7 +200,7 @@ class RewriteArrayRef(NodeVisitor):
     def visit_ArrayRef(self, node):
         n = node.name.name
         try:
-            if self.data.NumDims[n] == 2:
+            if self.data.NumDims[n] == 2 and len(node.subscript) == 2:
                 try:
                     if self.data.SubSwap[n]:
                         (node.subscript[0], node.subscript[1]) = \
@@ -211,7 +211,6 @@ class RewriteArrayRef(NodeVisitor):
                 # Id on first dimension
 
                 Id(self.ArrayIdToDimName[n][0]))
-                
                 topbinop = BinOp(leftbinop,'+', \
                 node.subscript[1])
                 node.subscript = [topbinop]
@@ -292,6 +291,10 @@ class LoopIds(NodeVisitor):
     def __init__(self, LoopIds):
         self.LoopIds = LoopIds
         self.ids = set()
+
+    def reset(self):
+        self.ids = set()
+
         
     def visit_Id(self, node):
         name = node.name
