@@ -93,6 +93,9 @@ class Rewriter(NodeVisitor):
         # Holds the sub-AST in AllocateBuffers
         # that we add constant memory pointer initializations to.
         self.ConstantMemory = None
+        # Holds the sub-AST in AllocateBuffers
+        # where we set the defines for the kernel.
+        self.Define = None
         # Dict containing the name and type for each kernel argument
         # set in SetArguments
         self.KernelArgs = dict()
@@ -270,6 +273,8 @@ class Rewriter(NodeVisitor):
 
         self.Transposition = GroupCompound([Comment('// Transposition')])
         self.ConstantMemory = GroupCompound([Comment('// Constant Memory')])
+        self.Define = GroupCompound([Comment('// Defines for the kernel')])
+
         arrays = Arrays(self.index)
         arrays.visit(ast)
         self.Subscript = arrays.Subscript
@@ -423,6 +428,99 @@ class Rewriter(NodeVisitor):
         ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
         ast.ext.append(newast)
 
+    def define(self, varList):
+        accname = 'str'
+        sstream = TypeId(['std::stringstream'], Id(accname))
+        stats = self.Define.statements
+        stats.append(sstream)
+
+        # add the defines to the string stream 
+        for var in varList:
+            try:
+                hstvar = self.NameSwap[var]
+            except KeyError:
+                hstvar = var
+            add = Id(accname + ' << ' + '"-D' + var+ '="' + \
+                     ' << ' + hstvar + ' << " ";')
+            stats.append(add)
+
+        # Set the string to the global variable
+        lval = Id('KernelDefines')
+        stats.append(Assignment(lval, Id(accname + '.str()')))
+
+        # Need to remove the kernel corresponding kernel arguments
+        for var in varList:
+            self.KernelArgs.pop(var)
+
+    def placeInReg(self, arrDict):
+
+        stats = self.Kernel.statements
+        initstats = []
+        loadings = []
+        writes = []
+        # insert allocation
+        for i, n in enumerate(arrDict):
+            # Find loop indices in subscript
+            # Just look at only the first subscript at the moment
+            idx = arrDict[n]
+            subs = self.LoopArrays[n]
+            try:
+                sub = subs[idx[0]]
+            except IndexError:
+                print idx[0]
+                print subs
+                print "placeInReg: Wrong index... Are you using zero indexing for the beginning of the loop?"
+                return
+            
+            arrays = Arrays(self.Loops.keys())
+            arrays.visit(sub)
+            ids = set(arrays.SubIdx[n][0]) - set([None]) - set(self.GridIndices)
+            
+
+            if len(ids) > 1:
+                print "placeInReg: only supported for one loop at the moment"
+                return
+
+            # get the loop upper limit
+            loopid = iter(ids).next()
+            dim = self.UpperLimit[loopid]
+
+            # insert the allocation of the registers
+            regName = n + '_reg'
+            arrayinit = '[' + dim + ']'
+            typ = self.Type[n][0]
+            regId = Id(regName + arrayinit)
+            initstats.append(TypeId([typ],regId))
+            writes.append(ArrayRef(Id(regName), [Id(loopid)]))
+            loadings.append(Assignment(writes[i], None))
+
+            
+        # get the loop wherein we preload data
+        loop = copy.deepcopy(self.Loops[iter(ids).next()])
+
+        # Create the loadings
+        for i,n in enumerate(arrDict):
+            idx = arrDict[n][0]
+            sub = copy.deepcopy(self.LoopArrays[n][idx])
+            loadings[i].rval = sub
+        
+        loop.compound = Compound(loadings)
+        initstats.append(loop)
+        stats.insert(0, GroupCompound(initstats))
+
+        # Replace the global Arefs with the register Arefs
+                # Must now replace global arefs with constant arefs
+        
+        for i,n in enumerate(arrDict):
+            idx = arrDict[n][0]
+            aref_new = writes[i]
+            aref_old = self.LoopArrays[n][idx]
+            # Copying the internal data of the two arefs
+            aref_old.name.name = aref_new.name.name
+            aref_old.subscript = aref_new.subscript
+
+
+
     def constantMemory2(self, arrDict):
         arrNames = arrDict.keys()
 
@@ -493,8 +591,6 @@ class Rewriter(NodeVisitor):
             arrays.visit(sub)
             ids = set(arrays.SubIdx[s][0]) - set([None]) - set(self.GridIndices)
             
-            print sub
-            print ids
             break
 
         if len(ids) > 1:
@@ -546,7 +642,7 @@ class Rewriter(NodeVisitor):
                 aref_old = self.LoopArrays[n][i]
                 # Copying the internal data of the two arefs
                 aref_old.name.name = ptrname
-                aref_old.subscript = writes[count]
+                aref_old.subscript = aref_new
                 count += 1
 
         self.ConstantMemory.statements.append(groupComp)
@@ -1130,6 +1226,10 @@ class Rewriter(NodeVisitor):
         rval = Constant(1)
         fileAST.ext.append(Assignment(lval,rval))
 
+        lval = TypeId(['std::string'], Id('KernelDefines'))
+        rval = Constant('""')
+        fileAST.ext.append(Assignment(lval,rval))
+
         allocateBuffer = EmptyFuncDecl('AllocateBuffers')
         fileAST.ext.append(allocateBuffer)
 
@@ -1160,6 +1260,9 @@ class Rewriter(NodeVisitor):
 
         allocateBuffer.compound.statements.append(\
             self.ConstantMemory)
+        
+        allocateBuffer.compound.statements.append(\
+            self.Define)
         
         ErrName = 'oclErrNum'
         lval = TypeId(['cl_int'], Id(ErrName))
@@ -1353,7 +1456,7 @@ class Rewriter(NodeVisitor):
         arglist = ArgList([Constant(self.DevFuncId),
                            Constant(self.DevFuncId+'.cl'),
                            Id('&' + self.KernelName),
-                           Constant('')])
+                           Id('KernelDefines')])
         ifThenList.append(FuncDecl(Id('compileKernelFromFile'), arglist, Compound([])))
 
         ifThenList.append(FuncDecl(Id('SetArguments'+self.DevFuncId), ArgList([]), Compound([])))

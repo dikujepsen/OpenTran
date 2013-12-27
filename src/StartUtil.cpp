@@ -1,9 +1,10 @@
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
-//#include <string.h>
+#include <string.h>
 #include <malloc.h>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 #define NUMDEVS 1
 using namespace std;
 
@@ -112,22 +113,20 @@ void StartUpGPU() {
 void compileKernelFromFile(std::string kernel_name,
 			   const char *filename,
 			   cl_kernel* kernel,
-			   const char* options) {
+			   std::string options) {
 
   cl_int err = CL_SUCCESS;
   const char* source2 = ReadSources(filename);
   cout << source2 << endl;
   cl_program program = clCreateProgramWithSource(context, 1, (const char **)&source2,NULL, &err);
   oclCheckErr(err, "clCreateProgramWithSource");
-  char buildOptions[256];
-  int ierr = snprintf(buildOptions, sizeof(buildOptions),
-		      "-cl-finite-math-only  -cl-fast-relaxed-math %s",options);
+
+  std::stringstream buildOptions;
+  // Okay for most programs
+  buildOptions << "-cl-fast-relaxed-math " << options;
   
-  if (ierr < 0) {
-    printf("Error in Build Options");
-    exit(-1);
-  }
-  err = clBuildProgram(program, 0, NULL, buildOptions, NULL, NULL);
+  
+  err = clBuildProgram(program, 0, NULL, buildOptions.str().c_str(), NULL, NULL);
   if (err != CL_SUCCESS)
     {
       std::cout << "OCL Error: OpenCL Build Error. Error Code: " << err << std::endl;
