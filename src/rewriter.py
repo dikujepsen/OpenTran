@@ -79,6 +79,8 @@ class Rewriter(NodeVisitor):
         self.WriteOnly = list()
         # dict of indices to loops in the kernel
         self.Loops = dict()
+        # Contains the loop indices for each subscript
+        self.SubIdx = dict()
         
         # List of arguments for the kernel
         ## self.KernelArgs = list()
@@ -155,11 +157,10 @@ class Rewriter(NodeVisitor):
         firstLoop = ForLoops()
         firstLoop.visit(innerbody.compound)
         loopIndices = LoopIndices()
-        loopIndices.visit(firstLoop.ast)
-        self.Loops = loopIndices.Loops
-
-
-        self.InsideKernel = firstLoop.ast
+        if firstLoop.ast is not None:
+            loopIndices.visit(firstLoop.ast)
+            self.Loops = loopIndices.Loops        
+            self.InsideKernel = firstLoop.ast
 
 
         arrays = Arrays([])
@@ -272,6 +273,8 @@ class Rewriter(NodeVisitor):
         arrays = Arrays(self.index)
         arrays.visit(ast)
         self.Subscript = arrays.Subscript
+        print "arrays.SubIdx " , arrays.SubIdx
+        self.SubIdx = arrays.SubIdx
 
     def dataStructures(self):
         print "self.index " , self.index
@@ -420,9 +423,136 @@ class Rewriter(NodeVisitor):
         ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
         ast.ext.append(newast)
 
+    def constantMemory2(self, arrDict):
+        arrNames = arrDict.keys()
+
+        # find out if we need to split into global and constant memory space
+        split = dict()
+        for name in arrNames:
+            if len(arrDict[name]) != len(self.Subscript[name]):
+                # Every aref to name is not put in constant memory
+                # so we split.
+                split[name] = True
+            else:
+                split[name] = False
+
+        print "split " , split
+        # Add new constant pointer
+        ptrname = 'Constant' + ''.join(arrNames)
+        hst_ptrname = 'hst_ptr' + ptrname
+        dev_ptrname = 'dev_ptr' + ptrname
+        print ptrname
+        typeset = set()
+        for name in arrNames:
+            typeset.add(self.Type[name][0])
+        
+        if len(typeset) > 1:
+            print "Conflicting types in constant memory transformation... Aborting"
+            return
+
+        ptrtype = [typeset.pop(), '*']
+        
+        # Add the ptr to central data structures
+        self.Type[ptrname] = ptrtype
+        self.DevId[ptrname] = dev_ptrname
+        self.HstId[ptrname] = hst_ptrname
+        self.Mem[ptrname] = self.HstId[ptrname]+'_mem_size'
+
+        # Add the ptr to be a kernel argument
+        self.KernelArgs[ptrname] = ['__constant'] +  ptrtype
+        self.GlobalVars[ptrname] = ''
+        self.ConstantMem[ptrname] = arrNames
+
+        # Delete original arguments if we split
+        for n in split:
+            if not split[n]:
+                self.KernelArgs.pop(n)
+                self.DevId.pop(n)
+        # Add pointer allocation to AllocateBuffers
+        lval = Id(self.HstId[ptrname])
+        rval = Id('new ' + self.Type[ptrname][0] + '['\
+                  + self.Mem[ptrname] + ']')
+        self.ConstantMemory.statements.append(Assignment(lval, rval))
+
+        # find the loop the we need to add to the allocation section
+        # Do it by looking at the loop indices in the subscripts
+        ids = []
+        for s in arrDict:
+            # Just look at only the first subscript at the moment
+            array = arrDict[s]
+            subs = self.LoopArrays[s]
+            try:
+                sub = subs[array[0]]
+            except IndexError:
+                print array[0]
+                print subs
+                print "ConstantMemory: Wrong index... Are you using zero indexing for the beginning of the loop?"
+                return
+            
+            arrays = Arrays(self.Loops.keys())
+            arrays.visit(sub)
+            ids = set(arrays.SubIdx[s][0]) - set([None]) - set(self.GridIndices)
+            
+            print sub
+            print ids
+            break
+
+        if len(ids) > 1:
+            print "Constant memory only supported for one loop at the moment"
+            return
+
+        
+        # Add the loop to the allocation code
+        forloop = copy.deepcopy(self.Loops[iter(ids).next()])
+        newcomp = []
+        forcomp = []
+        groupComp = GroupCompound(newcomp)
+        forloop.compound = Compound(forcomp)
+        loopcount = forloop.init.lval.name.name
+        # Add the for loop from the kernel
+        newcomp.append(forloop)
+
+        # find dimension of the constant ptr
+        constantdim = sum([ (len(arrDict[m])) for m in arrDict])
+        print "constantdim " , constantdim
+
+        # add constant writes
+        writes = []
+        for i in xrange(constantdim):
+            writes.append((
+             [BinOp(BinOp(Id(str(constantdim)), '*', \
+                          Id(loopcount)), '+', Id(str(i)))]))
+
+        # for rewriting the ARefs that we copy
+        rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName, self)
+        # add global loadings
+        count = 0
+        for n in arrDict:
+            for i in arrDict[n]:
+                aref = copy.deepcopy(self.LoopArrays[n][i])
+                name = aref.name.name
+                rewriteArrayRef.visit(aref)
+                aref.name.name = self.HstId[name]
+                lval = ArrayRef(Id(self.HstId[ptrname]), writes[count])
+                assign = Assignment(lval, aref)
+                forcomp.append(assign)
+                count += 1
+
+        # Must now replace global arefs with constant arefs
+        count = 0
+        for n in arrDict:
+            for i in (arrDict[n]):
+                aref_new = writes[count]
+                aref_old = self.LoopArrays[n][i]
+                # Copying the internal data of the two arefs
+                aref_old.name.name = ptrname
+                aref_old.subscript = writes[count]
+                count += 1
+
+        self.ConstantMemory.statements.append(groupComp)
+
 
     def constantMemory(self, arrNames):
-
         
         split = dict()
         for name in arrNames:
@@ -443,9 +573,9 @@ class Rewriter(NodeVisitor):
                     split[name] = True
                 else:
                     split[name] = False
-
+                    
         print "split ", split
-
+        
         # Add new constant pointer
         ptrname = 'constant' + ''.join(arrNames)
         hst_ptrname = 'hst_ptr_' + ptrname
@@ -829,7 +959,6 @@ class Rewriter(NodeVisitor):
                 lsub = copy.deepcopy(subscript)
                 lval = ArrayRef(Id(self.LocalSwap[arrName]), lsub)
                 rsub = copy.deepcopy(subscript)
-                print "lsub ", lsub
                 rval = ArrayRef(arrayId, rsub, extra = {'localMemory' : True})
                 load = Assignment(lval,rval)
                 exchangeId = ExchangeId(self.IndexToLocalVar)

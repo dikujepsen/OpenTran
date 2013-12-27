@@ -328,7 +328,7 @@ def jacobi():
         ## rw.transpose('A')
         ## rw.transpose('B')
         ## rw.transpose('C')
-        rw.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1)
+        rw.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
         ## rw.localMemory('A')
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
@@ -445,7 +445,6 @@ def nbody():
 
         run = 0
         filename = '../src/tempnbody.cpp'
-        ## funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
             s = f.read()
@@ -464,15 +463,8 @@ def nbody():
         ## rw.rewriteToDeviceCTemp(tempast, False)
         ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
-
-        ## rw.transpose('A')
-        ## rw.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1)
-        ## rw.localMemory(['Pos'], south = 1)
-        ## rw.localMemory(['Mas'])
-        ## rw.constantMemory(['Pos'])
-        ## rw.constantMemory(['Mas'])
-        rw.constantMemory(['Pos', 'Mas'])
         rw.dataStructures()
+        rw.constantMemory2({'Pos' : [0,1], 'Mas' : [0]})
         rw.rewriteToDeviceCRelease(tempast2)
         cprint.createTemp(tempast2, filename = '../test/NBody/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
@@ -533,10 +525,11 @@ def nbody2():
 
         ## rw.localMemory(['Pos'], south = 1, middle = 1)
         rw.dataStructures()
-        rw.localMemory2(['Mas', 'Pos'])
+        ## rw.localMemory2(['Mas', 'Pos'])
         ## rw.constantMemory(['Pos'])
-        rw.rewriteToDeviceCRelease(tempast2)
-        cprint.createTemp(tempast2, filename = '../test/NBody2/'+funcname + '.cl')
+        rw.constantMemory2({'Pos' : [2,3], 'Mas' : [1]})
+        rw.rewriteToDeviceCRelease(tempast)
+        cprint.createTemp(tempast, filename = '../test/NBody2/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
 
@@ -611,6 +604,6 @@ def knearest():
 if __name__ == "__main__":
     ## jacobi()
     ## matmul()
-    ## nbody()
-    nbody2()
+    nbody()
+    ## nbody2()
     ## knearest()

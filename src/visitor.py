@@ -43,7 +43,7 @@ class AddToId(NodeVisitor):
 
 
 class FindReadWrite(NodeVisitor):
-    """ Returns a mapping of arrays to either
+    """ Returns a mapping of array to either
     'read'-only, 'write'-only, or 'readwrite'
     """
     def __init__(self, ArrayIds):
@@ -349,12 +349,18 @@ class NumIndices(NodeVisitor):
         self.num = 0
         self.indices = indices
         self.found = set()
+        self.subIdx = set()
         self.yes = False
+
+    def reset(self):
+        self.subIdx = set()
+        
     def visit_Id(self, node):
         if node.name in self.indices \
         and node.name not in self.found \
         and self.num < self.numIndices:
             self.found.add(node.name)
+            self.subIdx.add(node.name)
             self.num += 1
             if self.num >= self.numIndices:
                 self.yes = True
@@ -373,6 +379,7 @@ class Arrays(NodeVisitor):
         self.numSubscripts = dict()
         self.Subscript = dict()
         self.LoopArrays = dict()
+        self.SubIdx = dict()
             
     def visit_ArrayRef(self, node):
         name = node.name.name
@@ -385,8 +392,20 @@ class Arrays(NodeVisitor):
             self.Subscript[name] = [node.subscript]
             self.LoopArrays[name] = [node]
         
+        listidx = []
         for s in node.subscript:
             numIndcs.visit(s)
+            if numIndcs.subIdx:
+                listidx.extend(list(numIndcs.subIdx))
+            else:
+                listidx.append(None)
+            numIndcs.reset()
+        
+        if name in self.SubIdx:
+            self.SubIdx[name].append(listidx)
+        else:
+            self.SubIdx[name] = [listidx]
+
         if name not in self.numIndices:
             self.numIndices[name] = numIndcs.num
             self.numSubscripts[name] = numIndcs.num
