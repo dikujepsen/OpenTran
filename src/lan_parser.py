@@ -11,22 +11,21 @@ precedence = (
     
 
 def p_first(p):
-    """ first : beginning_list
+    """ first : top_level
     """
     p[0] =  FileAST([]) if p[1] is None else FileAST(p[1])
 
 
 
-def p_beginning_list(p):
-    """ beginning_list :  beginning_list comment
-    			| beginning_list function_declaration
-                        | beginning_list type
-                        | beginning_list declaration
-                        | beginning_list compound
-                        | beginning_list assignment_expression_semi
-                        | beginning_list expr
-                        | beginning_list for_loop
-                        | empty
+def p_top_level(p):
+    """ top_level :  top_level comment
+    | top_level function_declaration
+    | top_level declaration
+    | top_level compound
+    | top_level assignment_expression_semi
+    | top_level expr
+    | top_level for_loop
+    | empty
     """
     tmp1 =  [] if p[1] is None else p[1]
     if len(p) == 3:
@@ -90,8 +89,8 @@ def p_increment(p):
 
 
 
-def p_binop_paren(p):
-    """binop : LPAREN binop_expression RPAREN
+def p_binop(p):
+    """ binop : LPAREN binop_expression RPAREN
     | binop_expression
     """
     if len(p) == 2:
@@ -182,7 +181,7 @@ def p_term(p):
 
 
 def p_compound(p):
-    """compound : LBRACE beginning_list RBRACE """
+    """compound : LBRACE top_level RBRACE """
     p[0] = Compound([] if p[2] is None else p[2],p.lineno(1))
 
 def p_func_call(p):
@@ -214,7 +213,7 @@ def p_typeid(p):
 
     
 def p_native_type(p):
-    """native_type : VOID
+    """native_type : VOID	
     | SIZE_T
     | UNKNOWN
     | CHAR
@@ -345,7 +344,7 @@ def matmul():
 
     run = 1
     while run:
-        filename = '../test/matmulfunc4.cpp'
+        filename = '../test/Matmul/matmulfunc4.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -363,7 +362,7 @@ def matmul():
             ## print tok
         
         ast = cparser.parse(s)
-        ## ast.show()
+        ast.show()
         ## print ast
         ## print slist
         cprint = CGenerator()
@@ -403,7 +402,7 @@ def matmul():
         rw.localMemory(['A','B'])
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
-        cprint.createTemp(tempast2, filename = 'matmulfunc4.cl')
+        cprint.createTemp(tempast2, filename = '../test/Matmul/matmulfunc4.cl')
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
 
@@ -667,8 +666,8 @@ def knearest2():
 
 if __name__ == "__main__":
     ## jacobi()
-    ## matmul()
+    matmul()
     ## nbody()
     ## nbody2()
     ## knearest()
-    knearest2()
+    ## knearest2()

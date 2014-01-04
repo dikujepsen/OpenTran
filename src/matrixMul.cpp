@@ -75,7 +75,8 @@ int main(int argc, char** argv)
 	 A_mat, wA, hA,
 	 C_mat, wC, hC,
 	 B_mat, wB, hB,
-	 wB, wA, hA);  
+	 wB, wA, hA); 
+ 
 #endif
 
   printMat(C_mat,C_size);

@@ -1,4 +1,5 @@
 from lan_ast import *
+
 class AddToId(NodeVisitor):
     """ Finds the Id and replaces it with a binop that
     adds another variable to the id.
@@ -275,9 +276,10 @@ class FindUpperLimit(NodeVisitor):
         self.index.append(node.name)
         
 class Ids(NodeVisitor):
-    """ Finds all unique Ids, excluding functions"""
+    """ Finds all unique IDs, excluding function IDs"""
     def __init__(self):
         self.ids = set()
+
     def visit_FuncDecl(self, node):
         pass
         
@@ -303,7 +305,9 @@ class LoopIds(NodeVisitor):
 
 
 class LoopIndices(NodeVisitor):
-    """ Finds loop indices
+    """ Finds loop indices, the start and end values of the
+        indices and creates a mapping from a loop index to
+        the ForLoop AST node that is indexes.
     """
     def __init__(self):
         self.index = list()
@@ -312,16 +316,17 @@ class LoopIndices(NodeVisitor):
         self.Loops = dict()
     def visit_ForLoop(self, node):
         self.Loops[node.init.lval.name.name] = node
-        IdVis = InitIds()
+        IdVis = Ids()
         IdVis.visit(node.init)
-        self.index.extend(IdVis.index)
+        ids = list(IdVis.ids)
+        self.index.extend(ids)
         self.visit(node.compound)
         try:
-            self.end[IdVis.index[0]] = (node.cond.rval.name)
-            self.start[IdVis.index[0]] = (node.init.rval.value)
+            self.end[ids[0]] = (node.cond.rval.name)
+            self.start[ids[0]] = (node.init.rval.value)
         except AttributeError:
-            self.end[IdVis.index[0]] = 'Unknown'
-            self.start[IdVis.index[0]] = 'Unknown'
+            self.end[ids[0]] = 'Unknown'
+            self.start[ids[0]] = 'Unknown'
             
 
 class ForLoops(NodeVisitor):
@@ -353,6 +358,7 @@ class NumIndices(NodeVisitor):
         self.yes = False
 
     def reset(self):
+        self.firstFound = False
         self.subIdx = set()
         
     def visit_Id(self, node):
@@ -365,9 +371,6 @@ class NumIndices(NodeVisitor):
             if self.num >= self.numIndices:
                 self.yes = True
                 
-    def reset(self):
-        self.firstFound = False
-
     
 class Arrays(NodeVisitor):
     """ Finds array Ids """

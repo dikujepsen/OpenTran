@@ -1,111 +1,111 @@
 #include "StartUtil.cpp"
 using namespace std;
 #define LSIZE 8
-cl_kernel KNearestFor2Kernel;
-cl_mem dev_ptrtrain_patterns;
-cl_mem dev_ptrtest_patterns;
-cl_mem dev_ptrdist_matrix;
+cl_kernel matmulfunc4Kernel;
+cl_mem dev_ptrA;
+cl_mem dev_ptrC;
+cl_mem dev_ptrB;
 
-float * hst_ptrtrain_patterns;
-float * hst_ptrtest_patterns;
-float * hst_ptrdist_matrix;
-size_t dim;
-size_t NTEST;
-size_t NTRAIN;
-float * hst_ptrtest_patterns_trans;
+float * hst_ptrA;
+float * hst_ptrC;
+float * hst_ptrB;
+size_t hA;
+size_t wB;
+size_t wA;
 
-size_t hst_ptrtrain_patterns_mem_size;
-size_t hst_ptrtest_patterns_mem_size;
-size_t hst_ptrdist_matrix_mem_size;
+size_t hst_ptrA_mem_size;
+size_t hst_ptrC_mem_size;
+size_t hst_ptrB_mem_size;
 
-size_t hst_ptrtrain_patterns_dim1;
-size_t hst_ptrtrain_patterns_dim2;
-size_t hst_ptrtest_patterns_dim1;
-size_t hst_ptrtest_patterns_dim2;
-size_t hst_ptrdist_matrix_dim1;
-size_t hst_ptrdist_matrix_dim2;
+size_t hst_ptrA_dim1;
+size_t hst_ptrA_dim2;
+size_t hst_ptrC_dim1;
+size_t hst_ptrC_dim2;
+size_t hst_ptrB_dim1;
+size_t hst_ptrB_dim2;
 
 size_t isFirstTime = 1;
 std::string KernelDefines = "";
 
 void AllocateBuffers()
 {
-  hst_ptrtrain_patterns_mem_size = hst_ptrtrain_patterns_dim2 * (hst_ptrtrain_patterns_dim1 * sizeof(float));
-  hst_ptrtest_patterns_mem_size = hst_ptrtest_patterns_dim2 * (hst_ptrtest_patterns_dim1 * sizeof(float));
-  hst_ptrdist_matrix_mem_size = hst_ptrdist_matrix_dim2 * (hst_ptrdist_matrix_dim1 * sizeof(float));
+  hst_ptrA_mem_size = hst_ptrA_dim2 * (hst_ptrA_dim1 * sizeof(float));
+  hst_ptrC_mem_size = hst_ptrC_dim2 * (hst_ptrC_dim1 * sizeof(float));
+  hst_ptrB_mem_size = hst_ptrB_dim2 * (hst_ptrB_dim1 * sizeof(float));
   
   // Transposition
 
-  hst_ptrtest_patterns_trans = new float[hst_ptrtest_patterns_mem_size];
-  transpose<float>(
-	hst_ptrtest_patterns, hst_ptrtest_patterns_trans, hst_ptrtest_patterns_dim1, 
-	hst_ptrtest_patterns_dim2);
   
   // Constant Memory
 
   
   // Defines for the kernel
 
-  std::stringstream str;
-  str << "-Ddim=" << dim << " ";
-  str << "-DNTRAIN=" << NTRAIN << " ";
-  str << "-Dhst_ptrtrain_patterns_dim1=" << hst_ptrtrain_patterns_dim1 << " ";
-  str << "-Dhst_ptrtest_patterns_dim1=" << hst_ptrtest_patterns_dim2 << " ";
-  str << "-Dhst_ptrdist_matrix_dim1=" << hst_ptrdist_matrix_dim1 << " ";
-  KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
   
-  dev_ptrtrain_patterns = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR, hst_ptrtrain_patterns_mem_size, 
-	hst_ptrtrain_patterns, &oclErrNum);
+  dev_ptrA = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR, hst_ptrA_mem_size, 
+	hst_ptrA, &oclErrNum);
   oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrtrain_patterns");
-  dev_ptrtest_patterns = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR, hst_ptrtest_patterns_mem_size, 
-	hst_ptrtest_patterns_trans, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrtest_patterns");
-  dev_ptrdist_matrix = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrdist_matrix_mem_size, 
+	oclErrNum, "clCreateBuffer dev_ptrA");
+  dev_ptrC = clCreateBuffer(
+	context, CL_MEM_WRITE_ONLY, hst_ptrC_mem_size, 
 	NULL, &oclErrNum);
   oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrdist_matrix");
+	oclErrNum, "clCreateBuffer dev_ptrC");
+  dev_ptrB = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR, hst_ptrB_mem_size, 
+	hst_ptrB, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrB");
 }
 
-void SetArgumentsKNearestFor2()
+void SetArgumentsmatmulfunc4()
 {
   cl_int oclErrNum = CL_SUCCESS;
   int counter = 0;
   oclErrNum |= clSetKernelArg(
-	KNearestFor2Kernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrdist_matrix);
+	matmulfunc4Kernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptrA);
   oclErrNum |= clSetKernelArg(
-	KNearestFor2Kernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrtrain_patterns);
+	matmulfunc4Kernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptrC);
   oclErrNum |= clSetKernelArg(
-	KNearestFor2Kernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrtest_patterns);
+	matmulfunc4Kernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptrB);
+  oclErrNum |= clSetKernelArg(
+	matmulfunc4Kernel, counter++, sizeof(unsigned), 
+	(void *) &hst_ptrB_dim1);
+  oclErrNum |= clSetKernelArg(
+	matmulfunc4Kernel, counter++, sizeof(unsigned), 
+	(void *) &wA);
+  oclErrNum |= clSetKernelArg(
+	matmulfunc4Kernel, counter++, sizeof(unsigned), 
+	(void *) &hst_ptrA_dim1);
+  oclErrNum |= clSetKernelArg(
+	matmulfunc4Kernel, counter++, sizeof(unsigned), 
+	(void *) &hst_ptrC_dim1);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }
 
-void ExecKNearestFor2()
+void Execmatmulfunc4()
 {
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
-  size_t KNearestFor2_global_worksize[] = {NTEST - 0};
-  size_t KNearestFor2_local_worksize[] = {LSIZE};
-  size_t KNearestFor2_global_offset[] = {0};
+  size_t matmulfunc4_global_worksize[] = {wB - 0, hA - 0};
+  size_t matmulfunc4_local_worksize[] = {LSIZE, LSIZE};
+  size_t matmulfunc4_global_offset[] = {0, 0};
   oclErrNum = clEnqueueNDRangeKernel(
-	command_queue, KNearestFor2Kernel, 1, 
-	KNearestFor2_global_offset, KNearestFor2_global_worksize, KNearestFor2_local_worksize, 
+	command_queue, matmulfunc4Kernel, 2, 
+	matmulfunc4_global_offset, matmulfunc4_global_worksize, matmulfunc4_local_worksize, 
 	0, NULL, &GPUExecution);
   oclCheckErr(
 	oclErrNum, "clEnqueueNDRangeKernel");
   oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrdist_matrix, CL_TRUE, 
-	0, hst_ptrdist_matrix_mem_size, hst_ptrdist_matrix, 
+	command_queue, dev_ptrC, CL_TRUE, 
+	0, hst_ptrC_mem_size, hst_ptrC, 
 	1, &GPUExecution, NULL);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
@@ -114,32 +114,32 @@ void ExecKNearestFor2()
 	oclErrNum, "clFinish");
 }
 
-void RunOCLKNearestFor2Kernel(
-	size_t arg_dim, float * arg_test_patterns, size_t arg_hst_ptrtest_patterns_dim1, 
-	size_t arg_hst_ptrtest_patterns_dim2, float * arg_dist_matrix, size_t arg_hst_ptrdist_matrix_dim1, 
-	size_t arg_hst_ptrdist_matrix_dim2, float * arg_train_patterns, size_t arg_hst_ptrtrain_patterns_dim1, 
-	size_t arg_hst_ptrtrain_patterns_dim2, size_t arg_NTEST, size_t arg_NTRAIN)
+void RunOCLmatmulfunc4Kernel(
+	float * arg_A, size_t arg_hst_ptrA_dim1, size_t arg_hst_ptrA_dim2, 
+	float * arg_C, size_t arg_hst_ptrC_dim1, size_t arg_hst_ptrC_dim2, 
+	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
+	size_t arg_wB, size_t arg_wA, size_t arg_hA)
 {
   if (isFirstTime)
     {
-      dim = arg_dim;
-      hst_ptrtest_patterns = arg_test_patterns;
-      hst_ptrtest_patterns_dim1 = arg_hst_ptrtest_patterns_dim1;
-      hst_ptrtest_patterns_dim2 = arg_hst_ptrtest_patterns_dim2;
-      hst_ptrdist_matrix = arg_dist_matrix;
-      hst_ptrdist_matrix_dim1 = arg_hst_ptrdist_matrix_dim1;
-      hst_ptrdist_matrix_dim2 = arg_hst_ptrdist_matrix_dim2;
-      hst_ptrtrain_patterns = arg_train_patterns;
-      hst_ptrtrain_patterns_dim1 = arg_hst_ptrtrain_patterns_dim1;
-      hst_ptrtrain_patterns_dim2 = arg_hst_ptrtrain_patterns_dim2;
-      NTEST = arg_NTEST;
-      NTRAIN = arg_NTRAIN;
+      hst_ptrA = arg_A;
+      hst_ptrA_dim1 = arg_hst_ptrA_dim1;
+      hst_ptrA_dim2 = arg_hst_ptrA_dim2;
+      hst_ptrC = arg_C;
+      hst_ptrC_dim1 = arg_hst_ptrC_dim1;
+      hst_ptrC_dim2 = arg_hst_ptrC_dim2;
+      hst_ptrB = arg_B;
+      hst_ptrB_dim1 = arg_hst_ptrB_dim1;
+      hst_ptrB_dim2 = arg_hst_ptrB_dim2;
+      wB = arg_wB;
+      wA = arg_wA;
+      hA = arg_hA;
       StartUpGPU();
       AllocateBuffers();
       compileKernelFromFile(
-	"KNearestFor2", "KNearestFor2.cl", &KNearestFor2Kernel, 
+	"matmulfunc4", "matmulfunc4.cl", &matmulfunc4Kernel, 
 	KernelDefines);
-      SetArgumentsKNearestFor2();
+      SetArgumentsmatmulfunc4();
     }
-  ExecKNearestFor2();
+  Execmatmulfunc4();
 }

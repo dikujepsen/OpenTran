@@ -10,13 +10,10 @@ keywords = (
     'CHAR', 'DOUBLE', 'FLOAT', 'INT', 'LONG', 'UNKNOWN',
     'SHORT', 'SIGNED', 'UNSIGNED', 'VOID', 'SIZE_T',
     # Control flow
-    'DO',  'WHILE', 'IF', 'ELSE', 'FOR', 'RETURN',
+    'FOR', 'RETURN',
     
     # C internals
-    'SIZEOF',  'STRUCT',
-
-    # qualifiers
-    'EXTERN',
+    'SIZEOF',
     )
 
 tokens = keywords + (
