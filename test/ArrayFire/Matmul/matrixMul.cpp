@@ -1,9 +1,11 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
-#include "boilerplate.cpp"
-
+#include <arrayfire.h>
+#include <af/utils.h>
 using namespace std;
+using namespace af;
+
 
 void
 matmul(float* A, float* B, float* C, unsigned hA, unsigned wA, unsigned wB)
@@ -18,6 +20,7 @@ matmul(float* A, float* B, float* C, unsigned hA, unsigned wA, unsigned wB)
     }
   }
 }
+
 
 void
 randMat(float* mat, unsigned mat_size)
@@ -58,6 +61,7 @@ int main(int argc, char** argv)
   float* A_mat = new float[A_size];
   float* B_mat = new float[B_size];
   float* C_mat = new float[C_size];
+  float* C_mat2 = new float[C_size];
 
   srand(2013);
 
@@ -68,14 +72,28 @@ int main(int argc, char** argv)
 #if 0
   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
 #else
-  RunOCLmatmulfunc4Kernel(
-	 A_mat, wA, hA,
-	 C_mat, wC, hC,
-	 B_mat, wB, hB,
-	 wB, wA, hA);  
+  array A(hA, wA, A_mat);
+  array B(hB, wB, B_mat);
+  array C(hC, wC, C_mat);
+  
+  printf("\nBenchmarking........\n\n");
+  af::sync();
+  timer::start();
+  A = A.T();
+  gfor (array k, wA) {
+    for (unsigned i = 0; i < wA; i++) {
+      C(i, k) = sum(A(k, span) * B(i, span)); 
+    }
+  }
+
+  af::sync();
+  printf("Average time : %g seconds\n", timer::stop());
+
+  C_mat = C.host<float>();
+
 #endif
 
-  printMat(C_mat,C_size);
+  printMat(C_mat, C_size);
 
   free(A_mat);
   free(B_mat);

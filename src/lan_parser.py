@@ -258,6 +258,7 @@ def p_error(p):
 
 from cgen import *
 
+fileprefix = "../test/C/"
 
 def jacobi():
     import ply.yacc as yacc
@@ -344,7 +345,7 @@ def matmul():
 
     run = 1
     while run:
-        filename = '../test/Matmul/matmulfunc4.cpp'
+        filename = fileprefix + 'Matmul/matmulfunc4.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -402,7 +403,7 @@ def matmul():
         rw.localMemory(['A','B'])
         rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
-        cprint.createTemp(tempast2, filename = '../test/Matmul/matmulfunc4.cl')
+        cprint.createTemp(tempast2, filename = fileprefix + 'Matmul/matmulfunc4.cl')
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
 
