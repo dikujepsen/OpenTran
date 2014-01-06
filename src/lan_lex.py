@@ -13,7 +13,7 @@ keywords = (
     'FOR', 'RETURN',
     
     # C internals
-    'SIZEOF',
+    'SIZEOF', 'INCLUDE'
     )
 
 tokens = keywords + (

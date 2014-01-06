@@ -25,6 +25,7 @@ def p_top_level(p):
     | top_level assignment_expression_semi
     | top_level expr
     | top_level for_loop
+    | top_level include
     | empty
     """
     tmp1 =  [] if p[1] is None else p[1]
@@ -41,10 +42,10 @@ def p_comment(p):
 
 
 def p_arg_params(p):
-    """arg_params : typeid COMMA arg_params
+    """arg_params : term COMMA arg_params
+    | typeid COMMA arg_params
+    | term
     | typeid
-    | identifier
-    | binop
     | empty
     """
     if len(p) == 4:
@@ -203,15 +204,23 @@ def p_func_decl_3(p):
     
 
 
-def p_decl(p):
+def p_decl_1(p):
     """declaration : typeid SEMI"""
     p[0] = p[1]
 
+def p_decl_2(p):
+    """declaration : array_typeid SEMI"""
+    p[0] = p[1]
+    
 def p_typeid(p):
     """ typeid : type identifier"""
-    p[0] = TypeId(p[1], p[2], p.lineno(1))
+    p[0] = TypeId(p[1], p[2])
 
-    
+def p_array_typeid(p):
+    """ array_typeid : type identifier subscript_list"""
+    p[0] = ArrayTypeId(p[1], p[2], p[3])
+
+
 def p_native_type(p):
     """native_type : VOID	
     | SIZE_T
@@ -245,6 +254,11 @@ def p_identifier(p):
     """ identifier : ID """
     p[0] = Id(p[1], p.lineno(1))
 
+
+def p_include(p):
+    """ include : PPHASH INCLUDE STRING_LITERAL """
+    p[0] = Include(p[3])
+    
 
 
 def p_empty(p):
@@ -365,10 +379,7 @@ def matmul():
         ast = cparser.parse(s)
         ast.show()
         ## print ast
-        ## print slist
         cprint = CGenerator()
-        ## printres = cprint.visit(ast)
-        ## print printres
         rw = Rewriter()
         rw.initOriginal(ast)
         ## rw.rewrite(ast, funcname, changeAST = True)
@@ -540,7 +551,7 @@ def knearest():
 
     run = 1
     while run:
-        filename = '../test/KNearest/KNearestFor.cpp'
+        filename = fileprefix + 'KNearest/KNearestFor.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -585,18 +596,24 @@ def knearest():
         tempast2 = copy.deepcopy(ast)
         rw.initNewRepr(tempast)
 
-# train_patterns[(get_global_id(0) * hst_ptrtrain_patterns_dim1) + k];
-# test_patterns[((k + kk) * hst_ptrtest_patterns_dim1) + get_global_id(1)]
+        
+        
         ## rw.constantMemory(['Pos']) 
         rw.transpose('train_patterns')
         ## rw.localMemory(['test_patterns'])
         ## rw.localMemory(['train_patterns'])
+
         
         rw.localMemory(['test_patterns','train_patterns'])
         rw.transpose('dist_matrix')
-        rw.dataStructures()
+        rw.define(['dim', 'hst_ptrtest_patterns_dim1',
+                   'hst_ptrtrain_patterns_dim1', 'hst_ptrdist_matrix_dim1'])
+
+        
+        
+        ## rw.dataStructures()
         rw.rewriteToDeviceCRelease(tempast2)
-        cprint.createTemp(tempast2, filename = '../test/KNearest/'+funcname + '.cl')
+        cprint.createTemp(tempast2, filename = fileprefix + 'KNearest/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
 
@@ -608,7 +625,7 @@ def knearest2():
 
     run = 1
     while run:
-        filename = '../test/KNearest2/KNearestFor2.cpp'
+        filename = fileprefix + 'KNearest2/KNearestFor2.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -660,15 +677,84 @@ def knearest2():
         rw.dataStructures()
         rw.placeInReg({ 'test_patterns' : [0]})
         rw.rewriteToDeviceCRelease(tempast2)
-        cprint.createTemp(tempast2, filename = '../test/KNearest2/'+funcname + '.cl')
+        cprint.createTemp(tempast2, filename = fileprefix + 'KNearest2/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
 
 
+def gaussian():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
+    # Build the lexer
+    lex.lex()
+
+    run = 1
+    while run:
+        filename = fileprefix + 'GaussianDerivates/GaussianDerivatesFor.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+
+        
+        lex.input(s)
+        while 1:
+            tok = lex.token()
+            if not tok: break
+            ## print tok
+        
+        ast = cparser.parse(s)
+        print ast
+        ## ast.show()
+        cprint = CGenerator()
+        rw = Rewriter()
+        rw.initOriginal(ast)
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = 'tempgaussian.cpp')
+
+        run = 0
+        filename = '../src/tempgaussian.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+ 
+        ast = cparser.parse(s)
+        ## ## ast.show()
+        tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
+        rw.initNewRepr(tempast)
+
+        ## rw.rewriteToSequentialC(ast)
+        ## cprint.createTemp(ast, filename = 'ctemp.cpp')
+        ## rw.rewriteToDeviceCTemp(tempast, False)
+        ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
+
+
+        ## rw.transpose('A')
+        ## rw.transpose('B')
+        ## rw.transpose('C')
+        ## rw.localMemory(['A','B'])
+        ## rw.dataStructures()
+        rw.rewriteToDeviceCRelease(tempast2)
+        # fileprefix + 'GaussianDerivates/
+        cprint.createTemp(tempast2, filename = fileprefix + 'GaussianDerivates/' + 'GaussianDerivatesFor.cl')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+
 if __name__ == "__main__":
     ## jacobi()
-    matmul()
+    ## matmul()
     ## nbody()
     ## nbody2()
-    ## knearest()
+    knearest()
     ## knearest2()
+    ## gaussian()

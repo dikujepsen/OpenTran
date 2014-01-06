@@ -77,6 +77,8 @@ class Rewriter(NodeVisitor):
         self.ReadWrite = dict()
         # List of arrays that are write only
         self.WriteOnly = list()
+        # List of arrays that are read only
+        self.ReadOnly = list()
         # dict of indices to loops in the kernel
         self.Loops = dict()
         # Contains the loop indices for each subscript
@@ -122,7 +124,8 @@ class Rewriter(NodeVisitor):
         self.LocalSwap = dict()
         # Extra things that we add to ids [local memory]
         self.Add = dict()
-        
+        # Holds includes for the kernel
+        self.Includes = list()
         
     def initOriginal(self, ast):
         loops = ForLoops()
@@ -139,19 +142,30 @@ class Rewriter(NodeVisitor):
         arrays = Arrays(self.index)
         arrays.visit(ast)
         self.NumDims = arrays.numSubscripts
-        self.ArrayIds = arrays.ids
+        
         self.IndexInSubscript = arrays.indexIds
         typeIds = TypeIds()
         typeIds.visit(ast)
 
+        
         ids = Ids()
         ids.visit(ast)
+
+        ## print "typeIds.ids ", typeIds.ids
+        ## print "arrays.ids ", arrays.ids
+        ## print "ids.ids ", ids.ids
         otherIds = ids.ids - arrays.ids - typeIds.ids
+        self.ArrayIds = arrays.ids - typeIds.ids
         self.NonArrayIds = otherIds
 
+        
 
 
     def initNewRepr(self, ast):
+        findIncludes = FindIncludes()
+        findIncludes.visit(ast)
+        self.Includes = findIncludes.includes
+        
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
         self.ParDim = perfectForLoop.depth
@@ -214,6 +228,9 @@ class Rewriter(NodeVisitor):
         findDim = FindDim(self.NumDims)
         findDim.visit(ast)
         self.ArrayIdToDimName = findDim.dimNames
+
+        
+        
         self.RemovedIds = set(self.UpperLimit[i] for i in self.GridIndices)
 
         idsStillInKernel = Ids()
@@ -239,6 +256,7 @@ class Rewriter(NodeVisitor):
             type = n.type[-2:]
             self.Type[name] = type
 
+            
         for n in self.ArrayIdToDimName:
             for m in self.ArrayIdToDimName[n]:
                 self.Type[m] = ['size_t']
@@ -256,8 +274,12 @@ class Rewriter(NodeVisitor):
 
         for n in self.ReadWrite:
             pset = self.ReadWrite[n]
-            if len(pset) == 1 and 'write' in pset:
-                self.WriteOnly.append(n)
+            print pset , n
+            if len(pset) == 1:
+                if 'write' in pset:
+                    self.WriteOnly.append(n)
+                else:
+                    self.ReadOnly.append(n)
 
         argIds = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
 
@@ -278,8 +300,9 @@ class Rewriter(NodeVisitor):
         arrays = Arrays(self.index)
         arrays.visit(ast)
         self.Subscript = arrays.Subscript
-        print "arrays.SubIdx " , arrays.SubIdx
         self.SubIdx = arrays.SubIdx
+
+         
 
     def dataStructures(self):
         print "self.index " , self.index
@@ -307,6 +330,7 @@ class Rewriter(NodeVisitor):
         print "self.Worksize " , self.Worksize
         print "self.IdxToDim " , self.IdxToDim
         print "self.WriteOnly " , self.WriteOnly
+        print "self.ReadOnly " , self.ReadOnly
         print "self.Subscript " , self.Subscript
         print "TRANSFORMATIONS"
         print "self.Transposition " , self.Transposition
@@ -421,9 +445,10 @@ class Rewriter(NodeVisitor):
         typeid = copy.deepcopy(self.DevFuncTypeId)
         typeid.type.insert(0, '__kernel')
 
-
+        ext = self.Includes
+        newast = FileAST(ext)
         
-        newast =  FuncDecl(typeid, ArgList(arglist), self.Kernel)
+        ext.append(FuncDecl(typeid, ArgList(arglist), self.Kernel))
         ast.ext = list()
         ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
         ast.ext.append(newast)
@@ -440,8 +465,8 @@ class Rewriter(NodeVisitor):
                 hstvar = self.NameSwap[var]
             except KeyError:
                 hstvar = var
-            add = Id(accname + ' << ' + '"-D' + var+ '="' + \
-                     ' << ' + hstvar + ' << " ";')
+            add = Id(accname + ' << ' + '\"' + '-D' + var+ '=\"' + \
+                     ' << ' + hstvar + ' << \" \";')
             stats.append(add)
 
         # Set the string to the global variable
@@ -1282,9 +1307,13 @@ class Rewriter(NodeVisitor):
             if n in self.WriteOnly:
                 flag = Id('CL_MEM_WRITE_ONLY')
                 arraynId = Id('NULL')
+            elif n in self.ReadOnly:
+                flag = Id('CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY')
+                arraynId = Id(arrayn)
             else:
                 flag = Id('CL_MEM_USE_HOST_PTR')
                 arraynId = Id(arrayn)
+
             arglist = ArgList([Id('context'),\
                                flag,\
                                Id(dictNToSize[n]),\
@@ -1422,7 +1451,8 @@ class Rewriter(NodeVisitor):
         fileAST.ext.append(runOCL)
         runOCLBody = runOCL.compound.statements
 
-        argIds = self.NonArrayIds.union(self.ArrayIds)
+        argIds = self.NonArrayIds.union(self.ArrayIds) #
+
         typeIdList = []
         ifThenList = []
         for n in argIds:
@@ -1449,7 +1479,7 @@ class Rewriter(NodeVisitor):
         
         arglist = ArgList(typeIdList)
         runOCL.arglist = arglist
-
+        
         arglist = ArgList([])
         ifThenList.append(FuncDecl(Id('StartUpGPU'), arglist, Compound([])))
         ifThenList.append(FuncDecl(Id('AllocateBuffers'), arglist, Compound([])))

@@ -40,7 +40,7 @@ long get_system_time_in_microseconds(void){
 
 DEFINE_TIMER(1); 
  
-#include "../../src/boilerplate.cpp"
+#include "../../../src/boilerplate.cpp"
 
 int main( int argc, char* argv[] )
 {
@@ -71,7 +71,7 @@ int main( int argc, char* argv[] )
   /////////////////////////////////////////////////////// FIXME ///////////////////////////////////////////////////////
   // @Jacob: You could try to parallelize these computations here (maybe the first loop?)
   /////////////////////////////////////////////////////// FIXME ///////////////////////////////////////////////////////
-#define GPU 1
+#define GPU 1 
 #if GPU
   
   RunOCLKNearestForKernel(dim, test_patterns, dim, 
@@ -79,7 +79,7 @@ int main( int argc, char* argv[] )
 			  train_patterns, dim, NTRAIN, NTEST, NTRAIN);
   
 #else
-   START_TIMER(1);
+   START_TIMER(1); 
   float d,tmp;
   for (i=0;i<NTEST;i++) {
     // compute distances to all training patterns

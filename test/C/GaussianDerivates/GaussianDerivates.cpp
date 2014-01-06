@@ -2,8 +2,9 @@
 #include <cstdio>
 #include <iostream>
 #include <cmath>
-using namespace std;
+#include "../../../src/boilerplate.cpp"
 
+using namespace std;
 
 float He(const int n,
 	 const float x) {
@@ -52,11 +53,11 @@ float DaKs(int da[3], float xmy[3], float r, float ks) {
 
 
 float gamma(float xmy[3], float r2, float sw2) {
-  float dot = 0.0;
+  float dot1 = 0.0;
   for (int k = 0; k < 3; k++) {
-    dot += xmy[k] * xmy[k];
+    dot1 += xmy[k] * xmy[k];
   }
-  return 1.0/sw2*exp(dot/r2);
+  return 1.0/sw2*exp(dot1/r2);
 }
 
 void
@@ -70,35 +71,35 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
 		  float * D3Ks__ijbgd_x, unsigned * D3Ks__ijbgd_dimsI
 		  )
 {
-  float xj[3];
-  float xi[3];
-  float ximxj[3];
-  int da[3];
-  int db[3];
-  int dc[3];
   
   for (int j=0; j<Lp; j++) {
     for (int i=0; i<Lq; i++) {
+      float xj[3];
+      float xi[3];
       for (int k = 0; k < dim; k++) {
 	xj[k] = p_a_i_x[j*p_a_i_rows + k];
       }
 
       for (int k = 0; k < dim; k++) {
-	xi[k] = q_a_i_x[j*q_a_i_rows + k];
+	xi[k] = q_a_i_x[i*q_a_i_rows + k];
       }
 
 
       
       // Vector3<scalar> xi(&q_a_i.x[q_a_i.rows*i]);
+      float ximxj[3];
       for (int k = 0; k < dim; k++) {
-	ximxj[k] = xi[k]-xj[k];
+	ximxj[k] = xi[k] -xj[k];
       }
       
       float r = sqrt(scales2_x);
 
-      float ks = gamma(ximxj,scales2_x,scaleweight2_x);
+      float ks = gamma(ximxj, scales2_x, scaleweight2_x);
       K__ij_x[i+K__ij_rows*j] = ks;
 
+      int da[3];
+      int db[3];
+      int dc[3];
       // nargout 1
       for (int b=0; b<dim; b++) {
 	// da.set(1,b);
@@ -108,8 +109,8 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
 
 	D1Ks__ijb_x[i +
 		    D1Ks__ijb_dimsI[0] * j +
-		    D1Ks__ijb_dimsI[1] * b] =
-	  DaKs(da,ximxj,r,ks);
+		    D1Ks__ijb_dimsI[1] * b
+		    ] = DaKs(da, ximxj,r,ks);
 
 
 	// nargout 2
@@ -162,7 +163,7 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
     }
 
   void
-    printMat(float* mat, unsigned mat_size)
+  printMat(float* mat, unsigned mat_size)
     {
       for (unsigned i = 0; i < mat_size; ++i) {
 	cout << mat[i] << " ";
@@ -174,8 +175,8 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
     }
 
 
-#define LP 4
-#define LQ 4
+#define LP 16
+#define LQ 16
 
 int main(int argc, char** argv)
 {
@@ -199,12 +200,16 @@ int main(int argc, char** argv)
   unsigned * D2Ks__ijbg_dimsI = new unsigned[3];
   unsigned * D3Ks__ijbgd_dimsI  = new unsigned[4];
 
+  ///////////////////////////////////////////////////////////////////
+  // Stefan: Omskriv venligst nedenstående størrelsesberegninger
+  ///////////////////////////////////////////////////////////////////
+
   // Insert some values as dimensions
   D1Ks__ijb_dimsI[0] = Lq;
   D2Ks__ijbg_dimsI[0] = Lq;
   D3Ks__ijbgd_dimsI[0] = Lq;
 
-  D1Ks__ijb_dimsI[1] = dim;
+  D1Ks__ijb_dimsI[1] = 1;
   D2Ks__ijbg_dimsI[1] = dim;
   D3Ks__ijbgd_dimsI[1] = dim;
 
@@ -213,18 +218,19 @@ int main(int argc, char** argv)
 
   D3Ks__ijbgd_dimsI[3] = dim;
 
-  unsigned D1Ks__ijb_x_size = Lq *
+  
+  unsigned D1Ks__ijb_x_size = Lq * 
     D1Ks__ijb_dimsI[0] +
-    D1Ks__ijb_dimsI[1];
+    D1Ks__ijb_dimsI[1] * dim;
   unsigned D2Ks__ijbg_x_size = Lq *
     D2Ks__ijbg_dimsI[0] +
-    D2Ks__ijbg_dimsI[1] +
-    D2Ks__ijbg_dimsI[2]  ;
+    D2Ks__ijbg_dimsI[1] * dim +
+    D2Ks__ijbg_dimsI[2] * dim  ;
   unsigned D3Ks__ijbgd_x_size = Lq *
     D3Ks__ijbgd_dimsI[0] +
-    D3Ks__ijbgd_dimsI[1] +
-    D3Ks__ijbgd_dimsI[2] +
-    D3Ks__ijbgd_dimsI[3]  ;
+    D3Ks__ijbgd_dimsI[1] * dim +
+    D3Ks__ijbgd_dimsI[2] * dim +
+    D3Ks__ijbgd_dimsI[3] * dim  ;
   
   float * D1Ks__ijb_x =   new float[D1Ks__ijb_x_size];
   float * D2Ks__ijbg_x =  new float[D2Ks__ijbg_x_size];
@@ -237,9 +243,10 @@ int main(int argc, char** argv)
   randMat(q_a_i_x, q_a_i_x_size);
   randMat(K__ij_x, K__ij_x_size);
 
-  randMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
-  randMat(D2Ks__ijbg_x,  D2Ks__ijbg_x_size);
-  randMat(D3Ks__ijbgd_x, D3Ks__ijbgd_x_size);
+  
+  // randMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
+  // randMat(D2Ks__ijbg_x,  D2Ks__ijbg_x_size);
+  // randMat(D3Ks__ijbgd_x, D3Ks__ijbgd_x_size);
   
 
   
@@ -253,16 +260,60 @@ int main(int argc, char** argv)
 		     D2Ks__ijbg_x,    D2Ks__ijbg_dimsI,
 		     D3Ks__ijbgd_x,   D3Ks__ijbgd_dimsI);
 #else
- 
+ RunOCLGaussianDerivatesForKernel(
+				  dim, D1Ks__ijb_dimsI, 2, 
+	scaleweight2_x, D3Ks__ijbgd_x, D3Ks__ijbgd_x_size, 
+	D2Ks__ijbg_dimsI, 3, D3Ks__ijbgd_dimsI, 
+	4, q_a_i_x, dim, 
+	Lq, scales2_x, Lp, 
+	Lq, p_a_i_x, dim, 
+	Lp, D1Ks__ijb_x, D1Ks__ijb_x_size, 
+	K__ij_x, Lq, Lp, 
+				  D2Ks__ijbg_x, D2Ks__ijbg_x_size);
 #endif
 
-    printMat(K__ij_x, K__ij_x_size);
+
+    // printMat(K__ij_x, K__ij_x_size);
     printMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
-    printMat(D2Ks__ijbg_x,  D2Ks__ijbg_x_size);
-    printMat(D3Ks__ijbgd_x, D3Ks__ijbgd_x_size);
+    // printMat(D2Ks__ijbg_x,  D2Ks__ijbg_x_size);
+    // printMat(D3Ks__ijbgd_x, D3Ks__ijbgd_x_size);
 
     // free(A_mat);
     // free(B_mat);
     // free(C_mat);
   
 }
+
+
+/*
+
+
+
+
+
+
+	 RunOCLGaussianDerivatesForKernel(
+				  dim, D1Ks__ijb_dimsI, 2, 
+	scaleweight2_x, D3Ks__ijbgd_x, D3Ks__ijbgd_x_size, 
+	D2Ks__ijbg_dimsI, 3, D3Ks__ijbgd_dimsI, 
+	4, q_a_i_x, dim, 
+	Lq, scales2_x, Lp, 
+	Lq, p_a_i_x, dim, 
+	Lp, D1Ks__ijb_x, D1Ks__ijb_x_size, 
+	K__ij_x, Lq, Lp, 
+				  D2Ks__ijbg_x, D2Ks__ijbg_x_size);
+
+
+  void GaussianDerivatesFor(
+	unsigned * D1Ks__ijb_dimsI, size_t hst_ptrD1Ks__ijb_dimsI_dim1,
+	float * q_a_i_x, size_t hst_ptrq_a_i_x_dim1, size_t hst_ptrq_a_i_x_dim2,
+	float * D3Ks__ijbgd_x, size_t hst_ptrD3Ks__ijbgd_x_dim1,
+	unsigned * D2Ks__ijbg_dimsI, size_t hst_ptrD2Ks__ijbg_dimsI_dim1,
+	unsigned * D3Ks__ijbgd_dimsI, size_t hst_ptrD3Ks__ijbgd_dimsI_dim1, 
+	float * p_a_i_x, size_t hst_ptrp_a_i_x_dim1, size_t hst_ptrp_a_i_x_dim2, 
+	float * D1Ks__ijb_x, size_t hst_ptrD1Ks__ijb_x_dim1,
+	float * K__ij_x, size_t hst_ptrK__ij_x_dim1, size_t hst_ptrK__ij_x_dim2,
+	float * D2Ks__ijbg_x, size_t hst_ptrD2Ks__ijbg_x_dim1,  
+	size_t dim, size_t scaleweight2_x, size_t scales2_x,
+	size_t Lp, size_t Lq)
+*/

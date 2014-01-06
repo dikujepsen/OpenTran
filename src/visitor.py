@@ -50,26 +50,43 @@ class FindReadWrite(NodeVisitor):
     def __init__(self, ArrayIds):
         self.ReadWrite = dict()
         self.ArrayIds = ArrayIds
-        self.left = True
         for n in self.ArrayIds:
             self.ReadWrite[n] = set()
         
     def visit_Assignment(self, node):
-        self.left = True
-        self.visit(node.lval)
-        self.left = False
-        self.visit(node.rval)
+        findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, True)
+        findReadPattern.visit(node.lval)
+        findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, False)
+        findReadPattern.visit(node.rval)
 
-    def visit_Id(self, node):
-        name = node.name
+
+
+class FindReadPattern(NodeVisitor):
+    """ Return whether the an array are read or written """
+    def __init__(self, ArrayIds, ReadWrite, left):
+        self.ReadWrite = ReadWrite
+        self.ArrayIds = ArrayIds
+        self.left = left
+
+    def visit_ArrayRef(self, node):
+        name = node.name.name
         if name in self.ArrayIds:
             if self.left:
                 self.ReadWrite[name].add('write')
             else:
                 self.ReadWrite[name].add('read')
+            findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, False)
+            for n in node.subscript:
+                findReadPattern.visit(n)
+    
+                
+def updateDict(sink, src):
+    for n in sink:
+        l = sink[n]
+        for m in src[n]:
+            l.add(m)
 
                 
-
 class ExchangeId(NodeVisitor):
     """ Exchanges the Ids that we parallelize with the threadids,
     (or whatever is given in idMap)
@@ -237,6 +254,7 @@ class FindDim(NodeVisitor):
                     for n in xrange(self.arrayIds[arrayname]):
                         self.dimNames[arrayname].append(
                         node.arglist[count + 1 + n].name.name)
+                        
                 count += 1
 
 
@@ -254,6 +272,16 @@ class FindSpecificArrayId(NodeVisitor):
     def reset(self, arrayId):
         self.Found = False
         self.arrayId = arrayId
+
+
+class FindIncludes(NodeVisitor):
+    """ Return a list of include statements
+    """
+    def __init__(self):
+        self.includes = list()
+    
+    def visit_Include(self, node):
+        self.includes.append(node)
 
 class InitIds(NodeVisitor):
     """ Finds Id's in a for loop initialization.
@@ -281,7 +309,8 @@ class Ids(NodeVisitor):
         self.ids = set()
 
     def visit_FuncDecl(self, node):
-        pass
+        if node.compound.statements == []:
+            self.visit(node.arglist)
         
     def visit_Id(self, node):
         self.ids.add(node.name)
@@ -416,13 +445,18 @@ class Arrays(NodeVisitor):
         else:
             self.indexIds[name].update((numIndcs.found))
             
-        self.numSubscripts[name] = max(len(node.subscript),self.numIndices[name])
+        ## self.numSubscripts[name] = max(len(node.subscript),self.numIndices[name])
+        self.numSubscripts[name] = len(node.subscript)
+        for n in node.subscript:
+            self.visit(n)
 
 class TypeIds(NodeVisitor):
     """ Finds type Ids """
     def __init__(self):
         self.ids = set()
     def visit_TypeId(self, node):
+        self.ids.add(node.name.name)
+    def visit_ArrayTypeId(self, node):
         self.ids.add(node.name.name)
 
 
