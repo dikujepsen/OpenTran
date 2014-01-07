@@ -44,7 +44,7 @@ def p_comment(p):
 def p_arg_params(p):
     """arg_params : term COMMA arg_params
     | typeid COMMA arg_params
-    | term
+    | binop
     | typeid
     | empty
     """
@@ -488,7 +488,7 @@ def nbody2():
 
     run = 1
     while run:
-        filename = '../test/NBody2/NBody2For.cpp'
+        filename = fileprefix + 'NBody2/NBody2For.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -538,9 +538,14 @@ def nbody2():
         rw.dataStructures()
         ## rw.localMemory2(['Mas', 'Pos'])
         ## rw.constantMemory(['Pos'])
+        
         rw.constantMemory2({'Pos' : [2,3], 'Mas' : [1]})
-        rw.rewriteToDeviceCRelease(tempast)
-        cprint.createTemp(tempast, filename = '../test/NBody2/'+funcname + '.cl')
+        rw.placeInReg2({ 'Pos' : [0, 1], 'Mas' : [0]})
+        ## rw.Unroll(['k', 'kk'])
+        
+        rw.InSourceKernel(tempast2, filename = fileprefix + 'NBody2/'+funcname + '.cl')
+        ## rw.rewriteToDeviceCRelease(tempast)
+        ## cprint.createTemp(tempast, filename = fileprefix + 'NBody2/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
 
@@ -611,9 +616,12 @@ def knearest():
 
         
         
-        ## rw.dataStructures()
-        rw.rewriteToDeviceCRelease(tempast2)
-        cprint.createTemp(tempast2, filename = fileprefix + 'KNearest/'+funcname + '.cl')
+        rw.dataStructures()
+        rw.Unroll(['k', 'kk'])
+        
+        rw.InSourceKernel(tempast2, filename = fileprefix + 'KNearest/'+funcname + '.cl')
+        ## rw.rewriteToDeviceCRelease(tempast2)
+        ## cprint.createTemp(tempast2, filename = fileprefix + 'KNearest/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
 
@@ -754,7 +762,7 @@ if __name__ == "__main__":
     ## jacobi()
     ## matmul()
     ## nbody()
-    ## nbody2()
-    knearest()
+    nbody2()
+    ## knearest()
     ## knearest2()
     ## gaussian()

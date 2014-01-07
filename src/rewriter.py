@@ -1,6 +1,7 @@
 import copy
 import os
 from visitor import *
+from stringstream import *
 
 class Rewriter(NodeVisitor):
     """ Class for rewriting of the original AST. Includes:
@@ -126,6 +127,12 @@ class Rewriter(NodeVisitor):
         self.Add = dict()
         # Holds includes for the kernel
         self.Includes = list()
+        # Holds the ast for a function that returns the kernelstring
+        self.KernelStringStream = None
+        # Holds a list of which loops we will unroll
+        self.UnrollLoops = list()
+        
+        
         
     def initOriginal(self, ast):
         loops = ForLoops()
@@ -169,7 +176,7 @@ class Rewriter(NodeVisitor):
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
         self.ParDim = perfectForLoop.depth
-
+        
         innerbody = perfectForLoop.inner
         firstLoop = ForLoops()
         firstLoop.visit(innerbody.compound)
@@ -400,6 +407,28 @@ class Rewriter(NodeVisitor):
         if changeAST:
             ast.ext = list()
             ast.ext.append(newast)
+
+    def Unroll(self, looplist):
+        # find loops and check that the loops given in the argument
+        # exist
+        loopIndices = LoopIndices()
+        loopIndices.visit(self.Kernel)
+        kernelLoops = loopIndices.Loops
+        for l in looplist:
+            if l not in kernelLoops:
+                print "Valid loops are %r. Your input contained %r. Aborting..." % (kernelLoops.keys(), l)
+                return
+        
+        self.UnrollLoops = looplist
+           
+        
+
+    def InSourceKernel(self, ast, filename):
+        self.rewriteToDeviceCRelease(ast)
+        ssprint = SSGenerator()
+        newast = FileAST([])
+        ssprint.createKernelStringStream(ast, newast, self.UnrollLoops,filename = filename)
+        self.KernelStringStream = newast
         
     def rewriteToDeviceCRelease(self, ast):
 
@@ -450,7 +479,7 @@ class Rewriter(NodeVisitor):
         
         ext.append(FuncDecl(typeid, ArgList(arglist), self.Kernel))
         ast.ext = list()
-        ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
+        ## ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
         ast.ext.append(newast)
 
     def define(self, varList):
@@ -519,6 +548,7 @@ class Rewriter(NodeVisitor):
             writes.append(ArrayRef(Id(regName), [Id(loopid)]))
             loadings.append(Assignment(writes[i], None))
 
+        
             
         # get the loop wherein we preload data
         loop = copy.deepcopy(self.Loops[iter(ids).next()])
@@ -534,8 +564,6 @@ class Rewriter(NodeVisitor):
         stats.insert(0, GroupCompound(initstats))
 
         # Replace the global Arefs with the register Arefs
-                # Must now replace global arefs with constant arefs
-        
         for i,n in enumerate(arrDict):
             idx = arrDict[n][0]
             aref_new = writes[i]
@@ -544,7 +572,40 @@ class Rewriter(NodeVisitor):
             aref_old.name.name = aref_new.name.name
             aref_old.subscript = aref_new.subscript
 
+    def placeInReg2(self, arrDict):
 
+        stats = self.Kernel.statements
+        initstats = []
+        loadings = []
+        writes = []
+        # Create the loadings
+        for i,n in enumerate(arrDict):
+            for m in arrDict[n]:
+                idx = m
+                sub = copy.deepcopy(self.LoopArrays[n][idx])
+                type = self.Type[n][0]
+                regid = Id(n + str(m) + '_reg')
+                reg = TypeId([type], regid)
+                writes.append(regid)
+                assign = Assignment(reg, sub)
+                loadings.append(assign)
+        
+        comp = GroupCompound(loadings)
+        initstats.append(comp)
+        stats.insert(0, GroupCompound(initstats))
+ 
+        # Replace the global Arefs with the register Arefs
+        count = 0
+        for i,n in enumerate(arrDict):
+            for m in arrDict[n]:
+                idx = m
+                aref_new = writes[count]
+                aref_old = self.LoopArrays[n][idx]
+                # Copying the internal data of the two arefs
+                aref_old.name.name = aref_new.name
+                aref_old.subscript = []
+                count += 1
+            
 
     def constantMemory2(self, arrDict):
         arrNames = arrDict.keys()
@@ -559,12 +620,10 @@ class Rewriter(NodeVisitor):
             else:
                 split[name] = False
 
-        print "split " , split
         # Add new constant pointer
         ptrname = 'Constant' + ''.join(arrNames)
         hst_ptrname = 'hst_ptr' + ptrname
         dev_ptrname = 'dev_ptr' + ptrname
-        print ptrname
         typeset = set()
         for name in arrNames:
             typeset.add(self.Type[name][0])
@@ -695,13 +754,11 @@ class Rewriter(NodeVisitor):
                 else:
                     split[name] = False
                     
-        print "split ", split
         
         # Add new constant pointer
         ptrname = 'constant' + ''.join(arrNames)
         hst_ptrname = 'hst_ptr_' + ptrname
         dev_ptrname = 'dev_ptr_' + ptrname
-        print ptrname
         typeset = set()
         for name in arrNames:
             typeset.add(self.Type[name][0])
@@ -1118,10 +1175,13 @@ class Rewriter(NodeVisitor):
         func.arglist = arglist
         stats2.append(func)
 
+        
+        
         exchangeIndices.visit(InitComp)
         exchangeIndices.visit(LoadComp)
         if isInsideLoop:
             forLoopAst.compound.statements.insert(0,LoadComp)
+            forLoopAst.compound.statements.append(func)
         else:
             self.Kernel.statements.insert(0, LoadComp)
         self.Kernel.statements.insert(0, InitComp)
@@ -1255,6 +1315,9 @@ class Rewriter(NodeVisitor):
         rval = Constant('""')
         fileAST.ext.append(Assignment(lval,rval))
 
+        if self.KernelStringStream is not None:
+            fileAST.ext.append(self.KernelStringStream)
+        
         allocateBuffer = EmptyFuncDecl('AllocateBuffers')
         fileAST.ext.append(allocateBuffer)
 
@@ -1483,8 +1546,14 @@ class Rewriter(NodeVisitor):
         arglist = ArgList([])
         ifThenList.append(FuncDecl(Id('StartUpGPU'), arglist, Compound([])))
         ifThenList.append(FuncDecl(Id('AllocateBuffers'), arglist, Compound([])))
+        useFile = 'true'
+        if self.KernelStringStream is not None:
+            useFile = 'false'
+            
         arglist = ArgList([Constant(self.DevFuncId),
                            Constant(self.DevFuncId+'.cl'),
+                           Id('KernelString()'),
+                           Id(useFile),
                            Id('&' + self.KernelName),
                            Id('KernelDefines')])
         ifThenList.append(FuncDecl(Id('compileKernelFromFile'), arglist, Compound([])))

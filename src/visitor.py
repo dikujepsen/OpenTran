@@ -189,6 +189,7 @@ class PerfectForLoop(NodeVisitor):
 
     def visit_FuncDecl(self, node):
         funcstats = node.compound.statements
+        
         if len(funcstats) == 1: # 
             if isinstance(funcstats[0], ForLoop):
                 self.ast = funcstats[0]
@@ -400,7 +401,27 @@ class NumIndices(NodeVisitor):
             if self.num >= self.numIndices:
                 self.yes = True
                 
-    
+class SwapUnrollID(NodeVisitor):
+    """ Swap a loop index that is being unrolled with
+        ' " << <loop index> << "
+    """
+    def __init__(self, UnrollLoops):
+        self.UnrollLoops = UnrollLoops
+        self.outsideHeader = True
+
+    def visit_ForLoop(self,node):
+        self.outsideHeader = False
+        self.visit(node.init)
+        self.visit(node.cond)
+        self.visit(node.inc)
+        self.outsideHeader = True
+        self.visit(node.compound)
+        
+    def visit_Id(self, node):
+        if self.outsideHeader:
+            if node.name in self.UnrollLoops:
+                node.name = '\" << ' + node.name + ' << \"'
+                
 class Arrays(NodeVisitor):
     """ Finds array Ids """
     def __init__(self, loopindices):

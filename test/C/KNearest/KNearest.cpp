@@ -50,7 +50,7 @@ int main( int argc, char* argv[] )
   size_t dim = 16;
 
   size_t i,j,k;
-
+  
   // training and test patterns
   float *train_patterns = (float*)malloc(NTRAIN*dim*sizeof(float));
   float *test_patterns = (float*)malloc(NTEST*dim*sizeof(float));
