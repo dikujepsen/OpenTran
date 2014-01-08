@@ -45,8 +45,8 @@ DEFINE_TIMER(1);
 int main( int argc, char* argv[] )
 {
   // problem parameters
-  size_t NTRAIN = 16384;
-  size_t NTEST = 3*NTRAIN;
+  size_t NTRAIN = 8;
+  size_t NTEST = 4*NTRAIN;
   size_t dim = 16;
 
   size_t i,j,k;
@@ -59,12 +59,12 @@ int main( int argc, char* argv[] )
   // initialize with some values ...
   for (i=0;i<NTRAIN;i++){
     for (k=0;k<dim;k++){
-      train_patterns[i*dim + k] = (float)sin(i);
+      train_patterns[i*dim + k] = (float)i*k;
     }
   }
   for (i=0;i<NTEST;i++){
     for (k=0;k<dim;k++){
-      test_patterns[i*dim + k] = (float)cos(i);
+      test_patterns[i*dim + k] = (float)i;
     }
   }
   // for each test pattern
@@ -74,7 +74,7 @@ int main( int argc, char* argv[] )
 #define GPU 1
 #if GPU
   
-  RunOCLKNearestForKernel(dim, test_patterns, dim, 
+  RunOCLKNearestFor2Kernel(dim, test_patterns, dim, 
 			  NTEST, dist_matrix, NTEST, NTRAIN,
 			  train_patterns, dim, NTRAIN, NTEST, NTRAIN);
   
@@ -90,7 +90,7 @@ int main( int argc, char* argv[] )
 	tmp = test_patterns[i*dim+k]-train_patterns[j*dim+k];
 	d += tmp*tmp;
       }
-      dist_matrix[i*NTRAIN + j] = d;
+      dist_matrix[j*NTEST + i] = d;
     }
   }
   STOP_TIMER(1);

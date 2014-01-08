@@ -1,4 +1,5 @@
 from lan_ast import *
+
 class AddToId(NodeVisitor):
     """ Finds the Id and replaces it with a binop that
     adds another variable to the id.
@@ -43,32 +44,49 @@ class AddToId(NodeVisitor):
 
 
 class FindReadWrite(NodeVisitor):
-    """ Returns a mapping of arrays to either
+    """ Returns a mapping of array to either
     'read'-only, 'write'-only, or 'readwrite'
     """
     def __init__(self, ArrayIds):
         self.ReadWrite = dict()
         self.ArrayIds = ArrayIds
-        self.left = True
         for n in self.ArrayIds:
             self.ReadWrite[n] = set()
         
     def visit_Assignment(self, node):
-        self.left = True
-        self.visit(node.lval)
-        self.left = False
-        self.visit(node.rval)
+        findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, True)
+        findReadPattern.visit(node.lval)
+        findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, False)
+        findReadPattern.visit(node.rval)
 
-    def visit_Id(self, node):
-        name = node.name
+
+
+class FindReadPattern(NodeVisitor):
+    """ Return whether the an array are read or written """
+    def __init__(self, ArrayIds, ReadWrite, left):
+        self.ReadWrite = ReadWrite
+        self.ArrayIds = ArrayIds
+        self.left = left
+
+    def visit_ArrayRef(self, node):
+        name = node.name.name
         if name in self.ArrayIds:
             if self.left:
                 self.ReadWrite[name].add('write')
             else:
                 self.ReadWrite[name].add('read')
+            findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, False)
+            for n in node.subscript:
+                findReadPattern.visit(n)
+    
+                
+def updateDict(sink, src):
+    for n in sink:
+        l = sink[n]
+        for m in src[n]:
+            l.add(m)
 
                 
-
 class ExchangeId(NodeVisitor):
     """ Exchanges the Ids that we parallelize with the threadids,
     (or whatever is given in idMap)
@@ -171,6 +189,7 @@ class PerfectForLoop(NodeVisitor):
 
     def visit_FuncDecl(self, node):
         funcstats = node.compound.statements
+        
         if len(funcstats) == 1: # 
             if isinstance(funcstats[0], ForLoop):
                 self.ast = funcstats[0]
@@ -200,7 +219,7 @@ class RewriteArrayRef(NodeVisitor):
     def visit_ArrayRef(self, node):
         n = node.name.name
         try:
-            if self.data.NumDims[n] == 2:
+            if self.data.NumDims[n] == 2 and len(node.subscript) == 2:
                 try:
                     if self.data.SubSwap[n]:
                         (node.subscript[0], node.subscript[1]) = \
@@ -211,7 +230,6 @@ class RewriteArrayRef(NodeVisitor):
                 # Id on first dimension
 
                 Id(self.ArrayIdToDimName[n][0]))
-                
                 topbinop = BinOp(leftbinop,'+', \
                 node.subscript[1])
                 node.subscript = [topbinop]
@@ -237,6 +255,7 @@ class FindDim(NodeVisitor):
                     for n in xrange(self.arrayIds[arrayname]):
                         self.dimNames[arrayname].append(
                         node.arglist[count + 1 + n].name.name)
+                        
                 count += 1
 
 
@@ -254,6 +273,16 @@ class FindSpecificArrayId(NodeVisitor):
     def reset(self, arrayId):
         self.Found = False
         self.arrayId = arrayId
+
+
+class FindIncludes(NodeVisitor):
+    """ Return a list of include statements
+    """
+    def __init__(self):
+        self.includes = list()
+    
+    def visit_Include(self, node):
+        self.includes.append(node)
 
 class InitIds(NodeVisitor):
     """ Finds Id's in a for loop initialization.
@@ -276,11 +305,13 @@ class FindUpperLimit(NodeVisitor):
         self.index.append(node.name)
         
 class Ids(NodeVisitor):
-    """ Finds all unique Ids, excluding functions"""
+    """ Finds all unique IDs, excluding function IDs"""
     def __init__(self):
         self.ids = set()
+
     def visit_FuncDecl(self, node):
-        pass
+        if node.compound.statements == []:
+            self.visit(node.arglist)
         
     def visit_Id(self, node):
         self.ids.add(node.name)
@@ -292,6 +323,10 @@ class LoopIds(NodeVisitor):
     def __init__(self, LoopIds):
         self.LoopIds = LoopIds
         self.ids = set()
+
+    def reset(self):
+        self.ids = set()
+
         
     def visit_Id(self, node):
         name = node.name
@@ -300,7 +335,9 @@ class LoopIds(NodeVisitor):
 
 
 class LoopIndices(NodeVisitor):
-    """ Finds loop indices
+    """ Finds loop indices, the start and end values of the
+        indices and creates a mapping from a loop index to
+        the ForLoop AST node that is indexes.
     """
     def __init__(self):
         self.index = list()
@@ -309,16 +346,17 @@ class LoopIndices(NodeVisitor):
         self.Loops = dict()
     def visit_ForLoop(self, node):
         self.Loops[node.init.lval.name.name] = node
-        IdVis = InitIds()
+        IdVis = Ids()
         IdVis.visit(node.init)
-        self.index.extend(IdVis.index)
+        ids = list(IdVis.ids)
+        self.index.extend(ids)
         self.visit(node.compound)
         try:
-            self.end[IdVis.index[0]] = (node.cond.rval.name)
-            self.start[IdVis.index[0]] = (node.init.rval.value)
+            self.end[ids[0]] = (node.cond.rval.name)
+            self.start[ids[0]] = (node.init.rval.value)
         except AttributeError:
-            self.end[IdVis.index[0]] = 'Unknown'
-            self.start[IdVis.index[0]] = 'Unknown'
+            self.end[ids[0]] = 'Unknown'
+            self.start[ids[0]] = 'Unknown'
             
 
 class ForLoops(NodeVisitor):
@@ -346,20 +384,44 @@ class NumIndices(NodeVisitor):
         self.num = 0
         self.indices = indices
         self.found = set()
+        self.subIdx = set()
         self.yes = False
+
+    def reset(self):
+        self.firstFound = False
+        self.subIdx = set()
+        
     def visit_Id(self, node):
         if node.name in self.indices \
         and node.name not in self.found \
         and self.num < self.numIndices:
             self.found.add(node.name)
+            self.subIdx.add(node.name)
             self.num += 1
             if self.num >= self.numIndices:
                 self.yes = True
                 
-    def reset(self):
-        self.firstFound = False
+class SwapUnrollID(NodeVisitor):
+    """ Swap a loop index that is being unrolled with
+        ' " << <loop index> << "
+    """
+    def __init__(self, UnrollLoops):
+        self.UnrollLoops = UnrollLoops
+        self.outsideHeader = True
 
-    
+    def visit_ForLoop(self,node):
+        self.outsideHeader = False
+        self.visit(node.init)
+        self.visit(node.cond)
+        self.visit(node.inc)
+        self.outsideHeader = True
+        self.visit(node.compound)
+        
+    def visit_Id(self, node):
+        if self.outsideHeader:
+            if node.name in self.UnrollLoops:
+                node.name = '\" << ' + node.name + ' << \"'
+                
 class Arrays(NodeVisitor):
     """ Finds array Ids """
     def __init__(self, loopindices):
@@ -370,6 +432,7 @@ class Arrays(NodeVisitor):
         self.numSubscripts = dict()
         self.Subscript = dict()
         self.LoopArrays = dict()
+        self.SubIdx = dict()
             
     def visit_ArrayRef(self, node):
         name = node.name.name
@@ -382,8 +445,20 @@ class Arrays(NodeVisitor):
             self.Subscript[name] = [node.subscript]
             self.LoopArrays[name] = [node]
         
+        listidx = []
         for s in node.subscript:
             numIndcs.visit(s)
+            if numIndcs.subIdx:
+                listidx.extend(list(numIndcs.subIdx))
+            else:
+                listidx.append(None)
+            numIndcs.reset()
+        
+        if name in self.SubIdx:
+            self.SubIdx[name].append(listidx)
+        else:
+            self.SubIdx[name] = [listidx]
+
         if name not in self.numIndices:
             self.numIndices[name] = numIndcs.num
             self.numSubscripts[name] = numIndcs.num
@@ -391,13 +466,18 @@ class Arrays(NodeVisitor):
         else:
             self.indexIds[name].update((numIndcs.found))
             
-        self.numSubscripts[name] = max(len(node.subscript),self.numIndices[name])
+        ## self.numSubscripts[name] = max(len(node.subscript),self.numIndices[name])
+        self.numSubscripts[name] = len(node.subscript)
+        for n in node.subscript:
+            self.visit(n)
 
 class TypeIds(NodeVisitor):
     """ Finds type Ids """
     def __init__(self):
         self.ids = set()
     def visit_TypeId(self, node):
+        self.ids.add(node.name.name)
+    def visit_ArrayTypeId(self, node):
         self.ids.add(node.name.name)
 
 

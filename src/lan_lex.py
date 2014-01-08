@@ -10,13 +10,10 @@ keywords = (
     'CHAR', 'DOUBLE', 'FLOAT', 'INT', 'LONG', 'UNKNOWN',
     'SHORT', 'SIGNED', 'UNSIGNED', 'VOID', 'SIZE_T',
     # Control flow
-    'DO',  'WHILE', 'IF', 'ELSE', 'FOR', 'RETURN',
+    'FOR', 'RETURN',
     
     # C internals
-    'SIZEOF',  'STRUCT',
-
-    # qualifiers
-    'EXTERN',
+    'SIZEOF', 'INCLUDE'
     )
 
 tokens = keywords + (
@@ -67,7 +64,7 @@ integer = r"""0|([1-9][0-9]*)"""
 
 identifier = r"""[a-zA-Z_][a-zA-Z0-9_]*"""
 
-string_characters = r"""[a-zA-Z0-9_\+\.,: \t;=<>\"\#\-@$%&/\{\}\(\)\[\]\?\*]*"""
+string_characters = r"""[a-zA-Z0-9_\+\.,: \t;!=<>\"\#\-@$%&/\{\}\(\)\[\]\?\*]*"""
 comment_literal = '//' + string_characters #+ r'\n'
 @TOKEN(comment_literal)
 def t_COMMENT(t):

@@ -12,6 +12,7 @@ for (unsigned i = 0; i < N; i++) {
     f_x += deno * r_x ;
     f_y += deno * r_y ;
   }
+
   Forces[0][i] = f_x;
   Forces[1][i] = f_y;
  }

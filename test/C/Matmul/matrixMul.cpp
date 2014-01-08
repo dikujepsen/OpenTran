@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
-#include "boilerplate.cpp"
+#include "../../../src/boilerplate.cpp"
 
 using namespace std;
 
@@ -56,7 +56,6 @@ int main(int argc, char** argv)
   unsigned C_size = hC*wC;
   
   float* A_mat = new float[A_size];
-  float* A_mattrans = new float[A_size];
   float* B_mat = new float[B_size];
   float* C_mat = new float[C_size];
 
@@ -66,8 +65,6 @@ int main(int argc, char** argv)
   randMat(B_mat,B_size);
   randMat(C_mat,C_size);
 
-  // transpose(A_mat, A_mattrans, wA, hA);
-  
 #if 0
   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
 #else

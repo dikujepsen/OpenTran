@@ -1,9 +1,11 @@
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
-//#include <string.h>
+#include <string.h>
 #include <malloc.h>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
+#include <fstream>
 #define NUMDEVS 1
 using namespace std;
 
@@ -111,23 +113,32 @@ void StartUpGPU() {
 
 void compileKernelFromFile(std::string kernel_name,
 			   const char *filename,
+			   std::string kernelstr,
+			   bool useFile,
 			   cl_kernel* kernel,
-			   const char* options) {
+			   std::string options) {
 
   cl_int err = CL_SUCCESS;
-  const char* source2 = ReadSources(filename);
-  cout << source2 << endl;
-  cl_program program = clCreateProgramWithSource(context, 1, (const char **)&source2,NULL, &err);
-  oclCheckErr(err, "clCreateProgramWithSource");
-  char buildOptions[256];
-  int ierr = snprintf(buildOptions, sizeof(buildOptions),
-		      "-cl-finite-math-only  -cl-fast-relaxed-math %s",options);
-  
-  if (ierr < 0) {
-    printf("Error in Build Options");
-    exit(-1);
+  const char* source2;
+  if (useFile) {
+    source2 = ReadSources(filename);
+  } else {
+    source2 = kernelstr.c_str();
+    std::ofstream file;
+    file.open(filename);
+    file << kernelstr;
+    file.close();
   }
-  err = clBuildProgram(program, 0, NULL, buildOptions, NULL, NULL);
+  
+  cl_program program = clCreateProgramWithSource(context, 1, (const char **)&source2, NULL, &err);
+  oclCheckErr(err, "clCreateProgramWithSource");
+
+  std::stringstream buildOptions;
+  // Okay for most programs
+  buildOptions << "-cl-fast-relaxed-math " << options;
+  
+  
+  err = clBuildProgram(program, 0, NULL, buildOptions.str().c_str(), NULL, NULL);
   if (err != CL_SUCCESS)
     {
       std::cout << "OCL Error: OpenCL Build Error. Error Code: " << err << std::endl;
@@ -148,7 +159,9 @@ void compileKernelFromFile(std::string kernel_name,
 
   err |= clReleaseProgram(program);
   oclCheckErr(err, "clReleaseProgram");
-  free((void *)source2);
+  if (useFile) {
+    free((void *)source2);
+  }
 } 
 
 template <class T>

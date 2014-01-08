@@ -150,6 +150,16 @@ class Id(Node):
         return tuple(nodelist)
     attr_names = ('name',)
 
+class Include(Node):
+    def __init__(self, name, coord = None):
+        self.name = name
+        self.coord = coord
+    def __repr__(self):
+        return "Include(%r)" % ( self.name)
+    def children(self):
+        nodelist = []
+        return tuple(nodelist)
+    attr_names = ('name',)
 
 class TypeId(Node):
     def __init__(self,type,name,coord = None):
@@ -163,6 +173,23 @@ class TypeId(Node):
         return tuple(nodelist)
     attr_names = ('type',)
 
+class ArrayTypeId(Node):
+    def __init__(self,type, name, subscript, coord = None):
+        self.type = type
+        self.name = name
+        self.subscript = subscript
+        self.coord = coord
+    def __repr__(self):
+        return "ArrayTypeId(%r %r % r)" % ( self.type, self.name, self.subscript)
+    def children(self):
+        nodelist = [("name", self.name)]
+        for count, i in enumerate(self.subscript):
+            nodelist.append(("subscript %r" % count, i))
+
+        return tuple(nodelist)
+    attr_names = ('type',)
+
+    
 class Assignment(Node):
     def __init__(self, lval, rval, op = '=', coord = None):
         self.lval = lval
@@ -285,10 +312,10 @@ class ForLoop(Node):
         self.inc = inc
         self.compound = compound
     def __repr__(self):
-        return "ForLoop(%r) " % ( self.init.lval.name#, \
+        return "\nForLoop(%r %r) " % ( self.init.lval.name, \
                                             #self.cond, \
                                             #self.inc#, \
-                                            #self.compound
+                                            self.compound
                                         )
     def children(self):
         nodelist = []

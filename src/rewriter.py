@@ -1,6 +1,7 @@
 import copy
 import os
 from visitor import *
+from stringstream import *
 
 class Rewriter(NodeVisitor):
     """ Class for rewriting of the original AST. Includes:
@@ -77,8 +78,12 @@ class Rewriter(NodeVisitor):
         self.ReadWrite = dict()
         # List of arrays that are write only
         self.WriteOnly = list()
+        # List of arrays that are read only
+        self.ReadOnly = list()
         # dict of indices to loops in the kernel
         self.Loops = dict()
+        # Contains the loop indices for each subscript
+        self.SubIdx = dict()
         
         # List of arguments for the kernel
         ## self.KernelArgs = list()
@@ -91,6 +96,9 @@ class Rewriter(NodeVisitor):
         # Holds the sub-AST in AllocateBuffers
         # that we add constant memory pointer initializations to.
         self.ConstantMemory = None
+        # Holds the sub-AST in AllocateBuffers
+        # where we set the defines for the kernel.
+        self.Define = None
         # Dict containing the name and type for each kernel argument
         # set in SetArguments
         self.KernelArgs = dict()
@@ -117,6 +125,13 @@ class Rewriter(NodeVisitor):
         self.LocalSwap = dict()
         # Extra things that we add to ids [local memory]
         self.Add = dict()
+        # Holds includes for the kernel
+        self.Includes = list()
+        # Holds the ast for a function that returns the kernelstring
+        self.KernelStringStream = None
+        # Holds a list of which loops we will unroll
+        self.UnrollLoops = list()
+        
         
         
     def initOriginal(self, ast):
@@ -134,32 +149,42 @@ class Rewriter(NodeVisitor):
         arrays = Arrays(self.index)
         arrays.visit(ast)
         self.NumDims = arrays.numSubscripts
-        self.ArrayIds = arrays.ids
+        
         self.IndexInSubscript = arrays.indexIds
         typeIds = TypeIds()
         typeIds.visit(ast)
 
+        
         ids = Ids()
         ids.visit(ast)
+
+        ## print "typeIds.ids ", typeIds.ids
+        ## print "arrays.ids ", arrays.ids
+        ## print "ids.ids ", ids.ids
         otherIds = ids.ids - arrays.ids - typeIds.ids
+        self.ArrayIds = arrays.ids - typeIds.ids
         self.NonArrayIds = otherIds
 
+        
 
 
     def initNewRepr(self, ast):
+        findIncludes = FindIncludes()
+        findIncludes.visit(ast)
+        self.Includes = findIncludes.includes
+        
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
         self.ParDim = perfectForLoop.depth
-
+        
         innerbody = perfectForLoop.inner
         firstLoop = ForLoops()
         firstLoop.visit(innerbody.compound)
         loopIndices = LoopIndices()
-        loopIndices.visit(firstLoop.ast)
-        self.Loops = loopIndices.Loops
-
-
-        self.InsideKernel = firstLoop.ast
+        if firstLoop.ast is not None:
+            loopIndices.visit(firstLoop.ast)
+            self.Loops = loopIndices.Loops        
+            self.InsideKernel = firstLoop.ast
 
 
         arrays = Arrays([])
@@ -210,6 +235,9 @@ class Rewriter(NodeVisitor):
         findDim = FindDim(self.NumDims)
         findDim.visit(ast)
         self.ArrayIdToDimName = findDim.dimNames
+
+        
+        
         self.RemovedIds = set(self.UpperLimit[i] for i in self.GridIndices)
 
         idsStillInKernel = Ids()
@@ -235,6 +263,7 @@ class Rewriter(NodeVisitor):
             type = n.type[-2:]
             self.Type[name] = type
 
+            
         for n in self.ArrayIdToDimName:
             for m in self.ArrayIdToDimName[n]:
                 self.Type[m] = ['size_t']
@@ -252,8 +281,12 @@ class Rewriter(NodeVisitor):
 
         for n in self.ReadWrite:
             pset = self.ReadWrite[n]
-            if len(pset) == 1 and 'write' in pset:
-                self.WriteOnly.append(n)
+            print pset , n
+            if len(pset) == 1:
+                if 'write' in pset:
+                    self.WriteOnly.append(n)
+                else:
+                    self.ReadOnly.append(n)
 
         argIds = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
 
@@ -269,9 +302,14 @@ class Rewriter(NodeVisitor):
 
         self.Transposition = GroupCompound([Comment('// Transposition')])
         self.ConstantMemory = GroupCompound([Comment('// Constant Memory')])
+        self.Define = GroupCompound([Comment('// Defines for the kernel')])
+
         arrays = Arrays(self.index)
         arrays.visit(ast)
         self.Subscript = arrays.Subscript
+        self.SubIdx = arrays.SubIdx
+
+         
 
     def dataStructures(self):
         print "self.index " , self.index
@@ -299,6 +337,7 @@ class Rewriter(NodeVisitor):
         print "self.Worksize " , self.Worksize
         print "self.IdxToDim " , self.IdxToDim
         print "self.WriteOnly " , self.WriteOnly
+        print "self.ReadOnly " , self.ReadOnly
         print "self.Subscript " , self.Subscript
         print "TRANSFORMATIONS"
         print "self.Transposition " , self.Transposition
@@ -368,6 +407,28 @@ class Rewriter(NodeVisitor):
         if changeAST:
             ast.ext = list()
             ast.ext.append(newast)
+
+    def Unroll(self, looplist):
+        # find loops and check that the loops given in the argument
+        # exist
+        loopIndices = LoopIndices()
+        loopIndices.visit(self.Kernel)
+        kernelLoops = loopIndices.Loops
+        for l in looplist:
+            if l not in kernelLoops:
+                print "Valid loops are %r. Your input contained %r. Aborting..." % (kernelLoops.keys(), l)
+                return
+        
+        self.UnrollLoops = looplist
+           
+        
+
+    def InSourceKernel(self, ast, filename):
+        self.rewriteToDeviceCRelease(ast)
+        ssprint = SSGenerator()
+        newast = FileAST([])
+        ssprint.createKernelStringStream(ast, newast, self.UnrollLoops,filename = filename)
+        self.KernelStringStream = newast
         
     def rewriteToDeviceCRelease(self, ast):
 
@@ -413,16 +474,265 @@ class Rewriter(NodeVisitor):
         typeid = copy.deepcopy(self.DevFuncTypeId)
         typeid.type.insert(0, '__kernel')
 
+        ext = self.Includes
+        newast = FileAST(ext)
+        
+        ext.append(FuncDecl(typeid, ArgList(arglist), self.Kernel))
+        ast.ext = list()
+        ## ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
+        ast.ext.append(newast)
+
+    def define(self, varList):
+        accname = 'str'
+        sstream = TypeId(['std::stringstream'], Id(accname))
+        stats = self.Define.statements
+        stats.append(sstream)
+
+        # add the defines to the string stream 
+        for var in varList:
+            try:
+                hstvar = self.NameSwap[var]
+            except KeyError:
+                hstvar = var
+            add = Id(accname + ' << ' + '\"' + '-D' + var+ '=\"' + \
+                     ' << ' + hstvar + ' << \" \";')
+            stats.append(add)
+
+        # Set the string to the global variable
+        lval = Id('KernelDefines')
+        stats.append(Assignment(lval, Id(accname + '.str()')))
+
+        # Need to remove the kernel corresponding kernel arguments
+        for var in varList:
+            self.KernelArgs.pop(var)
+
+    def placeInReg(self, arrDict):
+
+        stats = self.Kernel.statements
+        initstats = []
+        loadings = []
+        writes = []
+        # insert allocation
+        for i, n in enumerate(arrDict):
+            # Find loop indices in subscript
+            # Just look at only the first subscript at the moment
+            idx = arrDict[n]
+            subs = self.LoopArrays[n]
+            try:
+                sub = subs[idx[0]]
+            except IndexError:
+                print idx[0]
+                print subs
+                print "placeInReg: Wrong index... Are you using zero indexing for the beginning of the loop?"
+                return
+            
+            arrays = Arrays(self.Loops.keys())
+            arrays.visit(sub)
+            ids = set(arrays.SubIdx[n][0]) - set([None]) - set(self.GridIndices)
+            
+
+            if len(ids) > 1:
+                print "placeInReg: only supported for one loop at the moment"
+                return
+
+            # get the loop upper limit
+            loopid = iter(ids).next()
+            dim = self.UpperLimit[loopid]
+
+            # insert the allocation of the registers
+            regName = n + '_reg'
+            arrayinit = '[' + dim + ']'
+            typ = self.Type[n][0]
+            regId = Id(regName + arrayinit)
+            initstats.append(TypeId([typ],regId))
+            writes.append(ArrayRef(Id(regName), [Id(loopid)]))
+            loadings.append(Assignment(writes[i], None))
 
         
-        newast =  FuncDecl(typeid, ArgList(arglist), self.Kernel)
-        ast.ext = list()
-        ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
-        ast.ext.append(newast)
+            
+        # get the loop wherein we preload data
+        loop = copy.deepcopy(self.Loops[iter(ids).next()])
+
+        # Create the loadings
+        for i,n in enumerate(arrDict):
+            idx = arrDict[n][0]
+            sub = copy.deepcopy(self.LoopArrays[n][idx])
+            loadings[i].rval = sub
+        
+        loop.compound = Compound(loadings)
+        initstats.append(loop)
+        stats.insert(0, GroupCompound(initstats))
+
+        # Replace the global Arefs with the register Arefs
+        for i,n in enumerate(arrDict):
+            idx = arrDict[n][0]
+            aref_new = writes[i]
+            aref_old = self.LoopArrays[n][idx]
+            # Copying the internal data of the two arefs
+            aref_old.name.name = aref_new.name.name
+            aref_old.subscript = aref_new.subscript
+
+    def placeInReg2(self, arrDict):
+
+        stats = self.Kernel.statements
+        initstats = []
+        loadings = []
+        writes = []
+        # Create the loadings
+        for i,n in enumerate(arrDict):
+            for m in arrDict[n]:
+                idx = m
+                sub = copy.deepcopy(self.LoopArrays[n][idx])
+                type = self.Type[n][0]
+                regid = Id(n + str(m) + '_reg')
+                reg = TypeId([type], regid)
+                writes.append(regid)
+                assign = Assignment(reg, sub)
+                loadings.append(assign)
+        
+        comp = GroupCompound(loadings)
+        initstats.append(comp)
+        stats.insert(0, GroupCompound(initstats))
+ 
+        # Replace the global Arefs with the register Arefs
+        count = 0
+        for i,n in enumerate(arrDict):
+            for m in arrDict[n]:
+                idx = m
+                aref_new = writes[count]
+                aref_old = self.LoopArrays[n][idx]
+                # Copying the internal data of the two arefs
+                aref_old.name.name = aref_new.name
+                aref_old.subscript = []
+                count += 1
+            
+
+    def constantMemory2(self, arrDict):
+        arrNames = arrDict.keys()
+
+        # find out if we need to split into global and constant memory space
+        split = dict()
+        for name in arrNames:
+            if len(arrDict[name]) != len(self.Subscript[name]):
+                # Every aref to name is not put in constant memory
+                # so we split.
+                split[name] = True
+            else:
+                split[name] = False
+
+        # Add new constant pointer
+        ptrname = 'Constant' + ''.join(arrNames)
+        hst_ptrname = 'hst_ptr' + ptrname
+        dev_ptrname = 'dev_ptr' + ptrname
+        typeset = set()
+        for name in arrNames:
+            typeset.add(self.Type[name][0])
+        
+        if len(typeset) > 1:
+            print "Conflicting types in constant memory transformation... Aborting"
+            return
+
+        ptrtype = [typeset.pop(), '*']
+        
+        # Add the ptr to central data structures
+        self.Type[ptrname] = ptrtype
+        self.DevId[ptrname] = dev_ptrname
+        self.HstId[ptrname] = hst_ptrname
+        self.Mem[ptrname] = self.HstId[ptrname]+'_mem_size'
+
+        # Add the ptr to be a kernel argument
+        self.KernelArgs[ptrname] = ['__constant'] +  ptrtype
+        self.GlobalVars[ptrname] = ''
+        self.ConstantMem[ptrname] = arrNames
+
+        # Delete original arguments if we split
+        for n in split:
+            if not split[n]:
+                self.KernelArgs.pop(n)
+                self.DevId.pop(n)
+        # Add pointer allocation to AllocateBuffers
+        lval = Id(self.HstId[ptrname])
+        rval = Id('new ' + self.Type[ptrname][0] + '['\
+                  + self.Mem[ptrname] + ']')
+        self.ConstantMemory.statements.append(Assignment(lval, rval))
+
+        # find the loop the we need to add to the allocation section
+        # Do it by looking at the loop indices in the subscripts
+        ids = []
+        for s in arrDict:
+            # Just look at only the first subscript at the moment
+            array = arrDict[s]
+            subs = self.LoopArrays[s]
+            try:
+                sub = subs[array[0]]
+            except IndexError:
+                print array[0]
+                print subs
+                print "ConstantMemory: Wrong index... Are you using zero indexing for the beginning of the loop?"
+                return
+            
+            arrays = Arrays(self.Loops.keys())
+            arrays.visit(sub)
+            ids = set(arrays.SubIdx[s][0]) - set([None]) - set(self.GridIndices)
+            
+            break
+
+        if len(ids) > 1:
+            print "Constant memory only supported for one loop at the moment"
+            return
+
+        
+        # Add the loop to the allocation code
+        forloop = copy.deepcopy(self.Loops[iter(ids).next()])
+        newcomp = []
+        forcomp = []
+        groupComp = GroupCompound(newcomp)
+        forloop.compound = Compound(forcomp)
+        loopcount = forloop.init.lval.name.name
+        # Add the for loop from the kernel
+        newcomp.append(forloop)
+
+        # find dimension of the constant ptr
+        constantdim = sum([ (len(arrDict[m])) for m in arrDict])
+        print "constantdim " , constantdim
+
+        # add constant writes
+        writes = []
+        for i in xrange(constantdim):
+            writes.append((
+             [BinOp(BinOp(Id(str(constantdim)), '*', \
+                          Id(loopcount)), '+', Id(str(i)))]))
+
+        # for rewriting the ARefs that we copy
+        rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName, self)
+        # add global loadings
+        count = 0
+        for n in arrDict:
+            for i in arrDict[n]:
+                aref = copy.deepcopy(self.LoopArrays[n][i])
+                name = aref.name.name
+                rewriteArrayRef.visit(aref)
+                aref.name.name = self.HstId[name]
+                lval = ArrayRef(Id(self.HstId[ptrname]), writes[count])
+                assign = Assignment(lval, aref)
+                forcomp.append(assign)
+                count += 1
+
+        # Must now replace global arefs with constant arefs
+        count = 0
+        for n in arrDict:
+            for i in (arrDict[n]):
+                aref_new = writes[count]
+                aref_old = self.LoopArrays[n][i]
+                # Copying the internal data of the two arefs
+                aref_old.name.name = ptrname
+                aref_old.subscript = aref_new
+                count += 1
+
+        self.ConstantMemory.statements.append(groupComp)
 
 
     def constantMemory(self, arrNames):
-
         
         split = dict()
         for name in arrNames:
@@ -443,14 +753,12 @@ class Rewriter(NodeVisitor):
                     split[name] = True
                 else:
                     split[name] = False
-
-        print "split ", split
-
+                    
+        
         # Add new constant pointer
         ptrname = 'constant' + ''.join(arrNames)
         hst_ptrname = 'hst_ptr_' + ptrname
         dev_ptrname = 'dev_ptr_' + ptrname
-        print ptrname
         typeset = set()
         for name in arrNames:
             typeset.add(self.Type[name][0])
@@ -538,9 +846,11 @@ class Rewriter(NodeVisitor):
         # that means they are inside a loop, and their subscript contains
         # a loop index
         local = dict()
+        localsubdict = dict()
         for name in arrNames:
             count = 0
-            for sub in self.Subscript[name]:
+            localsub = []
+            for k, sub in enumerate(self.Subscript[name]):
                 localDim[name] = 0
                 for s in sub:
                     ids = LoopIds(self.Loops.keys())
@@ -552,6 +862,7 @@ class Rewriter(NodeVisitor):
                     loopindex = None
                     if len(iset) == 1:
                         
+                        localsub.append(self.LoopArrays[name][k])
                         if name in local:
                             local[name].append(sub)
                         else:
@@ -565,7 +876,6 @@ class Rewriter(NodeVisitor):
                             loopext[loopindex] = [(name, count)]
                             localIdx[name] = [loopindex]
                             count += 1
-                                                    
                     ids = LoopIds(self.GridIndices)
                     ids.visit(s)
                     gset = ids.ids
@@ -581,7 +891,9 @@ class Rewriter(NodeVisitor):
                             localIdx[name].append(loopindex)
                         else:
                             localIdx[name] = [loopindex]
-                    
+            localsubdict[name] = localsub
+        print "localsubdict " , localsubdict
+
                         
         # Print built structures
         print "localIdx ", localIdx
@@ -596,9 +908,33 @@ class Rewriter(NodeVisitor):
 
         print "loopext ", loopext
 
-        
         print "local ", local
 
+        # find indices in local subscripts
+        loopIds = LoopIds(self.index)
+        subIdx = dict()
+        for name in local:
+            subIdx[name] = []
+            subs = local[name]
+            for s in subs:
+                IdxList = []
+                for i in s:
+                    loopIds.visit(i)
+                    if len(loopIds.ids) > 1:
+                        print "More than one idx in a subscript"
+                    if loopIds.ids:
+                        IdxList.extend(loopIds.ids)
+                    else:
+                        IdxList.append(None)
+                    loopIds.reset()
+                subIdx[name].append(IdxList)
+
+        print "subIdx ", subIdx
+            
+        
+        initstats = []
+        initComp = GroupCompound(initstats)
+        self.Kernel.statements.insert(0, initComp)
         # do the extending
         for n in loopext:
             outerloop = self.Loops[n]
@@ -631,20 +967,66 @@ class Rewriter(NodeVisitor):
                     getlocals.add((self.IdxToDim[l], localOffset[l]))
 
             # Now add loadings
-            for n, offset in getlocals:
-                lval = TypeId(['unsigned'], Id(self.IndexToLocalVar[n]))
-                idloc = Id(self.IndexToLocalId[n])
+            for m, offset in getlocals:
+                lval = TypeId(['unsigned'], Id(self.IndexToLocalVar[m]))
+                idloc = Id(self.IndexToLocalId[m])
                 if offset != 0:
                     rval = BinOp(idloc, '+', Constant(offset))
                 else:
                     rval = idloc
-                loadstats.append(Assignment(lval, rval))
+                initstats.append(Assignment(lval, rval))
                 
             
-            loc_load = loopext
+
+            # Add array allocations
+            for m in local:
+                dim = len(local[m])
+                localName = m + '_local'
+                arrayinit = '['
+                arrayinit += str(dim)
+                arrayinit += '*' + self.Local['size'] + ']'
+
+                localId = Id(localName + arrayinit)
+                localTypeId = TypeId(['__local'] + [self.Type[m][0]], localId)
+                initstats.append(localTypeId)
+                
+                
+            loc_load = loopext[n]
+            # Add the loadings
+            # we only change array names and rewrite indices
+            for m,i in loc_load:
+                loc_subs = copy.deepcopy(local[m][i])
+                loc_name = m+'_local'
+                
+                loc_ref = ArrayRef(Id(loc_name), loc_subs)
+                if localDim[m] == 1:
+                    exchangeId = ExchangeId({n : 'get_local_id(0)'})
+                exchangeId.visit(loc_ref)
+                                        
+                self.ArrayIdToDimName[loc_name] = self.Local['size']
+                self.NumDims[loc_name] = self.NumDims[m]
+
+                glo_subs = copy.deepcopy(local[m][i])
+                glo_ref = ArrayRef(Id(m), glo_subs)
+                exchangeId = ExchangeId({n : n*2})
+                for ss  in local[m][i]:
+                    exchangeId.visit(ss)
+
+                if localDim[m] == 1:
+                    exchangeId = ExchangeId({n : n + ' + get_local_id(0)'})
+                exchangeId.visit(glo_ref)
+
+                loadstats.append(Assignment(loc_ref, glo_ref))
+
+                exchangeId = ExchangeId({m : loc_name})
+                for ss  in localsubdict[m]:
+                    exchangeId.visit(ss)
+
             
-            
-            
+            exchangeId = ExchangeId({n : n + ' + ' + n*2})
+            exchangeId.visit(innerloop.compound)
+
+                
 
         print getlocals
         ## local[arrNames[0]][0][1].name = 'lll'
@@ -755,7 +1137,6 @@ class Rewriter(NodeVisitor):
                 lsub = copy.deepcopy(subscript)
                 lval = ArrayRef(Id(self.LocalSwap[arrName]), lsub)
                 rsub = copy.deepcopy(subscript)
-                print "lsub ", lsub
                 rval = ArrayRef(arrayId, rsub, extra = {'localMemory' : True})
                 load = Assignment(lval,rval)
                 exchangeId = ExchangeId(self.IndexToLocalVar)
@@ -794,10 +1175,13 @@ class Rewriter(NodeVisitor):
         func.arglist = arglist
         stats2.append(func)
 
+        
+        
         exchangeIndices.visit(InitComp)
         exchangeIndices.visit(LoadComp)
         if isInsideLoop:
             forLoopAst.compound.statements.insert(0,LoadComp)
+            forLoopAst.compound.statements.append(func)
         else:
             self.Kernel.statements.insert(0, LoadComp)
         self.Kernel.statements.insert(0, InitComp)
@@ -927,6 +1311,13 @@ class Rewriter(NodeVisitor):
         rval = Constant(1)
         fileAST.ext.append(Assignment(lval,rval))
 
+        lval = TypeId(['std::string'], Id('KernelDefines'))
+        rval = Constant('""')
+        fileAST.ext.append(Assignment(lval,rval))
+
+        if self.KernelStringStream is not None:
+            fileAST.ext.append(self.KernelStringStream)
+        
         allocateBuffer = EmptyFuncDecl('AllocateBuffers')
         fileAST.ext.append(allocateBuffer)
 
@@ -958,6 +1349,9 @@ class Rewriter(NodeVisitor):
         allocateBuffer.compound.statements.append(\
             self.ConstantMemory)
         
+        allocateBuffer.compound.statements.append(\
+            self.Define)
+        
         ErrName = 'oclErrNum'
         lval = TypeId(['cl_int'], Id(ErrName))
         rval = Id('CL_SUCCESS')
@@ -976,9 +1370,13 @@ class Rewriter(NodeVisitor):
             if n in self.WriteOnly:
                 flag = Id('CL_MEM_WRITE_ONLY')
                 arraynId = Id('NULL')
+            elif n in self.ReadOnly:
+                flag = Id('CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY')
+                arraynId = Id(arrayn)
             else:
                 flag = Id('CL_MEM_USE_HOST_PTR')
                 arraynId = Id(arrayn)
+
             arglist = ArgList([Id('context'),\
                                flag,\
                                Id(dictNToSize[n]),\
@@ -1116,7 +1514,8 @@ class Rewriter(NodeVisitor):
         fileAST.ext.append(runOCL)
         runOCLBody = runOCL.compound.statements
 
-        argIds = self.NonArrayIds.union(self.ArrayIds)
+        argIds = self.NonArrayIds.union(self.ArrayIds) #
+
         typeIdList = []
         ifThenList = []
         for n in argIds:
@@ -1143,14 +1542,20 @@ class Rewriter(NodeVisitor):
         
         arglist = ArgList(typeIdList)
         runOCL.arglist = arglist
-
+        
         arglist = ArgList([])
         ifThenList.append(FuncDecl(Id('StartUpGPU'), arglist, Compound([])))
         ifThenList.append(FuncDecl(Id('AllocateBuffers'), arglist, Compound([])))
+        useFile = 'true'
+        if self.KernelStringStream is not None:
+            useFile = 'false'
+            
         arglist = ArgList([Constant(self.DevFuncId),
                            Constant(self.DevFuncId+'.cl'),
+                           Id('KernelString()'),
+                           Id(useFile),
                            Id('&' + self.KernelName),
-                           Constant('')])
+                           Id('KernelDefines')])
         ifThenList.append(FuncDecl(Id('compileKernelFromFile'), arglist, Compound([])))
 
         ifThenList.append(FuncDecl(Id('SetArguments'+self.DevFuncId), ArgList([]), Compound([])))

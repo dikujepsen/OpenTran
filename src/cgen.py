@@ -1,6 +1,8 @@
 import os
 from lan_ast import *
 
+debug = False
+
 class CGenerator(object):
     """ Uses the same visitor pattern as the NodeVisitor, but modified to
         return a value from each visit method, using string accumulation in 
@@ -8,6 +10,10 @@ class CGenerator(object):
     """
     def __init__(self):
         self.output = ''
+        self.quotes = '\"'
+        self.newline = '\n'
+        self.semi = ';'
+        self.start = ''
         
         # Statements start with indentation of self.indent_level spaces, using
         # the _make_indent method
@@ -62,12 +68,17 @@ class CGenerator(object):
                            else self.visit(c) for c in node.children())
     
     def visit_FileAST(self, n):
+        newline = self.newline
+        start = self.start
+        if debug:
+            newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ + start
         s = ''
         for ext in n.ext:
             if isinstance(ext, Compound):
                 s += self.visit_GlobalCompound(ext)
             else:
-                s += self.visit(ext) + '\n'
+                s += start + self.visit(ext) + newline
         return s
 
     
@@ -75,18 +86,27 @@ class CGenerator(object):
         s =  ''
         for stat in n.statements:
            s += self.visit(stat)
-        s += '\n'
+        s += n.__class__.__name__ + self.newline
         return s
 
 
     def visit_GroupCompound(self, n):
+        newline = self.newline
+        start = self.start
+        if debug:
+            newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ + start
         s =  ''
-        for stat in n.statements:
-           s += self.visit(stat) + '\n' + self._make_indent() 
+        for i,stat in enumerate(n.statements):
+            start1 = ''
+            if i != 0:
+                start1 = start
+            s += start1 + self.visit(stat) + newline + self._make_indent()
+        s += start
         return s
 
     def visit_Comment(self, n):
-        return n.value + '\n'
+        return n.value 
 
     def visit_Increment(self, n):
         s = self.visit(n.name)
@@ -101,7 +121,17 @@ class CGenerator(object):
         s1 = ' '.join(n.type)
         s1 += ' ' + s
         if not self.inside_ArgList:
-            s1 += ';'
+            s1 += self.semi
+        return s1
+
+    def visit_ArrayTypeId(self, n):
+        s = self.visit(n.name)
+        s1 = ' '.join(n.type)
+        s1 += ' ' + s
+        for arg in n.subscript:
+            s1 += '[' + self.visit(arg) + ']'
+        if not self.inside_ArgList:
+            s1 += self.semi
         return s1
 
     def visit_Assignment(self, n):
@@ -111,7 +141,7 @@ class CGenerator(object):
         self.inside_Assignment = True
         rval = self.visit(n.rval)
         self.inside_Assignment = False
-        return lval + ' ' + n.op + ' ' + rval + ';'
+        return lval + ' ' + n.op + ' ' + rval + self.semi
 
     def visit_ArrayInit(self, n):
         s = '{'
@@ -122,15 +152,27 @@ class CGenerator(object):
         return s
 
     def visit_Compound(self, n):
-        s = '\n' + self._make_indent() + '{\n'
+        start = self.start
+        newline = self.newline
+        if debug:
+            newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ +  start
+            
+        s = start + self._make_indent() + '{' + newline
         self.indent_level += 2
         for stat in n.statements:
-            s += self._make_indent() + self.visit(stat) + '\n'
+            s += start + self._make_indent() + self.visit(stat) + newline 
         self.indent_level -= 2
-        s += self._make_indent() + '}'
+        s += start + self._make_indent() + '}'  
         return s
 
     def visit_ArgList(self, n):
+        newline = self.newline
+        start = self.start
+        if debug:
+            newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ +  start
+
         s = '('
         count = 1
         if len(n.arglist) == 1:
@@ -138,15 +180,17 @@ class CGenerator(object):
             
         for arg in n.arglist:
             if count == 1:
-                s += '\n\t'
-            s += self.visit(arg) + ', '
+                s += newline + '\t' + start
+            s += self.visit(arg)
+            if count != (len(n.arglist)):
+                s += ', '
             if count % 3 == 0:
-                s += '\n\t'
+                s += newline + '\t' + start
             count += 1
-        if n.arglist:
-            s = s[:-2]
-        if (count-1) % 3 == 0 and count != 1:
-            s = s[:-2]
+        ## if n.arglist:
+        ##     s = s[:-2]
+        ## if (count-1) % 3 == 0 and count != 1:
+        ##     s = s[:-2]
         return s + ')'
 
     def visit_ArrayRef(self, n):
@@ -161,41 +205,62 @@ class CGenerator(object):
         return lval + ' ' + n.op + ' ' + rval
 
     def visit_FuncDecl(self, n):
+        newline = self.newline
+        if debug:
+            newline = n.__class__.__name__ +  newline
+            
         self.inside_ArgList = True
-        typeid = self.visit(n.typeid) 
-        arglist = self.visit(n.arglist) 
+        typeid = self.visit(n.typeid)
+        
+        arglist = self.visit(n.arglist)
+
         self.inside_ArgList = False
         if self.inside_Assignment:
             compound = ''
             end = ''
         elif n.compound.statements:
-            typeid = '\n' + typeid
-            compound = self.visit(n.compound)
+            typeid = self.start + typeid
+            arglist += newline
+            compound = self.visit(n.compound) + newline
         else:
-            compound = ';'
-        
+            compound = self.semi
         return typeid + arglist + compound
 
     def visit_ForLoop(self, n):
+        newline = self.newline
+        if debug:
+            newline = n.__class__.__name__ +  newline
+
         init = self.visit(n.init) # already has a semi at the end
         cond = self.visit(n.cond)
         inc = self.visit(n.inc)
         self.indent_level += 2
         compound = self.visit(n.compound)
         self.indent_level -= 2
-        return 'for (' + init + ' ' + cond + '; ' + inc + ')' + compound
+        return 'for (' + init + ' ' + cond + self.semi + ' ' + inc + ')'\
+          + newline + compound
 
     def visit_IfThen(self, n):
+        newline = self.newline
+        start = self.start
+        if debug:
+            newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ + start
+
         cond = self.visit(n.cond)
         self.indent_level += 2
         compound = self.visit(n.compound)
         self.indent_level -= 2
-        return 'if (' + cond + ')' + compound
+        return 'if (' + cond + ')' + newline + compound
 
         
     def visit_Id(self, n):
         return n.name
-        
+
+    def visit_Include(self, n):
+        return "#include " + n.name
+ 
+    
     def visit_Constant(self, n):
         try:
             s = float(n.value)
@@ -203,9 +268,12 @@ class CGenerator(object):
             if len(n.value) == 0:
                 return '\"\"'
             if n.value[0] == '"':
+                ## if self.extraquotes and False:
+                ##     return self.quotes + n.value[1:-1] + self.quotes
+                
                 return n.value
             else:
-                return '\"' + n.value + '\"'
+                return self.quotes + n.value + self.quotes
         else:
             return str(n.value)
         
