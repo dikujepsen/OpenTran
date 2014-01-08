@@ -573,8 +573,8 @@ def knearest():
         ## print printres
         rw = Rewriter()
         rw.initOriginal(ast)
-        ## rw.rewrite(ast, funcname, changeAST = True)
-        ## cprint.createTemp(ast, filename = 'tempknearest.cpp')
+        # rw.rewrite(ast, funcname, changeAST = True)
+        # cprint.createTemp(ast, filename = 'tempknearest.cpp')
 
         run = 0
         filename = '../src/tempknearest.cpp'
@@ -612,5 +612,5 @@ if __name__ == "__main__":
     ## jacobi()
     ## matmul()
     ## nbody()
-    nbody2()
-    ## knearest()
+    ## nbody2()
+    knearest()
