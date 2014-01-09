@@ -1,14 +1,5 @@
 
-
-LNK_LIB = -lOpenCL
-
-CC = g++
-
-OPTS = -O3 -Wall
-
-Jacobi: Jacobi.cpp 
-	$(CC) $(OPTS) $@.cpp -o $@ $(LNK_LIB)
+EXEC = Jacobi.exe
 
 
-clean: 
-	rm -f *~ *.o Jacobi
+include ../common.mk
