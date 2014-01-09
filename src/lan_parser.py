@@ -617,7 +617,7 @@ def knearest():
         
         
         rw.dataStructures()
-        rw.Unroll(['k', 'kk'])
+        rw.Unroll(['kk'])
         
         rw.InSourceKernel(tempast2, filename = fileprefix + 'KNearest/'+funcname + '.cl')
         ## rw.rewriteToDeviceCRelease(tempast2)

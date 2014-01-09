@@ -24,7 +24,7 @@ class Rewriter(NodeVisitor):
         # The local work group size
         self.Local = dict()
         self.Local['name'] = 'LSIZE'
-        self.Local['size'] = '8'
+        self.Local['size'] = '16'
         # The number of dimensions of each array 
         self.NumDims = dict()
         # The Ids of arrays, or pointers
