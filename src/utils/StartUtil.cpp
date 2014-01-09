@@ -17,6 +17,8 @@ cl_device_id *device_ids;
 cl_context context;
 cl_command_queue command_queue;
 
+#include "Stopwatch.cpp"
+
 char * ReadSources(const char *fileName) {
 
   FILE *file = fopen(fileName, "rb");
@@ -79,14 +81,14 @@ void oclCheckErr(cl_int err, const char * function) {
 
 
 void StartUpGPU() {
-  std::cout << "StartUpGPU" << std::endl;
+  // std::cout << "StartUpGPU" << std::endl;
   cl_int err = CL_SUCCESS;
   err |= clGetPlatformIDs(0, NULL, &num_platforms);
   oclCheckErr(err, "clGetPlatformIDs1");
   
   platform_ids = new cl_platform_id[num_platforms];
   // get available platforms
-  std::cout << "numPLAT: " << num_platforms << std::endl;
+  // std::cout << "numPLAT: " << num_platforms << std::endl;
   err |= clGetPlatformIDs(num_platforms, platform_ids, NULL);
   oclCheckErr(err, "clGetPlatformIDs2");
 
@@ -95,12 +97,20 @@ void StartUpGPU() {
   oclCheckErr(err, "clGetDeviceIDs1");
   
   num_devices = std::min<unsigned>(num_devices, NUMDEVS);
-  std::cout << "numDEV: " << num_devices << std::endl;
-      
+  std::cout << "$numDEV " << num_devices << std::endl;
+
   device_ids = new cl_device_id[num_devices];
   
   err |= clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, num_devices, device_ids, NULL);
   oclCheckErr(err, "clGetDeviceIDs2");
+  size_t len;
+  for(size_t i = 0; i < num_devices; i++)  {
+    clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, 0, NULL, &len);
+    char * buff = new char[len];
+    clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, sizeof(char)*len, buff, NULL);
+    cout << "$Devicename " << buff << endl;
+    
+  }
 
   context = clCreateContext(0, num_devices, device_ids, NULL, NULL, &err);
   oclCheckErr(err, "clCreateContext");

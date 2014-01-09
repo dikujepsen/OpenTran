@@ -1,7 +1,7 @@
-#include "StartUtil.cpp"
+#include "../../../src/utils/StartUtil.cpp"
 using namespace std;
-#define LSIZE 8
-cl_kernel NBody2ForKernel;
+#define LSIZE 64
+cl_kernel NBodyForKernel;
 cl_mem dev_ptrMas;
 cl_mem dev_ptrPos;
 cl_mem dev_ptrForces;
@@ -26,29 +26,29 @@ size_t hst_ptrForces_dim2;
 
 size_t isFirstTime = 1;
 std::string KernelDefines = "";
+Stopwatch timer;
+
 std::string KernelString()
 {
   std::stringstream str;
-  str << "__kernel void NBody2For(" << endl;
+  str << "__kernel void NBodyFor(" << endl;
   str << "	unsigned hst_ptrForces_dim1, __global float * Mas, __global float * Pos, " << endl;
   str << "	unsigned N, __constant float * ConstantMasPos, __global float * Forces, " << endl;
   str << "	unsigned hst_ptrPos_dim1) {" << endl;
-  str << "  float Mas0_reg = Mas[get_global_id(0)];" << endl;
-  str << "  float Pos0_reg = Pos[(0 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
-  str << "  float Pos1_reg = Pos[(1 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
-  str << "" << endl;
-  str << "" << endl;
+  str << "  float a_x = Pos[(0 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
+  str << "  float a_y = Pos[(1 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
+  str << "  float a_m = Mas[get_global_id(0)];" << endl;
   str << "  float f_x = 0;" << endl;
   str << "  float f_y = 0;" << endl;
   str << "  for (unsigned j = 0; j < N; j++) {" << endl;
-  str << "      float b_m = Mas0_reg * ConstantMasPos[(3 * j) + 0];" << endl;
-  str << "      float a_x = Pos0_reg;" << endl;
-  str << "      float a_y = Pos1_reg;" << endl;
-  str << "      float r_x = ConstantMasPos[(3 * j) + 1] - a_x;" << endl;
-  str << "      float r_y = ConstantMasPos[(3 * j) + 2] - a_y;" << endl;
+  str << "      float b_x = ConstantMasPos[(3 * (j & 255)) + 1];" << endl;
+  str << "      float b_y = ConstantMasPos[(3 * (j & 255)) + 2];" << endl;
+  str << "      float b_m = ConstantMasPos[(3 * (j & 255)) + 0];" << endl;
+  str << "      float r_x = b_x - a_x;" << endl;
+  str << "      float r_y = b_y - a_y;" << endl;
   str << "      float d = (r_x * r_x) + (r_y * r_y);" << endl;
   str << "      float deno = (sqrt((d * d) * d)) + (get_global_id(0) == j);" << endl;
-  str << "      deno = (b_m / deno) * (get_global_id(0) != j);" << endl;
+  str << "      deno = ((a_m * b_m) / deno) * (get_global_id(0) != j);" << endl;
   str << "      f_x += deno * r_x;" << endl;
   str << "      f_y += deno * r_y;" << endl;
   str << "  }" << endl;
@@ -89,7 +89,7 @@ void AllocateBuffers()
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrMas");
   dev_ptrConstantMasPos = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR, hst_ptrConstantMasPos_mem_size, 
+	context, CL_MEM_USE_HOST_PTR, 16834, 
 	hst_ptrConstantMasPos, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrConstantMasPos");
@@ -105,45 +105,45 @@ void AllocateBuffers()
 	oclErrNum, "clCreateBuffer dev_ptrForces");
 }
 
-void SetArgumentsNBody2For()
+void SetArgumentsNBodyFor()
 {
   cl_int oclErrNum = CL_SUCCESS;
   int counter = 0;
   oclErrNum |= clSetKernelArg(
-	NBody2ForKernel, counter++, sizeof(unsigned), 
+	NBodyForKernel, counter++, sizeof(unsigned), 
 	(void *) &hst_ptrForces_dim1);
   oclErrNum |= clSetKernelArg(
-	NBody2ForKernel, counter++, sizeof(cl_mem), 
+	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrMas);
   oclErrNum |= clSetKernelArg(
-	NBody2ForKernel, counter++, sizeof(cl_mem), 
+	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrPos);
   oclErrNum |= clSetKernelArg(
-	NBody2ForKernel, counter++, sizeof(unsigned), 
+	NBodyForKernel, counter++, sizeof(unsigned), 
 	(void *) &N);
   oclErrNum |= clSetKernelArg(
-	NBody2ForKernel, counter++, sizeof(cl_mem), 
+	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrConstantMasPos);
   oclErrNum |= clSetKernelArg(
-	NBody2ForKernel, counter++, sizeof(cl_mem), 
+	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrForces);
   oclErrNum |= clSetKernelArg(
-	NBody2ForKernel, counter++, sizeof(unsigned), 
+	NBodyForKernel, counter++, sizeof(unsigned), 
 	(void *) &hst_ptrPos_dim1);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }
 
-void ExecNBody2For()
+void ExecNBodyFor()
 {
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
-  size_t NBody2For_global_worksize[] = {N - 0};
-  size_t NBody2For_local_worksize[] = {LSIZE};
-  size_t NBody2For_global_offset[] = {0};
+  size_t NBodyFor_global_worksize[] = {N - 0};
+  size_t NBodyFor_local_worksize[] = {LSIZE};
+  size_t NBodyFor_global_offset[] = {0};
   oclErrNum = clEnqueueNDRangeKernel(
-	command_queue, NBody2ForKernel, 1, 
-	NBody2For_global_offset, NBody2For_global_worksize, NBody2For_local_worksize, 
+	command_queue, NBodyForKernel, 1, 
+	NBodyFor_global_offset, NBodyFor_global_worksize, NBodyFor_local_worksize, 
 	0, NULL, &GPUExecution
 	);
   oclCheckErr(
@@ -160,7 +160,7 @@ void ExecNBody2For()
 	oclErrNum, "clFinish");
 }
 
-void RunOCLNBody2ForKernel(
+void RunOCLNBodyForKernel(
 	float * arg_Mas, size_t arg_hst_ptrMas_dim1, float * arg_Pos, 
 	size_t arg_hst_ptrPos_dim1, size_t arg_hst_ptrPos_dim2, float * arg_Forces, 
 	size_t arg_hst_ptrForces_dim1, size_t arg_hst_ptrForces_dim2, size_t arg_N
@@ -180,11 +180,13 @@ void RunOCLNBody2ForKernel(
       StartUpGPU();
       AllocateBuffers();
       compileKernelFromFile(
-	"NBody2For", "NBody2For.cl", KernelString(), 
-	false, &NBody2ForKernel, KernelDefines
+	"NBodyFor", "NBodyFor.cl", KernelString(), 
+	false, &NBodyForKernel, KernelDefines
 	);
-      SetArgumentsNBody2For();
+      SetArgumentsNBodyFor();
     }
-  ExecNBody2For();
+  timer.start();
+  ExecNBodyFor();
+  cout << timer.stop() << endl;
 }
 

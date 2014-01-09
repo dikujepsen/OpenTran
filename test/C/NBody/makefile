@@ -1,6 +1,6 @@
 
 
-LNK_LIB = -lOpenCL
+LNK_LIB = -lOpenCL -lrt
 
 CC = g++
 
