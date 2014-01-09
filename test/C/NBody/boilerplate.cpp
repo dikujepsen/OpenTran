@@ -5,16 +5,13 @@ cl_kernel NBodyForKernel;
 cl_mem dev_ptrMas;
 cl_mem dev_ptrPos;
 cl_mem dev_ptrForces;
-cl_mem dev_ptrConstantMasPos;
 
 float * hst_ptrMas;
 float * hst_ptrPos;
 float * hst_ptrForces;
 size_t N;
-float * hst_ptrConstantMasPos;
 
 size_t hst_ptrMas_mem_size;
-size_t hst_ptrConstantMasPos_mem_size;
 size_t hst_ptrPos_mem_size;
 size_t hst_ptrForces_mem_size;
 
@@ -33,17 +30,17 @@ std::string KernelString()
   std::stringstream str;
   str << "__kernel void NBodyFor(" << endl;
   str << "	unsigned hst_ptrForces_dim1, __global float * Mas, __global float * Pos, " << endl;
-  str << "	unsigned N, __constant float * ConstantMasPos, __global float * Forces, " << endl;
-  str << "	unsigned hst_ptrPos_dim1) {" << endl;
+  str << "	unsigned N, __global float * Forces, unsigned hst_ptrPos_dim1" << endl;
+  str << "	) {" << endl;
   str << "  float a_x = Pos[(0 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
   str << "  float a_y = Pos[(1 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
   str << "  float a_m = Mas[get_global_id(0)];" << endl;
   str << "  float f_x = 0;" << endl;
   str << "  float f_y = 0;" << endl;
   str << "  for (unsigned j = 0; j < N; j++) {" << endl;
-  str << "      float b_x = ConstantMasPos[(3 * (j & 255)) + 1];" << endl;
-  str << "      float b_y = ConstantMasPos[(3 * (j & 255)) + 2];" << endl;
-  str << "      float b_m = ConstantMasPos[(3 * (j & 255)) + 0];" << endl;
+  str << "      float b_x = Pos[(0 * hst_ptrPos_dim1) + j];" << endl;
+  str << "      float b_y = Pos[(1 * hst_ptrPos_dim1) + j];" << endl;
+  str << "      float b_m = Mas[j];" << endl;
   str << "      float r_x = b_x - a_x;" << endl;
   str << "      float r_y = b_y - a_y;" << endl;
   str << "      float d = (r_x * r_x) + (r_y * r_y);" << endl;
@@ -65,19 +62,10 @@ void AllocateBuffers()
   hst_ptrMas_mem_size = hst_ptrMas_dim1 * sizeof(float);
   hst_ptrPos_mem_size = hst_ptrPos_dim2 * (hst_ptrPos_dim1 * sizeof(float));
   hst_ptrForces_mem_size = hst_ptrForces_dim2 * (hst_ptrForces_dim1 * sizeof(float));
-  hst_ptrConstantMasPos_mem_size = hst_ptrMas_mem_size + hst_ptrPos_mem_size;
   
   // Transposition
   
   // Constant Memory
-  hst_ptrConstantMasPos = new float[hst_ptrConstantMasPos_mem_size];
-  for (unsigned j = 0; j < N; j++)
-    {
-      hst_ptrConstantMasPos[(3 * j) + 0] = hst_ptrMas[j];
-      hst_ptrConstantMasPos[(3 * j) + 1] = hst_ptrPos[(0 * hst_ptrPos_dim1) + j];
-      hst_ptrConstantMasPos[(3 * j) + 2] = hst_ptrPos[(1 * hst_ptrPos_dim1) + j];
-    }
-  
   
   // Defines for the kernel
   
@@ -88,11 +76,6 @@ void AllocateBuffers()
 	hst_ptrMas, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrMas");
-  dev_ptrConstantMasPos = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR, 16834, 
-	hst_ptrConstantMasPos, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrConstantMasPos");
   dev_ptrPos = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrPos_mem_size, 
 	hst_ptrPos, &oclErrNum);
@@ -121,9 +104,6 @@ void SetArgumentsNBodyFor()
   oclErrNum |= clSetKernelArg(
 	NBodyForKernel, counter++, sizeof(unsigned), 
 	(void *) &N);
-  oclErrNum |= clSetKernelArg(
-	NBodyForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrConstantMasPos);
   oclErrNum |= clSetKernelArg(
 	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrForces);
