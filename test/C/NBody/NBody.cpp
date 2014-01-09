@@ -2,8 +2,7 @@
 #include <cstdio>
 #include <iostream>
 #include <cmath>
-// #include "../../src/ctemp.cpp"
-#include "../../src/boilerplate.cpp"
+#include "boilerplate.cpp"
 
 
 using namespace std;
@@ -25,7 +24,7 @@ createPosses(float* M, unsigned wM, unsigned hM)
 {
   for (unsigned i = 0; i < hM; i++) {
     for (unsigned j = 0; j < wM; j++) {
-      M[i * wM + j] = ((rand() % 100) / 100.0) * 100.0;
+      M[i * wM + j] = ((rand() % 100000) / 100000.0) * 100000.0;
     }
   }
 
@@ -144,7 +143,7 @@ void computeForces(float * Forces, float * Pos, float * Mas, unsigned N) {
 }
 
 
-#define matsize 8
+#define matsize 262144
 
 int main(int argc, char** argv)
 {
@@ -171,8 +170,8 @@ int main(int argc, char** argv)
   createPosses(Pos, wPos, hPos);
   createVelles(Vel, wVel, hVel);
 
-  computeForces(Forces, Pos, M_mat, N);
-  float dt = 0.015;
+  // computeForces(Forces, Pos, M_mat, N);
+  // float dt = 0.015;
   
 
 #define GPU 1
@@ -184,15 +183,16 @@ int main(int argc, char** argv)
 		       N);
   
 #else
-  for (unsigned i = 0; i < 1; i++) {
-    VelStorVer(Forces, Pos, Vel,
-	       M_mat, dt, N);
-  }
+  computeForces(Forces, Pos, M_mat, N);
+  // for (unsigned i = 0; i < 1; i++) {
+  //   VelStorVer(Forces, Pos, Vel,
+  // 	       M_mat, dt, N);
+  // }
 #endif
-  printMat2(M_mat, wM, hM);
-  printMat2(Pos   , wPos, hPos);
-  printMat2(Vel   , wVel, hVel);
-  printMat2(Forces, wVel, hVel);
+  // printMat2(M_mat, wM, hM);
+  // printMat2(Pos   , wPos, hPos);
+  // printMat2(Vel   , wVel, hVel);
+  // printMat2(Forces, wVel, hVel);
 
   free(Pos);
   free(M_mat);

@@ -425,7 +425,7 @@ def nbody():
 
     run = 1
     while run:
-        filename = '../test/NBody/NBodyFor.cpp'
+        filename = fileprefix + 'NBody/NBodyFor.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -451,11 +451,12 @@ def nbody():
         ## print printres
         rw = Rewriter()
         rw.initOriginal(ast)
+        tempfilename = fileprefix + 'NBody/tempnbody.cpp'
         ## rw.rewrite(ast, funcname, changeAST = True)
-        ## cprint.createTemp(ast, filename = 'tempnbody.cpp')
+        ## cprint.createTemp(ast, filename = tempfilename)
 
         run = 0
-        filename = '../src/tempnbody.cpp'
+        filename = tempfilename
         try:
             f = open(filename, 'r')
             s = f.read()
@@ -469,17 +470,18 @@ def nbody():
         tempast2 = copy.deepcopy(ast)
         rw.initNewRepr(tempast)
 
-        rw.rewriteToSequentialC(ast)
-        cprint.createTemp(ast, filename = 'ctemp.cpp')
+        ## rw.rewriteToSequentialC(ast)
+        ## cprint.createTemp(ast, filename = 'ctemp.cpp')
         ## rw.rewriteToDeviceCTemp(tempast, False)
         ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
         rw.dataStructures()
         rw.constantMemory2({'Pos' : [0,1], 'Mas' : [0]})
-        rw.rewriteToDeviceCRelease(tempast2)
-        cprint.createTemp(tempast2, filename = '../test/NBody/'+funcname + '.cl')
+        rw.InSourceKernel(tempast2, filename = fileprefix + 'NBody/'+funcname + '.cl')
+        ## rw.rewriteToDeviceCRelease(tempast2)
+        ## cprint.createTemp(tempast2, filename = fileprefix + 'NBody/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
-        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+        cprint.createTemp(boilerast, filename = fileprefix + 'NBody/'+'boilerplate.cpp')
 
 def nbody2():
     import ply.yacc as yacc
@@ -761,8 +763,8 @@ def gaussian():
 if __name__ == "__main__":
     ## jacobi()
     ## matmul()
-    ## nbody()
+    nbody()
     ## nbody2()
-    knearest()
+    ## knearest()
     ## knearest2()
     ## gaussian()

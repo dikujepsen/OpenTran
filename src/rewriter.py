@@ -24,7 +24,7 @@ class Rewriter(NodeVisitor):
         # The local work group size
         self.Local = dict()
         self.Local['name'] = 'LSIZE'
-        self.Local['size'] = '16'
+        self.Local['size'] = '64'
         # The number of dimensions of each array 
         self.NumDims = dict()
         # The Ids of arrays, or pointers
@@ -176,6 +176,11 @@ class Rewriter(NodeVisitor):
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
         self.ParDim = perfectForLoop.depth
+
+        if self.ParDim == 1:
+            self.Local['size'] = '64'
+        else:
+            self.Local['size'] = '8'
         
         innerbody = perfectForLoop.inner
         firstLoop = ForLoops()
@@ -1239,7 +1244,7 @@ class Rewriter(NodeVisitor):
 
         fileAST = FileAST([])
 
-        fileAST.ext.append(Id('#include \"StartUtil.cpp\"'))
+        fileAST.ext.append(Id('#include \"../../../src/utils/StartUtil.cpp\"'))
         fileAST.ext.append(Id('using namespace std;'))
         fileAST.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
 
@@ -1307,13 +1312,20 @@ class Rewriter(NodeVisitor):
                 
         fileAST.ext.append(GroupCompound(listMemSize))
         fileAST.ext.append(GroupCompound(listDimSize))
+        misc = []
         lval = TypeId(['size_t'], Id('isFirstTime'))
         rval = Constant(1)
-        fileAST.ext.append(Assignment(lval,rval))
+        misc.append(Assignment(lval,rval))
 
         lval = TypeId(['std::string'], Id('KernelDefines'))
         rval = Constant('""')
-        fileAST.ext.append(Assignment(lval,rval))
+        misc.append(Assignment(lval,rval))
+
+        lval = TypeId(['Stopwatch'], Id('timer'))
+        misc.append(lval)
+        
+        
+        fileAST.ext.append(GroupCompound(misc))
 
         if self.KernelStringStream is not None:
             fileAST.ext.append(self.KernelStringStream)
@@ -1562,7 +1574,11 @@ class Rewriter(NodeVisitor):
 
         runOCLBody.append(IfThen(Id('isFirstTime'), Compound(ifThenList)))
         arglist = ArgList([])
+
+        # Insert timing
+        runOCLBody.append(Id('timer.start();'))
         runOCLBody.append(FuncDecl(Id('Exec' + self.DevFuncId), arglist, Compound([])))
+        runOCLBody.append(Id('cout << timer.stop() << endl;'))
 
 
         return fileAST
