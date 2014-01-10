@@ -867,9 +867,21 @@ class Rewriter(NodeVisitor):
             outerstats = outerloop.compound.statements
             outerstats.insert(0, innerloop)
             # change increment of outer loop
-            outerloop.inc = Increment(Id(outeridx), '+='+self.Local['size'][0])
+            outerloop.inc = Increment(Id(outeridx), '+='+str(looplist[n]))
             print "outerloop " , outerloop
+            inneridx = outeridx*2
+            # For adding to this index in other subscripts
+            self.Add[outeridx] = inneridx
 
+            # new inner loop
+            innerloop.cond = BinOp(Id(inneridx), '<' , Id(str(looplist[n])))
+            innerloop.inc = Increment(Id(inneridx), '++')
+            innerloop.init = ConstantAssignment(inneridx)
+            self.Loops[inneridx] = innerloop
+
+            exchangeId = ExchangeIdWithBinOp({n : BinOp(Id(outeridx),'+', Id(inneridx))})
+            exchangeId.visit(innerloop.compound)
+       
         
 
 
@@ -1061,7 +1073,8 @@ class Rewriter(NodeVisitor):
                 for ss  in localsubdict[m]:
                     exchangeId.visit(ss)
 
-            
+
+            # Change the subscripts of the loops to match the unrolling
             exchangeId = ExchangeId({n : n + ' + ' + n*2})
             exchangeId.visit(innerloop.compound)
 

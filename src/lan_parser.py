@@ -479,7 +479,8 @@ def nbody():
 
         rw.SetLSIZE(['256'])
         rw.SetDefine(['hst_ptrForces_dim1', 'hst_ptrPos_dim1', 'N'])
-        rw.Unroll2(['j'])
+        rw.Unroll2({'j' : 4})
+        rw.Unroll(['jj'])
         rw.InSourceKernel(tempast2, filename = fileprefix + 'NBody/'+funcname + '.cl')
         ## rw.rewriteToDeviceCRelease(tempast2)
         ## cprint.createTemp(tempast2, filename = fileprefix + 'NBody/'+funcname + '.cl')

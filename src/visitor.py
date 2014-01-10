@@ -98,6 +98,44 @@ class ExchangeId(NodeVisitor):
         if node.name in self.idMap:
             node.name = self.idMap[node.name]
 
+class ExchangeIdWithBinOp(NodeVisitor):
+    """ Exchanges the Ids that we parallelize with the threadids,
+    (or whatever is given in idMap)
+    """
+    def __init__(self, idMap):
+        self.idMap = idMap
+
+    def visit_Assignment(self, node):
+        if isinstance(node.lval, Id):
+            try:
+                node.lval = self.idMap[node.lval.name]
+                self.visit(node.rval)
+                return
+            except KeyError:
+                pass
+        for c_name, c in node.children():
+            self.visit(c)
+            
+    def visit_BinOp(self, node):
+        if isinstance(node.lval, Id):
+            try:
+                node.lval = self.idMap[node.lval.name]
+                self.visit(node.rval)
+                return
+            except KeyError:
+                pass
+            
+        if isinstance(node.rval, Id):
+            try:
+                node.rval = self.idMap[node.rval.name]
+                self.visit(node.lval)
+                return
+            except KeyError:
+                pass
+        for c_name, c in node.children():
+            self.visit(c)
+        
+
 
 class ExchangeIndices(NodeVisitor):
     """ Exchanges the indices that we parallelize with the threadids,
