@@ -312,9 +312,9 @@ class ForLoop(Node):
         self.inc = inc
         self.compound = compound
     def __repr__(self):
-        return "\nForLoop(%r %r) " % ( self.init.lval.name, \
-                                            #self.cond, \
-                                            #self.inc#, \
+        return "\nForLoop(%r, %r, %r, %r) " % ( self.init.lval.name, \
+                                            self.cond, \
+                                            self.inc, \
                                             self.compound
                                         )
     def children(self):

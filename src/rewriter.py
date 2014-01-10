@@ -24,7 +24,7 @@ class Rewriter(NodeVisitor):
         # The local work group size
         self.Local = dict()
         self.Local['name'] = 'LSIZE'
-        self.Local['size'] = '64'
+        self.Local['size'] = ['64']
         # The number of dimensions of each array 
         self.NumDims = dict()
         # The Ids of arrays, or pointers
@@ -175,12 +175,14 @@ class Rewriter(NodeVisitor):
         
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
-        self.ParDim = perfectForLoop.depth
+        
+        if self.ParDim is None:
+            self.ParDim = perfectForLoop.depth
 
         if self.ParDim == 1:
-            self.Local['size'] = '64'
+            self.Local['size'] = ['64']
         else:
-            self.Local['size'] = '8'
+            self.Local['size'] = ['8','8']
         
         innerbody = perfectForLoop.inner
         firstLoop = ForLoops()
@@ -215,7 +217,7 @@ class Rewriter(NodeVisitor):
         gridIds.extend(initIds.index)
         kernel = perfectForLoop.ast.compound
         self.ReverseIdx[1] = 0
-        if perfectForLoop.depth == 2:
+        if self.ParDim == 2:
             initIds = InitIds()
             initIds.visit(kernel.statements[0].init)
             kernel = kernel.statements[0].compound
@@ -413,6 +415,19 @@ class Rewriter(NodeVisitor):
             ast.ext = list()
             ast.ext.append(newast)
 
+    def SetParDim(self, number):
+        self.ParDim = number
+        
+
+    def SetLSIZE(self, lsizelist):
+        if len(lsizelist) == 1 and self.ParDim == 1 \
+               or len(lsizelist) == 2 and self.ParDim == 2:
+            self.Local['size'] = lsizelist
+        else:
+            print """SetLSIZE: the local work-group size must be 1D or 2D and it must have the same number of dimensions as we are parallelizing """
+
+        
+
     def Unroll(self, looplist):
         # find loops and check that the loops given in the argument
         # exist
@@ -487,7 +502,7 @@ class Rewriter(NodeVisitor):
         ## ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
         ast.ext.append(newast)
 
-    def define(self, varList):
+    def SetDefine(self, varList):
         accname = 'str'
         sstream = TypeId(['std::stringstream'], Id(accname))
         stats = self.Define.statements
@@ -840,6 +855,25 @@ class Rewriter(NodeVisitor):
         self.ConstantMemory.statements.append(groupComp)
         
 
+    def Unroll2(self, looplist):
+        
+        for n in looplist:
+            outerloop = self.Loops[n]
+            outeridx = n
+            compound = outerloop.compound
+            outerloop.compound = Compound([])
+            innerloop = copy.deepcopy(outerloop)
+            innerloop.compound = compound
+            outerstats = outerloop.compound.statements
+            outerstats.insert(0, innerloop)
+            # change increment of outer loop
+            outerloop.inc = Increment(Id(outeridx), '+='+self.Local['size'][0])
+            print "outerloop " , outerloop
+
+        
+
+
+        
     def localMemory2(self, arrNames):
         # Loops that must be extended, contains list of array for which loadings must be created.
         loopext = dict()
@@ -954,14 +988,14 @@ class Rewriter(NodeVisitor):
             loadComp = GroupCompound(loadstats)
             outerstats.insert(0, loadComp)
             # change increment of outer loop
-            outerloop.inc = Increment(Id(outeridx), '+='+self.Local['size'])
+            outerloop.inc = Increment(Id(outeridx), '+='+self.Local['size'][0])
             
             inneridx = outeridx*2
             # For adding to this index in other subscripts
             self.Add[outeridx] = inneridx
 
             # new inner loop
-            innerloop.cond = BinOp(Id(inneridx), '<' , Constant(self.Local['size']))
+            innerloop.cond = BinOp(Id(inneridx), '<' , Constant(self.Local['size'][0]))
             innerloop.inc = Increment(Id(inneridx), '++')
             innerloop.init = ConstantAssignment(inneridx)
             self.Loops[inneridx] = innerloop
@@ -989,7 +1023,7 @@ class Rewriter(NodeVisitor):
                 localName = m + '_local'
                 arrayinit = '['
                 arrayinit += str(dim)
-                arrayinit += '*' + self.Local['size'] + ']'
+                arrayinit += '*' + self.Local['size'][0] + ']'
 
                 localId = Id(localName + arrayinit)
                 localTypeId = TypeId(['__local'] + [self.Type[m][0]], localId)
@@ -1008,7 +1042,7 @@ class Rewriter(NodeVisitor):
                     exchangeId = ExchangeId({n : 'get_local_id(0)'})
                 exchangeId.visit(loc_ref)
                                         
-                self.ArrayIdToDimName[loc_name] = self.Local['size']
+                self.ArrayIdToDimName[loc_name] = self.Local['size'][0]
                 self.NumDims[loc_name] = self.NumDims[m]
 
                 glo_subs = copy.deepcopy(local[m][i])
@@ -1059,11 +1093,11 @@ class Rewriter(NodeVisitor):
             loopIndices.visit(forLoopAst)
             outeridx = loopIndices.index[0]
             print outeridx
-            forLoopAst.inc = Increment(Id(outeridx), '+='+self.Local['size'])
+            forLoopAst.inc = Increment(Id(outeridx), '+='+ self.Local['size'][0])
             
             inneridx = outeridx*2
             self.Add[outeridx] = inneridx
-            cond = BinOp(Id(inneridx), '<' , Constant(self.Local['size']))
+            cond = BinOp(Id(inneridx), '<' , Constant(self.Local['size'][0]))
             innerinc = Increment(Id(inneridx), '++')
             innercomp = copy.copy(forLoopAst.compound)
             innerloop = ForLoop(ConstantAssignment(inneridx), cond, \
@@ -1080,7 +1114,7 @@ class Rewriter(NodeVisitor):
 
         ## finding the correct local memory size
         arrName = arrNames[0]
-        localDims = [int(self.Local['size'])\
+        localDims = [int(self.Local['size'][0])\
                      for i in xrange(self.NumDims[arrName])]
         if self.ParDim == 1 and len(localDims) == 2:
             localDims[0] = 1;
@@ -1110,7 +1144,7 @@ class Rewriter(NodeVisitor):
             localTypeId = TypeId(['__local'] + [self.Type[arrName][0]], localId)
             self.NumDims[localName] = self.NumDims[arrName]
             self.LocalSwap[arrName] = localName
-            self.ArrayIdToDimName[localName] = [self.Local['size'], self.Local['size']]
+            self.ArrayIdToDimName[localName] = [self.Local['size'][0], self.Local['size'][0]]
             stats.append(localTypeId)
 
         InitComp = GroupCompound(stats)
@@ -1246,7 +1280,7 @@ class Rewriter(NodeVisitor):
 
         fileAST.ext.append(Id('#include \"../../../src/utils/StartUtil.cpp\"'))
         fileAST.ext.append(Id('using namespace std;'))
-        fileAST.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
+        ## fileAST.ext.append(Id('#define LSIZE ' + str(self.Local['size'][0])))
 
 
         kernelId = Id(self.KernelName)
@@ -1462,7 +1496,7 @@ class Rewriter(NodeVisitor):
         for n in self.Worksize:
             lval = TypeId(['size_t'], Id(self.Worksize[n] + '[]'))
             if n == 'local':
-                local_worksize = [Id('LSIZE') for i in xrange(self.ParDim)]
+                local_worksize = [Id(i) for i in self.Local['size']]
                 rval = ArrayInit(local_worksize)
             elif n == 'global':
                 initlist = []

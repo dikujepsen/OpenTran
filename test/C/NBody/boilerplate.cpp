@@ -1,6 +1,5 @@
 #include "../../../src/utils/StartUtil.cpp"
 using namespace std;
-#define LSIZE 64
 cl_kernel NBodyForKernel;
 cl_mem dev_ptrMas;
 cl_mem dev_ptrPos;
@@ -29,25 +28,26 @@ std::string KernelString()
 {
   std::stringstream str;
   str << "__kernel void NBodyFor(" << endl;
-  str << "	unsigned hst_ptrForces_dim1, __global float * Mas, __global float * Pos, " << endl;
-  str << "	unsigned N, __global float * Forces, unsigned hst_ptrPos_dim1" << endl;
+  str << "	__global float * Mas, __global float * Pos, __global float * Forces" << endl;
   str << "	) {" << endl;
   str << "  float a_x = Pos[(0 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
   str << "  float a_y = Pos[(1 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
   str << "  float a_m = Mas[get_global_id(0)];" << endl;
   str << "  float f_x = 0;" << endl;
   str << "  float f_y = 0;" << endl;
-  str << "  for (unsigned j = 0; j < N; j++) {" << endl;
-  str << "      float b_x = Pos[(0 * hst_ptrPos_dim1) + j];" << endl;
-  str << "      float b_y = Pos[(1 * hst_ptrPos_dim1) + j];" << endl;
-  str << "      float b_m = Mas[j];" << endl;
-  str << "      float r_x = b_x - a_x;" << endl;
-  str << "      float r_y = b_y - a_y;" << endl;
-  str << "      float d = (r_x * r_x) + (r_y * r_y);" << endl;
-  str << "      float deno = (sqrt((d * d) * d)) + (get_global_id(0) == j);" << endl;
-  str << "      deno = ((a_m * b_m) / deno) * (get_global_id(0) != j);" << endl;
-  str << "      f_x += deno * r_x;" << endl;
-  str << "      f_y += deno * r_y;" << endl;
+  str << "  for (unsigned j = 0; j < N; j+=256) {" << endl;
+  str << "      for (unsigned j = 0; j < N; j++) {" << endl;
+  str << "          float b_x = Pos[(0 * hst_ptrPos_dim1) + j];" << endl;
+  str << "          float b_y = Pos[(1 * hst_ptrPos_dim1) + j];" << endl;
+  str << "          float b_m = Mas[j];" << endl;
+  str << "          float r_x = b_x - a_x;" << endl;
+  str << "          float r_y = b_y - a_y;" << endl;
+  str << "          float d = (r_x * r_x) + (r_y * r_y);" << endl;
+  str << "          float deno = (sqrt((d * d) * d)) + (get_global_id(0) == j);" << endl;
+  str << "          deno = ((a_m * b_m) / deno) * (get_global_id(0) != j);" << endl;
+  str << "          f_x += deno * r_x;" << endl;
+  str << "          f_y += deno * r_y;" << endl;
+  str << "      }" << endl;
   str << "  }" << endl;
   str << "  Forces[(0 * hst_ptrForces_dim1) + get_global_id(0)] = f_x;" << endl;
   str << "  Forces[(1 * hst_ptrForces_dim1) + get_global_id(0)] = f_y;" << endl;
@@ -68,6 +68,11 @@ void AllocateBuffers()
   // Constant Memory
   
   // Defines for the kernel
+  std::stringstream str;
+  str << "-Dhst_ptrForces_dim1=" << hst_ptrForces_dim1 << " ";
+  str << "-Dhst_ptrPos_dim1=" << hst_ptrPos_dim1 << " ";
+  str << "-DN=" << N << " ";
+  KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
   
@@ -93,23 +98,14 @@ void SetArgumentsNBodyFor()
   cl_int oclErrNum = CL_SUCCESS;
   int counter = 0;
   oclErrNum |= clSetKernelArg(
-	NBodyForKernel, counter++, sizeof(unsigned), 
-	(void *) &hst_ptrForces_dim1);
-  oclErrNum |= clSetKernelArg(
 	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrMas);
   oclErrNum |= clSetKernelArg(
 	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrPos);
   oclErrNum |= clSetKernelArg(
-	NBodyForKernel, counter++, sizeof(unsigned), 
-	(void *) &N);
-  oclErrNum |= clSetKernelArg(
 	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrForces);
-  oclErrNum |= clSetKernelArg(
-	NBodyForKernel, counter++, sizeof(unsigned), 
-	(void *) &hst_ptrPos_dim1);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }
@@ -119,7 +115,7 @@ void ExecNBodyFor()
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
   size_t NBodyFor_global_worksize[] = {N - 0};
-  size_t NBodyFor_local_worksize[] = {LSIZE};
+  size_t NBodyFor_local_worksize[] = {256};
   size_t NBodyFor_global_offset[] = {0};
   oclErrNum = clEnqueueNDRangeKernel(
 	command_queue, NBodyForKernel, 1, 

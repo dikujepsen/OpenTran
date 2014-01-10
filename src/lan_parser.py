@@ -476,7 +476,10 @@ def nbody():
         ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
         rw.dataStructures()
-        ## rw.constantMemory2({'Pos' : [0,1], 'Mas' : [0]})
+
+        rw.SetLSIZE(['256'])
+        rw.SetDefine(['hst_ptrForces_dim1', 'hst_ptrPos_dim1', 'N'])
+        rw.Unroll2(['j'])
         rw.InSourceKernel(tempast2, filename = fileprefix + 'NBody/'+funcname + '.cl')
         ## rw.rewriteToDeviceCRelease(tempast2)
         ## cprint.createTemp(tempast2, filename = fileprefix + 'NBody/'+funcname + '.cl')
