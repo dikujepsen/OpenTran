@@ -35,18 +35,25 @@ std::string KernelString()
   str << "  float a_m = Mas[get_global_id(0)];" << endl;
   str << "  float f_x = 0;" << endl;
   str << "  float f_y = 0;" << endl;
-  str << "  for (unsigned j = 0; j < N; j+=4) {" << endl;
-        for (unsigned jj = 0; jj < 4; jj++) {
-  str << "{         float b_x = Pos[(0 * hst_ptrPos_dim1) + j];" << endl;
-  str << "          float b_y = Pos[(1 * hst_ptrPos_dim1) + j];" << endl;
-  str << "          float b_m = Mas[j];" << endl;
-  str << "          float r_x = b_x - a_x;" << endl;
-  str << "          float r_y = b_y - a_y;" << endl;
-  str << "          float d = (r_x * r_x) + (r_y * r_y);" << endl;
-  str << "          float deno = (sqrt((d * d) * d)) + (get_global_id(0) == (j + " << jj << "));" << endl;
+  str << "  for (unsigned j = 0; j < N; j+=32) {" << endl;
+  str << "      float d;" << endl;
+  str << "      float b_y;" << endl;
+  str << "      float b_m;" << endl;
+  str << "      float r_x;" << endl;
+  str << "      float r_y;" << endl;
+  str << "      float deno;" << endl;
+  str << "      float b_x;" << endl;
+        for (unsigned jj = 0; jj < 32; jj++) {
+  str << "          b_x = Pos[(0 * hst_ptrPos_dim1) + (j + " << jj << ")];" << endl;
+  str << "          b_y = Pos[(1 * hst_ptrPos_dim1) + (j + " << jj << ")];" << endl;
+  str << "          b_m = Mas[j + " << jj << "];" << endl;
+  str << "          r_x = b_x - a_x;" << endl;
+  str << "          r_y = b_y - a_y;" << endl;
+  str << "          d = (r_x * r_x) + (r_y * r_y);" << endl;
+  str << "          deno = (sqrt((d * d) * d)) + (get_global_id(0) == (j + " << jj << "));" << endl;
   str << "          deno = ((a_m * b_m) / deno) * (get_global_id(0) != (j + " << jj << "));" << endl;
   str << "          f_x += deno * r_x;" << endl;
-  str << "          f_y += deno * r_y;}" << endl;
+  str << "          f_y += deno * r_y;" << endl;
         }
   str << "  }" << endl;
   str << "  Forces[(0 * hst_ptrForces_dim1) + get_global_id(0)] = f_x;" << endl;

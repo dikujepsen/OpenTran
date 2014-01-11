@@ -1,4 +1,5 @@
 from lan_ast import *
+import copy
 
 class AddToId(NodeVisitor):
     """ Finds the Id and replaces it with a binop that
@@ -106,15 +107,23 @@ class ExchangeIdWithBinOp(NodeVisitor):
         self.idMap = idMap
 
     def visit_Assignment(self, node):
-        if isinstance(node.lval, Id):
+        if isinstance(node.rval, Id):
             try:
-                node.lval = self.idMap[node.lval.name]
-                self.visit(node.rval)
+                node.rval = self.idMap[node.lval.name]
+                self.visit(node.lval)
                 return
             except KeyError:
                 pass
         for c_name, c in node.children():
             self.visit(c)
+            
+    def visit_ArrayRef(self, node):
+        for i,s in enumerate(node.subscript):
+            if isinstance(s, Id):
+                try:
+                    node.subscript[i] = self.idMap[s.name]
+                except KeyError:
+                    pass
             
     def visit_BinOp(self, node):
         if isinstance(node.lval, Id):
@@ -517,6 +526,19 @@ class TypeIds(NodeVisitor):
         self.ids.add(node.name.name)
     def visit_ArrayTypeId(self, node):
         self.ids.add(node.name.name)
+
+class TypeIds2(NodeVisitor):
+    """ Return a set of TypeId nodes. Remove the type from the
+        TypeIds that we encounter.
+    """
+    def __init__(self):
+        self.ids = set()
+    def visit_TypeId(self, node):
+        self.ids.add(copy.deepcopy(node))
+        node.type = []
+    def visit_ArrayTypeId(self, node):
+        self.ids.add(copy.deepcopy(node))
+        node.type = []
 
 
 class NumBinOps(NodeVisitor):

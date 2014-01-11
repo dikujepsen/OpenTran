@@ -865,7 +865,13 @@ class Rewriter(NodeVisitor):
             innerloop = copy.deepcopy(outerloop)
             innerloop.compound = compound
             outerstats = outerloop.compound.statements
-            outerstats.insert(0, innerloop)
+            # Add the TypeId declarations to the outer loop
+            # First find the typeids
+            typeIds = TypeIds2()
+            typeIds.visit(innerloop.compound)
+            for m in typeIds.ids:
+                outerstats.append(m)
+            outerstats.append(innerloop)
             # change increment of outer loop
             outerloop.inc = Increment(Id(outeridx), '+='+str(looplist[n]))
             print "outerloop " , outerloop
@@ -879,9 +885,15 @@ class Rewriter(NodeVisitor):
             innerloop.init = ConstantAssignment(inneridx)
             self.Loops[inneridx] = innerloop
 
+
+            
+            # In the inner loop: Add the extra index to the index of the
+            # outer loop
             exchangeId = ExchangeIdWithBinOp({n : BinOp(Id(outeridx),'+', Id(inneridx))})
             exchangeId.visit(innerloop.compound)
-       
+
+            # unroll the inner index in stringstream
+            self.Unroll([inneridx])
         
 
 

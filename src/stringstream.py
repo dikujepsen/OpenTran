@@ -153,9 +153,10 @@ class SSGenerator(object):
         return n.op + s
 
     def visit_TypeId(self, n):
-        s = self.visit(n.name)
-        s1 = ' '.join(n.type)
-        s1 += ' ' + s
+        s1 = self.visit(n.name)
+        if n.type:
+            s = ' '.join(n.type)
+            s1 = s + ' ' + s1
         if not self.inside_ArgList:
             s1 += self.semi
         return s1
@@ -292,8 +293,8 @@ class SSGenerator(object):
             newline = '\n'
             compstart = '{'
             compend = '}'
-            compound = compound[0:8] + compstart + compound[9:-11]\
-               + compend + compound[-11:]
+            ## compound = compound[0:8] + compstart + compound[9:-11]\
+            ##    + compend + compound[-11:]
         return start + self._make_indent() + 'for (' + init + ' ' + cond + self.semi + ' ' + inc + ') {'\
           + newline  + compound + start + self._make_indent() + '}' + newline
 

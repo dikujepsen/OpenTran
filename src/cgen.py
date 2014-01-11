@@ -118,8 +118,9 @@ class CGenerator(object):
 
     def visit_TypeId(self, n):
         s = self.visit(n.name)
-        s1 = ' '.join(n.type)
-        s1 += ' ' + s
+        if n.type:
+            s1 = ' '.join(n.type)
+            s1 += ' ' + s
         if not self.inside_ArgList:
             s1 += self.semi
         return s1
