@@ -542,8 +542,9 @@ def nbody2():
         rw.initNewRepr(tempast)
 
 
-        rw.SetLSIZE(['8','8'])
+        rw.SetLSIZE(['256','1'])
         ## rw.localMemory(['Pos'], south = 1, middle = 1)
+        rw.SetDefine(['hst_ptrForces_x_dim1', 'hst_ptrForces_y_dim1', 'hst_ptrPos_dim1'])
         rw.dataStructures()
         ## rw.localMemory2(['Mas', 'Pos'])
         ## rw.constantMemory(['Pos'])

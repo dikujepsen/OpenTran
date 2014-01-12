@@ -244,6 +244,7 @@ RunOCLNBody2ForKernel(
   
   // printMat2(Forces_x, N, N);
   // printMat2(Forces_y, N, N);
+
   // summation2(Forces_x, N, N, N/8);
   // summation2(Forces_y, N, N, N/8);
   // printMat3(Forces_x, N, N);
