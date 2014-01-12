@@ -43,7 +43,7 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define matsize 8
+#define matsize 4096
 
 int main(int argc, char** argv)
 {
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
   float* A_mat = new float[A_size];
   float* B_mat = new float[B_size];
   float* C_mat = new float[C_size];
-  float* C_mat2 = new float[C_size];
+  // float* C_mat2 = new float[C_size];
 
   srand(2013);
 
@@ -89,11 +89,11 @@ int main(int argc, char** argv)
   af::sync();
   printf("Average time : %g seconds\n", timer::stop());
 
-  C_mat = C.host<float>();
+  // C_mat = C.host<float>();
 
 #endif
 
-  printMat(C_mat, C_size);
+  // printMat(C_mat, C_size);
 
   free(A_mat);
   free(B_mat);

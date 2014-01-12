@@ -1,14 +1,5 @@
 
-
-LNK_LIB = -lOpenCL
-
-CC = g++
-
-OPTS = -O3 -Wall
-
-NBody2: NBody2.cpp 
-	$(CC) $(OPTS) $@.cpp -o $@ $(LNK_LIB)
+EXEC = NBody2.exe
 
 
-clean: 
-	rm -f *~ *.o NBody2
+include ../common.mk

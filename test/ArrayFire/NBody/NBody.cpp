@@ -25,7 +25,7 @@ createPosses(float* M, unsigned wM, unsigned hM)
 {
   for (unsigned i = 0; i < hM; i++) {
     for (unsigned j = 0; j < wM; j++) {
-      M[i * wM + j] = ((rand() % 100) / 100.0) * 100.0;
+      M[i * wM + j] = ((rand() % 100000) / 100000.0) * 100000.0;
     }
   }
 
@@ -146,10 +146,13 @@ void computeForces(float * Forces, float * Pos, float * Mas, unsigned N) {
 }
 
 
-#define matsize 8
+#define matsize 8192
 
 int main(int argc, char** argv)
 {
+  int device = argc > 1 ? atoi(argv[1]) : 0;
+  deviceset(device);
+  info();
   unsigned hPos = 2;
   unsigned hM = 1;
   unsigned hVel = 2;
@@ -174,7 +177,6 @@ int main(int argc, char** argv)
   createVelles(Vel, wVel, hVel);
 
   // computeForces(Forces, Pos, M_mat, N);
-  float dt = 0.015;
   
 
 
@@ -245,21 +247,19 @@ int main(int argc, char** argv)
       f_x += (deno * r_x);
       f_y += (deno * r_y) ;
     }
-       // print(f_x);
-   // print(f_x);
     F(k, 0) = f_x;
     F(k, 1) = f_y;
     
   }
-  print(F);
+  // print(F);
   af::sync();
   printf("Average time : %g seconds\n", timer::stop());
   
-  Forces = F.host<float>();
+  // Forces = F.host<float>();
 #endif  
 
 
-  printMat2(Forces, wVel, hVel);
+  // printMat2(Forces, wVel, hVel);
 
   free(Pos);
   free(M_mat);

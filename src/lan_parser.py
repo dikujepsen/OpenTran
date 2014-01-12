@@ -413,10 +413,11 @@ def matmul():
         ## rw.transpose('C')
         rw.localMemory(['A','B'])
         rw.dataStructures()
-        rw.rewriteToDeviceCRelease(tempast2)
-        cprint.createTemp(tempast2, filename = fileprefix + 'Matmul/matmulfunc4.cl')
+        rw.SetDefine(['hst_ptrB_dim1', 'hst_ptrA_dim1', 'wA', 'hst_ptrC_dim1'])
+        
+        rw.InSourceKernel(tempast2, filename = fileprefix + 'Matmul/matmulfunc4.cl')
         boilerast = rw.generateBoilerplateCode(ast)
-        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+        cprint.createTemp(boilerast, filename = fileprefix + 'Matmul/boilerplate.cpp')
 
 def nbody():
     import ply.yacc as yacc
@@ -520,11 +521,12 @@ def nbody2():
         ## print printres
         rw = Rewriter()
         rw.initOriginal(ast)
+        tempfilename = fileprefix + 'NBody2/'+'tempnbody2.cpp'
         ## rw.rewrite(ast, funcname, changeAST = True)
-        ## cprint.createTemp(ast, filename = 'tempnbody2.cpp')
+        ## cprint.createTemp(ast, filename = tempfilename)
 
         run = 0
-        filename = '../src/tempnbody2.cpp'
+        filename = tempfilename
         ## funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -540,20 +542,21 @@ def nbody2():
         rw.initNewRepr(tempast)
 
 
+        rw.SetLSIZE(['8','8'])
         ## rw.localMemory(['Pos'], south = 1, middle = 1)
         rw.dataStructures()
         ## rw.localMemory2(['Mas', 'Pos'])
         ## rw.constantMemory(['Pos'])
-        
-        rw.constantMemory2({'Pos' : [2,3], 'Mas' : [1]})
-        rw.placeInReg2({ 'Pos' : [0, 1], 'Mas' : [0]})
+        ## rw.SetNoReadBack()
+        ## rw.constantMemory2({'Pos' : [2,3], 'Mas' : [1]})
+        ## rw.placeInReg2({ 'Pos' : [0, 1], 'Mas' : [0]})
         ## rw.Unroll(['k', 'kk'])
         
         rw.InSourceKernel(tempast2, filename = fileprefix + 'NBody2/'+funcname + '.cl')
         ## rw.rewriteToDeviceCRelease(tempast)
         ## cprint.createTemp(tempast, filename = fileprefix + 'NBody2/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
-        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+        cprint.createTemp(boilerast, filename = fileprefix + 'NBody2/'+'boilerplate.cpp')
 
 def knearest():
     import ply.yacc as yacc
@@ -767,8 +770,8 @@ def gaussian():
 if __name__ == "__main__":
     ## jacobi()
     ## matmul()
-    nbody()
-    ## nbody2()
+    ## nbody()
+    nbody2()
     ## knearest()
     ## knearest2()
     ## gaussian()

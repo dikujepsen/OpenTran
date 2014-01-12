@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
-#include "../../../src/boilerplate.cpp"
+#include "boilerplate.cpp"
 
 using namespace std;
 
@@ -40,7 +40,7 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define matsize 8
+#define matsize 4096
 
 int main(int argc, char** argv)
 {
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 	 wB, wA, hA);  
 #endif
 
-  printMat(C_mat,C_size);
+  // printMat(C_mat,C_size);
 
   free(A_mat);
   free(B_mat);

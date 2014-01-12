@@ -19,16 +19,19 @@ createMasses(float* M, unsigned wM, unsigned hM)
 
 }
 
+#define ri 100000
+#define rd 100000.0
 void
 createPosses(float* M, unsigned wM, unsigned hM)
 {
   for (unsigned i = 0; i < hM; i++) {
     for (unsigned j = 0; j < wM; j++) {
-      M[i * wM + j] = ((rand() % 100000) / 100000.0) * 100000.0;
+      M[i * wM + j] = ((rand() % ri) / rd ) * rd;
     }
   }
 
 }
+
 
 void
 createVelles(float* M, unsigned wM, unsigned hM)
@@ -121,8 +124,8 @@ void computeForces(float * Forces, float * Pos, float * Mas, unsigned N) {
     float a_x = Pos[i]; 
     float a_y = Pos[N + i];
     float a_m = Mas[i];
-    float f_x = 0;
-    float f_y = 0;
+    float f_x = 0.0;
+    float f_y = 0.0;
     for (unsigned j = 0; j < N; j++) {
       float b_x = Pos[j]; 
       float b_y = Pos[N + j];
@@ -143,7 +146,8 @@ void computeForces(float * Forces, float * Pos, float * Mas, unsigned N) {
 }
 
 
-#define matsize 262144
+#define matsize 12800
+// #define matsize 32
 
 int main(int argc, char** argv)
 {

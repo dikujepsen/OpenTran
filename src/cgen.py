@@ -121,6 +121,8 @@ class CGenerator(object):
         if n.type:
             s1 = ' '.join(n.type)
             s1 += ' ' + s
+        else:
+            s1 = s
         if not self.inside_ArgList:
             s1 += self.semi
         return s1

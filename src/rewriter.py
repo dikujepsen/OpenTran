@@ -148,8 +148,8 @@ class Rewriter(NodeVisitor):
         norm.visit(forLoopAst)
         arrays = Arrays(self.index)
         arrays.visit(ast)
-        self.NumDims = arrays.numSubscripts
         
+        self.NumDims = arrays.numSubscripts
         self.IndexInSubscript = arrays.indexIds
         typeIds = TypeIds()
         typeIds.visit(ast)
@@ -194,12 +194,13 @@ class Rewriter(NodeVisitor):
             self.InsideKernel = firstLoop.ast
 
 
-        arrays = Arrays([])
+        arrays = Arrays(self.index)
+        
         if firstLoop.ast is None: # No inner loop
             arrays.visit(innerbody.compound)
         else:
             arrays.visit(firstLoop.ast)
-
+        self.NumDims = arrays.numSubscripts
         self.LoopArrays = arrays.LoopArrays
         
         initIds = InitIds()
@@ -238,7 +239,8 @@ class Rewriter(NodeVisitor):
         for i, n in enumerate(reversed(self.GridIndices)):
             self.IdxToDim[i] = n
             
-        
+
+
         findDim = FindDim(self.NumDims)
         findDim.visit(ast)
         self.ArrayIdToDimName = findDim.dimNames
@@ -426,7 +428,8 @@ class Rewriter(NodeVisitor):
         else:
             print """SetLSIZE: the local work-group size must be 1D or 2D and it must have the same number of dimensions as we are parallelizing """
 
-        
+    def SetNoReadBack(self):
+        self.WriteOnly = []
 
     def Unroll(self, looplist):
         # find loops and check that the loops given in the argument
