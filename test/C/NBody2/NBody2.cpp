@@ -187,7 +187,7 @@ void computeForces(float * Forces_x, float * Forces_y, float * Pos, float * Mas,
 }
 
 
-#define matsize 12800
+#define matsize 20480
 // #define matsize 32
 
 int main(int argc, char** argv)
