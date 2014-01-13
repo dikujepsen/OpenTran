@@ -1,8 +1,8 @@
 #define LSIZE 256
 __kernel void NBody2For(
-			unsigned hst_ptrForces_x_dim1, __global float * Mas, __global float * Pos, 
-			unsigned hst_ptrForces_y_dim1, __global float * Forces_y, __global float * Forces_x, 
-			unsigned hst_ptrPos_dim1) {
+			 __global float * Mas, __global float * Pos, 
+			__global float * Forces_y, __global float * Forces_x 
+			) {
   /* __local float Pos_x_local[LSIZE]; */
   /* __local float Pos_y_local[LSIZE]; */
   /* __local float Mas_local[LSIZE]; */

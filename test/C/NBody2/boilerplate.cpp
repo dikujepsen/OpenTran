@@ -33,9 +33,8 @@ std::string KernelString()
 {
   std::stringstream str;
   str << "__kernel void NBody2For(" << endl;
-  str << "	unsigned hst_ptrForces_x_dim1, __global float * Mas, __global float * Pos, " << endl;
-  str << "	unsigned hst_ptrForces_y_dim1, __global float * Forces_y, __global float * Forces_x, " << endl;
-  str << "	unsigned hst_ptrPos_dim1) {" << endl;
+  str << "	__global float * Mas, __global float * Pos, __global float * Forces_y, " << endl;
+  str << "	__global float * Forces_x) {" << endl;
   str << "  float b_x = Pos[(0 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
   str << "  float b_y = Pos[(1 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
   str << "  float b_m = Mas[get_global_id(0)];" << endl;
@@ -67,6 +66,11 @@ void AllocateBuffers()
   // Constant Memory
   
   // Defines for the kernel
+  std::stringstream str;
+  str << "-Dhst_ptrForces_x_dim1=" << hst_ptrForces_x_dim1 << " ";
+  str << "-Dhst_ptrForces_y_dim1=" << hst_ptrForces_y_dim1 << " ";
+  str << "-Dhst_ptrPos_dim1=" << hst_ptrPos_dim1 << " ";
+  KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
   
@@ -97,26 +101,17 @@ void SetArgumentsNBody2For()
   cl_int oclErrNum = CL_SUCCESS;
   int counter = 0;
   oclErrNum |= clSetKernelArg(
-	NBody2ForKernel, counter++, sizeof(unsigned), 
-	(void *) &hst_ptrForces_x_dim1);
-  oclErrNum |= clSetKernelArg(
 	NBody2ForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrMas);
   oclErrNum |= clSetKernelArg(
 	NBody2ForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrPos);
   oclErrNum |= clSetKernelArg(
-	NBody2ForKernel, counter++, sizeof(unsigned), 
-	(void *) &hst_ptrForces_y_dim1);
-  oclErrNum |= clSetKernelArg(
 	NBody2ForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrForces_y);
   oclErrNum |= clSetKernelArg(
 	NBody2ForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrForces_x);
-  oclErrNum |= clSetKernelArg(
-	NBody2ForKernel, counter++, sizeof(unsigned), 
-	(void *) &hst_ptrPos_dim1);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }
@@ -135,9 +130,6 @@ void ExecNBody2For()
 	);
   oclCheckErr(
 	oclErrNum, "clEnqueueNDRangeKernel");
-  oclErrNum = clFinish(command_queue);
-  oclCheckErr(
-	oclErrNum, "clFinish");
   // oclErrNum = clEnqueueReadBuffer(
   // 	command_queue, dev_ptrForces_y, CL_TRUE, 
   // 	0, hst_ptrForces_y_mem_size, hst_ptrForces_y, 
