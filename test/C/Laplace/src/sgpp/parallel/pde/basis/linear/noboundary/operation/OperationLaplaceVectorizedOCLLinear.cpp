@@ -123,7 +123,7 @@ namespace sg {
       }
 
 #if GPU1
-
+      std::cout << "RUN" << std::endl;
       
       this->OCLPDEKernelsHandle.
       	RunOCLKernelLaplaceInner(alpha,result, lcl_q, lcl_q_inv,
