@@ -1,0 +1,17 @@
+K 10
+svn:ignore
+V 246
+classification_job*.gz
+saveload.0.arff.gz
+saveload.0.grid.gz
+saveload.0.learner.gz
+savegrid.0.grid.gz
+saveknowledge.0.arff.gz
+saveload.1.arff.gz
+saveload.1.grid.gz
+saveload.1.learner.gz
+saveload.2.arff.gz
+saveload.2.grid.gz
+saveload.2.learner.gz
+
+END

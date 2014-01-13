@@ -1,0 +1,13 @@
+K 10
+svn:ignore
+V 172
+payoff_nodal.grid.gnuplot
+payoff_surplus.grid.gnuplot
+payoff.gnuplot
+solvedBS_nodal.grid.gnuplot
+solvedBS_surplus.grid.gnuplot
+solvedBS.gnuplot
+analyticBS.gnuplot
+BSSolver
+
+END

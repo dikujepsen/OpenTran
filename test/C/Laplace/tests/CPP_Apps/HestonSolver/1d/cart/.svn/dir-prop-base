@@ -1,0 +1,15 @@
+K 10
+svn:ignore
+V 232
+HestonSolver
+analyticHeston.gnuplot
+payoff_nodal.grid.gnuplot
+payoff_surplus.grid.gnuplot
+payoff.gnuplot
+solvedHeston_nodal.grid.gnuplot
+solvedHeston_surplus.grid.gnuplot
+solvedHeston.gnuplot
+custom_test_HestonSolver_1d_cart.sh
+tmp
+
+END

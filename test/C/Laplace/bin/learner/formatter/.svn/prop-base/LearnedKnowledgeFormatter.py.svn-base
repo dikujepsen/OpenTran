@@ -1,0 +1,14 @@
+K 13
+svn:mergeinfo
+V 863
+/branches/MPIDataMining/bin/learner/formatter/LearnedKnowledgeFormatter.py:2178-2545
+/branches/MPIDataMining_v2/bin/learner/formatter/LearnedKnowledgeFormatter.py:2867-3133
+/branches/OCLDataTransposed/bin/learner/formatter/LearnedKnowledgeFormatter.py:2934-2950
+/branches/anova-refinement-tmp/bin/learner/formatter/LearnedKnowledgeFormatter.py:2182-2263
+/branches/anova_refinement/bin/learner/formatter/LearnedKnowledgeFormatter.py:2156-2181
+/branches/dm_mpi_merge/bin/learner/formatter/LearnedKnowledgeFormatter.py:2542-2551
+/branches/heston-branch/bin/learner/formatter/LearnedKnowledgeFormatter.py:2144-2363
+/branches/pre-release2/bin/learner/formatter/LearnedKnowledgeFormatter.py:673-766
+/branches/refactoring/bin/learner/formatter/LearnedKnowledgeFormatter.py:1226-1443
+/trunk/bin/learner/formatter/LearnedKnowledgeFormatter.py:2871-2997,2999-3006,3109-3237
+END
