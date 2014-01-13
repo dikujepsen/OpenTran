@@ -221,7 +221,7 @@ namespace sg {
 #define TOTALTIMING 1
 #define PROFILING 0
 #define QUEUEPROF 0
-#define PRINTOCL  0
+#define PRINTOCL  1
 #define PRINTBUFFERSIZES 0
 
       extern cl_uint num_devices;
