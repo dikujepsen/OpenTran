@@ -1,0 +1,21 @@
+K 10
+svn:ignore
+V 452
+BSSolver
+analyticBS.gnuplot
+payoff_nodal_cart.grid.gnuplot
+payoff_nodal_cart.PAT.grid.gnuplot
+payoff_nodal.grid.gnuplot
+payoff_surplus_cart.grid.gnuplot
+payoff_surplus_cart.PAT.grid.gnuplot
+payoff_surplus.grid.gnuplot
+payoff.gnuplot
+solvedBS_nodal_cart.grid.gnuplot
+solvedBS_nodal_cart.PAT.grid.gnuplot
+solvedBS_nodal.grid.gnuplot
+solvedBS_surplus_cart.grid.gnuplot
+solvedBS_surplus_cart.PAT.grid.gnuplot
+solvedBS_surplus.grid.gnuplot
+solvedBS.gnuplot
+
+END
