@@ -15,7 +15,7 @@
 #include <cmath>
 #include <assert.h>
 
-#define GPU1 0
+#define GPU1 1
 
 namespace sg {
   namespace parallel {

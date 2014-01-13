@@ -249,55 +249,6 @@ namespace sg {
       }
 
 #endif
-    }
-
-
-
-  }
-
-      #pragma omp parallel
-      {
-        double* gradient_temp = new double[this->storage->dim()];
-        double* dot_temp = new double[this->storage->dim()];
-        double all_gradient_zero = 0;
-        //  size_t lcl_count = 0;
-
-        #pragma omp for
-
-        for (size_t ii = offset; ii < length; ii++) {
-	  result[ii] = 0.0;
-          for (size_t jj = 0; jj < this->storage->size(); jj++) {
-            all_gradient_zero = 0;
-
-            for (size_t d = 0; d < this->storage->dim(); d++) {
-              gradient_temp[d] = gradient(ii, jj, d);
-              all_gradient_zero += gradient_temp[d];
-            }
-
-            if (all_gradient_zero > 0) {
-              for (size_t d = 0; d < this->storage->dim(); d++) {
-                dot_temp[d] = l2dot(ii, jj, d);
-              }
-
-              for (size_t d_outer = 0; d_outer < this->storage->dim(); d_outer++) {
-                double element = alpha[jj];
-
-                for (size_t d_inner = 0; d_inner < this->storage->dim(); d_inner++) {
-                  element *= ((dot_temp[d_inner] * (d_outer != d_inner)) + (gradient_temp[d_inner] * (d_outer == d_inner)));
-                }
-
-                result[ii] += (this->lambda_->get(d_outer) * element);
-              }
-            }
-          }
-        }
-
-        delete [] gradient_temp;
-        delete [] dot_temp;
-      }
-    } // new mult function
-
-
-    
+    }    
   } // namespace parallel
 }
