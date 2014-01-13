@@ -7,4 +7,12 @@
 a.out
 *.personal
 *.pyc
-*.cl
+*.clPrintout/
+src/boilerplate.cpp
+src/parser.out
+src/tempgaussian.cpp
+src/tempjacobi.cpp
+src/tempknearest.cpp
+src/tempknearest2.cpp
+test/C/GaussianDerivates/Stefan_GaussianDerivates.cpp
+test/C/GaussianDerivates/forsaved.cpp
