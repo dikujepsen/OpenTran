@@ -1,0 +1,17 @@
+K 13
+svn:mergeinfo
+V 541
+/branches/MPIDataMining/src:2178-2545
+/branches/MPIDataMining_v2/src:2555-2643,2867-3133,3140-3269,3272-3274
+/branches/OCLDataTransposed/src:2934-2950
+/branches/anova-refinement-tmp/src:2182-2263
+/branches/anova_refinement/src:2156-2181
+/branches/dm_mpi_merge/src:2542-2551
+/branches/heston-branch/src:2144-2363
+/branches/pre-release/src:593-667
+/branches/pre-release2/src:673-766
+/branches/refactoring/src:1226-1443
+/branches/sgdm/src:2494-2560
+/branches/stretchedGrid-branch/src:1000-1274
+/trunk/src:2871-2997,2999-3006,3008-3107,3109-3340
+END

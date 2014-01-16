@@ -1,0 +1,24 @@
+K 10
+svn:ignore
+V 498
+HestonSolver
+analyticBS.gnuplot
+analyticHeston.gnuplot
+payoff_nodal_cart.grid.gnuplot
+payoff_nodal.grid.gnuplot
+payoff_surplus_cart.grid.gnuplot
+payoff_surplus.grid.gnuplot
+payoff.gnuplot
+solvedBS_nodal_cart.grid.gnuplot
+solvedBS_nodal.grid.gnuplot
+solvedBS_surplus_cart.grid.gnuplot
+solvedBS_surplus.grid.gnuplot
+solvedBS.gnuplot
+solvedHeston_nodal_cart.grid.gnuplot
+solvedHeston_nodal.grid.gnuplot
+solvedHeston_surplus_cart.grid.gnuplot
+solvedHeston_surplus.grid.gnuplot
+solvedHeston.gnuplot
+tmp
+
+END

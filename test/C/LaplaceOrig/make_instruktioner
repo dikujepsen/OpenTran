@@ -1,0 +1,9 @@
+make CC=g++ EXT=NVOCL VEC=sse3 JOBS=8 HESolver
+
+./bin/HESolver PoissonEquation 3 5 5 0.0 1.0 smooth 0.00001 100
+
+
+./bin/BSSolver solveND PAT 3 8 tests/CPP_Apps/BSSolver/3d/log/BStest3d.log.bound tests/CPP_Apps/BSSolver/3d/log/BStest3d.stoch 1.0 std_euro_call 0.05 1.0 0.05 CrNic 10 0.00001
+
+
+./bin/BSSolver solveNDadaptSurplusSubDomain PAT 5 4 bin/BStest5d.log.bound bin/BStest5d.stoch 1.0 std_euro_put 0.05 1.0 0.05 CrNic 180 0.000001 maxLevel 5 7 0.000001 none 0.0000001

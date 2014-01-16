@@ -1,0 +1,23 @@
+#################################################################################
+# Copyright (C) 2009-2011 Technische Universitaet Muenchen                      #
+# This file is part of the SG++ project. For conditions of distribution and     #
+# use, please see the copyright notice at http://www5.in.tum.de/SGpp            #
+#                                                                               #
+# author Alexander Heinecke (Alexander.Heinecke@mytum.de)                       #
+#################################################################################
+
+SRCDIR = ./../../../src/application_cpp/
+BUILDDIR = ./
+BINDIR = ./../../../bin/
+LIBDIR = ./../../../lib/sgpp/
+OBJS = NativeCppL2Test.o
+
+default : $(OBJS)
+	$(CC) $(LFLAGS) $(BUILDDIR)NativeCppL2Test.o $(LIBDIR)$(LIBNAME) -o $(BINDIR)$(BINNAME) -lOpenCL
+	cp $(BINDIR)$(BINNAME) $(BINDIR)L2Test
+	
+NativeCppL2Test.o : $(SRCDIR)NativeCppL2Test.cpp
+	$(CC) $(CFLAGS) -o $(BUILDDIR)NativeCppL2Test.o $(SRCDIR)NativeCppL2Test.cpp
+		
+clean :
+	rm *

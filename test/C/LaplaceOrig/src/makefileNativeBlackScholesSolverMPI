@@ -1,0 +1,44 @@
+#################################################################################
+# Copyright (C) 2009-2011 Technische Universitaet Muenchen                      #
+# This file is part of the SG++ project. For conditions of distribution and     #
+# use, please see the copyright notice at http://www5.in.tum.de/SGpp            #
+#                                                                               #
+# author Alexander Heinecke (Alexander.Heinecke@mytum.de)                       #
+#################################################################################
+
+SRCDIR = ./../../../src/application_cpp/
+TOPDIR = ./../../../
+BUILDDIR = ./
+BINDIR = ./../../../bin/
+LIBDIR = ./../../../lib/sgpp/
+ifeq ($(EXT), NVOCL)
+SRCNAME = NativeCppBlackScholesSolverOCLMPI.cpp
+OBJS = NativeCppBlackScholesSolverOCLMPI.o
+CPPOBJ = NativeCppBlackScholesSolverOCLMPI.o
+else
+ifeq ($(EXT), AMDOCLGPU)
+SRCNAME = NativeCppBlackScholesSolverOCLMPI.cpp
+OBJS = NativeCppBlackScholesSolverOCLMPI.o
+CPPOBJ = NativeCppBlackScholesSolverOCLMPI.o
+else
+ifeq ($(EXT), INTELOCL)
+SRCNAME = NativeCppBlackScholesSolverOCLMPI.cpp
+OBJS = NativeCppBlackScholesSolverOCLMPI.o
+CPPOBJ = NativeCppBlackScholesSolverOCLMPI.o
+else
+SRCNAME = NativeCppBlackScholesSolverMPI.cpp
+OBJS = NativeCppBlackScholesSolverMPI.o
+CPPOBJ = NativeCppBlackScholesSolverMPI.o
+endif
+endif
+endif
+
+default: $(OBJS)
+	$(CC) $(LFLAGS) $(BUILDDIR)$(CPPOBJ) $(LIBDIR)$(LIBNAME) -o $(BINDIR)$(BINNAME)
+	cp $(BINDIR)$(BINNAME) $(BINDIR)BSSolverMPI
+	
+$(OBJS) : $(SRCDIR)$(SRCNAME) 
+	$(CC) $(CFLAGS) -o $(BUILDDIR)$(CPPOBJ) $(SRCDIR)$(SRCNAME)
+	
+clean:
+	rm *
