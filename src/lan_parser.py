@@ -767,12 +767,91 @@ def gaussian():
         cprint.createTemp(tempast2, filename = fileprefix + 'GaussianDerivates/' + 'GaussianDerivatesFor.cl')
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+        
+def laplace():
+    import ply.yacc as yacc
+    cparser = yacc.yacc()
+    lex.lex()
+
+    run = 1
+    while run:
+        filename = fileprefix + 'Laplace/LaplaceFor.cpp'
+        funcname = basename(os.path.splitext(filename)[0])
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+            ## print s
+        except EOFError:
+            break
+
+        
+        lex.input(s)
+        while 1:
+            tok = lex.token()
+            if not tok: break
+            ## print tok
+        
+        ast = cparser.parse(s)
+        ## ast.show()
+        ## print ast
+        ## print slist
+        cprint = CGenerator()
+        ## printres = cprint.visit(ast)
+        ## print printres
+        rw = Rewriter()
+        rw.initOriginal(ast)
+        tempfilename = fileprefix + 'Laplace/'+'templaplace.cpp'
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = tempfilename)
+
+        run = 0
+        funcname = basename(os.path.splitext(filename)[0])
+        filename = tempfilename
+        try:
+            f = open(filename, 'r')
+            s = f.read()
+            f.close()
+        except EOFError:
+            break
+ 
+        ast = cparser.parse(s)
+        ## ## ast.show()
+        tempast = copy.deepcopy(ast)
+        tempast2 = copy.deepcopy(ast)
+        rw.initNewRepr(tempast)
+
+
+        rw.SetLSIZE(['8'])
+        ## rw.localMemory(['Pos'], south = 1, middle = 1)
+        rw.dataStructures()
+        ## rw.placeInReg2({'level': [0], 'level_int' : [0], 'index' : [0]})
+        rw.transpose('level')
+        rw.transpose('level_int')
+        rw.transpose('index')
+        rw.SetDefine(['dim', 'hst_ptrlevel_dim1', 'hst_ptrindex_dim1',
+                      'storagesize', 'hst_ptrlevel_int_dim1'])
+
+        rw.placeInReg3({'level': [0], 'level_int' : [0], 'index' : [0]})
+        ## rw.localMemory(['level'])
+        rw.localMemory2(['alpha'])
+        ## rw.placeInReg2({ 'alpha_local' : [1]})
+        ## rw.constantMemory(['Pos'])
+        ## rw.SetNoReadBack()
+        ## rw.constantMemory2({'Pos' : [2,3], 'Mas' : [1]})
+        ## rw.placeInReg2({ 'Pos' : [0, 1], 'Mas' : [0]})
+        ## rw.Unroll(['k', 'kk'])
+        
+        rw.InSourceKernel(tempast2, filename = fileprefix + 'Laplace/'+funcname + '.cl')
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = fileprefix + 'Laplace/'+'boilerplate.cpp')
 
 if __name__ == "__main__":
     ## jacobi()
     ## matmul()
     ## nbody()
-    nbody2()
+    ## nbody2()
+    laplace()
     ## knearest()
     ## knearest2()
     ## gaussian()

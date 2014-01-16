@@ -146,8 +146,8 @@ void computeForces(float * Forces, float * Pos, float * Mas, unsigned N) {
 }
 
 
-#define matsize 20480
-// #define matsize 32
+// #define matsize 20480
+#define matsize 256
 
 int main(int argc, char** argv)
 {
@@ -196,7 +196,7 @@ int main(int argc, char** argv)
   // printMat2(M_mat, wM, hM);
   // printMat2(Pos   , wPos, hPos);
   // printMat2(Vel   , wVel, hVel);
-  // printMat2(Forces, wVel, hVel);
+  printMat2(Forces, wVel, hVel);
 
   free(Pos);
   free(M_mat);

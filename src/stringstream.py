@@ -57,6 +57,8 @@ class SSGenerator(object):
         for s in split:
             self.statements.append(Id(s))
 
+        
+            
         # Create the function where we generate the code for the
         # kernel function
         kernelfunc = EmptyFuncDecl('KernelString', type = ['std::string'])
@@ -129,16 +131,19 @@ class SSGenerator(object):
     def visit_GroupCompound(self, n):
         newline = self.newline
         start = self.start
+        
         if debug:
             newline = n.__class__.__name__ +  newline
             start = n.__class__.__name__ + start
-        s =  ''
+        s = ''
         for i,stat in enumerate(n.statements):
             start1 = ''
-            if i != 0:
+            ## if i != 0:
+            newline1 = ''
+            if not isinstance(stat, ForLoop):
+                newline1 = newline
                 start1 = start+ self._make_indent()
-            s += start1  + self.visit(stat) +  newline
-        s += start
+            s += start1  + self.visit(stat) + newline1
         return s
 
     def visit_Comment(self, n):
@@ -198,7 +203,7 @@ class SSGenerator(object):
         s = '' #start + self._make_indent() + '{' + newline
         self.indent_level += 2
         for stat in n.statements:
-            if isinstance(stat, ForLoop):
+            if isinstance(stat, ForLoop) or isinstance(stat, GroupCompound):
                 s += self.visit(stat)
             else:
                 s += start + self._make_indent() + self.visit(stat) + newline 
@@ -316,7 +321,12 @@ class SSGenerator(object):
         return n.name
 
     def visit_Include(self, n):
-        return "#include " + n.name
+        newline = self.newline
+        start = self.start
+        if debug:
+            newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ + start
+        return start + "#include " + '\\"'+ n.name[1:-1] + '\\"' + newline
  
     
     def visit_Constant(self, n):

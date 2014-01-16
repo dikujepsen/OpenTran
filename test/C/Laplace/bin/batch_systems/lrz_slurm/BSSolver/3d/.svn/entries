@@ -1,40 +1,0 @@
-10
-
-dir
-3386
-svn+ssh://jepsen@atsccs30.informatik.tu-muenchen.de/home_local/repositories/svn/SGpp/branches/LaplaceVector_GPU/bin/batch_systems/lrz_slurm/BSSolver/3d
-svn+ssh://jepsen@atsccs30.informatik.tu-muenchen.de/home_local/repositories/svn/SGpp
-
-
-
-2011-09-14T15:17:38.734317Z
-1790
-heinecke
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-4eea3252-f0fb-4393-894d-40516dce545b
-
-cart
-dir
-
-stretch
-dir
-
-log
-dir
-
-PAT
-dir
-

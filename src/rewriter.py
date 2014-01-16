@@ -84,7 +84,12 @@ class Rewriter(NodeVisitor):
         self.Loops = dict()
         # Contains the loop indices for each subscript
         self.SubIdx = dict()
-        
+        # Contains a list for each arrayref of what loop indices
+        # appear in the subscript.
+        self.Subscript = dict()
+        # The same as above but names are saved as strings instead
+        # of Id(strings)
+        self.SubscriptNoId = dict()
         # List of arguments for the kernel
         ## self.KernelArgs = list()
         ########################################################
@@ -131,6 +136,8 @@ class Rewriter(NodeVisitor):
         self.KernelStringStream = None
         # Holds a list of which loops we will unroll
         self.UnrollLoops = list()
+        # True is SetDefine were called.
+        self.DefinesAreMade = False
         
         
         
@@ -180,9 +187,9 @@ class Rewriter(NodeVisitor):
             self.ParDim = perfectForLoop.depth
 
         if self.ParDim == 1:
-            self.Local['size'] = ['64']
+            self.Local['size'] = ['256']
         else:
-            self.Local['size'] = ['8','8']
+            self.Local['size'] = ['16','16']
         
         innerbody = perfectForLoop.inner
         firstLoop = ForLoops()
@@ -196,10 +203,8 @@ class Rewriter(NodeVisitor):
 
         arrays = Arrays(self.index)
         
-        if firstLoop.ast is None: # No inner loop
-            arrays.visit(innerbody.compound)
-        else:
-            arrays.visit(firstLoop.ast)
+        arrays.visit(innerbody.compound)
+
         self.NumDims = arrays.numSubscripts
         self.LoopArrays = arrays.LoopArrays
         
@@ -290,7 +295,6 @@ class Rewriter(NodeVisitor):
 
         for n in self.ReadWrite:
             pset = self.ReadWrite[n]
-            print pset , n
             if len(pset) == 1:
                 if 'write' in pset:
                     self.WriteOnly.append(n)
@@ -317,8 +321,12 @@ class Rewriter(NodeVisitor):
         arrays.visit(ast)
         self.Subscript = arrays.Subscript
         self.SubIdx = arrays.SubIdx
+        self.SubscriptNoId = copy.deepcopy(self.Subscript)
+        for n in self.SubscriptNoId.values():
+            for m in n:
+                for i,k in enumerate(m):
+                    m[i] = k.name
 
-         
 
     def dataStructures(self):
         print "self.index " , self.index
@@ -348,6 +356,7 @@ class Rewriter(NodeVisitor):
         print "self.WriteOnly " , self.WriteOnly
         print "self.ReadOnly " , self.ReadOnly
         print "self.Subscript " , self.Subscript
+        print "self.SubscriptNoId " , self.SubscriptNoId
         print "TRANSFORMATIONS"
         print "self.Transposition " , self.Transposition
         print "self.ConstantMemory " , self.ConstantMemory
@@ -506,6 +515,7 @@ class Rewriter(NodeVisitor):
         ast.ext.append(newast)
 
     def SetDefine(self, varList):
+        self.DefinesAreMade = True
         accname = 'str'
         sstream = TypeId(['std::stringstream'], Id(accname))
         stats = self.Define.statements
@@ -596,7 +606,6 @@ class Rewriter(NodeVisitor):
             aref_old.subscript = aref_new.subscript
 
     def placeInReg2(self, arrDict):
-
         stats = self.Kernel.statements
         initstats = []
         loadings = []
@@ -611,10 +620,8 @@ class Rewriter(NodeVisitor):
                 reg = TypeId([type], regid)
                 writes.append(regid)
                 assign = Assignment(reg, sub)
-                loadings.append(assign)
+                initstats.append(assign)
         
-        comp = GroupCompound(loadings)
-        initstats.append(comp)
         stats.insert(0, GroupCompound(initstats))
  
         # Replace the global Arefs with the register Arefs
@@ -628,7 +635,71 @@ class Rewriter(NodeVisitor):
                 aref_old.name.name = aref_new.name
                 aref_old.subscript = []
                 count += 1
-            
+
+    
+    def placeInReg3(self, arrDict):
+        """ Check if the arrayref is inside a loop and use a static
+            array for the allocation of the registers
+        """
+        stats = self.Kernel.statements
+        initstats = []
+        loadings = []
+        writes = []
+
+        insideloop = ''
+        # check what loop we are inside
+        for n in arrDict:
+            # assume all refs are inside the same loop
+            idx = arrDict[n]
+            sublist = self.SubscriptNoId[n]
+            for sub in sublist[idx[0]]:
+                if sub not in self.GridIndices:
+                    insideloop = sub
+                    break
+            break
+
+        if insideloop == '':
+            print "placeInReg3 only works when the ArrayRef is inside a loop"
+            return
+
+        # Add allocation of registers to the initiation stage
+        for n in arrDict:
+            lval = TypeId([self.Type[n][0]], \
+                          Id(n+'_reg['+ str(self.UpperLimit[insideloop])\
+                             + ']'))
+            initstats.append(lval)
+
+
+        # add the loop to the initiation stage
+        loop = copy.deepcopy(self.Loops[insideloop])
+        loopstats = []
+        loop.compound.statements = loopstats       
+        initstats.append(loop)
+       
+        # Create the loadings
+        for i,n in enumerate(arrDict):
+            for m in arrDict[n]:
+                idx = m
+                sub = copy.deepcopy(self.LoopArrays[n][idx])
+                regid = Id(n + '_reg[d]')
+                writes.append(regid)
+                assign = Assignment(regid, sub)
+                loopstats.append(assign)
+        
+        stats.insert(0, GroupCompound(initstats))
+ 
+        # Replace the global Arefs with the register Arefs
+        count = 0
+        for i,n in enumerate(arrDict):
+            for m in arrDict[n]:
+                idx = m
+                aref_new = writes[count]
+                aref_old = self.LoopArrays[n][idx]
+                # Copying the internal data of the two arefs
+                aref_old.name.name = aref_new.name
+                aref_old.subscript = []
+                count += 1
+
 
     def constantMemory2(self, arrDict):
         arrNames = arrDict.keys()
@@ -717,7 +788,6 @@ class Rewriter(NodeVisitor):
 
         # find dimension of the constant ptr
         constantdim = sum([ (len(arrDict[m])) for m in arrDict])
-        print "constantdim " , constantdim
 
         # add constant writes
         writes = []
@@ -851,7 +921,6 @@ class Rewriter(NodeVisitor):
                                         
 
         # Add dimensions to ptrname
-        print "constantdim ", constantdim
         
         
         #self.ArrayIdToDimName
@@ -877,7 +946,6 @@ class Rewriter(NodeVisitor):
             outerstats.append(innerloop)
             # change increment of outer loop
             outerloop.inc = Increment(Id(outeridx), '+='+str(looplist[n]))
-            print "outerloop " , outerloop
             inneridx = outeridx*2
             # For adding to this index in other subscripts
             self.Add[outeridx] = inneridx
@@ -958,23 +1026,16 @@ class Rewriter(NodeVisitor):
                         else:
                             localIdx[name] = [loopindex]
             localsubdict[name] = localsub
-        print "localsubdict " , localsubdict
 
                         
         # Print built structures
-        print "localIdx ", localIdx
         arrName = arrNames[0]
 
         setIdx = set(localIdx[arrName])
-        print "setIdx " , setIdx
         localOffset = [int(self.LowerLimit[i]) for i in setIdx]
-        print "localOffset ", localOffset
 
-        print "localDim " , localDim
 
-        print "loopext ", loopext
 
-        print "local ", local
 
         # find indices in local subscripts
         loopIds = LoopIds(self.index)
@@ -995,7 +1056,6 @@ class Rewriter(NodeVisitor):
                     loopIds.reset()
                 subIdx[name].append(IdxList)
 
-        print "subIdx ", subIdx
             
         
         initstats = []
@@ -1095,7 +1155,6 @@ class Rewriter(NodeVisitor):
 
                 
 
-        print getlocals
         ## local[arrNames[0]][0][1].name = 'lll'
 
     def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0, middle = 1):
@@ -1120,7 +1179,6 @@ class Rewriter(NodeVisitor):
             loopIndices = LoopIndices()
             loopIndices.visit(forLoopAst)
             outeridx = loopIndices.index[0]
-            print outeridx
             forLoopAst.inc = Increment(Id(outeridx), '+='+ self.Local['size'][0])
             
             inneridx = outeridx*2
@@ -1155,8 +1213,6 @@ class Rewriter(NodeVisitor):
             if self.NumDims[arrName] == 2:
                 localDims[1] += abs(y)
 
-        print "localDims " , localDims
-        print "localOffset " , localOffset
 
         stats = []
         for arrName in arrNames:
@@ -1191,7 +1247,6 @@ class Rewriter(NodeVisitor):
             lval = TypeId(['unsigned'], Id('l'+self.GridIndices[i]))
             stats.append(Assignment(lval,rval))
 
-        print "loadings " , loadings
         exchangeIndices = ExchangeIndices(self.IndexToLocalVar,  self.LocalSwap.values())
         
         ## Creating the loading of values into the local array.
@@ -1218,7 +1273,6 @@ class Rewriter(NodeVisitor):
                         # might need to do something more complicated here
                         if outeridx in addToId.ids:
                             orisub[i] = Id(inneridx)
-                    print "outeridx ", outeridx
 
                     for i, n in enumerate(rsub): # GlobalLoad
                         idd = self.ReverseIdx[i] if self.NumDims[arrName] == 2 else i
@@ -1256,6 +1310,10 @@ class Rewriter(NodeVisitor):
         
 
     def transpose(self, arrName):
+        if self.DefinesAreMade:
+            print "Transposed must be called before SetDefine, returning..."
+            return
+
         if self.NumDims[arrName] != 2:
             print "Array ", arrName , "of dimension " , \
                   self.NumDims[arrName], "cannot be transposed"
