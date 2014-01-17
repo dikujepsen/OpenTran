@@ -451,7 +451,7 @@ class Rewriter(NodeVisitor):
                 print "Valid loops are %r. Your input contained %r. Aborting..." % (kernelLoops.keys(), l)
                 return
         
-        self.UnrollLoops = looplist
+        self.UnrollLoops.extend(looplist)
            
         
 
@@ -673,7 +673,10 @@ class Rewriter(NodeVisitor):
         # add the loop to the initiation stage
         loop = copy.deepcopy(self.Loops[insideloop])
         loopstats = []
+        # Exchange loop index
         loop.compound.statements = loopstats       
+        ## exchangeId = ExchangeId({insideloop : 'outer_'+insideloop})
+        ## exchangeId.visit(loop)
         initstats.append(loop)
        
         # Create the loadings
@@ -681,23 +684,22 @@ class Rewriter(NodeVisitor):
             for m in arrDict[n]:
                 idx = m
                 sub = copy.deepcopy(self.LoopArrays[n][idx])
-                regid = Id(n + '_reg[d]')
+                regid = ArrayRef(Id(n + '_reg'), [Id('d')])
                 writes.append(regid)
                 assign = Assignment(regid, sub)
                 loopstats.append(assign)
         
         stats.insert(0, GroupCompound(initstats))
- 
         # Replace the global Arefs with the register Arefs
         count = 0
         for i,n in enumerate(arrDict):
             for m in arrDict[n]:
                 idx = m
-                aref_new = writes[count]
+                aref_new = copy.deepcopy(writes[count])
                 aref_old = self.LoopArrays[n][idx]
                 # Copying the internal data of the two arefs
-                aref_old.name.name = aref_new.name
-                aref_old.subscript = []
+                aref_old.name.name = aref_new.name.name
+                aref_old.subscript = aref_new.subscript
                 count += 1
 
 
@@ -943,15 +945,19 @@ class Rewriter(NodeVisitor):
             typeIds.visit(innerloop.compound)
             for m in typeIds.ids:
                 outerstats.append(m)
+            print "outerloop " , outerloop
             outerstats.append(innerloop)
+            upperbound = str(looplist[n])
+            if upperbound == '0':
+                upperbound = outerloop.cond.rval.name
             # change increment of outer loop
-            outerloop.inc = Increment(Id(outeridx), '+='+str(looplist[n]))
+            outerloop.inc = Increment(Id(outeridx), '+='+upperbound)
             inneridx = outeridx*2
             # For adding to this index in other subscripts
             self.Add[outeridx] = inneridx
 
             # new inner loop
-            innerloop.cond = BinOp(Id(inneridx), '<' , Id(str(looplist[n])))
+            innerloop.cond = BinOp(Id(inneridx), '<' , Id(upperbound))
             innerloop.inc = Increment(Id(inneridx), '++')
             innerloop.init = ConstantAssignment(inneridx)
             self.Loops[inneridx] = innerloop
@@ -965,7 +971,8 @@ class Rewriter(NodeVisitor):
 
             # unroll the inner index in stringstream
             self.Unroll([inneridx])
-        
+            if looplist[n] == 0:
+                self.Unroll([outeridx])
 
 
         

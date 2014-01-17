@@ -533,6 +533,8 @@ class TypeIds2(NodeVisitor):
     """
     def __init__(self):
         self.ids = set()
+    def visit_ForLoop(self,node):
+        self.visit(node.compound)
     def visit_TypeId(self, node):
         self.ids.add(copy.deepcopy(node))
         node.type = []
