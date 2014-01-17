@@ -183,7 +183,7 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define storage_size 1024
+#define storage_size 262144
 #define dim 3
 
 int main(int argc, char** argv)
@@ -245,7 +245,7 @@ int main(int argc, char** argv)
 #endif
   // printMat(alpha, alpha_size);
     
-  printMat(result, result_size);
+  // printMat(result, result_size);
 
   free(level);
   free(level_int);

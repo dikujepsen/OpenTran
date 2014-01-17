@@ -58,36 +58,36 @@ std::string KernelString()
   str << "	__global float * lcl_q, __global float * index, __global float * result, " << endl;
   str << "	__global float * lcl_q_inv, __global float * alpha) {" << endl;
   str << "  unsigned li = get_local_id(0);" << endl;
-  str << "  __local float alpha_local[1*8];" << endl;
+  str << "  __local float alpha_local[1*256];" << endl;
   str << "  float index_reg[dim];" << endl;
   str << "  float level_int_reg[dim];" << endl;
   str << "  float level_reg[dim];" << endl;
-  str << "  for (unsigned d = 0; d < dim; d++) {" << endl;
-  str << "      index_reg[d] = index[(d * hst_ptrindex_dim1) + get_global_id(0)];" << endl;
-  str << "      level_int_reg[d] = level_int[(d * hst_ptrlevel_int_dim1) + get_global_id(0)];" << endl;
-  str << "      level_reg[d] = level[(d * hst_ptrlevel_dim1) + get_global_id(0)];" << endl;
-  str << "  }" << endl;
+    for (unsigned d = 0; d < dim; d++) {
+  str << "      index_reg[d] = index[(" << d << " * hst_ptrindex_dim1) + get_global_id(0)];" << endl;
+  str << "      level_int_reg[d] = level_int[(" << d << " * hst_ptrlevel_int_dim1) + get_global_id(0)];" << endl;
+  str << "      level_reg[d] = level[(" << d << " * hst_ptrlevel_dim1) + get_global_id(0)];" << endl;
+    }
   str << "  float sub = 0.0;" << endl;
   str << "  float gradient_temp[dim];" << endl;
   str << "  float dot_temp[dim];" << endl;
-  str << "  for (unsigned j = 0; j < storagesize; j+=8) {" << endl;
+  str << "  for (unsigned j = 0; j < storagesize; j+=256) {" << endl;
   str << "      alpha_local[get_local_id(0)] = alpha[j + get_local_id(0)];" << endl;
-  str << "      for (unsigned jj = 0; jj < 8; jj++) {" << endl;
-  str << "          for (unsigned d = 0; d < dim; d++) {" << endl;
+  str << "      for (unsigned jj = 0; jj < 256; jj++) {" << endl;
+            for (unsigned d = 0; d < dim; d++) {
   str << "              float level_i = level_reg[d];" << endl;
-  str << "              float level_j = level[(d * hst_ptrlevel_dim1) + j + jj];" << endl;
+  str << "              float level_j = level[(" << d << " * hst_ptrlevel_dim1) + j + jj];" << endl;
   str << "              float level_int_i = level_int_reg[d];" << endl;
-  str << "              float level_int_j = level_int[(d * hst_ptrlevel_int_dim1) + j + jj];" << endl;
+  str << "              float level_int_j = level_int[(" << d << " * hst_ptrlevel_int_dim1) + j + jj];" << endl;
   str << "              float index_i = index_reg[d];" << endl;
-  str << "              float index_j = index[(d * hst_ptrindex_dim1) + j + jj];" << endl;
-  str << "              gradient_temp[d] = gradient(" << endl;
+  str << "              float index_j = index[(" << d << " * hst_ptrindex_dim1) + j + jj];" << endl;
+  str << "              gradient_temp[" << d << "] = gradient(" << endl;
   str << "	level_i, index_i, level_j, " << endl;
-  str << "	index_j, lcl_q_inv[d]);" << endl;
-  str << "              dot_temp[d] = l2dot(" << endl;
+  str << "	index_j, lcl_q_inv[" << d << "]);" << endl;
+  str << "              dot_temp[" << d << "] = l2dot(" << endl;
   str << "	level_i, level_j, index_i, " << endl;
   str << "	index_j, level_int_i, level_int_j, " << endl;
-  str << "	lcl_q[d]);" << endl;
-  str << "          }" << endl;
+  str << "	lcl_q[" << d << "]);" << endl;
+            }
   str << "          float alphatemp = alpha_local[jj];" << endl;
   str << "          for (unsigned d_outer = 0; d_outer < dim; d_outer++) {" << endl;
   str << "              float element = alphatemp;" << endl;
@@ -164,8 +164,8 @@ void AllocateBuffers()
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrlcl_q");
   dev_ptrresult = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrresult_mem_size, 
-	NULL, &oclErrNum);
+	context, CL_MEM_USE_HOST_PTR, hst_ptrresult_mem_size, 
+	hst_ptrresult, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrresult");
   dev_ptrlcl_q_inv = clCreateBuffer(
@@ -222,7 +222,7 @@ void ExecLaplaceFor()
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
   size_t LaplaceFor_global_worksize[] = {storagesize - 0};
-  size_t LaplaceFor_local_worksize[] = {8};
+  size_t LaplaceFor_local_worksize[] = {256};
   size_t LaplaceFor_global_offset[] = {0};
   oclErrNum = clEnqueueNDRangeKernel(
 	command_queue, LaplaceForKernel, 1, 
@@ -231,11 +231,6 @@ void ExecLaplaceFor()
 	);
   oclCheckErr(
 	oclErrNum, "clEnqueueNDRangeKernel");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrresult, CL_TRUE, 
-	0, hst_ptrresult_mem_size, hst_ptrresult, 
-	1, &GPUExecution, NULL
-	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
   oclErrNum = clFinish(command_queue);

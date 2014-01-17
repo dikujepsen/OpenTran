@@ -822,7 +822,7 @@ def laplace():
         rw.initNewRepr(tempast)
 
 
-        rw.SetLSIZE(['8'])
+        rw.SetLSIZE(['256'])
         ## rw.localMemory(['Pos'], south = 1, middle = 1)
         rw.dataStructures()
         ## rw.placeInReg2({'level': [0], 'level_int' : [0], 'index' : [0]})
@@ -837,10 +837,10 @@ def laplace():
         rw.localMemory2(['alpha'])
         ## rw.placeInReg2({ 'alpha_local' : [1]})
         ## rw.constantMemory(['Pos'])
-        ## rw.SetNoReadBack()
+        rw.SetNoReadBack()
         ## rw.constantMemory2({'Pos' : [2,3], 'Mas' : [1]})
         ## rw.placeInReg2({ 'Pos' : [0, 1], 'Mas' : [0]})
-        ## rw.Unroll(['k', 'kk'])
+        rw.Unroll2(['d'])
         
         rw.InSourceKernel(tempast2, filename = fileprefix + 'Laplace/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
