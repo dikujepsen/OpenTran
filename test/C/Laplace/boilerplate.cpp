@@ -63,9 +63,9 @@ std::string KernelString()
   str << "  float level_int_reg[dim];" << endl;
   str << "  float level_reg[dim];" << endl;
     for (unsigned d = 0; d < dim; d++) {
-  str << "      index_reg[d] = index[(" << d << " * hst_ptrindex_dim1) + get_global_id(0)];" << endl;
-  str << "      level_int_reg[d] = level_int[(" << d << " * hst_ptrlevel_int_dim1) + get_global_id(0)];" << endl;
-  str << "      level_reg[d] = level[(" << d << " * hst_ptrlevel_dim1) + get_global_id(0)];" << endl;
+  str << "      index_reg[" << d << "] = index[(" << d << " * hst_ptrindex_dim1) + get_global_id(0)];" << endl;
+  str << "      level_int_reg[" << d << "] = level_int[(" << d << " * hst_ptrlevel_int_dim1) + get_global_id(0)];" << endl;
+  str << "      level_reg[" << d << "] = level[(" << d << " * hst_ptrlevel_dim1) + get_global_id(0)];" << endl;
     }
   str << "  float sub = 0.0;" << endl;
   str << "  float gradient_temp[dim];" << endl;
@@ -73,29 +73,42 @@ std::string KernelString()
   str << "  for (unsigned j = 0; j < storagesize; j+=256) {" << endl;
   str << "      alpha_local[get_local_id(0)] = alpha[j + get_local_id(0)];" << endl;
   str << "      for (unsigned jj = 0; jj < 256; jj++) {" << endl;
-            for (unsigned d = 0; d < dim; d++) {
-  str << "              float level_i = level_reg[d];" << endl;
-  str << "              float level_j = level[(" << d << " * hst_ptrlevel_dim1) + j + jj];" << endl;
-  str << "              float level_int_i = level_int_reg[d];" << endl;
-  str << "              float level_int_j = level_int[(" << d << " * hst_ptrlevel_int_dim1) + j + jj];" << endl;
-  str << "              float index_i = index_reg[d];" << endl;
-  str << "              float index_j = index[(" << d << " * hst_ptrindex_dim1) + j + jj];" << endl;
-  str << "              gradient_temp[" << d << "] = gradient(" << endl;
+            for (unsigned d = 0; d < dim; d+=dim) {
+  str << "              float level_int_j;" << endl;
+  str << "              float level_int_i;" << endl;
+  str << "              float index_j;" << endl;
+  str << "              float index_i;" << endl;
+  str << "              float level_i;" << endl;
+  str << "              float level_j;" << endl;
+                for (unsigned dd = 0; dd < dim; dd++) {
+  str << "                  level_i = level_reg[" << d << " + " << dd << "];" << endl;
+  str << "                  level_j = level[((" << d << " + " << dd << ") * hst_ptrlevel_dim1) + j + jj];" << endl;
+  str << "                  level_int_i = level_int_reg[" << d << " + " << dd << "];" << endl;
+  str << "                  level_int_j = level_int[((" << d << " + " << dd << ") * hst_ptrlevel_int_dim1) + j + jj];" << endl;
+  str << "                  index_i = index_reg[" << d << " + " << dd << "];" << endl;
+  str << "                  index_j = index[((" << d << " + " << dd << ") * hst_ptrindex_dim1) + j + jj];" << endl;
+  str << "                  gradient_temp[" << d << " + " << dd << "] = gradient(" << endl;
   str << "	level_i, index_i, level_j, " << endl;
-  str << "	index_j, lcl_q_inv[" << d << "]);" << endl;
-  str << "              dot_temp[" << d << "] = l2dot(" << endl;
+  str << "	index_j, lcl_q_inv[" << d << " + " << dd << "]);" << endl;
+  str << "                  dot_temp[" << d << " + " << dd << "] = l2dot(" << endl;
   str << "	level_i, level_j, index_i, " << endl;
   str << "	index_j, level_int_i, level_int_j, " << endl;
-  str << "	lcl_q[" << d << "]);" << endl;
+  str << "	lcl_q[" << d << " + " << dd << "]);" << endl;
+                }
             }
   str << "          float alphatemp = alpha_local[jj];" << endl;
-  str << "          for (unsigned d_outer = 0; d_outer < dim; d_outer++) {" << endl;
-  str << "              float element = alphatemp;" << endl;
-  str << "              for (unsigned d_inner = 0; d_inner < dim; d_inner++) {" << endl;
-  str << "                  element *= (dot_temp[d_inner] * (d_outer != d_inner)) + (gradient_temp[d_inner] * (d_outer == d_inner));" << endl;
-  str << "              }" << endl;
-  str << "              sub += lambda[d_outer] * element;" << endl;
-  str << "          }" << endl;
+            for (unsigned d_outer = 0; d_outer < dim; d_outer+=dim) {
+  str << "              float element;" << endl;
+                for (unsigned d_outerd_outer = 0; d_outerd_outer < dim; d_outerd_outer++) {
+  str << "                  element = alphatemp;" << endl;
+                    for (unsigned d_inner = 0; d_inner < dim; d_inner+=dim) {
+                        for (unsigned d_innerd_inner = 0; d_innerd_inner < dim; d_innerd_inner++) {
+  str << "                          element *= (dot_temp[" << d_inner << " + " << d_innerd_inner << "] * ((" << d_outer << " + " << d_outerd_outer << ") != (" << d_inner << " + " << d_innerd_inner << "))) + (gradient_temp[" << d_inner << " + " << d_innerd_inner << "] * ((" << d_outer << " + " << d_outerd_outer << ") == (" << d_inner << " + " << d_innerd_inner << ")));" << endl;
+                        }
+                    }
+  str << "                  sub += lambda[" << d_outer << " + " << d_outerd_outer << "] * element;" << endl;
+                }
+            }
   str << "      }" << endl;
   str << "  }" << endl;
   str << "  result[get_global_id(0)] = sub;" << endl;
