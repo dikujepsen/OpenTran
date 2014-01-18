@@ -5,120 +5,120 @@
 #include "boilerplate.cpp"
 
 using namespace std;
-float gradient2(
-		float i_level_grad,
-		float i_index_grad,
-		float j_level_grad,
-		float j_index_grad,
-		float lcl_q_inv
+double gradient2(
+		double i_level_grad,
+		double i_index_grad,
+		double j_level_grad,
+		double j_index_grad,
+		double lcl_q_inv
 		) {
-  float grad;
+  double grad;
   
   //only affects the diagonal of the stiffness matrix
   unsigned doGrad = ((i_level_grad == j_level_grad) && (i_index_grad == j_index_grad));
-  grad = i_level_grad * 2.0 * (float)(doGrad);
+  grad = i_level_grad * 2.0 * (double)(doGrad);
 
   return (grad)* lcl_q_inv;
 }
 
-float gradient(
-		float i_level_grad,
-		float i_index_grad,
-		float j_level_grad,
-		float j_index_grad,
-		float lcl_q_inv
+double gradient(
+		double i_level_grad,
+		double i_index_grad,
+		double j_level_grad,
+		double j_index_grad,
+		double lcl_q_inv
 		) {
-  float grad;
+  double grad;
   
   grad = i_level_grad * 2.0;
 
   return (grad)* lcl_q_inv;
 }
 
-float l2dot2(float lid,
-	     float ljd,
-	     float iid,
-	     float ijd,
-	     float in_lid,
-	     float in_ljd,
-	     float lcl_q
+double l2dot2(double lid,
+	     double ljd,
+	     double iid,
+	     double ijd,
+	     double in_lid,
+	     double in_ljd,
+	     double lcl_q
 	     ) {
 
-  float res_one = (2.0 / 3.0) * in_lid * (iid == ijd);
+  double res_one = (2.0 / 3.0) * in_lid * (iid == ijd);
 
   bool selector = (lid > ljd);
-  float i1d = iid * (selector) + ijd * (!selector);
-  float in_l1d = in_lid * (selector) + in_ljd * (!selector);
-  float i2d = ijd * (selector) + iid * (!selector);
-  float l2d = ljd * (selector) + lid * (!selector);
-  float in_l2d = in_ljd * (selector) + in_lid * (!selector);
+  double i1d = iid * (selector) + ijd * (!selector);
+  double in_l1d = in_lid * (selector) + in_ljd * (!selector);
+  double i2d = ijd * (selector) + iid * (!selector);
+  double l2d = ljd * (selector) + lid * (!selector);
+  double in_l2d = in_ljd * (selector) + in_lid * (!selector);
 
-  float q = (i1d - 1) * in_l1d;
-  float p = (i1d + 1) * in_l1d;
+  double q = (i1d - 1) * in_l1d;
+  double p = (i1d + 1) * in_l1d;
   unsigned overlap = (std::max(q, (i2d - 1) * in_l2d) < std::min(p, (i2d + 1) * in_l2d));
 
 
-  float temp_res = 2.0 - fabs(l2d * q - i2d) - fabs(l2d * p - i2d);
+  double temp_res = 2.0 - fabs(l2d * q - i2d) - fabs(l2d * p - i2d);
   temp_res *= (0.5 * in_l1d);
-  float res_two = temp_res * overlap; // Now mask result
+  double res_two = temp_res * overlap; // Now mask result
 
   return (res_one * (lid == ljd) + res_two * (lid != ljd)) * lcl_q;
 }
 
-float l2dot(float lid,
-	     float ljd,
-	     float iid,
-	     float ijd,
-	     float in_lid,
-	     float in_ljd,
-	     float lcl_q
+double l2dot(double lid,
+	     double ljd,
+	     double iid,
+	     double ijd,
+	     double in_lid,
+	     double in_ljd,
+	     double lcl_q
 	     ) {
 
-  float res_one = (2.0 / 3.0) * in_lid ;
+  double res_one = (2.0 / 3.0) * in_lid ;
 
   bool selector = (lid > ljd);
-  float i1d = iid * (selector) + ijd * (!selector);
-  float in_l1d = in_lid * (selector) + in_ljd * (!selector);
-  float i2d = ijd * (selector) + iid * (!selector);
-  float l2d = ljd * (selector) + lid * (!selector);
-  float in_l2d = in_ljd * (selector) + in_lid * (!selector);
+  double i1d = iid * (selector) + ijd * (!selector);
+  double in_l1d = in_lid * (selector) + in_ljd * (!selector);
+  double i2d = ijd * (selector) + iid * (!selector);
+  double l2d = ljd * (selector) + lid * (!selector);
+  double in_l2d = in_ljd * (selector) + in_lid * (!selector);
 
-  float q = (i1d - 1) * in_l1d;
-  float p = (i1d + 1) * in_l1d;
+  double q = (i1d - 1) * in_l1d;
+  double p = (i1d + 1) * in_l1d;
   unsigned overlap = (std::max(q, (i2d - 1) * in_l2d) < std::min(p, (i2d + 1) * in_l2d));
 
 
-  float temp_res = 2.0 - fabs(l2d * q - i2d) - fabs(l2d * p - i2d);
+  double temp_res = 2.0 - fabs(l2d * q - i2d) - fabs(l2d * p - i2d);
   temp_res *= (0.5 * in_l1d);
-  float res_two = temp_res * overlap; // Now mask result
+  double res_two = temp_res * overlap; // Now mask result
 
   return (res_one * (lid == ljd) + res_two * (lid != ljd)) * lcl_q;
 }
 
 void
-Laplace(float * level,
-	float * level_int,
-	float * index,
-	float * result,
-	float * lcl_q_inv,
-	float * lcl_q,
-	float * alpha,
-	float * lambda,
+Laplace(double * level,
+	double * level_int,
+	double * index,
+	double * result,
+	double * lcl_q_inv,
+	double * lcl_q,
+	double * alpha,
+	double * lambda,
 	unsigned storagesize, unsigned dim)
 {
 
   for (unsigned i = 0; i < storagesize; i++) {
-    float sub = 0.0;
+    double sub = 0.0;
     for (unsigned j = 0; j < storagesize; j++) {
-      float gradient_temp[dim];
-      float dot_temp[dim];
+      double gradient_temp[dim];
+      double dot_temp[dim];
       for (unsigned d = 0; d < dim; d++) {
-	float level_i = level[i * dim + d];
-	float level_j = level[j * dim + d];
-	float level_int_i = level_int[i * dim + d];
-	float level_int_j = level_int[j * dim + d];
-	float index_i = index[i * dim + d];
-	float index_j = index[j * dim + d];
+	double level_i = level[i * dim + d];
+	double level_j = level[j * dim + d];
+	double level_int_i = level_int[i * dim + d];
+	double level_int_j = level_int[j * dim + d];
+	double index_i = index[i * dim + d];
+	double index_j = index[j * dim + d];
 	gradient_temp[d] = gradient2(level_i,index_i,
 				     level_j,index_j, lcl_q_inv[d]);
 	dot_temp[d] = l2dot2(level_i,
@@ -130,7 +130,7 @@ Laplace(float * level,
 			     lcl_q[d]);
       }
       for (size_t d_outer = 0; d_outer < dim; d_outer++) {
-	float element = alpha[j];
+	double element = alpha[j];
 
 	for (size_t d_inner = 0; d_inner < dim; d_inner++) {
 	  element *= ((dot_temp[d_inner] * (d_outer != d_inner)) + (gradient_temp[d_inner] * (d_outer == d_inner)));
@@ -144,7 +144,7 @@ Laplace(float * level,
 }
 
 void
-zeroMatrix(float* B, unsigned wB, unsigned hB)
+zeroMatrix(double* B, unsigned wB, unsigned hB)
 {
   for (unsigned i = 0; i < (hB); i++) {
     for (unsigned j = 0; j < (wB); j++) {
@@ -156,14 +156,14 @@ zeroMatrix(float* B, unsigned wB, unsigned hB)
 #define ri 20
 #define rd 20.0
 void
-randMat(float* mat, unsigned mat_size)
+randMat(double* mat, unsigned mat_size)
 {
   for (unsigned i = 0; i < mat_size; ++i) {
     mat[i] = ((rand() % ri) / rd ) * rd;
   }
 }
 void
-divMat(float* mat, unsigned mat_size, float diver)
+divMat(double* mat, unsigned mat_size, double diver)
 {
   for (unsigned i = 0; i < mat_size; ++i) {
     mat[i] = mat[i] / diver;
@@ -171,7 +171,7 @@ divMat(float* mat, unsigned mat_size, float diver)
 }
 
 void
-printMat(float* mat, unsigned mat_size)
+printMat(double* mat, unsigned mat_size)
 {
   for (unsigned i = 0; i < mat_size; ++i) {
     cout << mat[i] << " ";
@@ -183,7 +183,7 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define storage_size 1024
+#define storage_size 32768
 #define dim 3
 
 int main(int argc, char** argv)
@@ -202,14 +202,14 @@ int main(int argc, char** argv)
   unsigned alpha_size = storage_size;
 
   
-  float * level = new float[level_size];
-  float * level_int = new float[level_int_size];
-  float * index = new float[index_size];
-  float * result = new float[result_size];
-  float * alpha = new float[alpha_size];
-  float * lcl_q = new float[dim];
-  float * lcl_q_inv = new float[dim];
-  float * lambda = new float[dim];
+  double * level = new double[level_size];
+  double * level_int = new double[level_int_size];
+  double * index = new double[index_size];
+  double * result = new double[result_size];
+  double * alpha = new double[alpha_size];
+  double * lcl_q = new double[dim];
+  double * lcl_q_inv = new double[dim];
+  double * lambda = new double[dim];
   srand(2013);
   randMat(level, level_size);
   randMat(level_int, level_int_size);
@@ -245,7 +245,7 @@ int main(int argc, char** argv)
 #endif
   // printMat(alpha, alpha_size);
     
-  printMat(result, result_size);
+  // printMat(result, result_size);
 
   free(level);
   free(level_int);
