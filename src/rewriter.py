@@ -325,8 +325,13 @@ class Rewriter(NodeVisitor):
         for n in self.SubscriptNoId.values():
             for m in n:
                 for i,k in enumerate(m):
-                    m[i] = k.name
-
+                    try:
+                        m[i] = k.name
+                    except AttributeError:
+                        try:
+                            m[i] = k.value
+                        except AttributeError:
+                            m[i] = 'unknown'
 
     def dataStructures(self):
         print "self.index " , self.index
@@ -457,6 +462,7 @@ class Rewriter(NodeVisitor):
 
     def InSourceKernel(self, ast, filename):
         self.rewriteToDeviceCRelease(ast)
+        
         ssprint = SSGenerator()
         newast = FileAST([])
         ssprint.createKernelStringStream(ast, newast, self.UnrollLoops,filename = filename)
@@ -520,7 +526,6 @@ class Rewriter(NodeVisitor):
                     break
                 
 
-        
         ext.append(FuncDecl(typeid, ArgList(arglist), self.Kernel))
         ast.ext = list()
         ## ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
@@ -1632,6 +1637,13 @@ class Rewriter(NodeVisitor):
         ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
         execBody.append(ErrCheck)
 
+        arglist = ArgList([Id('command_queue')])
+        finish = FuncDecl(Id('clFinish'), arglist, Compound([]))
+        execBody.append(Assignment(Id(ErrName), finish))
+        
+        arglist = ArgList([Id(ErrName), Constant('clFinish')])
+        ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
+        execBody.append(ErrCheck)
 
         for n in self.WriteOnly:
             lval = Id(ErrName)
@@ -1700,6 +1712,7 @@ class Rewriter(NodeVisitor):
         if self.KernelStringStream is not None:
             useFile = 'false'
             
+        ifThenList.append(Id('cout << KernelDefines << endl;'))
         arglist = ArgList([Constant(self.DevFuncId),
                            Constant(self.DevFuncId+'.cl'),
                            Id('KernelString()'),
@@ -1707,9 +1720,9 @@ class Rewriter(NodeVisitor):
                            Id('&' + self.KernelName),
                            Id('KernelDefines')])
         ifThenList.append(FuncDecl(Id('compileKernelFromFile'), arglist, Compound([])))
-
         ifThenList.append(FuncDecl(Id('SetArguments'+self.DevFuncId), ArgList([]), Compound([])))
-
+        
+        
         runOCLBody.append(IfThen(Id('isFirstTime'), Compound(ifThenList)))
         arglist = ArgList([])
 

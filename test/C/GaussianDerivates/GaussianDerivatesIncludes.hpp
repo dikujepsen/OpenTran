@@ -33,13 +33,13 @@ float DaKs(int da[3], float xmy[3], float r, float ks) {
   float z[3];
   float sum_da = 0.0;
   for (int k = 0; k < 3; k++) {
-    z[k] = sqrt((float)2)/r*xmy[k];
+    z[k] = sqrt(2.0f)/r*xmy[k];
 
     sum_da += da[k];
   }
   
   float res;
-  res = pow(-sqrt((float)2)/r, sum_da)*He(da[0],z[0])*He(da[1],z[1])*He(da[2],z[2])*ks;
+  res = pow(-sqrt(2.0f)/r, sum_da)*He(da[0],z[0])*He(da[1],z[1])*He(da[2],z[2])*ks;
   return res;
 }
 
@@ -49,5 +49,5 @@ float gamma(float xmy[3], float r2, float sw2) {
   for (int k = 0; k < 3; k++) {
     dot1 += xmy[k] * xmy[k];
   }
-  return 1.0/sw2*exp(dot1/r2);
+  return 1.0f/sw2*exp(dot1/r2);
 }
