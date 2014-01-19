@@ -175,8 +175,8 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define LP 3200
-#define LQ 3200
+#define LP 4800
+#define LQ 4800
 
 int main(int argc, char** argv)
 {
@@ -191,7 +191,7 @@ int main(int argc, char** argv)
 
   unsigned p_a_i_x_size = Lp * p_a_i_rows;
   unsigned q_a_i_x_size = Lq * q_a_i_rows;
-  unsigned K__ij_x_size = Lp * Lq; 
+  unsigned K__ij_x_size = Lq * K__ij_rows; 
   float * p_a_i_x = new float[p_a_i_x_size];
   float * q_a_i_x = new float[q_a_i_x_size];
   float * K__ij_x = new float[K__ij_x_size];
@@ -242,6 +242,7 @@ int main(int argc, char** argv)
 
   
 #if 0
+ timer.start();
   GaussianDerivates( Lp,  Lq,  dim,
 		     p_a_i_x,  p_a_i_rows,
 		     q_a_i_x,  q_a_i_rows,
@@ -250,6 +251,7 @@ int main(int argc, char** argv)
 		     D1Ks__ijb_x,     D1Ks__ijb_dimsI,
 		     D2Ks__ijbg_x,    D2Ks__ijbg_dimsI,
 		     D3Ks__ijbgd_x,   D3Ks__ijbgd_dimsI);
+ cout << timer.stop() << endl;
 #else
 RunOCLGaussianDerivatesForKernel(
 	dim, D1Ks__ijb_dimsI, 2, 

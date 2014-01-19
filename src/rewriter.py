@@ -196,7 +196,7 @@ class Rewriter(NodeVisitor):
         firstLoop.visit(innerbody.compound)
         loopIndices = LoopIndices()
         if firstLoop.ast is not None:
-            loopIndices.visit(firstLoop.ast)
+            loopIndices.visit(innerbody.compound)
             self.Loops = loopIndices.Loops        
             self.InsideKernel = firstLoop.ast
 
