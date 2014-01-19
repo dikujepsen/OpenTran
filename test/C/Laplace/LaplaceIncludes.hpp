@@ -1,46 +1,46 @@
-float gradient(
-		float i_level_grad,
-		float i_index_grad,
-		float j_level_grad,
-		float j_index_grad,
-		float lcl_q_inv
+double gradient(
+		double i_level_grad,
+		double i_index_grad,
+		double j_level_grad,
+		double j_index_grad,
+		double lcl_q_inv
 		) {
-  float grad;
+  double grad;
   
   unsigned doGrad = ((i_level_grad == j_level_grad) && (i_index_grad == j_index_grad));
-  grad = i_level_grad * 2.0 * (float)(doGrad);
+  grad = i_level_grad * 2.0 * (double)(doGrad);
 
   return (grad)* lcl_q_inv;
 }
 
 
 
-float l2dot(float lid,
-	     float ljd,
-	     float iid,
-	     float ijd,
-	     float in_lid,
-	     float in_ljd,
-	     float lcl_q
+double l2dot(double lid,
+	     double ljd,
+	     double iid,
+	     double ijd,
+	     double in_lid,
+	     double in_ljd,
+	     double lcl_q
 	     ) {
 
-  float res_one = (2.0 / 3.0) * in_lid * (iid == ijd);
+  double res_one = (2.0 / 3.0) * in_lid * (iid == ijd);
 
   unsigned selector = (lid > ljd);
-  float i1d = iid * (selector) + ijd * (!selector);
-  float in_l1d = in_lid * (selector) + in_ljd * (!selector);
-  float i2d = ijd * (selector) + iid * (!selector);
-  float l2d = ljd * (selector) + lid * (!selector);
-  float in_l2d = in_ljd * (selector) + in_lid * (!selector);
+  double i1d = iid * (selector) + ijd * (!selector);
+  double in_l1d = in_lid * (selector) + in_ljd * (!selector);
+  double i2d = ijd * (selector) + iid * (!selector);
+  double l2d = ljd * (selector) + lid * (!selector);
+  double in_l2d = in_ljd * (selector) + in_lid * (!selector);
 
-  float q = (i1d - 1) * in_l1d;
-  float p = (i1d + 1) * in_l1d;
+  double q = (i1d - 1) * in_l1d;
+  double p = (i1d + 1) * in_l1d;
   unsigned overlap = (max(q, (i2d - 1) * in_l2d) < min(p, (i2d + 1) * in_l2d));
 
 
-  float temp_res = 2.0 - fabs(l2d * q - i2d) - fabs(l2d * p - i2d);
+  double temp_res = 2.0 - fabs(l2d * q - i2d) - fabs(l2d * p - i2d);
   temp_res *= (0.5 * in_l1d);
-  float res_two = temp_res * overlap;
+  double res_two = temp_res * overlap;
 
   return (res_one * (lid == ljd) + res_two * (lid != ljd)) * lcl_q;
 }

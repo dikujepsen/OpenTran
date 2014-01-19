@@ -508,6 +508,18 @@ class Rewriter(NodeVisitor):
 
         ext = self.Includes
         newast = FileAST(ext)
+        for n in arglist:
+            if len(n.type) == 3:
+                if n.type[1] == 'double':
+                    ext.insert(0, Compound([Id("#pragma OPENCL EXTENSION cl_khr_fp64: enable")]))
+                    break
+            else:
+                if n.type[0] == 'double':
+                    ext.insert(0,Compound([Id("#pragma OPENCL EXTENSION cl_khr_fp64: enable")]))
+
+                    break
+                
+
         
         ext.append(FuncDecl(typeid, ArgList(arglist), self.Kernel))
         ast.ext = list()
@@ -945,7 +957,6 @@ class Rewriter(NodeVisitor):
             typeIds.visit(innerloop.compound)
             for m in typeIds.ids:
                 outerstats.append(m)
-            print "outerloop " , outerloop
             outerstats.append(innerloop)
             upperbound = str(looplist[n])
             if upperbound == '0':

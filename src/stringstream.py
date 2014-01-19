@@ -121,10 +121,15 @@ class SSGenerator(object):
 
     
     def visit_GlobalCompound(self, n):
-        s =  ''
+        newline = self.newline
+        start = self.start
+        if debug:
+            newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ + start
+        s = ''
         for stat in n.statements:
            s += self.visit(stat)
-        s += n.__class__.__name__ + self.newline
+        s = start + s + self.newline
         return s
 
 
