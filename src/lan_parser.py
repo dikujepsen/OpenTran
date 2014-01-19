@@ -837,7 +837,7 @@ def laplace():
         # rw.localMemory2(['alpha'])
         ## rw.placeInReg2({ 'alpha_local' : [1]})
         ## rw.constantMemory(['Pos'])
-        rw.SetNoReadBack()
+        # rw.SetNoReadBack()
         ## rw.constantMemory2({'Pos' : [2,3], 'Mas' : [1]})
         ## rw.placeInReg2({ 'Pos' : [0, 1], 'Mas' : [0]})
         # rw.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})

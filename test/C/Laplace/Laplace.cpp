@@ -183,7 +183,7 @@ printMat(double* mat, unsigned mat_size)
 }
 
 
-#define storage_size 262144
+#define storage_size 166400
 #define dim 3
 
 int main(int argc, char** argv)
@@ -222,7 +222,7 @@ int main(int argc, char** argv)
   divMat(alpha, alpha_size, 100.0);
   divMat(level_int, level_int_size, 10000.0);
  
-#if 0
+#if 1
   Laplace(level,
   	  level_int,
   	  index,
@@ -245,7 +245,7 @@ int main(int argc, char** argv)
 #endif
   // printMat(alpha, alpha_size);
     
-  // printMat(result, result_size);
+  printMat(result, result_size);
 
   free(level);
   free(level_int);

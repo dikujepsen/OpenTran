@@ -160,8 +160,8 @@ void AllocateBuffers()
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrlcl_q");
   dev_ptrresult = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR, hst_ptrresult_mem_size, 
-	hst_ptrresult, &oclErrNum);
+	context, CL_MEM_WRITE_ONLY, hst_ptrresult_mem_size, 
+	NULL, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrresult");
   dev_ptrlcl_q_inv = clCreateBuffer(
@@ -227,6 +227,11 @@ void ExecLaplaceFor()
 	);
   oclCheckErr(
 	oclErrNum, "clEnqueueNDRangeKernel");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrresult, CL_TRUE, 
+	0, hst_ptrresult_mem_size, hst_ptrresult, 
+	1, &GPUExecution, NULL
+	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
   oclErrNum = clFinish(command_queue);
@@ -271,7 +276,7 @@ void RunOCLLaplaceForKernel(
       AllocateBuffers();
       compileKernelFromFile(
 	"LaplaceFor", "LaplaceFor.cl", KernelString(), 
-	false, &LaplaceForKernel, KernelDefines
+	true, &LaplaceForKernel, KernelDefines
 	);
       SetArgumentsLaplaceFor();
     }
