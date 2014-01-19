@@ -2,17 +2,17 @@
 #include <cstdio>
 #include <iostream>
 #include <cmath>
-#include "../../../src/boilerplate.cpp"
+#include "boilerplate.cpp"
 
 using namespace std;
 
-float He(const int n,
+float He(const unsigned n,
 	 const float x) {
-  float v;
+  float v = 0.0;
 
   switch(n) {
   case 0:
-    v = 1;
+    v = 1.0;
     break;
   case 1:
     v = x;
@@ -37,10 +37,10 @@ float He(const int n,
 }
 
 
-float DaKs(int da[3], float xmy[3], float r, float ks) {
+float DaKs(unsigned da[3], float xmy[3], float r, float ks) {
   float z[3];
   float sum_da = 0.0;
-  for (int k = 0; k < 3; k++) {
+  for (unsigned k = 0; k < 3; k++) {
     z[k] = sqrt(2)/r*xmy[k];
 
     sum_da += da[k];
@@ -54,7 +54,7 @@ float DaKs(int da[3], float xmy[3], float r, float ks) {
 
 float gamma(float xmy[3], float r2, float sw2) {
   float dot1 = 0.0;
-  for (int k = 0; k < 3; k++) {
+  for (unsigned k = 0; k < 3; k++) {
     dot1 += xmy[k] * xmy[k];
   }
   return 1.0/sw2*exp(dot1/r2);
@@ -72,15 +72,15 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
 		  )
 {
   
-  for (int j=0; j<Lp; j++) {
-    for (int i=0; i<Lq; i++) {
+  for (unsigned j=0; j<Lp; j++) {
+    for (unsigned i=0; i<Lq; i++) {
       float xj[3];
       float xi[3];
-      for (int k = 0; k < dim; k++) {
+      for (unsigned k = 0; k < dim; k++) {
 	xj[k] = p_a_i_x[j*p_a_i_rows + k];
       }
 
-      for (int k = 0; k < dim; k++) {
+      for (unsigned k = 0; k < dim; k++) {
 	xi[k] = q_a_i_x[i*q_a_i_rows + k];
       }
 
@@ -88,8 +88,8 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
       
       // Vector3<scalar> xi(&q_a_i.x[q_a_i.rows*i]);
       float ximxj[3];
-      for (int k = 0; k < dim; k++) {
-	ximxj[k] = xi[k] -xj[k];
+      for (unsigned k = 0; k < dim; k++) {
+	ximxj[k] = xi[k] - xj[k];
       }
       
       float r = sqrt(scales2_x);
@@ -97,13 +97,13 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
       float ks = gamma(ximxj, scales2_x, scaleweight2_x);
       K__ij_x[i+K__ij_rows*j] = ks;
 
-      int da[3];
-      int db[3];
-      int dc[3];
+      unsigned da[3];
+      unsigned db[3];
+      unsigned dc[3];
       // nargout 1
-      for (int b=0; b<dim; b++) {
+      for (unsigned b=0; b<dim; b++) {
 	// da.set(1,b);
-	for (int k = 0; k < dim; k++) {
+	for (unsigned k = 0; k < dim; k++) {
 	  da[k] = 1;
 	}
 
@@ -114,14 +114,14 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
 
 
 	// nargout 2
-	for (int g=0; g<dim; g++) {
-	  // Vector3<int> db = da;
-	  for (int k = 0; k < dim; k++) {
+	for (unsigned g=0; g<dim; g++) {
+	  // Vector3<unsigned> db = da;
+	  for (unsigned k = 0; k < dim; k++) {
 	    db[k] = da[k];
 	  }
 	  // db.set(db[g]+1,g) ?
 	  // db[g] = db[g] + 1;
-	  for (int k = 0; k < dim; k++) {
+	  for (unsigned k = 0; k < dim; k++) {
 	    db[k] = db[k] + 1;
 	  }
 	  
@@ -132,12 +132,12 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
 	    DaKs(db,ximxj,r,ks);
 
 
-	  for (int d=0; d<dim; d++) {
-	    // Vector3<int> dc = db; dc.set(dc[d]+1,d);
-	    for (int k = 0; k < dim; k++) {
+	  for (unsigned d=0; d<dim; d++) {
+	    // Vector3<unsigned> dc = db; dc.set(dc[d]+1,d);
+	    for (unsigned k = 0; k < dim; k++) {
 	      dc[k] = db[k];
 	    }
-	    for (int k = 0; k < dim; k++) {
+	    for (unsigned k = 0; k < dim; k++) {
 	      dc[d] = dc[d] + 1;
 	    }	    
 	    D3Ks__ijbgd_x[i +
@@ -154,29 +154,29 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
   }
 }
 
-  void
-    randMat(float* mat, unsigned mat_size)
-    {
-      for (unsigned i = 0; i < mat_size; ++i) {
-	mat[i] = (float)((rand() % 10)/10.0);
-      }
-    }
+void
+randMat(float* mat, unsigned mat_size)
+{
+  for (unsigned i = 0; i < mat_size; ++i) {
+    mat[i] = (float)((rand() % 10)/10.0);
+  }
+}
 
-  void
-  printMat(float* mat, unsigned mat_size)
-    {
-      for (unsigned i = 0; i < mat_size; ++i) {
-	cout << mat[i] << " ";
-	if (i % 10 == 0) {
-	  cout << endl;
-	}
-      }
+void
+printMat(float* mat, unsigned mat_size)
+{
+  for (unsigned i = 0; i < mat_size; ++i) {
+    cout << mat[i] << " ";
+    if (i % 10 == 0) {
       cout << endl;
     }
+  }
+  cout << endl;
+}
 
 
-#define LP 16
-#define LQ 16
+#define LP 3200
+#define LQ 3200
 
 int main(int argc, char** argv)
 {
@@ -186,8 +186,8 @@ int main(int argc, char** argv)
   unsigned p_a_i_rows = dim;
   unsigned q_a_i_rows = dim;
   unsigned K__ij_rows = Lp;
-  float scales2_x = 2;
-  float scaleweight2_x = 1.7;
+  float scales2_x = 2.1f;
+  float scaleweight2_x = 1.7f;
 
   unsigned p_a_i_x_size = Lp * p_a_i_rows;
   unsigned q_a_i_x_size = Lq * q_a_i_rows;
@@ -209,28 +209,19 @@ int main(int argc, char** argv)
   D2Ks__ijbg_dimsI[0] = Lq;
   D3Ks__ijbgd_dimsI[0] = Lq;
 
-  D1Ks__ijb_dimsI[1] = 1;
-  D2Ks__ijbg_dimsI[1] = dim;
-  D3Ks__ijbgd_dimsI[1] = dim;
+  D1Ks__ijb_dimsI[1] = Lq*Lp;
+  D2Ks__ijbg_dimsI[1] = Lq*Lp;
+  D3Ks__ijbgd_dimsI[1] = Lq*Lp;
 
-  D2Ks__ijbg_dimsI[2] = dim;
-  D3Ks__ijbgd_dimsI[2] = dim;
+  D2Ks__ijbg_dimsI[2] = Lq*Lp*dim;
+  D3Ks__ijbgd_dimsI[2] = Lq*Lp*dim;
 
-  D3Ks__ijbgd_dimsI[3] = dim;
+  D3Ks__ijbgd_dimsI[3] = Lq*Lp*dim*dim;
 
   
-  unsigned D1Ks__ijb_x_size = Lq * 
-    D1Ks__ijb_dimsI[0] +
-    D1Ks__ijb_dimsI[1] * dim;
-  unsigned D2Ks__ijbg_x_size = Lq *
-    D2Ks__ijbg_dimsI[0] +
-    D2Ks__ijbg_dimsI[1] * dim +
-    D2Ks__ijbg_dimsI[2] * dim  ;
-  unsigned D3Ks__ijbgd_x_size = Lq *
-    D3Ks__ijbgd_dimsI[0] +
-    D3Ks__ijbgd_dimsI[1] * dim +
-    D3Ks__ijbgd_dimsI[2] * dim +
-    D3Ks__ijbgd_dimsI[3] * dim  ;
+  unsigned D1Ks__ijb_x_size = D1Ks__ijb_dimsI[1] * dim;
+  unsigned D2Ks__ijbg_x_size = D2Ks__ijbg_dimsI[2] * dim;
+  unsigned D3Ks__ijbgd_x_size = D3Ks__ijbgd_dimsI[3] * dim;
   
   float * D1Ks__ijb_x =   new float[D1Ks__ijb_x_size];
   float * D2Ks__ijbg_x =  new float[D2Ks__ijbg_x_size];
@@ -250,7 +241,7 @@ int main(int argc, char** argv)
   
 
   
-#if 1
+#if 0
   GaussianDerivates( Lp,  Lq,  dim,
 		     p_a_i_x,  p_a_i_rows,
 		     q_a_i_x,  q_a_i_rows,
@@ -260,21 +251,34 @@ int main(int argc, char** argv)
 		     D2Ks__ijbg_x,    D2Ks__ijbg_dimsI,
 		     D3Ks__ijbgd_x,   D3Ks__ijbgd_dimsI);
 #else
- RunOCLGaussianDerivatesForKernel(
-				  dim, D1Ks__ijb_dimsI, 2, 
+RunOCLGaussianDerivatesForKernel(
+	dim, D1Ks__ijb_dimsI, 2, 
 	scaleweight2_x, D3Ks__ijbgd_x, D3Ks__ijbgd_x_size, 
-	D2Ks__ijbg_dimsI, 3, D3Ks__ijbgd_dimsI, 
-	4, q_a_i_x, dim, 
-	Lq, scales2_x, Lp, 
-	Lq, p_a_i_x, dim, 
-	Lp, D1Ks__ijb_x, D1Ks__ijb_x_size, 
+	D2Ks__ijbg_dimsI, 3,
+	D3Ks__ijbgd_dimsI, 4,
+	q_a_i_x, q_a_i_rows, Lq,
+	scales2_x, Lp, Lq,
+	p_a_i_x, p_a_i_rows, Lp,
+	D1Ks__ijb_x, D1Ks__ijb_x_size, 
 	K__ij_x, Lq, Lp, 
-				  D2Ks__ijbg_x, D2Ks__ijbg_x_size);
+	D2Ks__ijbg_x, D2Ks__ijbg_x_size);
+
+
+  // RunOCLGaussianDerivatesForKernel(
+  // 				  dim, D1Ks__ijb_dimsI, 2, 
+  // 	scaleweight2_x, D3Ks__ijbgd_x, D3Ks__ijbgd_x_size, 
+  // 	D2Ks__ijbg_dimsI, 3, D3Ks__ijbgd_dimsI, 
+  // 	4, q_a_i_x, dim, 
+  // 	Lq, scales2_x, Lp, 
+  // 	Lq, p_a_i_x, dim, 
+  // 	Lp, D1Ks__ijb_x, D1Ks__ijb_x_size, 
+  // 	K__ij_x, Lq, Lp, 
+  // 				  D2Ks__ijbg_x, D2Ks__ijbg_x_size);
 #endif
 
 
     // printMat(K__ij_x, K__ij_x_size);
-    printMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
+    // printMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
     // printMat(D2Ks__ijbg_x,  D2Ks__ijbg_x_size);
     // printMat(D3Ks__ijbgd_x, D3Ks__ijbgd_x_size);
 

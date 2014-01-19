@@ -726,17 +726,18 @@ def gaussian():
             ## print tok
         
         ast = cparser.parse(s)
-        print ast
         ## ast.show()
         cprint = CGenerator()
         rw = Rewriter()
         rw.initOriginal(ast)
+        tempfilename = fileprefix + 'GaussianDerivates/'+'tempgaussian.cpp'
         ## rw.rewrite(ast, funcname, changeAST = True)
-        ## cprint.createTemp(ast, filename = 'tempgaussian.cpp')
+        ## cprint.createTemp(ast, filename = tempfilename)
 
         run = 0
-        filename = '../src/tempgaussian.cpp'
-        funcname = basename(os.path.splitext(filename)[0])
+        filename = tempfilename
+        ## funcname = basename(os.path.splitext(filename)[0])
+
         try:
             f = open(filename, 'r')
             s = f.read()
@@ -751,23 +752,35 @@ def gaussian():
         tempast2 = copy.deepcopy(ast)
         rw.initNewRepr(tempast)
 
+        rw.SetLSIZE(['16', '16'])
         ## rw.rewriteToSequentialC(ast)
         ## cprint.createTemp(ast, filename = 'ctemp.cpp')
         ## rw.rewriteToDeviceCTemp(tempast, False)
         ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
 
-        ## rw.transpose('A')
-        ## rw.transpose('B')
+        rw.transpose('p_a_i_x')
+        rw.transpose('q_a_i_x')
+        rw.SetDefine(['dim', 'scaleweight2_x', 'hst_ptrp_a_i_x_dim1',
+                      'hst_ptrK__ij_x_dim1', 'scales2_x',
+                      'hst_ptrq_a_i_x_dim1', ])
         ## rw.transpose('C')
         ## rw.localMemory(['A','B'])
         ## rw.dataStructures()
-        rw.rewriteToDeviceCRelease(tempast2)
+        rw.SetNoReadBack()
+        ## rw.rewriteToDeviceCRelease(tempast2)
         # fileprefix + 'GaussianDerivates/
-        cprint.createTemp(tempast2, filename = fileprefix + 'GaussianDerivates/' + 'GaussianDerivatesFor.cl')
-        boilerast = rw.generateBoilerplateCode(ast)
-        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
+        rw.InSourceKernel(tempast2, filename = fileprefix + 'GaussianDerivates/'+funcname + '.cl')
         
+        boilerast = rw.generateBoilerplateCode(ast)
+        cprint.createTemp(boilerast, filename = fileprefix + 'GaussianDerivates/'+'boilerplate.cpp')
+## 0.00325902 -0 0.032143 -0.0251829 -0 0 0.0489179 -0.00325902 0.00212156 -0.0879844 
+## -0.0118921 -0 -0.0118921 -0 -0.00325902 -0 0 0.00741233 -0.00453474 0.00325902 
+## -0.015038 -0.0016064 -0.0286717 -0.0141325 -0.00690135 -0.0141325 0.00741234 -0.00741234 0.00741234 -0.00449265 
+## 0.0101567 -0.00212156 0.0141325 0.0504732 -0.0633 -0 -0.0204797 -0.0186647 0.0229105 0.0489179 
+## -0 -0 -0.0124129 -0.019482 -0.0124129 -0.0607155 -0.0296494 -0.169504 0.0113864 -0.00221446 
+## 0.00556629 -0.142482 0 0.031201 0.0095137 0 0.0141325 
+
 def laplace():
     import ply.yacc as yacc
     cparser = yacc.yacc()
@@ -831,13 +844,14 @@ def laplace():
         rw.transpose('index')
         rw.SetDefine(['dim', 'hst_ptrlevel_dim1', 'hst_ptrindex_dim1',
                       'storagesize', 'hst_ptrlevel_int_dim1'])
+        ## rw.SetDefine(['dim'])
 
         rw.placeInReg3({'level': [0], 'level_int' : [0], 'index' : [0]})
         ## rw.localMemory(['level'])
         ## rw.localMemory2(['alpha'])
         ## rw.placeInReg2({ 'alpha_local' : [1]})
         ## rw.constantMemory(['Pos'])
-        rw.SetNoReadBack()
+        ## rw.SetNoReadBack()
         ## rw.constantMemory2({'Pos' : [2,3], 'Mas' : [1]})
         ## rw.placeInReg2({ 'Pos' : [0, 1], 'Mas' : [0]})
         ## rw.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
@@ -851,7 +865,7 @@ if __name__ == "__main__":
     ## matmul()
     ## nbody()
     ## nbody2()
-    laplace()
+    ## laplace()
     ## knearest()
     ## knearest2()
-    ## gaussian()
+    gaussian()
