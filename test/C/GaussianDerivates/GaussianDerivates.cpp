@@ -175,8 +175,8 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define LP 4800
-#define LQ 4800
+#define LP 2048
+#define LQ 2048
 
 int main(int argc, char** argv)
 {
@@ -265,21 +265,10 @@ RunOCLGaussianDerivatesForKernel(
 	K__ij_x, Lq, Lp, 
 	D2Ks__ijbg_x, D2Ks__ijbg_x_size);
 
-
-  // RunOCLGaussianDerivatesForKernel(
-  // 				  dim, D1Ks__ijb_dimsI, 2, 
-  // 	scaleweight2_x, D3Ks__ijbgd_x, D3Ks__ijbgd_x_size, 
-  // 	D2Ks__ijbg_dimsI, 3, D3Ks__ijbgd_dimsI, 
-  // 	4, q_a_i_x, dim, 
-  // 	Lq, scales2_x, Lp, 
-  // 	Lq, p_a_i_x, dim, 
-  // 	Lp, D1Ks__ijb_x, D1Ks__ijb_x_size, 
-  // 	K__ij_x, Lq, Lp, 
-  // 				  D2Ks__ijbg_x, D2Ks__ijbg_x_size);
 #endif
 
 
-    // printMat(K__ij_x, K__ij_x_size);
+    // printMat(K__ij_x, K__ij_x_size); a
     // printMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
     // printMat(D2Ks__ijbg_x,  D2Ks__ijbg_x_size);
     // printMat(D3Ks__ijbgd_x, D3Ks__ijbgd_x_size);
@@ -291,35 +280,5 @@ RunOCLGaussianDerivatesForKernel(
 }
 
 
-/*
 
 
-
-
-
-
-	 RunOCLGaussianDerivatesForKernel(
-				  dim, D1Ks__ijb_dimsI, 2, 
-	scaleweight2_x, D3Ks__ijbgd_x, D3Ks__ijbgd_x_size, 
-	D2Ks__ijbg_dimsI, 3, D3Ks__ijbgd_dimsI, 
-	4, q_a_i_x, dim, 
-	Lq, scales2_x, Lp, 
-	Lq, p_a_i_x, dim, 
-	Lp, D1Ks__ijb_x, D1Ks__ijb_x_size, 
-	K__ij_x, Lq, Lp, 
-				  D2Ks__ijbg_x, D2Ks__ijbg_x_size);
-
-
-  void GaussianDerivatesFor(
-	unsigned * D1Ks__ijb_dimsI, size_t hst_ptrD1Ks__ijb_dimsI_dim1,
-	float * q_a_i_x, size_t hst_ptrq_a_i_x_dim1, size_t hst_ptrq_a_i_x_dim2,
-	float * D3Ks__ijbgd_x, size_t hst_ptrD3Ks__ijbgd_x_dim1,
-	unsigned * D2Ks__ijbg_dimsI, size_t hst_ptrD2Ks__ijbg_dimsI_dim1,
-	unsigned * D3Ks__ijbgd_dimsI, size_t hst_ptrD3Ks__ijbgd_dimsI_dim1, 
-	float * p_a_i_x, size_t hst_ptrp_a_i_x_dim1, size_t hst_ptrp_a_i_x_dim2, 
-	float * D1Ks__ijb_x, size_t hst_ptrD1Ks__ijb_x_dim1,
-	float * K__ij_x, size_t hst_ptrK__ij_x_dim1, size_t hst_ptrK__ij_x_dim2,
-	float * D2Ks__ijbg_x, size_t hst_ptrD2Ks__ijbg_x_dim1,  
-	size_t dim, size_t scaleweight2_x, size_t scales2_x,
-	size_t Lp, size_t Lq)
-*/

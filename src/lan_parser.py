@@ -750,21 +750,23 @@ def gaussian():
         ## ## ast.show()
         tempast = copy.deepcopy(ast)
         tempast2 = copy.deepcopy(ast)
+
+        rw.SetParDim(1)
         rw.initNewRepr(tempast)
 
-        rw.SetLSIZE(['16', '16'])
+        rw.SetLSIZE(['256'])
         ## rw.rewriteToSequentialC(ast)
         ## cprint.createTemp(ast, filename = 'ctemp.cpp')
         ## rw.rewriteToDeviceCTemp(tempast, False)
         ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
 
-        rw.transpose('p_a_i_x')
-        rw.transpose('q_a_i_x')
+        ## rw.transpose('p_a_i_x')
+        ## rw.transpose('q_a_i_x')
         rw.SetDefine(['dim', 'scaleweight2_x', 'hst_ptrp_a_i_x_dim1',
                       'hst_ptrK__ij_x_dim1', 'scales2_x',
-                      'hst_ptrq_a_i_x_dim1', ])
-        rw.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
+                      'hst_ptrq_a_i_x_dim1', 'Lq'])
+        ## rw.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
         ## rw.transpose('C')
         ## rw.localMemory(['A','B'])
         #rw.dataStructures()
