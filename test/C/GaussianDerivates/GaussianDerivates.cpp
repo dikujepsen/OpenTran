@@ -253,6 +253,8 @@ int main(int argc, char** argv)
 		     D3Ks__ijbgd_x,   D3Ks__ijbgd_dimsI);
  cout << timer.stop() << endl;
 #else
+
+ 
 RunOCLGaussianDerivatesForKernel(
 	dim, D1Ks__ijb_dimsI, 2, 
 	scaleweight2_x, D3Ks__ijbgd_x, D3Ks__ijbgd_x_size, 
@@ -264,7 +266,6 @@ RunOCLGaussianDerivatesForKernel(
 	D1Ks__ijb_x, D1Ks__ijb_x_size, 
 	K__ij_x, Lq, Lp, 
 	D2Ks__ijbg_x, D2Ks__ijbg_x_size);
-
 #endif
 
 

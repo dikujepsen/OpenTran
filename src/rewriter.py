@@ -532,6 +532,8 @@ class Rewriter(NodeVisitor):
         ast.ext.append(newast)
 
     def SetDefine(self, varList):
+        # TODO: Check that the vars in varlist are actually an argument
+
         self.DefinesAreMade = True
         accname = 'str'
         sstream = TypeId(['std::stringstream'], Id(accname))

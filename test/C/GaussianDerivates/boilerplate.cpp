@@ -25,6 +25,7 @@ float scaleweight2_x;
 float scales2_x;
 unsigned Lp;
 unsigned Lq;
+float * hst_ptrq_a_i_x_trans;
 
 size_t hst_ptrD1Ks__ijb_dimsI_mem_size;
 size_t hst_ptrq_a_i_x_mem_size;
@@ -59,17 +60,17 @@ std::string KernelString()
   str << "#include \"GaussianDerivatesIncludes.hpp\"" << endl;
   str << "__kernel void GaussianDerivatesFor(" << endl;
   str << "	__global unsigned * D1Ks__ijb_dimsI, __global float * D3Ks__ijbgd_x, __global unsigned * D2Ks__ijbg_dimsI, " << endl;
-  str << "	__global unsigned * D3Ks__ijbgd_dimsI, __global float * q_a_i_x, __global float * p_a_i_x, " << endl;
+  str << "	__global float * q_a_i_x, __global unsigned * D3Ks__ijbgd_dimsI, __global float * p_a_i_x, " << endl;
   str << "	__global float * D1Ks__ijb_x, __global float * K__ij_x, __global float * D2Ks__ijbg_x" << endl;
   str << "	) {" << endl;
-  str << "  for (int i = 0; i < Lq; i++) {" << endl;
+  str << "  for (int j = 0; j < Lp; j++) {" << endl;
   str << "      float xj[3];" << endl;
   str << "      float xi[3];" << endl;
   str << "      for (int k = 0; k < dim; k++) {" << endl;
-  str << "          xj[k] = p_a_i_x[(get_global_id(0) * hst_ptrp_a_i_x_dim1) + k];" << endl;
+  str << "          xj[k] = p_a_i_x[(j * hst_ptrp_a_i_x_dim1) + k];" << endl;
   str << "      }" << endl;
   str << "      for (int k = 0; k < dim; k++) {" << endl;
-  str << "          xi[k] = q_a_i_x[(i * hst_ptrq_a_i_x_dim1) + k];" << endl;
+  str << "          xi[k] = q_a_i_x[(k * hst_ptrq_a_i_x_dim1) + get_global_id(0)];" << endl;
   str << "      }" << endl;
   str << "      // Vector3<scalar> xi(&q_a_i.x[q_a_i.rows*i]);" << endl;
   str << "      float ximxj[3];" << endl;
@@ -80,7 +81,7 @@ std::string KernelString()
   str << "      float ks = gamma(" << endl;
   str << "	ximxj, scales2_x, scaleweight2_x" << endl;
   str << "	);" << endl;
-  str << "      K__ij_x[(get_global_id(0) * hst_ptrK__ij_x_dim1) + i] = ks;" << endl;
+  str << "      K__ij_x[(j * hst_ptrK__ij_x_dim1) + get_global_id(0)] = ks;" << endl;
   str << "      int da[3];" << endl;
   str << "      int db[3];" << endl;
   str << "      int dc[3];" << endl;
@@ -90,7 +91,7 @@ std::string KernelString()
   str << "          for (int k = 0; k < dim; k++) {" << endl;
   str << "              da[k] = 1;" << endl;
   str << "          }" << endl;
-  str << "          D1Ks__ijb_x[(i + (D1Ks__ijb_dimsI[0] * get_global_id(0))) + (D1Ks__ijb_dimsI[1] * b)] = DaKs(" << endl;
+  str << "          D1Ks__ijb_x[(get_global_id(0) + (D1Ks__ijb_dimsI[0] * j)) + (D1Ks__ijb_dimsI[1] * b)] = DaKs(" << endl;
   str << "	da, ximxj, r, " << endl;
   str << "	ks);" << endl;
   str << "          // nargout 2" << endl;
@@ -104,7 +105,7 @@ std::string KernelString()
   str << "              for (int k = 0; k < dim; k++) {" << endl;
   str << "                  db[k] = db[k] + 1;" << endl;
   str << "              }" << endl;
-  str << "              D2Ks__ijbg_x[((i + (D2Ks__ijbg_dimsI[0] * get_global_id(0))) + (D2Ks__ijbg_dimsI[1] * b)) + (D2Ks__ijbg_dimsI[2] * g)] = DaKs(" << endl;
+  str << "              D2Ks__ijbg_x[((get_global_id(0) + (D2Ks__ijbg_dimsI[0] * j)) + (D2Ks__ijbg_dimsI[1] * b)) + (D2Ks__ijbg_dimsI[2] * g)] = DaKs(" << endl;
   str << "	db, ximxj, r, " << endl;
   str << "	ks);" << endl;
   str << "              for (int d = 0; d < dim; d++) {" << endl;
@@ -115,7 +116,7 @@ std::string KernelString()
   str << "                  for (int k = 0; k < dim; k++) {" << endl;
   str << "                      dc[d] = dc[d] + 1;" << endl;
   str << "                  }" << endl;
-  str << "                  D3Ks__ijbgd_x[(((i + (D3Ks__ijbgd_dimsI[0] * get_global_id(0))) + (D3Ks__ijbgd_dimsI[1] * b)) + (D3Ks__ijbgd_dimsI[2] * g)) + (D3Ks__ijbgd_dimsI[3] * d)] = DaKs(" << endl;
+  str << "                  D3Ks__ijbgd_x[(((get_global_id(0) + (D3Ks__ijbgd_dimsI[0] * j)) + (D3Ks__ijbgd_dimsI[1] * b)) + (D3Ks__ijbgd_dimsI[2] * g)) + (D3Ks__ijbgd_dimsI[3] * d)] = DaKs(" << endl;
   str << "	dc, ximxj, r, " << endl;
   str << "	ks);" << endl;
   str << "              }" << endl;
@@ -141,6 +142,10 @@ void AllocateBuffers()
   hst_ptrD2Ks__ijbg_x_mem_size = hst_ptrD2Ks__ijbg_x_dim1 * sizeof(float);
   
   // Transposition
+  hst_ptrq_a_i_x_trans = new float[hst_ptrq_a_i_x_mem_size];
+  transpose<float>(
+	hst_ptrq_a_i_x, hst_ptrq_a_i_x_trans, hst_ptrq_a_i_x_dim1, 
+	hst_ptrq_a_i_x_dim2);
   
   // Constant Memory
   
@@ -151,8 +156,8 @@ void AllocateBuffers()
   str << "-Dhst_ptrp_a_i_x_dim1=" << hst_ptrp_a_i_x_dim1 << " ";
   str << "-Dhst_ptrK__ij_x_dim1=" << hst_ptrK__ij_x_dim1 << " ";
   str << "-Dscales2_x=" << scales2_x << " ";
-  str << "-Dhst_ptrq_a_i_x_dim1=" << hst_ptrq_a_i_x_dim1 << " ";
-  str << "-DLq=" << Lq << " ";
+  str << "-Dhst_ptrq_a_i_x_dim1=" << hst_ptrq_a_i_x_dim2 << " ";
+  str << "-DLp=" << Lp << " ";
   KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
@@ -164,7 +169,7 @@ void AllocateBuffers()
 	oclErrNum, "clCreateBuffer dev_ptrD1Ks__ijb_dimsI");
   dev_ptrq_a_i_x = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrq_a_i_x_mem_size, 
-	hst_ptrq_a_i_x, &oclErrNum);
+	hst_ptrq_a_i_x_trans, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrq_a_i_x");
   dev_ptrD3Ks__ijbgd_x = clCreateBuffer(
@@ -219,10 +224,10 @@ void SetArgumentsGaussianDerivatesFor()
 	(void *) &dev_ptrD2Ks__ijbg_dimsI);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrD3Ks__ijbgd_dimsI);
+	(void *) &dev_ptrq_a_i_x);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrq_a_i_x);
+	(void *) &dev_ptrD3Ks__ijbgd_dimsI);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrp_a_i_x);
@@ -243,7 +248,7 @@ void ExecGaussianDerivatesFor()
 {
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
-  size_t GaussianDerivatesFor_global_worksize[] = {Lp - 0};
+  size_t GaussianDerivatesFor_global_worksize[] = {Lq - 0};
   size_t GaussianDerivatesFor_local_worksize[] = {256};
   size_t GaussianDerivatesFor_global_offset[] = {0};
   oclErrNum = clEnqueueNDRangeKernel(
