@@ -581,7 +581,7 @@ def knearest():
         while 1:
             tok = lex.token()
             if not tok: break
-            print tok
+            ## print tok
         
         ast = cparser.parse(s)
         ## ast.show()
@@ -592,11 +592,12 @@ def knearest():
         ## print printres
         rw = Rewriter()
         rw.initOriginal(ast)
-        # rw.rewrite(ast, funcname, changeAST = True)
-        # cprint.createTemp(ast, filename = 'tempknearest.cpp')
+        tempfilename = fileprefix + 'KNearest/'+'tempknearest.cpp'
+        ## rw.rewrite(ast, funcname, changeAST = True)
+        ## cprint.createTemp(ast, filename = tempfilename)
 
         run = 0
-        filename = '../src/tempknearest.cpp'
+        filename = tempfilename
         ## funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -609,96 +610,30 @@ def knearest():
         ## ## ast.show()
         tempast = copy.deepcopy(ast)
         tempast2 = copy.deepcopy(ast)
+        rw.SetParDim(1)
         rw.initNewRepr(tempast)
 
         
         
         ## rw.constantMemory(['Pos']) 
-        rw.transpose('train_patterns')
-        ## rw.localMemory(['test_patterns'])
+        ## rw.transpose('train_patterns')
+        rw.transpose('test_patterns')
+
         ## rw.localMemory(['train_patterns'])
 
         
-        rw.localMemory(['test_patterns','train_patterns'])
-        rw.transpose('dist_matrix')
-        rw.define(['dim', 'hst_ptrtest_patterns_dim1',
-                   'hst_ptrtrain_patterns_dim1', 'hst_ptrdist_matrix_dim1'])
+        ## rw.localMemory(['test_patterns','train_patterns'])
+        ## rw.transpose('dist_matrix')
+        rw.SetDefine(['dim', 'hst_ptrtest_patterns_dim1',
+                   'hst_ptrtrain_patterns_dim1', 'hst_ptrdist_matrix_dim1',
+                   'NTRAIN'])
 
-        
-        
-        rw.dataStructures()
-        rw.Unroll(['kk'])
+        ## rw.dataStructures()
+        ## rw.Unroll2({'k' : 0})
         
         rw.InSourceKernel(tempast2, filename = fileprefix + 'KNearest/'+funcname + '.cl')
-        ## rw.rewriteToDeviceCRelease(tempast2)
-        ## cprint.createTemp(tempast2, filename = fileprefix + 'KNearest/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
-        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
-
-
-def knearest2():
-    import ply.yacc as yacc
-    cparser = yacc.yacc()
-    lex.lex()
-
-    run = 1
-    while run:
-        filename = fileprefix + 'KNearest2/KNearestFor2.cpp'
-        funcname = basename(os.path.splitext(filename)[0])
-        try:
-            f = open(filename, 'r')
-            s = f.read()
-            f.close()
-            ## print s
-        except EOFError:
-            break
-
-        
-        lex.input(s)
-        while 1:
-            tok = lex.token()
-            if not tok: break
-            print tok
-        
-        ast = cparser.parse(s)
-        ## ast.show()
-        ## print ast
-        ## print slist
-        cprint = CGenerator()
-        ## printres = cprint.visit(ast)
-        ## print printres
-        rw = Rewriter()
-        rw.initOriginal(ast)
-        ## rw.rewrite(ast, funcname, changeAST = True)
-        ## cprint.createTemp(ast, filename = 'tempknearest2.cpp')
-
-        run = 0
-        filename = '../src/tempknearest2.cpp'
-        try:
-            f = open(filename, 'r')
-            s = f.read()
-            f.close()
-        except EOFError:
-            break
- 
-        ast = cparser.parse(s)
-        ## ## ast.show()
-        tempast = copy.deepcopy(ast)
-        tempast2 = copy.deepcopy(ast)
-        rw.initNewRepr(tempast)
-
-        rw.transpose('test_patterns')
-
-        rw.define(['dim', 'NTRAIN', 'hst_ptrtrain_patterns_dim1', 'hst_ptrtest_patterns_dim1', 'hst_ptrdist_matrix_dim1'])
-
-
-        rw.dataStructures()
-        rw.placeInReg({ 'test_patterns' : [0]})
-        rw.rewriteToDeviceCRelease(tempast2)
-        cprint.createTemp(tempast2, filename = fileprefix + 'KNearest2/'+funcname + '.cl')
-        boilerast = rw.generateBoilerplateCode(ast)
-        cprint.createTemp(boilerast, filename = 'boilerplate.cpp')
-
+        cprint.createTemp(boilerast, filename = fileprefix + 'KNearest/'+'boilerplate.cpp')
 
 def gaussian():
     import ply.yacc as yacc
@@ -866,9 +801,7 @@ def laplace():
 if __name__ == "__main__":
     ## jacobi()
     ## matmul()
-    ## nbody()
     ## nbody2()
     ## laplace()
-    ## knearest()
-    ## knearest2()
-    gaussian()
+    knearest()
+    ## gaussian()
