@@ -98,12 +98,12 @@ int main( int argc, char* argv[] )
 #endif
 
   // print matrix
-  for (i=0;i<10;i++){    
-    for (j=0;j<10;j++){
-      printf("%f ", dist_matrix[j*NTEST+i]);
-    }
-    printf("\n");
-  }
+  // for (i=0;i<10;i++){    
+  //   for (j=0;j<10;j++){
+  //     printf("%f ", dist_matrix[j*NTEST+i]);
+  //   }
+  //   printf("\n");
+  // }
 
   // final timing results
     

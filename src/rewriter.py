@@ -90,6 +90,8 @@ class Rewriter(NodeVisitor):
         # The same as above but names are saved as strings instead
         # of Id(strings)
         self.SubscriptNoId = dict()
+        # Decides whether we read back data from GPU
+        self.NoReadBack = False
         # List of arguments for the kernel
         ## self.KernelArgs = list()
         ########################################################
@@ -443,7 +445,7 @@ class Rewriter(NodeVisitor):
             print """SetLSIZE: the local work-group size must be 1D or 2D and it must have the same number of dimensions as we are parallelizing """
 
     def SetNoReadBack(self):
-        self.WriteOnly = []
+        self.NoReadBack = True
 
     def Unroll(self, looplist):
         # find loops and check that the loops given in the argument
@@ -703,7 +705,7 @@ class Rewriter(NodeVisitor):
             for m in arrDict[n]:
                 idx = m
                 sub = copy.deepcopy(self.LoopArrays[n][idx])
-                regid = ArrayRef(Id(n + '_reg'), [Id('d')])
+                regid = ArrayRef(Id(n + '_reg'), [Id(insideloop)])
                 writes.append(regid)
                 assign = Assignment(regid, sub)
                 loopstats.append(assign)
@@ -1647,19 +1649,20 @@ class Rewriter(NodeVisitor):
         ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
         execBody.append(ErrCheck)
 
-        for n in self.WriteOnly:
-            lval = Id(ErrName)
-            arglist = ArgList([Id('command_queue'),\
-                               Id(self.DevId[n]),\
-                               Id('CL_TRUE'),\
-                               Constant(0),\
-                               Id(self.Mem[n]),\
-                               Id(self.HstId[n]),\
-                               Constant(1),
-                               Id('&' + eventName.name),Id('NULL')])
-            rval = FuncDecl(Id('clEnqueueReadBuffer'),arglist, Compound([]))
-            execBody.append(Assignment(lval,rval))
-            
+        if not self.SetNoReadBack:
+            for n in self.WriteOnly:
+                lval = Id(ErrName)
+                arglist = ArgList([Id('command_queue'),\
+                                   Id(self.DevId[n]),\
+                                   Id('CL_TRUE'),\
+                                   Constant(0),\
+                                   Id(self.Mem[n]),\
+                                   Id(self.HstId[n]),\
+                                   Constant(1),
+                                   Id('&' + eventName.name),Id('NULL')])
+                rval = FuncDecl(Id('clEnqueueReadBuffer'),arglist, Compound([]))
+                execBody.append(Assignment(lval,rval))
+
         arglist = ArgList([Id(ErrName), Constant('clEnqueueReadBuffer')])
         ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
         execBody.append(ErrCheck)

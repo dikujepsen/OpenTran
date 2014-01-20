@@ -627,7 +627,8 @@ def knearest():
         rw.SetDefine(['dim', 'hst_ptrtest_patterns_dim1',
                    'hst_ptrtrain_patterns_dim1', 'hst_ptrdist_matrix_dim1',
                    'NTRAIN'])
-
+        rw.placeInReg3({'test_patterns': [0]})
+        rw.SetNoReadBack()
         ## rw.dataStructures()
         ## rw.Unroll2({'k' : 0})
         
