@@ -9,11 +9,11 @@ void GaussianDerivatesFor(
 			  unsigned dim, float scaleweight2_x, float scales2_x, 
 			  unsigned Lp, unsigned Lq)
 {
-  for (int i = 0; i < Lq; i++)
-    { 
-      for (int j = 0; j < Lp; j++)
+  for (int j = 0; j < Lp; j++)
+    {
+      for (int i = 0; i < Lq; i++)
 	{
-	  float xj[3];
+          float xj[3];
           float xi[3];
           for (int k = 0; k < dim; k++)
             {

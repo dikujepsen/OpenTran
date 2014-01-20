@@ -14,7 +14,7 @@
 #include <pthread.h>
 #include <sched.h>
 #include <string.h>
-
+#include "boilerplate.cpp"
 
 long get_system_time_in_microseconds(void){
 	struct timeval tempo;
@@ -40,14 +40,16 @@ long get_system_time_in_microseconds(void){
 
 DEFINE_TIMER(1); 
  
-#include "../../../src/boilerplate.cpp"
 
 int main( int argc, char* argv[] )
 {
   // problem parameters
-  size_t NTRAIN = 16384;
+  size_t NTRAIN = 8192;
   size_t NTEST = 3*NTRAIN;
   size_t dim = 16;
+  // size_t NTRAIN = 16;
+  // size_t NTEST = 3*NTRAIN;
+  // size_t dim = 16;
 
   size_t i,j,k;
   
@@ -67,18 +69,8 @@ int main( int argc, char* argv[] )
       test_patterns[i*dim + k] = (float)cos(i);
     }
   }
-  // for each test pattern
-  /////////////////////////////////////////////////////// FIXME ///////////////////////////////////////////////////////
-  // @Jacob: You could try to parallelize these computations here (maybe the first loop?)
-  /////////////////////////////////////////////////////// FIXME ///////////////////////////////////////////////////////
-#define GPU 1 
-#if GPU
   
-  RunOCLKNearestForKernel(dim, test_patterns, dim, 
-			  NTEST, dist_matrix, NTEST, NTRAIN,
-			  train_patterns, dim, NTRAIN, NTEST, NTRAIN);
-  
-#else
+#if 0
    START_TIMER(1); 
   float d,tmp;
   for (i=0;i<NTEST;i++) {
@@ -90,12 +82,20 @@ int main( int argc, char* argv[] )
 	tmp = test_patterns[i*dim+k]-train_patterns[j*dim+k];
 	d += tmp*tmp;
       }
-      dist_matrix[i*NTRAIN + j] = d;
+      dist_matrix[j*NTEST + i] = d;
     }
   }
   STOP_TIMER(1);
+  
+  printf("\nElapsed time=%f\n", GET_TIME(1));
+  
+#else
+  RunOCLKNearestForKernel(dim, test_patterns, dim, 
+			  NTEST, dist_matrix, NTEST, NTRAIN,
+			  train_patterns, dim, NTRAIN,
+			  NTEST, NTRAIN);
+
 #endif
-  printf("Computation done.\n");
 
   // print matrix
   for (i=0;i<10;i++){    
@@ -106,7 +106,6 @@ int main( int argc, char* argv[] )
   }
 
   // final timing results
-  printf("\nElapsed time=%f\n", GET_TIME(1));
     
   return 0;
 }
