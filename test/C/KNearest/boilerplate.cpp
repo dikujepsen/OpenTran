@@ -34,10 +34,14 @@ std::string KernelString()
   str << "__kernel void KNearestFor(" << endl;
   str << "	__global float * dist_matrix, __global float * train_patterns, __global float * test_patterns" << endl;
   str << "	) {" << endl;
+  str << "  float test_patterns_reg[dim];" << endl;
+  str << "  for (unsigned k = 0; k < dim; k++) {" << endl;
+  str << "      test_patterns_reg[k] = test_patterns[(k * hst_ptrtest_patterns_dim1) + get_global_id(0)];" << endl;
+  str << "  }" << endl;
   str << "  for (unsigned j = 0; j < NTRAIN; j++) {" << endl;
   str << "      float d = 0.0;" << endl;
   str << "      for (unsigned k = 0; k < dim; k++) {" << endl;
-  str << "          float tmp = test_patterns[(k * hst_ptrtest_patterns_dim1) + get_global_id(0)] - train_patterns[(j * hst_ptrtrain_patterns_dim1) + k];" << endl;
+  str << "          float tmp = test_patterns_reg[k] - train_patterns[(j * hst_ptrtrain_patterns_dim1) + k];" << endl;
   str << "          d += tmp * tmp;" << endl;
   str << "      }" << endl;
   str << "      dist_matrix[(j * hst_ptrdist_matrix_dim1) + get_global_id(0)] = d;" << endl;
@@ -124,16 +128,16 @@ void ExecKNearestFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrdist_matrix, CL_TRUE, 
-	0, hst_ptrdist_matrix_mem_size, hst_ptrdist_matrix, 
-	1, &GPUExecution, NULL
-	);
-  oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-  oclErrNum = clFinish(command_queue);
-  oclCheckErr(
-	oclErrNum, "clFinish");
+  // oclErrNum = clEnqueueReadBuffer(
+  // 	command_queue, dev_ptrdist_matrix, CL_TRUE, 
+  // 	0, hst_ptrdist_matrix_mem_size, hst_ptrdist_matrix, 
+  // 	1, &GPUExecution, NULL
+  // 	);
+  // oclCheckErr(
+  // 	oclErrNum, "clEnqueueReadBuffer");
+  // oclErrNum = clFinish(command_queue);
+  // oclCheckErr(
+  // 	oclErrNum, "clFinish");
 }
 
 void RunOCLKNearestForKernel(

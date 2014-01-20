@@ -703,7 +703,7 @@ class Rewriter(NodeVisitor):
             for m in arrDict[n]:
                 idx = m
                 sub = copy.deepcopy(self.LoopArrays[n][idx])
-                regid = ArrayRef(Id(n + '_reg'), [Id('d')])
+                regid = ArrayRef(Id(n + '_reg'), [Id(insideloop)])
                 writes.append(regid)
                 assign = Assignment(regid, sub)
                 loopstats.append(assign)

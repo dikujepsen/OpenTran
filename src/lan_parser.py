@@ -616,10 +616,11 @@ def knearest():
         
         
         ## rw.constantMemory(['Pos']) 
-        ## rw.transpose('train_patterns')
+        #rw.transpose('train_patterns')
         rw.transpose('test_patterns')
 
-        ## rw.localMemory(['train_patterns'])
+        #rw.localMemory(['train_patterns'])
+        #rw.localMemory2(['train_patterns'])
 
         
         ## rw.localMemory(['test_patterns','train_patterns'])
@@ -627,9 +628,11 @@ def knearest():
         rw.SetDefine(['dim', 'hst_ptrtest_patterns_dim1',
                    'hst_ptrtrain_patterns_dim1', 'hst_ptrdist_matrix_dim1',
                    'NTRAIN'])
+        rw.placeInReg3({'test_patterns': [0]})
 
-        ## rw.dataStructures()
-        ## rw.Unroll2({'k' : 0})
+        rw.dataStructures()
+        #rw.SetNoReadBack()
+        #rw.Unroll2({'k' : 0})
         
         rw.InSourceKernel(tempast2, filename = fileprefix + 'KNearest/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
