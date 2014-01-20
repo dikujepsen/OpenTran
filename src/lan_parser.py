@@ -766,11 +766,12 @@ def gaussian():
         rw.SetDefine(['dim', 'scaleweight2_x', 'hst_ptrp_a_i_x_dim1',
                       'hst_ptrK__ij_x_dim1', 'scales2_x',
                       'hst_ptrq_a_i_x_dim1', 'Lp'])
-        ## rw.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
+        rw.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
+        #rw.Unroll2({'k' : 0})
         ## rw.transpose('C')
         ## rw.localMemory(['A','B'])
         #rw.dataStructures()
-        #rw.SetNoReadBack()
+        rw.SetNoReadBack()
         ## rw.rewriteToDeviceCRelease(tempast2)
         # fileprefix + 'GaussianDerivates/
         rw.InSourceKernel(tempast2, filename = fileprefix + 'GaussianDerivates/'+funcname + '.cl')

@@ -57,7 +57,7 @@ Stopwatch timer;
 std::string KernelString()
 {
   std::stringstream str;
-  str << "#include \"GaussianDerivatesIncludes.hpp\"" << endl;
+  str << "#include \"GaussianDerivatesIncludes2.hpp\"" << endl;
   str << "__kernel void GaussianDerivatesFor(" << endl;
   str << "	__global unsigned * D1Ks__ijb_dimsI, __global float * D3Ks__ijbgd_x, __global unsigned * D2Ks__ijbg_dimsI, " << endl;
   str << "	__global float * q_a_i_x, __global unsigned * D3Ks__ijbgd_dimsI, __global float * p_a_i_x, " << endl;
@@ -66,17 +66,17 @@ std::string KernelString()
   str << "  for (int j = 0; j < Lp; j++) {" << endl;
   str << "      float xj[3];" << endl;
   str << "      float xi[3];" << endl;
-  str << "      for (int k = 0; k < dim; k++) {" << endl;
-  str << "          xj[k] = p_a_i_x[(j * hst_ptrp_a_i_x_dim1) + k];" << endl;
-  str << "      }" << endl;
-  str << "      for (int k = 0; k < dim; k++) {" << endl;
-  str << "          xi[k] = q_a_i_x[(k * hst_ptrq_a_i_x_dim1) + get_global_id(0)];" << endl;
-  str << "      }" << endl;
+        for (int k = 0; k < dim; k++) {
+  str << "          xj[" << k << "] = p_a_i_x[(j * hst_ptrp_a_i_x_dim1) + " << k << "];" << endl;
+        }
+        for (int k = 0; k < dim; k++) {
+  str << "          xi[" << k << "] = q_a_i_x[(" << k << " * hst_ptrq_a_i_x_dim1) + get_global_id(0)];" << endl;
+        }
   str << "      // Vector3<scalar> xi(&q_a_i.x[q_a_i.rows*i]);" << endl;
   str << "      float ximxj[3];" << endl;
-  str << "      for (int k = 0; k < dim; k++) {" << endl;
-  str << "          ximxj[k] = xi[k] - xj[k];" << endl;
-  str << "      }" << endl;
+        for (int k = 0; k < dim; k++) {
+  str << "          ximxj[" << k << "] = xi[" << k << "] - xj[" << k << "];" << endl;
+        }
   str << "      float r = sqrt(scales2_x);" << endl;
   str << "      float ks = gamma(" << endl;
   str << "	ximxj, scales2_x, scaleweight2_x" << endl;
@@ -86,42 +86,50 @@ std::string KernelString()
   str << "      int db[3];" << endl;
   str << "      int dc[3];" << endl;
   str << "      // nargout 1" << endl;
-  str << "      for (int b = 0; b < dim; b++) {" << endl;
-  str << "          // da.set(1,b);" << endl;
-  str << "          for (int k = 0; k < dim; k++) {" << endl;
-  str << "              da[k] = 1;" << endl;
-  str << "          }" << endl;
-  str << "          D1Ks__ijb_x[(get_global_id(0) + (D1Ks__ijb_dimsI[0] * j)) + (D1Ks__ijb_dimsI[1] * b)] = DaKs(" << endl;
+        for (int b = 0; b < dim; b+=dim) {
+            for (unsigned bb = 0; bb < dim; bb++) {
+  str << "              // da.set(1,b);" << endl;
+                for (int k = 0; k < dim; k++) {
+  str << "                  da[" << k << "] = 1;" << endl;
+                }
+  str << "              D1Ks__ijb_x[(get_global_id(0) + (D1Ks__ijb_dimsI[0] * j)) + (D1Ks__ijb_dimsI[1] * " << b << ")] = DaKs(" << endl;
   str << "	da, ximxj, r, " << endl;
   str << "	ks);" << endl;
-  str << "          // nargout 2" << endl;
-  str << "          for (int g = 0; g < dim; g++) {" << endl;
-  str << "              // Vector3<int> db = da;" << endl;
-  str << "              for (int k = 0; k < dim; k++) {" << endl;
-  str << "                  db[k] = da[k];" << endl;
-  str << "              }" << endl;
-  str << "              // db.set(db[g]+1,g) ?" << endl;
-  str << "              // db[g] = db[g] + 1;" << endl;
-  str << "              for (int k = 0; k < dim; k++) {" << endl;
-  str << "                  db[k] = db[k] + 1;" << endl;
-  str << "              }" << endl;
-  str << "              D2Ks__ijbg_x[((get_global_id(0) + (D2Ks__ijbg_dimsI[0] * j)) + (D2Ks__ijbg_dimsI[1] * b)) + (D2Ks__ijbg_dimsI[2] * g)] = DaKs(" << endl;
+  str << "              // nargout 2" << endl;
+                for (int g = 0; g < dim; g+=dim) {
+                    for (unsigned gg = 0; gg < dim; gg++) {
+  str << "                      // Vector3<int> db = da;" << endl;
+                        for (int k = 0; k < dim; k++) {
+  str << "                          db[" << k << "] = da[" << k << "];" << endl;
+                        }
+  str << "                      // db.set(db[g]+1,g) ?" << endl;
+  str << "                      // db[g] = db[g] + 1;" << endl;
+                        for (int k = 0; k < dim; k++) {
+  str << "                          db[" << k << "] = db[" << k << "] + 1;" << endl;
+                        }
+  str << "                      D2Ks__ijbg_x[((get_global_id(0) + (D2Ks__ijbg_dimsI[0] * j)) + (D2Ks__ijbg_dimsI[1] * " << b << ")) + (D2Ks__ijbg_dimsI[2] * " << g << ")] = DaKs(" << endl;
   str << "	db, ximxj, r, " << endl;
   str << "	ks);" << endl;
-  str << "              for (int d = 0; d < dim; d++) {" << endl;
-  str << "                  // Vector3<int> dc = db; dc.set(dc[d]+1,d);" << endl;
-  str << "                  for (int k = 0; k < dim; k++) {" << endl;
-  str << "                      dc[k] = db[k];" << endl;
-  str << "                  }" << endl;
-  str << "                  for (int k = 0; k < dim; k++) {" << endl;
-  str << "                      dc[d] = dc[d] + 1;" << endl;
-  str << "                  }" << endl;
-  str << "                  D3Ks__ijbgd_x[(((get_global_id(0) + (D3Ks__ijbgd_dimsI[0] * j)) + (D3Ks__ijbgd_dimsI[1] * b)) + (D3Ks__ijbgd_dimsI[2] * g)) + (D3Ks__ijbgd_dimsI[3] * d)] = DaKs(" << endl;
+                        for (int d = 0; d < dim; d+=dim) {
+                            for (unsigned dd = 0; dd < dim; dd++) {
+  str << "                              // Vector3<int> dc = db; dc.set(dc[d]+1,d);" << endl;
+                                for (int k = 0; k < dim; k++) {
+  str << "                                  dc[" << k << "] = db[" << k << "];" << endl;
+                                }
+                                for (int k = 0; k < dim; k+=dim) {
+                                    for (unsigned kk = 0; kk < dim; kk++) {
+  str << "                                      dc[" << d << " + " << dd << "] = dc[" << d << " + " << dd << "] + 1;" << endl;
+                                    }
+                                }
+  str << "                              D3Ks__ijbgd_x[(((get_global_id(0) + (D3Ks__ijbgd_dimsI[0] * j)) + (D3Ks__ijbgd_dimsI[1] * " << b << ")) + (D3Ks__ijbgd_dimsI[2] * " << g << ")) + (D3Ks__ijbgd_dimsI[3] * " << d << ")] = DaKs(" << endl;
   str << "	dc, ximxj, r, " << endl;
   str << "	ks);" << endl;
-  str << "              }" << endl;
-  str << "          }" << endl;
-  str << "      }" << endl;
+                            }
+                        }
+                    }
+                }
+            }
+        }
   str << "  }" << endl;
   str << "}" << endl;
   
@@ -173,8 +181,8 @@ void AllocateBuffers()
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrq_a_i_x");
   dev_ptrD3Ks__ijbgd_x = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrD3Ks__ijbgd_x_mem_size, 
-	NULL, &oclErrNum);
+	context, CL_MEM_USE_HOST_PTR, hst_ptrD3Ks__ijbgd_x_mem_size, 
+	hst_ptrD3Ks__ijbgd_x, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrD3Ks__ijbgd_x");
   dev_ptrD2Ks__ijbg_dimsI = clCreateBuffer(
@@ -193,18 +201,18 @@ void AllocateBuffers()
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrp_a_i_x");
   dev_ptrD1Ks__ijb_x = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrD1Ks__ijb_x_mem_size, 
-	NULL, &oclErrNum);
+	context, CL_MEM_USE_HOST_PTR, hst_ptrD1Ks__ijb_x_mem_size, 
+	hst_ptrD1Ks__ijb_x, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrD1Ks__ijb_x");
   dev_ptrK__ij_x = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrK__ij_x_mem_size, 
-	NULL, &oclErrNum);
+	context, CL_MEM_USE_HOST_PTR, hst_ptrK__ij_x_mem_size, 
+	hst_ptrK__ij_x, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrK__ij_x");
   dev_ptrD2Ks__ijbg_x = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrD2Ks__ijbg_x_mem_size, 
-	NULL, &oclErrNum);
+	context, CL_MEM_USE_HOST_PTR, hst_ptrD2Ks__ijbg_x_mem_size, 
+	hst_ptrD2Ks__ijbg_x, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrD2Ks__ijbg_x");
 }
@@ -261,26 +269,6 @@ void ExecGaussianDerivatesFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrD3Ks__ijbgd_x, CL_TRUE, 
-	0, hst_ptrD3Ks__ijbgd_x_mem_size, hst_ptrD3Ks__ijbgd_x, 
-	1, &GPUExecution, NULL
-	);
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrD1Ks__ijb_x, CL_TRUE, 
-	0, hst_ptrD1Ks__ijb_x_mem_size, hst_ptrD1Ks__ijb_x, 
-	1, &GPUExecution, NULL
-	);
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrK__ij_x, CL_TRUE, 
-	0, hst_ptrK__ij_x_mem_size, hst_ptrK__ij_x, 
-	1, &GPUExecution, NULL
-	);
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrD2Ks__ijbg_x, CL_TRUE, 
-	0, hst_ptrD2Ks__ijbg_x_mem_size, hst_ptrD2Ks__ijbg_x, 
-	1, &GPUExecution, NULL
-	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
   oclErrNum = clFinish(command_queue);

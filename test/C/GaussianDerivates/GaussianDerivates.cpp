@@ -72,8 +72,8 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
 		  )
 {
   
-  for (unsigned i=0; i<Lq; i++) {
-    for (unsigned j=0; j<Lp; j++) {
+  for (unsigned j=0; j<Lp; j++) {
+    for (unsigned i=0; i<Lq; i++) {
       float xj[3];
       float xi[3];
       for (unsigned k = 0; k < dim; k++) {
@@ -175,8 +175,8 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define LP 16
-#define LQ 16
+#define LP 4608
+#define LQ 4608
 
 int main(int argc, char** argv)
 {
@@ -270,7 +270,7 @@ RunOCLGaussianDerivatesForKernel(
 
 
     // printMat(K__ij_x, K__ij_x_size); a
-    printMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
+    // printMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
     // printMat(D2Ks__ijbg_x,  D2Ks__ijbg_x_size);
     // printMat(D3Ks__ijbgd_x, D3Ks__ijbgd_x_size);
 
