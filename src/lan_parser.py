@@ -761,7 +761,8 @@ def gaussian():
         ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
 
-        ## rw.transpose('p_a_i_x')
+        # rw.transpose('p_a_i_x')
+        # rw.transpose('K__ij_x')
         ## rw.transpose('q_a_i_x')
         rw.SetDefine(['dim', 'scaleweight2_x', 'hst_ptrp_a_i_x_dim1',
                       'hst_ptrK__ij_x_dim1', 'scales2_x',

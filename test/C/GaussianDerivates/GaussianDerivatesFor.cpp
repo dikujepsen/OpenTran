@@ -2,8 +2,8 @@
 
 
 
-for (int j=0; j<Lp; j++) {
-  for (int i=0; i<Lq; i++) {
+for (int i=0; i<Lq; i++) {
+  for (int j=0; j<Lp; j++) {
     float xj[3];
     float xi[3];
     for (int k = 0; k < dim; k++) {
@@ -81,7 +81,7 @@ for (int j=0; j<Lp; j++) {
       }
     }
   }
-}
+ }
 
 
 
