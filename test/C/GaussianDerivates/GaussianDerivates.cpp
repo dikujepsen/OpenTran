@@ -72,8 +72,8 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
 		  )
 {
   
-  for (unsigned i=0; i<Lq; i++) {
-    for (unsigned j=0; j<Lp; j++) {
+  for (unsigned j=0; j<Lp; j++) {
+    for (unsigned i=0; i<Lq; i++) {
       float xj[3];
       float xi[3];
       for (unsigned k = 0; k < dim; k++) {
@@ -175,8 +175,8 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define LP 2048
-#define LQ 2048
+#define LP 1024
+#define LQ 1024
 
 int main(int argc, char** argv)
 {
