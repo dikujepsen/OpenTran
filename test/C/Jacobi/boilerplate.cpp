@@ -5,11 +5,11 @@ cl_mem dev_ptrX2;
 cl_mem dev_ptrB;
 cl_mem dev_ptrX1;
 
-unknown * hst_ptrX2;
-unknown * hst_ptrB;
-unknown * hst_ptrX1;
-unknown wB;
-unknown wA;
+float * hst_ptrX2;
+float * hst_ptrB;
+float * hst_ptrX1;
+float wB;
+unsigned wA;
 
 size_t hst_ptrX2_mem_size;
 size_t hst_ptrX1_mem_size;
@@ -20,6 +20,7 @@ size_t hst_ptrX2_dim2;
 size_t hst_ptrB_dim1;
 size_t hst_ptrB_dim2;
 size_t hst_ptrX1_dim1;
+size_t hst_ptrX1_dim2;
 
 size_t isFirstTime = 1;
 std::string KernelDefines = "";
@@ -29,10 +30,17 @@ std::string KernelString()
 {
   std::stringstream str;
   str << "__kernel void JacobiFor(" << endl;
-  str << "	__global unknown * B, unsigned hst_ptrB_dim1, unknown wA, " << endl;
-  str << "	unsigned hst_ptrX2_dim1, __global unknown * X2, __global unknown * X1" << endl;
-  str << "	) {" << endl;
-  str << "  X2[(get_global_id(1) * hst_ptrX2_dim1) + get_global_id(0)] = (-0.25) * ((B[(get_global_id(1) * hst_ptrB_dim1) + get_global_id(0)] - (X1[((get_global_id(1) - 1) * wA) + get_global_id(0)] + X1[((get_global_id(1) + 1) * wA) + get_global_id(0)])) - (X1[(get_global_id(1) * wA) + (get_global_id(0) - 1)] + X1[(get_global_id(1) * wA) + (get_global_id(0) + 1)]));" << endl;
+  str << "	__global float * B, unsigned hst_ptrX1_dim1, __global float * X2, " << endl;
+  str << "	__global float * X1) {" << endl;
+  str << "  __local float X1_local[18*18];" << endl;
+  str << "  unsigned li = get_local_id(1) + 1;" << endl;
+  str << "  unsigned lj = get_local_id(0) + 1;" << endl;
+  str << "  X1_local[((li - 1) * 16) + lj] = X1[((get_global_id(1) - 1) * hst_ptrX1_dim1) + get_global_id(0)];" << endl;
+  str << "  X1_local[((li + 1) * 16) + lj] = X1[((get_global_id(1) + 1) * hst_ptrX1_dim1) + get_global_id(0)];" << endl;
+  str << "  X1_local[(li * 16) + (lj - 1)] = X1[(get_global_id(1) * hst_ptrX1_dim1) + (get_global_id(0) - 1)];" << endl;
+  str << "  X1_local[(li * 16) + (lj + 1)] = X1[(get_global_id(1) * hst_ptrX1_dim1) + (get_global_id(0) + 1)];" << endl;
+  str << "  barrier(CLK_LOCAL_MEM_FENCE);" << endl;
+  str << "  X2[(get_global_id(1) * hst_ptrX2_dim1) + get_global_id(0)] = (-0.25) * ((B[(get_global_id(1) * hst_ptrB_dim1) + get_global_id(0)] - (X1_local[((li - 1) * 16) + lj] + X1_local[((li + 1) * 16) + lj])) - (X1_local[(li * 16) + (lj - 1)] + X1_local[(li * 16) + (lj + 1)]));" << endl;
   str << "}" << endl;
   
   return str.str();
@@ -41,15 +49,20 @@ std::string KernelString()
 
 void AllocateBuffers()
 {
-  hst_ptrX2_mem_size = hst_ptrX2_dim2 * (hst_ptrX2_dim1 * sizeof(unknown));
-  hst_ptrB_mem_size = hst_ptrB_dim2 * (hst_ptrB_dim1 * sizeof(unknown));
-  hst_ptrX1_mem_size = hst_ptrX1_dim1 * sizeof(unknown);
+  hst_ptrX2_mem_size = hst_ptrX2_dim2 * (hst_ptrX2_dim1 * sizeof(float));
+  hst_ptrB_mem_size = hst_ptrB_dim2 * (hst_ptrB_dim1 * sizeof(float));
+  hst_ptrX1_mem_size = hst_ptrX1_dim2 * (hst_ptrX1_dim1 * sizeof(float));
   
   // Transposition
   
   // Constant Memory
   
   // Defines for the kernel
+  std::stringstream str;
+  str << "-Dhst_ptrB_dim1=" << hst_ptrB_dim1 << " ";
+  str << "-Dhst_ptrX2_dim1=" << hst_ptrX2_dim1 << " ";
+  str << "-DwA=" << wA << " ";
+  KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
   
@@ -79,13 +92,7 @@ void SetArgumentsJacobiFor()
 	(void *) &dev_ptrB);
   oclErrNum |= clSetKernelArg(
 	JacobiForKernel, counter++, sizeof(unsigned), 
-	(void *) &hst_ptrB_dim1);
-  oclErrNum |= clSetKernelArg(
-	JacobiForKernel, counter++, sizeof(unknown), 
-	(void *) &wA);
-  oclErrNum |= clSetKernelArg(
-	JacobiForKernel, counter++, sizeof(unsigned), 
-	(void *) &hst_ptrX2_dim1);
+	(void *) &hst_ptrX1_dim1);
   oclErrNum |= clSetKernelArg(
 	JacobiForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrX2);
@@ -126,10 +133,10 @@ void ExecJacobiFor()
 }
 
 void RunOCLJacobiForKernel(
-	unknown * arg_X2, size_t arg_hst_ptrX2_dim1, size_t arg_hst_ptrX2_dim2, 
-	unknown * arg_X1, size_t arg_hst_ptrX1_dim1, unknown * arg_B, 
-	size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, unknown arg_wB, 
-	unknown arg_wA)
+	float * arg_X2, size_t arg_hst_ptrX2_dim1, size_t arg_hst_ptrX2_dim2, 
+	float * arg_X1, size_t arg_hst_ptrX1_dim1, size_t arg_hst_ptrX1_dim2, 
+	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
+	float arg_wB, unsigned arg_wA)
 {
   if (isFirstTime)
     {
@@ -138,6 +145,7 @@ void RunOCLJacobiForKernel(
       hst_ptrX2_dim2 = arg_hst_ptrX2_dim2;
       hst_ptrX1 = arg_X1;
       hst_ptrX1_dim1 = arg_hst_ptrX1_dim1;
+      hst_ptrX1_dim2 = arg_hst_ptrX1_dim2;
       hst_ptrB = arg_B;
       hst_ptrB_dim1 = arg_hst_ptrB_dim1;
       hst_ptrB_dim2 = arg_hst_ptrB_dim2;

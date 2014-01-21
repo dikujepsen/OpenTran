@@ -996,6 +996,135 @@ class Rewriter(NodeVisitor):
             if looplist[n] == 0:
                 self.Unroll([outeridx])
 
+    def localMemory3(self, arrDict, loopDict = None, blockDict = None):
+        initstats = []
+        initComp = GroupCompound(initstats)
+        self.Kernel.statements.insert(0, initComp)
+        
+        if loopDict is None:
+            loopDict = dict()
+            # So we create it
+            for n in arrDict:
+                for i in arrDict[n]:
+                    loopDict[(n,i)] = []
+                
+            for n in arrDict:
+                for i in arrDict[n]:
+                    subscript = self.SubscriptNoId[n][i]
+                    acc = []
+                    for m in subscript:
+                        try:
+                            something = int(m)
+                        except:
+                            if m not in self.GridIndices:
+                                acc.append(m)
+                    loopDict[(n,i)] = acc
+
+        # Check that all ArrayRefs are blocked using only one loop
+        # otherwise we do not know what to do
+        for n in arrDict:
+            for i in arrDict[n]:
+                if len(loopDict[(n,i)]) > 1:
+                    print "Array %r is being blocked by %r. Returning..." \
+                          % (n, loopDict[(n,i)])
+                    return
+
+        # Find which loops must be extended
+        loopext = set()
+        for n in arrDict:
+            for i in arrDict[n]:
+                loopext.add(loopDict[(n,i)][0])
+
+        # do the extending
+        for n in loopext:
+            outerloop = self.Loops[n]
+            outeridx = n
+            compound = outerloop.compound
+            outerloop.compound = Compound([])
+            innerloop = copy.deepcopy(outerloop)
+            innerloop.compound = compound
+            outerstats = outerloop.compound.statements
+            outerstats.insert(0,innerloop)
+            loadstats = []
+            loadComp = GroupCompound(loadstats)
+            outerstats.insert(0, loadComp)
+            # change increment of outer loop
+            outerloop.inc = Increment(Id(outeridx), '+='+self.Local['size'][0])
+            inneridx = outeridx*2
+            # For adding to this index in other subscripts
+            self.Add[outeridx] = inneridx
+
+            # new inner loop
+            innerloop.cond = BinOp(Id(inneridx), '<' , Constant(self.Local['size'][0]))
+            innerloop.inc = Increment(Id(inneridx), '++')
+            innerloop.init = ConstantAssignment(inneridx)
+            self.Loops[inneridx] = innerloop
+      
+        for n in arrDict:
+            # Add array allocations
+            ## dim = self.NumDims[n]
+            localName = n + '_local'
+            arrayinit = '['
+            arrayinit += self.Local['size'][0]
+            if self.NumDims[n] == 2 and self.ParDim == 2:
+                arrayinit += '*' + self.Local['size'][1]
+            arrayinit += ']'
+            
+            localId = Id(localName + arrayinit)
+            localTypeId = TypeId(['__local'] + [self.Type[n][0]], localId)
+            initstats.append(localTypeId)
+
+        loadings = []
+        for n in arrDict:
+            loc_name = n+'_local'
+            for i in arrDict[n]:
+                glob_subs = copy.deepcopy(self.LoopArrays[n][i])
+                # Change loop idx to local idx
+                loopname = loopDict[(n,i)][0]
+                loc_subs = copy.deepcopy(glob_subs).subscript
+                for k, m in enumerate(loc_subs):
+                        if isinstance(m, Id) and \
+                               m.name not in self.GridIndices:
+                            tid = str(self.ReverseIdx[k])
+                            tidstr = 'get_local_id('+tid+')'
+                            exchangeId = ExchangeId({loopname : tidstr})
+                            exchangeId.visit(m)
+                            exchangeId2 = ExchangeId({loopname : loopname + ' + ' + tidstr})
+                            exchangeId2.visit(glob_subs.subscript[k])
+                loc_ref = ArrayRef(Id(loc_name), loc_subs)
+                ## exchangeId = ExchangeId({loopname : loopname + ' + get_local_id(0)'})
+                ## exchangeId.visit(glob_subs)
+
+                ## if self.NumDim[n] == 1:
+                ##     exchangeId = ExchangeId({n : 'get_local_id(0)'})
+                ## exchangeId.visit(loc_ref)
+                loadings.append(Assignment(loc_ref, glob_subs))
+                if self.ParDim == 2:
+                    exchangeId = ExchangeId({self.GridIndices[1] : 'get_local_id(0)', self.GridIndices[0] : 'get_local_id(1)'})
+                else: 
+                    exchangeId = ExchangeId({self.GridIndices[0] : 'get_local_id(0)'})
+                exchangeId.visit(loc_ref)
+
+                inner_loc = self.LoopArrays[n][i]
+                inner_loc.name.name = loc_name
+                exchangeId2 = ExchangeId({loopname : loopname*2})
+                exchangeId2.visit(inner_loc)
+                exchangeId.visit(inner_loc)
+                ## inner_ref = ArrayRef(Id(loc_name), inner_loc)
+                ## initstats.append(Assignment(inner_ref, Id('1')))
+                
+
+            self.ArrayIdToDimName[loc_name] = self.Local['size']
+            self.NumDims[loc_name] = self.NumDims[n]
+        # Must also create the barrier
+        arglist = ArgList([Id('CLK_LOCAL_MEM_FENCE')])
+        func = EmptyFuncDecl('barrier', type = [])
+        func.arglist = arglist
+        loadings.append(func)
+
+        outerstats.insert(0, GroupCompound(loadings))
+        outerstats.append(func)
+        
 
         
     def localMemory2(self, arrNames):
@@ -1185,6 +1314,8 @@ class Rewriter(NodeVisitor):
                 
 
         ## local[arrNames[0]][0][1].name = 'lll'
+
+
 
     def localMemory(self, arrNames, west = 0, north = 0, east = 0, south = 0, middle = 1):
 
