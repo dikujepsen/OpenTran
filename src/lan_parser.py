@@ -282,13 +282,9 @@ def jacobi():
 
     run = 1
     while run:
-        filename = '../test/Jacobi/JacobiFor.cpp'
-        ## filename = '../test/matmulfunc4.cpp'
+        filename = fileprefix + 'Jacobi/JacobiFor.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
-            ## f = open('../test/matmulfunc2.cpp', 'r')
-            ## f = open('../test/matrixMul.cpp', 'r')
-            ## f = open('../test/matmulfunc3.cpp', 'r')
             f = open(filename, 'r')
             s = f.read()
             f.close()
@@ -419,14 +415,15 @@ def matmul():
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = fileprefix + 'Matmul/boilerplate.cpp')
 
-def nbody():
+
+def LexAndParse(name, createTemp):
     import ply.yacc as yacc
     cparser = yacc.yacc()
     lex.lex()
-
+        
     run = 1
     while run:
-        filename = fileprefix + 'NBody/NBodyFor.cpp'
+        filename = fileprefix + name + '/' + name + 'For.cpp'
         funcname = basename(os.path.splitext(filename)[0])
         try:
             f = open(filename, 'r')
@@ -452,78 +449,10 @@ def nbody():
         ## print printres
         rw = Rewriter()
         rw.initOriginal(ast)
-        tempfilename = fileprefix + 'NBody/tempnbody.cpp'
-        ## rw.rewrite(ast, funcname, changeAST = True)
-        ## cprint.createTemp(ast, filename = tempfilename)
-
-        run = 0
-        filename = tempfilename
-        try:
-            f = open(filename, 'r')
-            s = f.read()
-            f.close()
-        except EOFError:
-            break
- 
-        ast = cparser.parse(s)
-        ## ## ast.show()
-        tempast = copy.deepcopy(ast)
-        tempast2 = copy.deepcopy(ast)
-        rw.initNewRepr(tempast)
-
-        ## rw.rewriteToSequentialC(ast)
-        ## cprint.createTemp(ast, filename = 'ctemp.cpp')
-        ## rw.rewriteToDeviceCTemp(tempast, False)
-        ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
-
-        rw.dataStructures()
-
-        rw.SetLSIZE(['256'])
-        rw.SetDefine(['hst_ptrForces_dim1', 'hst_ptrPos_dim1', 'N'])
-        rw.Unroll2({'j' : 32})
-        
-        rw.InSourceKernel(tempast2, filename = fileprefix + 'NBody/'+funcname + '.cl')
-        ## rw.rewriteToDeviceCRelease(tempast2)
-        ## cprint.createTemp(tempast2, filename = fileprefix + 'NBody/'+funcname + '.cl')
-        boilerast = rw.generateBoilerplateCode(ast)
-        cprint.createTemp(boilerast, filename = fileprefix + 'NBody/'+'boilerplate.cpp')
-
-def nbody2():
-    import ply.yacc as yacc
-    cparser = yacc.yacc()
-    lex.lex()
-
-    run = 1
-    while run:
-        filename = fileprefix + 'NBody2/NBody2For.cpp'
-        funcname = basename(os.path.splitext(filename)[0])
-        try:
-            f = open(filename, 'r')
-            s = f.read()
-            f.close()
-            ## print s
-        except EOFError:
-            break
-
-        
-        lex.input(s)
-        while 1:
-            tok = lex.token()
-            if not tok: break
-            ## print tok
-        
-        ast = cparser.parse(s)
-        ## ast.show()
-        ## print ast
-        ## print slist
-        cprint = CGenerator()
-        ## printres = cprint.visit(ast)
-        ## print printres
-        rw = Rewriter()
-        rw.initOriginal(ast)
-        tempfilename = fileprefix + 'NBody2/'+'tempnbody2.cpp'
-        ## rw.rewrite(ast, funcname, changeAST = True)
-        ## cprint.createTemp(ast, filename = tempfilename)
+        tempfilename = fileprefix + name + '/'+'temp' +name.lower() + '.cpp'
+        if createTemp:
+            rw.rewrite(ast, funcname, changeAST = True)
+            cprint.createTemp(ast, filename = tempfilename)
 
         run = 0
         filename = tempfilename
@@ -540,24 +469,24 @@ def nbody2():
         tempast = copy.deepcopy(ast)
         tempast2 = copy.deepcopy(ast)
         rw.initNewRepr(tempast)
+        return (rw, ast, tempast, tempast2)
 
+def nbody():
+        name = 'NBody'
+        funcname = name+'For'
+        (rw, ast, tempast, tempast2) = LexAndParse(name, False)
+        cprint = CGenerator()
 
-        rw.SetLSIZE(['256','1'])
-        ## rw.localMemory(['Pos'], south = 1, middle = 1)
-        rw.SetDefine(['hst_ptrForces_x_dim1', 'hst_ptrForces_y_dim1', 'hst_ptrPos_dim1'])
-        rw.dataStructures()
+        ## rw.SetLSIZE(['256'])
+        rw.SetDefine(['hst_ptrForces_dim1', 'N', 'hst_ptrPos_dim1'])
+        ## rw.dataStructures()
         ## rw.localMemory2(['Mas', 'Pos'])
-        ## rw.constantMemory(['Pos'])
         ## rw.SetNoReadBack()
-        ## rw.constantMemory2({'Pos' : [2,3], 'Mas' : [1]})
-        ## rw.placeInReg2({ 'Pos' : [0, 1], 'Mas' : [0]})
-        ## rw.Unroll(['k', 'kk'])
+        ## rw.Unroll2({'j': 32})
         
-        rw.InSourceKernel(tempast2, filename = fileprefix + 'NBody2/'+funcname + '.cl')
-        ## rw.rewriteToDeviceCRelease(tempast)
-        ## cprint.createTemp(tempast, filename = fileprefix + 'NBody2/'+funcname + '.cl')
+        rw.InSourceKernel(tempast2, filename = fileprefix + name + '/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
-        cprint.createTemp(boilerast, filename = fileprefix + 'NBody2/'+'boilerplate.cpp')
+        cprint.createTemp(boilerast, filename = fileprefix + name + '/'+'boilerplate.cpp')
 
 def knearest():
     import ply.yacc as yacc
@@ -713,12 +642,6 @@ def gaussian():
         
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = fileprefix + 'GaussianDerivates/'+'boilerplate.cpp')
-## 0.00325902 -0 0.032143 -0.0251829 -0 0 0.0489179 -0.00325902 0.00212156 -0.0879844 
-## -0.0118921 -0 -0.0118921 -0 -0.00325902 -0 0 0.00741233 -0.00453474 0.00325902 
-## -0.015038 -0.0016064 -0.0286717 -0.0141325 -0.00690135 -0.0141325 0.00741234 -0.00741234 0.00741234 -0.00449265 
-## 0.0101567 -0.00212156 0.0141325 0.0504732 -0.0633 -0 -0.0204797 -0.0186647 0.0229105 0.0489179 
-## -0 -0 -0.0124129 -0.019482 -0.0124129 -0.0607155 -0.0296494 -0.169504 0.0113864 -0.00221446 
-## 0.00556629 -0.142482 0 0.031201 0.0095137 0 0.0141325 
 
 def laplace():
     import ply.yacc as yacc
@@ -802,7 +725,7 @@ def laplace():
 if __name__ == "__main__":
     ## jacobi()
     ## matmul()
-    ## nbody2()
+    nbody()
     ## laplace()
-    knearest()
+    ## knearest()
     ## gaussian()

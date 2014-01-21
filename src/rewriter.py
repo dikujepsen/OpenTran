@@ -1155,8 +1155,8 @@ class Rewriter(NodeVisitor):
                 if localDim[m] == 1:
                     exchangeId = ExchangeId({n : 'get_local_id(0)'})
                 exchangeId.visit(loc_ref)
-                                        
-                self.ArrayIdToDimName[loc_name] = self.Local['size'][0]
+
+                self.ArrayIdToDimName[loc_name] = self.Local['size']
                 self.NumDims[loc_name] = self.NumDims[m]
 
                 glo_subs = copy.deepcopy(local[m][i])
@@ -1649,7 +1649,7 @@ class Rewriter(NodeVisitor):
         ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
         execBody.append(ErrCheck)
 
-        if not self.SetNoReadBack:
+        if not self.NoReadBack:
             for n in self.WriteOnly:
                 lval = Id(ErrName)
                 arglist = ArgList([Id('command_queue'),\
