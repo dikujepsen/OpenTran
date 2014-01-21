@@ -2,13 +2,13 @@
 #include <cstdio>
 #include <iostream>
 #include <cmath>
-#include "../../src/boilerplate.cpp"
+#include "boilerplate.cpp"
 
 
 using namespace std;
 
 void
-jacobi(float* B, float* X1, float* X2, unsigned wA, unsigned wB)
+Jacobi(float* B, float* X1, float* X2, unsigned wA, unsigned wB)
 {
   for (unsigned i = 1; i < wB; i++) {
     for (unsigned j = 1; j < wB; j++) {
@@ -81,7 +81,7 @@ copyMat(float* mat1, float* mat2, unsigned wMat, unsigned hMat)
 }
 
 
-#define matsize 8
+#define matsize 256
 
 int main(int argc, char** argv)
 {
@@ -96,37 +96,37 @@ int main(int argc, char** argv)
   unsigned B_size = hB*wB;
   unsigned C_size = hC*wC;
   
-  float* A_mat = new float[A_size];
+  float* X1_mat = new float[A_size];
   float* B_mat = new float[B_size];
-  float* C_mat = new float[C_size];
+  float* X2_mat = new float[C_size];
 
-  zeroMatrix(A_mat, wA, hA);
-  zeroMatrix(C_mat, wC, hC);
+  zeroMatrix(X1_mat, wA, hA);
+  zeroMatrix(X2_mat, wC, hC);
   
   createB(B_mat, wB, hB);
-  printMat2(B_mat, wB, hB);
+  // printMat2(B_mat, wB, hB);
 
-#define GPU 1
-#if GPU
-  RunOCLJacobiKernel(C_mat,wC,hC,
-		     B_mat,wB,hB,
-		     A_mat,wA,hA,
-		     wB, wA
-		     );
-#else
-  for (int i = 2; i < 3; i++) {
-    // jacobi(B_mat, A_mat, C_mat, wA, wB);
-    Jacobi(C_mat, wC, hC,
-	   A_mat, wA, hA,
-	   B_mat, wB, hB,
-	   wB, wA);
-    copyMat(A_mat, C_mat, wA, hA);    
-  }
+#if 0
+   Jacobi(B_mat, X1_mat, X2_mat, wA, wB);
+
+#else 
+  RunOCLJacobiForKernel(X2_mat, wC, hC,
+			X1_mat, wA, hA,
+			B_mat,  wB, hB,
+			wB, wA
+			);
 #endif
-  printMat2(C_mat, wC, hC);
+  for (unsigned i = 0; i < 10; i++) {
+    for (unsigned j = 0; j < 10; j++) {
+      cout << X2_mat[i * wA + j] << " ";
+    }
+    cout << endl;
+  }
+  cout << endl;
+  // printMat(X2_mat, 100);
 
-  free(A_mat);
+  free(X1_mat);
   free(B_mat);
-  free(C_mat);
+  free(X2_mat);
   
 }

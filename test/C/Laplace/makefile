@@ -1,5 +1,5 @@
 
-EXEC = matrixMul.exe
+EXEC = Laplace.exe
 
 
 include ../common.mk

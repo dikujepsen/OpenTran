@@ -40,7 +40,7 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define matsize 4096
+#define matsize 16
 
 int main(int argc, char** argv)
 {
@@ -68,14 +68,14 @@ int main(int argc, char** argv)
 #if 0
   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
 #else
-  RunOCLmatmulfunc4Kernel(
+  RunOCLMatMulForKernel(
 	 A_mat, wA, hA,
 	 C_mat, wC, hC,
 	 B_mat, wB, hB,
 	 wB, wA, hA);  
 #endif
 
-  // printMat(C_mat,C_size);
+  printMat(C_mat,C_size);
 
   free(A_mat);
   free(B_mat);

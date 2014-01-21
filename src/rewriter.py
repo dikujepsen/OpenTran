@@ -157,7 +157,13 @@ class Rewriter(NodeVisitor):
         norm.visit(forLoopAst)
         arrays = Arrays(self.index)
         arrays.visit(ast)
-        
+
+        for n in arrays.numIndices:
+            if arrays.numIndices[n] == 2:
+                arrays.numSubscripts[n] = 2
+            elif arrays.numIndices[n] > 2:
+                arrays.numSubscripts[n] = 1
+            
         self.NumDims = arrays.numSubscripts
         self.IndexInSubscript = arrays.indexIds
         typeIds = TypeIds()
@@ -173,9 +179,6 @@ class Rewriter(NodeVisitor):
         otherIds = ids.ids - arrays.ids - typeIds.ids
         self.ArrayIds = arrays.ids - typeIds.ids
         self.NonArrayIds = otherIds
-
-        
-
 
     def initNewRepr(self, ast):
         findIncludes = FindIncludes()
@@ -246,7 +249,6 @@ class Rewriter(NodeVisitor):
         for i, n in enumerate(reversed(self.GridIndices)):
             self.IdxToDim[i] = n
             
-
 
         findDim = FindDim(self.NumDims)
         findDim.visit(ast)
