@@ -2,14 +2,21 @@
 #include <cstdio>
 #include <iostream>
 #include <cmath>
-#include "boilerplate.cpp"
+#include <openacc.h>
 
 
 using namespace std;
+#include <sys/time.h>
+#define gettime(a) gettimeofday(a,NULL)
+#define usec(t1,t2) (((t2).tv_sec-(t1).tv_sec)*1000000+((t2).tv_usec-(t1).tv_usec))
+typedef struct timeval timestruct;
 
 void
-Jacobi(float* B, float* X1, float* X2, unsigned wA, unsigned wB)
+Jacobi(float*  B, float*  X1, float*  X2, unsigned wA, unsigned wB)
 {
+  #if 1
+#pragma acc kernels loop copyin(B[0:wB*wB], X1[0:wA*wA]) local(X2[0:wA*wA]) independent
+  #endif
   for (unsigned i = 1; i < wB; i++) {
     for (unsigned j = 1; j < wB; j++) {
       X2[i*wA + j] = -0.25 * (B[i * wB + j] -
@@ -17,7 +24,6 @@ Jacobi(float* B, float* X1, float* X2, unsigned wA, unsigned wB)
 			      (X1[i * wA + (j-1)] + X1[i * wA + (j+1)]));
     }
   }
-    
 }
 
 void
@@ -85,6 +91,9 @@ copyMat(float* mat1, float* mat2, unsigned wMat, unsigned hMat)
 
 int main(int argc, char** argv)
 {
+  timestruct t1, t2;
+  long long cgpu;
+
   unsigned hA = matsize+2;
   unsigned hB = matsize+1;
   unsigned hC = matsize+2;
@@ -104,17 +113,17 @@ int main(int argc, char** argv)
   zeroMatrix(X2_mat, wC, hC);
   
   createB(B_mat, wB, hB);
-  // printMat2(B_mat, wB, hB);
+  acc_init( acc_device_nvidia );
 
-#if 0
-   Jacobi(B_mat, X1_mat, X2_mat, wA, wB);
+  // printMat2(B_mat, wB, hB);
+// 376082
+#if 1
+  gettime( &t1 );
+  Jacobi(B_mat, X1_mat, X2_mat, wA, wB);
+  gettime( &t2 );
+  cgpu = usec(t1,t2);
 
 #else 
-  RunOCLJacobiForKernel(X2_mat, wC, hC,
-			X1_mat, wA, hA,
-			B_mat,  wB, hB,
-			wB, wA
-			);
 #endif
   for (unsigned i = 0; i < 10; i++) {
     for (unsigned j = 0; j < 10; j++) {
@@ -124,6 +133,8 @@ int main(int argc, char** argv)
   }
   cout << endl;
   // printMat(X2_mat, 100);
+  printf( "matrix %d x %d, %d iterations\n", matsize, matsize, 1);
+  printf( "%f seconds\n", (double)cgpu / 1000000.0);
 
   free(X1_mat);
   free(B_mat);
