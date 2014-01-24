@@ -54,7 +54,7 @@ class Rewriter(NodeVisitor):
         # ArrayRef inside a loop in the kernel
         # Mapping from Id to AST ArrayRef node
         self.LoopArray = dict()
-        # The argument list in our ER
+        # The argument list in our IR
         self.DevArgList = list()
         # The name and type of the kernel function.
         self.DevFuncTypeId = None
@@ -140,6 +140,8 @@ class Rewriter(NodeVisitor):
         self.UnrollLoops = list()
         # True is SetDefine were called.
         self.DefinesAreMade = False
+        # List of what kernel arguments changes
+        self.Change = list()
         
         
         
@@ -337,7 +339,7 @@ class Rewriter(NodeVisitor):
                         except AttributeError:
                             m[i] = 'unknown'
 
-    def dataStructures(self):
+    def DataStructures(self):
         print "self.index " , self.index
         print "self.UpperLimit " , self.UpperLimit
         print "self.LowerLimit " , self.LowerLimit

@@ -3,6 +3,11 @@ import os
 from visitor import *
 from stringstream import *
 
+class MyError(Exception):
+     def __init__(self, value):
+         self.value = value
+     def __str__(self):
+         return repr(self.value)
 
 class Transformation():
     """ Apply transformations to the original AST. Includes:
@@ -15,13 +20,22 @@ class Transformation():
     7. Setting the number of dimensions to parallelize
     8. Setting the local work-group size
     9. Setting if we should read data back from the GPU
+    10. Setting which kernel arguments changes
     """
     def __init__(self, rw):
+        # The rewriter
         self.rw = rw
-
+        
     def SetParDim(self, number):
         rw = self.rw
         rw.ParDim = number
+
+    def SetChange(self, varList):
+        if self.DefinesAreMade:
+            raise MyError("SetChange needs to be called before SetDefine")
+        
+        rw = self.rw
+        rw.Change.append(varList)
         
 
     def SetLSIZE(self, lsizelist):
