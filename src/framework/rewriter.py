@@ -1524,7 +1524,7 @@ class Rewriter(NodeVisitor):
 
         fileAST = FileAST([])
 
-        fileAST.ext.append(Id('#include \"../../../src/utils/StartUtil.cpp\"'))
+        fileAST.ext.append(Id('#include \"../../../utils/StartUtil.cpp\"'))
         fileAST.ext.append(Id('using namespace std;'))
         ## fileAST.ext.append(Id('#define LSIZE ' + str(self.Local['size'][0])))
 
@@ -1850,7 +1850,7 @@ class Rewriter(NodeVisitor):
         if self.KernelStringStream is not None:
             useFile = 'false'
             
-        ifThenList.append(Id('cout << KernelDefines << endl;'))
+        ifThenList.append(Id('cout << "$Defines " << KernelDefines << endl;'))
         arglist = ArgList([Constant(self.DevFuncId),
                            Constant(self.DevFuncId+'.cl'),
                            Id('KernelString()'),
@@ -1867,7 +1867,7 @@ class Rewriter(NodeVisitor):
         # Insert timing
         runOCLBody.append(Id('timer.start();'))
         runOCLBody.append(FuncDecl(Id('Exec' + self.DevFuncId), arglist, Compound([])))
-        runOCLBody.append(Id('cout << timer.stop() << endl;'))
+        runOCLBody.append(Id('cout << "$Time " << timer.stop() << endl;'))
 
 
         return fileAST

@@ -1,4 +1,4 @@
-#include "../../../src/utils/StartUtil.cpp"
+#include "../../../utils/StartUtil.cpp"
 using namespace std;
 cl_kernel MatMulForKernel;
 cl_mem dev_ptrA;
@@ -123,11 +123,6 @@ void ExecMatMulFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrC, CL_TRUE, 
-	0, hst_ptrC_mem_size, hst_ptrC, 
-	1, &GPUExecution, NULL
-	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
   oclErrNum = clFinish(command_queue);
@@ -158,7 +153,7 @@ void RunOCLMatMulForKernel(
       hA = arg_hA;
       StartUpGPU();
       AllocateBuffers();
-      cout << KernelDefines << endl;
+      cout << "$Defines " << KernelDefines << endl;
       compileKernelFromFile(
 	"MatMulFor", "MatMulFor.cl", KernelString(), 
 	false, &MatMulForKernel, KernelDefines
@@ -167,6 +162,6 @@ void RunOCLMatMulForKernel(
     }
   timer.start();
   ExecMatMulFor();
-  cout << timer.stop() << endl;
+  cout << "$Time " << timer.stop() << endl;
 }
 

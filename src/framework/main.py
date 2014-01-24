@@ -100,8 +100,9 @@ def matmul():
     ## rw.transpose('C')
     ## rw.localMemory(['A','B'])
     rw.localMemory3({'A' : [0], 'B' : [0]})
-    rw.dataStructures()
+    ## rw.dataStructures()
     rw.SetDefine(['hst_ptrB_dim1', 'hst_ptrA_dim1', 'wA', 'hst_ptrC_dim1'])
+    rw.SetNoReadBack()
         
     CGen(name, funcname, rw, tempast2, ast)
     
@@ -192,7 +193,7 @@ def laplace():
     # rw.localMemory2(['alpha'])
     ## rw.placeInReg2({ 'alpha_local' : [1]})
     ## rw.constantMemory(['Pos'])
-    # rw.SetNoReadBack()
+    rw.SetNoReadBack()
     ## rw.constantMemory2({'Pos' : [2,3], 'Mas' : [1]})
     ## rw.placeInReg2({ 'Pos' : [0, 1], 'Mas' : [0]})
     # rw.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
@@ -200,8 +201,8 @@ def laplace():
     
 
 if __name__ == "__main__":
-    jacobi()
-    ## matmul()
+    ## jacobi()
+    matmul()
     ## nbody()
     ## laplace()
     ## knearest()

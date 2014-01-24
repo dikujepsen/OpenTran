@@ -175,8 +175,8 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define LP 1024
-#define LQ 1024
+#define LP 2048
+#define LQ 2048
 
 int main(int argc, char** argv)
 {

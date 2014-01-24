@@ -40,7 +40,7 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define matsize 16
+#define matsize 4800
 
 int main(int argc, char** argv)
 {
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 	 wB, wA, hA);  
 #endif
 
-  printMat(C_mat,C_size);
+  // printMat(C_mat,C_size);
 
   free(A_mat);
   free(B_mat);
