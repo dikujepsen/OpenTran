@@ -1,4 +1,4 @@
-#include "../../../src/utils/StartUtil.cpp"
+#include "../../../utils/StartUtil.cpp"
 using namespace std;
 cl_kernel LaplaceForKernel;
 cl_mem dev_ptrindex;
@@ -230,11 +230,6 @@ void ExecLaplaceFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrresult, CL_TRUE, 
-	0, hst_ptrresult_mem_size, hst_ptrresult, 
-	1, &GPUExecution, NULL
-	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
   oclErrNum = clFinish(command_queue);
@@ -277,7 +272,7 @@ void RunOCLLaplaceForKernel(
       hst_ptrlambda_dim1 = arg_hst_ptrlambda_dim1;
       StartUpGPU();
       AllocateBuffers();
-      cout << KernelDefines << endl;
+      cout << "$Defines " << KernelDefines << endl;
       compileKernelFromFile(
 	"LaplaceFor", "LaplaceFor.cl", KernelString(), 
 	false, &LaplaceForKernel, KernelDefines
@@ -286,6 +281,6 @@ void RunOCLLaplaceForKernel(
     }
   timer.start();
   ExecLaplaceFor();
-  cout << timer.stop() << endl;
+  cout << "$Time " << timer.stop() << endl;
 }
 

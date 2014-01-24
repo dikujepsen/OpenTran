@@ -1,4 +1,4 @@
-#include "../../../src/utils/StartUtil.cpp"
+#include "../../../utils/StartUtil.cpp"
 using namespace std;
 cl_kernel JacobiForKernel;
 cl_mem dev_ptrX2;
@@ -153,7 +153,7 @@ void RunOCLJacobiForKernel(
       wA = arg_wA;
       StartUpGPU();
       AllocateBuffers();
-      cout << KernelDefines << endl;
+      cout << "$Defines " << KernelDefines << endl;
       compileKernelFromFile(
 	"JacobiFor", "JacobiFor.cl", KernelString(), 
 	false, &JacobiForKernel, KernelDefines
@@ -162,6 +162,6 @@ void RunOCLJacobiForKernel(
     }
   timer.start();
   ExecJacobiFor();
-  cout << timer.stop() << endl;
+  cout << "$Time " << timer.stop() << endl;
 }
 

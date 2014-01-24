@@ -1,4 +1,4 @@
-#include "../../../src/utils/StartUtil.cpp"
+#include "../../../utils/StartUtil.cpp"
 using namespace std;
 cl_kernel GaussianDerivatesForKernel;
 cl_mem dev_ptrD1Ks__ijb_dimsI;
@@ -339,7 +339,7 @@ void RunOCLGaussianDerivatesForKernel(
       hst_ptrD2Ks__ijbg_x_dim1 = arg_hst_ptrD2Ks__ijbg_x_dim1;
       StartUpGPU();
       AllocateBuffers();
-      cout << KernelDefines << endl;
+      cout << "$Defines " << KernelDefines << endl;
       compileKernelFromFile(
 	"GaussianDerivatesFor", "GaussianDerivatesFor.cl", KernelString(), 
 	false, &GaussianDerivatesForKernel, KernelDefines
@@ -348,6 +348,6 @@ void RunOCLGaussianDerivatesForKernel(
     }
   timer.start();
   ExecGaussianDerivatesFor();
-  cout << timer.stop() << endl;
+  cout << "$Time " << timer.stop() << endl;
 }
 

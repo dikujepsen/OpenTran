@@ -1,4 +1,4 @@
-#include "../../../src/utils/StartUtil.cpp"
+#include "../../../utils/StartUtil.cpp"
 using namespace std;
 cl_kernel KNearestForKernel;
 cl_mem dev_ptrtrain_patterns;
@@ -158,7 +158,7 @@ void RunOCLKNearestForKernel(
       NTRAIN = arg_NTRAIN;
       StartUpGPU();
       AllocateBuffers();
-      cout << KernelDefines << endl;
+      cout << "$Defines " << KernelDefines << endl;
       compileKernelFromFile(
 	"KNearestFor", "KNearestFor.cl", KernelString(), 
 	false, &KNearestForKernel, KernelDefines
@@ -167,6 +167,6 @@ void RunOCLKNearestForKernel(
     }
   timer.start();
   ExecKNearestFor();
-  cout << timer.stop() << endl;
+  cout << "$Time " << timer.stop() << endl;
 }
 
