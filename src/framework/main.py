@@ -4,6 +4,7 @@ import copy
 from lan_parser import *
 from cgen import *
 from transformation import *
+from analysis import *
 fileprefix = "../test/C/"
 
 
@@ -75,13 +76,11 @@ def jacobi():
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
     
-    ## rw.transpose('A')
-    ## rw.transpose('B')
-    ## rw.transpose('C')
+    an = Analysis(rw, tf)
+    an.Transpose()
+    an.DefineArguments()
+
     tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
-    tf.SetDefine(['hst_ptrB_dim1', 'hst_ptrX2_dim1', 'wA'])
-    ## rw.localMemory('A')
-    ## rw.dataStructures()
 
     CGen(name, funcname, rw, tempast2, ast)
 
@@ -95,14 +94,15 @@ def matmul():
     ## rw.rewriteToDeviceCTemp(tempast, False)
     ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
+    an = Analysis(rw, tf)
+    an.Transpose()
+    an.DefineArguments()
 
     ## rw.transpose('A')
     ## rw.transpose('B')
     ## rw.transpose('C')
     ## rw.localMemory(['A','B'])
     tf.localMemory3({'A' : [0], 'B' : [0]})
-    ## rw.dataStructures()
-    tf.SetDefine(['hst_ptrB_dim1', 'hst_ptrA_dim1', 'wA', 'hst_ptrC_dim1'])
     tf.SetNoReadBack()
         
     CGen(name, funcname, rw, tempast2, ast)
@@ -114,8 +114,10 @@ def nbody():
 
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
-    ## rw.SetLSIZE(['256'])
-    tf.SetDefine(['hst_ptrForces_dim1', 'N', 'hst_ptrPos_dim1'])
+    an = Analysis(rw, tf)
+    an.Transpose()
+    an.DefineArguments()
+
     ## rw.dataStructures()
     ## rw.localMemory2(['Mas', 'Pos'])
     ## rw.localMemory3({'Mas' : [1] , 'Pos' : [2,3]})
@@ -132,16 +134,10 @@ def knearest():
     
     ## rw.constantMemory(['Pos']) 
     ## rw.transpose('train_patterns')
-    tf.transpose('test_patterns')
-    
-    ## rw.localMemory(['train_patterns'])
-    
-        
-    ## rw.localMemory(['test_patterns','train_patterns'])
-    ## rw.transpose('dist_matrix')
-    tf.SetDefine(['dim', 'hst_ptrtest_patterns_dim1',
-                  'hst_ptrtrain_patterns_dim1', 'hst_ptrdist_matrix_dim1',
-                  'NTRAIN'])
+    an = Analysis(rw, tf)
+    an.Transpose()
+    an.DefineArguments()
+
     tf.placeInReg3({'test_patterns': [0]})
     tf.SetNoReadBack()
     ## rw.dataStructures()
@@ -156,22 +152,14 @@ def gaussian():
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
 
-    tf.SetLSIZE(['16', '16'])
-    ## rw.rewriteToSequentialC(ast)
-    ## cprint.createTemp(ast, filename = 'ctemp.cpp')
-    ## rw.rewriteToDeviceCTemp(tempast, False)
-    ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
     
-
-    tf.transpose('p_a_i_x')
-    tf.transpose('q_a_i_x')
-    tf.SetDefine(['dim', 'scaleweight2_x', 'hst_ptrp_a_i_x_dim1',
-                  'hst_ptrK__ij_x_dim1', 'scales2_x',
-                  'hst_ptrq_a_i_x_dim1'])
+    an = Analysis(rw, tf)
+    an.Transpose()
+    an.DefineArguments()
     tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
     ## rw.transpose('C')
     ## rw.localMemory(['A','B'])
-    #rw.dataStructures()
+    ## rw.DataStructures()
     #rw.SetNoReadBack()
     CGen(name, funcname, rw, tempast2, ast)
 
@@ -180,18 +168,15 @@ def laplace():
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, False)
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
-    tf.SetLSIZE(['256'])
-    ## rw.dataStructures()
-    tf.transpose('level')
-    tf.transpose('level_int')
-    tf.transpose('index')
-    tf.SetDefine(['dim', 'hst_ptrlevel_dim1', 'hst_ptrindex_dim1',
-                  'storagesize', 'hst_ptrlevel_int_dim1'])
+    an = Analysis(rw, tf)
+    an.Transpose()
+    an.DefineArguments()
     
     tf.placeInReg3({'level': [0], 'level_int' : [0], 'index' : [0]})
     tf.SetNoReadBack()
-
-    rw.DataStructures()
+    
+    ## rw.DataStructures()
+    
     # rw.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
     CGen(name, funcname, rw, tempast2, ast)
     

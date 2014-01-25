@@ -44,7 +44,7 @@ class Transformation():
                or len(lsizelist) == 2 and rw.ParDim == 2:
             rw.Local['size'] = lsizelist
         else:
-            print """SetLSIZE: the local work-group size must be 1D or 2D and it must have the same number of dimensions as we are parallelizing """
+            raise MyError("""SetLSIZE: the local work-group size must be 1D or 2D and it must have the same number of dimensions as we are parallelizing """)
 
     def SetNoReadBack(self):
         rw = self.rw
