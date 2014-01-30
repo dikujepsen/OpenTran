@@ -40,7 +40,7 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define matsize 2048
+#define matsize 9216
 
 int main(int argc, char** argv)
 {
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
   randMat(B_mat,B_size);
   randMat(C_mat,C_size);
 
-#if 0
+#if 1
   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
 #else
   RunOCLMatMulForKernel(
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 	 wB, wA, hA);  
 #endif
 
-  // printMat(C_mat,C_size);
+  printMat(C_mat, 10);
 
   free(A_mat);
   free(B_mat);

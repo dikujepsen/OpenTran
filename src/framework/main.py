@@ -96,8 +96,8 @@ def matmul():
 
     an = Analysis(rw, tf)
     ## an.Transpose()
-    ## an.DefineArguments()
-    ## tf.localMemory3({'A' : [0], 'B' : [0]})
+    an.DefineArguments()
+    tf.localMemory3({'A' : [0], 'B' : [0]})
     ## tf.SetNoReadBack()
         
     CGen(name, funcname, rw, tempast2, ast)

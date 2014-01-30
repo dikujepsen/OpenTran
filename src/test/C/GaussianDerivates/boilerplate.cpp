@@ -57,7 +57,7 @@ Stopwatch timer;
 std::string KernelString()
 {
   std::stringstream str;
-  str << "#include \"GaussianDerivatesIncludes2.hpp\"" << endl;
+  str << "#include \"GaussianDerivatesIncludes.hpp\"" << endl;
   str << "__kernel void GaussianDerivatesFor(" << endl;
   str << "	__global unsigned * D1Ks__ijb_dimsI, __global float * D3Ks__ijbgd_x, __global unsigned * D2Ks__ijbg_dimsI, " << endl;
   str << "	__global float * q_a_i_x, __global unsigned * D3Ks__ijbgd_dimsI, __global float * p_a_i_x, " << endl;
@@ -170,8 +170,8 @@ void AllocateBuffers()
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrq_a_i_x");
   dev_ptrD3Ks__ijbgd_x = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR, hst_ptrD3Ks__ijbgd_x_mem_size, 
-	hst_ptrD3Ks__ijbgd_x, &oclErrNum);
+	context, CL_MEM_WRITE_ONLY, hst_ptrD3Ks__ijbgd_x_mem_size, 
+	NULL, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrD3Ks__ijbgd_x");
   dev_ptrD2Ks__ijbg_dimsI = clCreateBuffer(
@@ -190,18 +190,18 @@ void AllocateBuffers()
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrp_a_i_x");
   dev_ptrD1Ks__ijb_x = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR, hst_ptrD1Ks__ijb_x_mem_size, 
-	hst_ptrD1Ks__ijb_x, &oclErrNum);
+	context, CL_MEM_WRITE_ONLY, hst_ptrD1Ks__ijb_x_mem_size, 
+	NULL, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrD1Ks__ijb_x");
   dev_ptrK__ij_x = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR, hst_ptrK__ij_x_mem_size, 
-	hst_ptrK__ij_x, &oclErrNum);
+	context, CL_MEM_WRITE_ONLY, hst_ptrK__ij_x_mem_size, 
+	NULL, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrK__ij_x");
   dev_ptrD2Ks__ijbg_x = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR, hst_ptrD2Ks__ijbg_x_mem_size, 
-	hst_ptrD2Ks__ijbg_x, &oclErrNum);
+	context, CL_MEM_WRITE_ONLY, hst_ptrD2Ks__ijbg_x_mem_size, 
+	NULL, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrD2Ks__ijbg_x");
 }
@@ -258,6 +258,26 @@ void ExecGaussianDerivatesFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrD3Ks__ijbgd_x, CL_TRUE, 
+	0, hst_ptrD3Ks__ijbgd_x_mem_size, hst_ptrD3Ks__ijbgd_x, 
+	1, &GPUExecution, NULL
+	);
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrD1Ks__ijb_x, CL_TRUE, 
+	0, hst_ptrD1Ks__ijb_x_mem_size, hst_ptrD1Ks__ijb_x, 
+	1, &GPUExecution, NULL
+	);
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrK__ij_x, CL_TRUE, 
+	0, hst_ptrK__ij_x_mem_size, hst_ptrK__ij_x, 
+	1, &GPUExecution, NULL
+	);
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrD2Ks__ijbg_x, CL_TRUE, 
+	0, hst_ptrD2Ks__ijbg_x_mem_size, hst_ptrD2Ks__ijbg_x, 
+	1, &GPUExecution, NULL
+	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
   oclErrNum = clFinish(command_queue);
