@@ -4,7 +4,7 @@
 *.lib
 *~
 *.exe
-a.out
+*.out
 *.personal
 *.pyc
 *.clPrintout/
@@ -16,3 +16,5 @@ src/tempknearest.cpp
 src/tempknearest2.cpp
 test/C/GaussianDerivates/Stefan_GaussianDerivates.cpp
 test/C/GaussianDerivates/forsaved.cpp
+*.cl
+Printout
