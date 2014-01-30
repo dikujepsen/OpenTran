@@ -30,7 +30,8 @@ class Analysis():
         rw = self.rw
         defines = list()
         for n in rw.KernelArgs:
-            if n not in rw.Change:
+            if n not in rw.Change and \
+                len(rw.Type[n]) < 2:
                 defines.append(n)
 
         self.tf.SetDefine(defines)

@@ -8,7 +8,7 @@ cl_mem dev_ptrX1;
 float * hst_ptrX2;
 float * hst_ptrB;
 float * hst_ptrX1;
-float wB;
+unsigned wB;
 unsigned wA;
 
 size_t hst_ptrX2_mem_size;
@@ -30,8 +30,8 @@ std::string KernelString()
 {
   std::stringstream str;
   str << "__kernel void JacobiFor(" << endl;
-  str << "	__global float * B, unsigned hst_ptrX1_dim1, __global float * X2, " << endl;
-  str << "	__global float * X1) {" << endl;
+  str << "	__global float * B, __global float * X2, __global float * X1" << endl;
+  str << "	) {" << endl;
   str << "  __local float X1_local[18*18];" << endl;
   str << "  unsigned li = get_local_id(1) + 1;" << endl;
   str << "  unsigned lj = get_local_id(0) + 1;" << endl;
@@ -60,8 +60,9 @@ void AllocateBuffers()
   // Defines for the kernel
   std::stringstream str;
   str << "-Dhst_ptrB_dim1=" << hst_ptrB_dim1 << " ";
-  str << "-Dhst_ptrX2_dim1=" << hst_ptrX2_dim1 << " ";
   str << "-DwA=" << wA << " ";
+  str << "-Dhst_ptrX1_dim1=" << hst_ptrX1_dim1 << " ";
+  str << "-Dhst_ptrX2_dim1=" << hst_ptrX2_dim1 << " ";
   KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
@@ -90,9 +91,6 @@ void SetArgumentsJacobiFor()
   oclErrNum |= clSetKernelArg(
 	JacobiForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrB);
-  oclErrNum |= clSetKernelArg(
-	JacobiForKernel, counter++, sizeof(unsigned), 
-	(void *) &hst_ptrX1_dim1);
   oclErrNum |= clSetKernelArg(
 	JacobiForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrX2);
@@ -136,7 +134,7 @@ void RunOCLJacobiForKernel(
 	float * arg_X2, size_t arg_hst_ptrX2_dim1, size_t arg_hst_ptrX2_dim2, 
 	float * arg_X1, size_t arg_hst_ptrX1_dim1, size_t arg_hst_ptrX1_dim2, 
 	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
-	float arg_wB, unsigned arg_wA)
+	unsigned arg_wB, unsigned arg_wA)
 {
   if (isFirstTime)
     {
@@ -154,7 +152,7 @@ void RunOCLJacobiForKernel(
       StartUpGPU();
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
-      compileKernelFromFile(
+      compileKernel(
 	"JacobiFor", "JacobiFor.cl", KernelString(), 
 	false, &JacobiForKernel, KernelDefines
 	);

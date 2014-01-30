@@ -169,9 +169,15 @@ class Rewriter(NodeVisitor):
         self.NumDims = arrays.numSubscripts
         self.IndexInSubscript = arrays.indexIds
         typeIds = TypeIds()
-        typeIds.visit(ast)
+        typeIds.visit(loops.ast)
 
         
+        typeIds2 = TypeIds()
+        typeIds2.visit(ast)
+        outsideTypeIds = typeIds2.ids - typeIds.ids
+        for n in typeIds.ids:
+            typeIds2.dictIds.pop(n)
+        self.Type = typeIds2.dictIds
         ids = Ids()
         ids.visit(ast)
 
@@ -183,9 +189,9 @@ class Rewriter(NodeVisitor):
         self.NonArrayIds = otherIds
 
     def initNewRepr(self, ast):
-        findIncludes = FindIncludes()
-        findIncludes.visit(ast)
-        self.Includes = findIncludes.includes
+        ## findIncludes = FindIncludes()
+        ## findIncludes.visit(ast)
+        ## self.Includes = findIncludes.includes
         
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
@@ -200,6 +206,7 @@ class Rewriter(NodeVisitor):
         
         innerbody = perfectForLoop.inner
         firstLoop = ForLoops()
+        
         firstLoop.visit(innerbody.compound)
         loopIndices = LoopIndices()
         if firstLoop.ast is not None:
@@ -278,10 +285,10 @@ class Rewriter(NodeVisitor):
             self.HstId[n] = 'hst_ptr' + n
             self.Mem[n] = 'hst_ptr' + n + '_mem_size'
             
-        for n in self.DevArgList:
-            name = n.name.name
-            type = n.type[-2:]
-            self.Type[name] = type
+        ## for n in self.DevArgList:
+        ##     name = n.name.name
+        ##     type = n.type[-2:]
+        ##     self.Type[name] = type
 
             
         for n in self.ArrayIdToDimName:
@@ -339,6 +346,10 @@ class Rewriter(NodeVisitor):
                         except AttributeError:
                             m[i] = 'unknown'
 
+
+        refToLoop = RefToLoop(self.GridIndices)
+        refToLoop.visit(ast)
+
     def DataStructures(self):
         print "self.index " , self.index
         print "self.UpperLimit " , self.UpperLimit
@@ -388,18 +399,24 @@ class Rewriter(NodeVisitor):
         typeid = TypeId(['void'], Id(functionname),ast.coord)
         arraysArg = list()
         for arrayid in self.ArrayIds:
-            arraysArg.append(TypeId(['unknown','*'], Id(arrayid,ast.coord),ast.coord))
+            arraysArg.append(TypeId(self.Type[arrayid], Id(arrayid,ast.coord),ast.coord))
             for iarg in xrange(self.NumDims[arrayid]):
                 arraysArg.append(TypeId(['size_t'], Id('hst_ptr'+arrayid+'_dim'+str(iarg+1),ast.coord),ast.coord))
                 
         for arrayid in self.NonArrayIds:
-             arraysArg.append(TypeId(['unknown'], Id(arrayid,ast.coord),ast.coord))
+             arraysArg.append(TypeId(self.Type[arrayid], Id(arrayid,ast.coord),ast.coord))
             
-        arglist = ArgList([] + arraysArg,ast.coord)
-        compound = Compound(ast.ext,ast.coord)
+        arglist = ArgList([] + arraysArg)
+        while isinstance(ast.ext[0], Include):
+            include = ast.ext.pop(0)
+            self.Includes.append(include)
+
+        while not isinstance(ast.ext[0], ForLoop):
+            ast.ext.pop(0)
+        compound = Compound(ast.ext)
         if changeAST:
             ast.ext = list()
-            ast.ext.append(FuncDecl(typeid,arglist,compound,ast.coord))
+            ast.ext.append(FuncDecl(typeid,arglist,compound))
 
         
     def rewriteToSequentialC(self, ast): 
@@ -644,8 +661,6 @@ class Rewriter(NodeVisitor):
 
 
         
-
-
     def generateBoilerplateCode(self, ast):
 
 
@@ -936,14 +951,15 @@ class Rewriter(NodeVisitor):
         ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
         execBody.append(ErrCheck)
 
-        # add clFinish statement
-        arglist = ArgList([Id('command_queue')])
-        finish = FuncDecl(Id('clFinish'), arglist, Compound([]))
-        execBody.append(Assignment(Id(ErrName), finish))
+        if not self.NoReadBack:
+            # add clFinish statement
+            arglist = ArgList([Id('command_queue')])
+            finish = FuncDecl(Id('clFinish'), arglist, Compound([]))
+            execBody.append(Assignment(Id(ErrName), finish))
         
-        arglist = ArgList([Id(ErrName), Constant('clFinish')])
-        ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
-        execBody.append(ErrCheck)
+            arglist = ArgList([Id(ErrName), Constant('clFinish')])
+            ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
+            execBody.append(ErrCheck)
 
 
         runOCL = EmptyFuncDecl('RunOCL' + self.KernelName)
@@ -993,7 +1009,7 @@ class Rewriter(NodeVisitor):
                            Id(useFile),
                            Id('&' + self.KernelName),
                            Id('KernelDefines')])
-        ifThenList.append(FuncDecl(Id('compileKernelFromFile'), arglist, Compound([])))
+        ifThenList.append(FuncDecl(Id('compileKernel'), arglist, Compound([])))
         ifThenList.append(FuncDecl(Id('SetArguments'+self.DevFuncId), ArgList([]), Compound([])))
         
         

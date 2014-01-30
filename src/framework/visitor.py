@@ -468,6 +468,39 @@ class SwapUnrollID(NodeVisitor):
         if self.outsideHeader:
             if node.name in self.UnrollLoops:
                 node.name = '\" << ' + node.name + ' << \"'
+
+class RefToLoop(NodeVisitor):
+    """ Create a dict from array name to list of
+    	arrayref list of loop indices that the arrayrefs are inside.
+    """
+    def __init__(self, GridIndices):
+        self.stack = list()
+        self.RefToLoop = dict()
+        self.GridIndices = GridIndices
+
+    def visit_ForLoop(self,node):
+        name = node.init.lval.name.name
+        if name not in self.GridIndices:
+            self.stack.append(name)
+        self.outsideHeader = False
+        self.visit(node.init)
+        self.visit(node.cond)
+        self.visit(node.inc)
+        self.outsideHeader = True
+        self.visit(node.compound)
+        if name not in self.GridIndices:
+            self.stack.pop()
+        
+        
+    def visit_ArrayRef(self, node):
+        name = node.name.name
+        try:            
+            self.RefToLoop[name].append(copy.deepcopy(self.stack))
+        except KeyError:
+            self.RefToLoop[name] = [copy.deepcopy(self.stack)]
+        
+
+        
                 
 class Arrays(NodeVisitor):
     """ Finds array Ids """
@@ -522,11 +555,20 @@ class TypeIds(NodeVisitor):
     """ Finds type Ids """
     def __init__(self):
         self.ids = set()
+        self.dictIds = dict()
     def visit_TypeId(self, node):
-        self.ids.add(node.name.name)
+        name = node.name.name
+        self.ids.add(name)
+        self.dictIds[name] = node.type
     def visit_ArrayTypeId(self, node):
-        self.ids.add(node.name.name)
-
+        name = node.name.name
+        self.ids.add(name)
+        self.dictIds[name] = copy.deepcopy(node.type)
+        if len(node.type) != 2:
+            #"ArrayTypeId: Need to check, type of array is ", node.type
+            ## self.dictIds[name].append('*')
+            pass
+            
 class TypeIds2(NodeVisitor):
     """ Return a set of TypeId nodes. Remove the type from the
         TypeIds that we encounter.

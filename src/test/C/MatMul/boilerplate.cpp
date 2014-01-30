@@ -31,19 +31,12 @@ std::string KernelString()
 {
   std::stringstream str;
   str << "__kernel void MatMulFor(" << endl;
-  str << "	__global float * A, __global float * C, __global float * B" << endl;
-  str << "	) {" << endl;
-  str << "  __local float A_local[16*16];" << endl;
-  str << "  __local float B_local[16*16];" << endl;
+  str << "	__global float * A, __global float * C, __global float * B, " << endl;
+  str << "	unsigned hst_ptrB_dim1, unsigned wA, unsigned hst_ptrA_dim1, " << endl;
+  str << "	unsigned hst_ptrC_dim1) {" << endl;
   str << "  float sum = 0;" << endl;
-  str << "  for (unsigned k = 0; k < wA; k+=16) {" << endl;
-  str << "      A_local[(get_local_id(1) * 16) + get_local_id(0)] = A[(get_global_id(1) * hst_ptrA_dim1) + k + get_local_id(0)];" << endl;
-  str << "      B_local[(get_local_id(1) * 16) + get_local_id(0)] = B[(k + get_local_id(1) * hst_ptrB_dim1) + get_global_id(0)];" << endl;
-  str << "      barrier(CLK_LOCAL_MEM_FENCE);" << endl;
-  str << "      for (unsigned kk = 0; kk < 16; kk++) {" << endl;
-  str << "          sum += A_local[(get_local_id(1) * 16) + kk] * B_local[(kk * 16) + get_local_id(0)];" << endl;
-  str << "      }" << endl;
-  str << "      barrier(CLK_LOCAL_MEM_FENCE);" << endl;
+  str << "  for (unsigned k = 0; k < wA; k++) {" << endl;
+  str << "      sum += A[(get_global_id(1) * hst_ptrA_dim1) + k] * B[(k * hst_ptrB_dim1) + get_global_id(0)];" << endl;
   str << "  }" << endl;
   str << "  C[(get_global_id(1) * hst_ptrC_dim1) + get_global_id(0)] = sum;" << endl;
   str << "}" << endl;
@@ -63,12 +56,6 @@ void AllocateBuffers()
   // Constant Memory
   
   // Defines for the kernel
-  std::stringstream str;
-  str << "-Dhst_ptrB_dim1=" << hst_ptrB_dim1 << " ";
-  str << "-Dhst_ptrA_dim1=" << hst_ptrA_dim1 << " ";
-  str << "-DwA=" << wA << " ";
-  str << "-Dhst_ptrC_dim1=" << hst_ptrC_dim1 << " ";
-  KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
   
@@ -102,6 +89,18 @@ void SetArgumentsMatMulFor()
   oclErrNum |= clSetKernelArg(
 	MatMulForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrB);
+  oclErrNum |= clSetKernelArg(
+	MatMulForKernel, counter++, sizeof(unsigned), 
+	(void *) &hst_ptrB_dim1);
+  oclErrNum |= clSetKernelArg(
+	MatMulForKernel, counter++, sizeof(unsigned), 
+	(void *) &wA);
+  oclErrNum |= clSetKernelArg(
+	MatMulForKernel, counter++, sizeof(unsigned), 
+	(void *) &hst_ptrA_dim1);
+  oclErrNum |= clSetKernelArg(
+	MatMulForKernel, counter++, sizeof(unsigned), 
+	(void *) &hst_ptrC_dim1);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }
@@ -123,6 +122,11 @@ void ExecMatMulFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrC, CL_TRUE, 
+	0, hst_ptrC_mem_size, hst_ptrC, 
+	1, &GPUExecution, NULL
+	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
   oclErrNum = clFinish(command_queue);
@@ -154,7 +158,7 @@ void RunOCLMatMulForKernel(
       StartUpGPU();
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
-      compileKernelFromFile(
+      compileKernel(
 	"MatMulFor", "MatMulFor.cl", KernelString(), 
 	false, &MatMulForKernel, KernelDefines
 	);

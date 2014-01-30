@@ -157,7 +157,7 @@ void RunOCLNBodyForKernel(
       StartUpGPU();
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
-      compileKernelFromFile(
+      compileKernel(
 	"NBodyFor", "NBodyFor.cl", KernelString(), 
 	false, &NBodyForKernel, KernelDefines
 	);

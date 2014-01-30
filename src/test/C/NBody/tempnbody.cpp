@@ -1,15 +1,14 @@
-
 void NBodyFor(
-	      float * Mas, size_t hst_ptrMas_dim1, float * Pos, 
-	      size_t hst_ptrPos_dim1, size_t hst_ptrPos_dim2, float * Forces, 
-	      size_t hst_ptrForces_dim1, size_t hst_ptrForces_dim2, size_t N)
+	float * Mas, size_t hst_ptrMas_dim1, float * Pos, 
+	size_t hst_ptrPos_dim1, size_t hst_ptrPos_dim2, float * Forces, 
+	size_t hst_ptrForces_dim1, size_t hst_ptrForces_dim2, size_t N
+	)
 {
   for (unsigned i = 0; i < N; i++)
     {
       float a_x = Pos[0][i];
       float a_y = Pos[1][i];
       float a_m = Mas[i];
-
       float f_x = 0;
       float f_y = 0;
       for (unsigned j = 0; j < N; j++)
@@ -29,3 +28,4 @@ void NBodyFor(
       Forces[1][i] = f_y;
     }
 }
+

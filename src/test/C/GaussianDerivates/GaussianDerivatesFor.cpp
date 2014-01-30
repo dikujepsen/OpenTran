@@ -1,3 +1,18 @@
+#include "GaussianDerivatesIncludes.hpp"
+unsigned * D1Ks__ijb_dimsI;
+float * q_a_i_x;
+float * D3Ks__ijbgd_x;
+unsigned * D2Ks__ijbg_dimsI;
+unsigned * D3Ks__ijbgd_dimsI;
+float * p_a_i_x;
+float * D1Ks__ijb_x;
+float * K__ij_x;
+float * D2Ks__ijbg_x;
+unsigned dim;
+float scaleweight2_x;
+float scales2_x; 
+unsigned Lp;
+unsigned Lq;
 for (int j=0; j<Lp; j++) {
   for (int i=0; i<Lq; i++) { 
     float xj[3];
@@ -48,7 +63,7 @@ for (int j=0; j<Lp; j++) {
 	// db.set(db[g]+1,g) ?
 	// db[g] = db[g] + 1;
 	for (int k = 0; k < dim; k++) {
-	  db[k] = db[k] + 1;
+	  db[g] = db[g] + 1;
 	}
 	  
 	D2Ks__ijbg_x[i +
@@ -78,6 +93,4 @@ for (int j=0; j<Lp; j++) {
     }
   }
  }
-
-
 

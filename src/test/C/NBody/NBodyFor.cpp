@@ -1,3 +1,7 @@
+float * Mas;
+float * Pos;
+float * Forces;
+size_t N;
 for (unsigned i = 0; i < N; i++) {
   float a_x = Pos[0][i]; 
   float a_y = Pos[1][i];

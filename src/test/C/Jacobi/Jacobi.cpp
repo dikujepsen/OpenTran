@@ -81,7 +81,7 @@ copyMat(float* mat1, float* mat2, unsigned wMat, unsigned hMat)
 }
 
 
-#define matsize 8192
+#define matsize 2048
 
 int main(int argc, char** argv)
 {
@@ -106,9 +106,8 @@ int main(int argc, char** argv)
   createB(B_mat, wB, hB);
   // printMat2(B_mat, wB, hB);
 
-#if 0
+#if 1
    Jacobi(B_mat, X1_mat, X2_mat, wA, wB);
-
 #else 
   RunOCLJacobiForKernel(X2_mat, wC, hC,
 			X1_mat, wA, hA,

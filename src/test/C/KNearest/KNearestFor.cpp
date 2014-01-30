@@ -1,3 +1,9 @@
+unsigned NTEST;
+unsigned NTRAIN;
+unsigned dim;
+float * test_patterns;
+float * train_patterns;
+float * dist_matrix;
 for (size_t i = 0; i < NTEST; i++)
   {
     for (size_t j = 0; j < NTRAIN; j++)

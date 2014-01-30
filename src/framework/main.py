@@ -72,7 +72,7 @@ def CGen(name, funcname, rw, tempast2, ast):
 
 def jacobi():
     name = 'Jacobi'
-    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, False)
+    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
     
@@ -86,7 +86,7 @@ def jacobi():
 
 def matmul():
     name = 'MatMul'
-    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, False)
+    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
     ## rw.rewriteToSequentialC(ast)
@@ -95,22 +95,17 @@ def matmul():
     ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
     an = Analysis(rw, tf)
-    an.Transpose()
-    an.DefineArguments()
-
-    ## rw.transpose('A')
-    ## rw.transpose('B')
-    ## rw.transpose('C')
-    ## rw.localMemory(['A','B'])
-    tf.localMemory3({'A' : [0], 'B' : [0]})
-    tf.SetNoReadBack()
+    ## an.Transpose()
+    ## an.DefineArguments()
+    ## tf.localMemory3({'A' : [0], 'B' : [0]})
+    ## tf.SetNoReadBack()
         
     CGen(name, funcname, rw, tempast2, ast)
     
 
 def nbody():
     name = 'NBody'
-    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, False)
+    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
 
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
@@ -127,7 +122,7 @@ def nbody():
 
 def knearest():
     name = 'KNearest'
-    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, False)
+    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     tf = Transformation(rw)
     tf.SetParDim(1)
     rw.initNewRepr(tempast)
@@ -147,7 +142,7 @@ def knearest():
 
 def gaussian():
     name = 'GaussianDerivates'
-    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, False)
+    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     ## rw.SetParDim(1)
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
@@ -156,7 +151,7 @@ def gaussian():
     an = Analysis(rw, tf)
     an.Transpose()
     an.DefineArguments()
-    tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
+    ## tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
     ## rw.transpose('C')
     ## rw.localMemory(['A','B'])
     ## rw.DataStructures()
@@ -165,7 +160,7 @@ def gaussian():
 
 def laplace():
     name = 'Laplace'
-    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, False)
+    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
     an = Analysis(rw, tf)
@@ -175,7 +170,7 @@ def laplace():
     tf.placeInReg3({'level': [0], 'level_int' : [0], 'index' : [0]})
     tf.SetNoReadBack()
     
-    rw.DataStructures()
+    ## rw.DataStructures()
     
     # rw.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
     CGen(name, funcname, rw, tempast2, ast)

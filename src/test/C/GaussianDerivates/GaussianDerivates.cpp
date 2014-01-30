@@ -122,7 +122,7 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
 	  // db.set(db[g]+1,g) ?
 	  // db[g] = db[g] + 1;
 	  for (unsigned k = 0; k < dim; k++) {
-	    db[k] = db[k] + 1;
+	    db[g] = db[g] + 1;
 	  }
 	  
 	  D2Ks__ijbg_x[i +

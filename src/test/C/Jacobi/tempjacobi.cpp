@@ -2,7 +2,7 @@ void JacobiFor(
 	float * X2, size_t hst_ptrX2_dim1, size_t hst_ptrX2_dim2, 
 	float * B, size_t hst_ptrB_dim1, size_t hst_ptrB_dim2, 
 	float * X1, size_t hst_ptrX1_dim1, size_t hst_ptrX1_dim2, 
-	float wB, unsigned wA)
+	unsigned wB, unsigned wA)
 {
   for (unsigned i = 1; i < wB; i++)
     {

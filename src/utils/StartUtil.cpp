@@ -121,12 +121,12 @@ void StartUpGPU() {
 }
 
 
-void compileKernelFromFile(std::string kernel_name,
-			   const char *filename,
-			   std::string kernelstr,
-			   bool useFile,
-			   cl_kernel* kernel,
-			   std::string options) {
+void compileKernel(std::string kernel_name,
+		   const char *filename,
+		   std::string kernelstr,
+		   bool useFile,
+		   cl_kernel* kernel,
+		   std::string options) {
 
   cl_int err = CL_SUCCESS;
   const char* source2;

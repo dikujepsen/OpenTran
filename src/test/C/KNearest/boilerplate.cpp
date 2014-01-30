@@ -70,9 +70,9 @@ void AllocateBuffers()
   std::stringstream str;
   str << "-Ddim=" << dim << " ";
   str << "-Dhst_ptrtest_patterns_dim1=" << hst_ptrtest_patterns_dim2 << " ";
+  str << "-DNTRAIN=" << NTRAIN << " ";
   str << "-Dhst_ptrtrain_patterns_dim1=" << hst_ptrtrain_patterns_dim1 << " ";
   str << "-Dhst_ptrdist_matrix_dim1=" << hst_ptrdist_matrix_dim1 << " ";
-  str << "-DNTRAIN=" << NTRAIN << " ";
   KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
@@ -130,9 +130,6 @@ void ExecKNearestFor()
 	oclErrNum, "clFinish");
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
-  oclErrNum = clFinish(command_queue);
-  oclCheckErr(
-	oclErrNum, "clFinish");
 }
 
 void RunOCLKNearestForKernel(
@@ -159,7 +156,7 @@ void RunOCLKNearestForKernel(
       StartUpGPU();
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
-      compileKernelFromFile(
+      compileKernel(
 	"KNearestFor", "KNearestFor.cl", KernelString(), 
 	false, &KNearestForKernel, KernelDefines
 	);

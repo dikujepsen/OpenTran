@@ -1,3 +1,14 @@
+#include "LaplaceIncludes.hpp"
+double * index;
+double * level_int;
+double * level;
+double * lcl_q;
+double * result;
+double * lcl_q_inv;
+double * alpha;
+double * lambda;
+size_t dim;
+size_t storagesize;
 for (unsigned i = 0; i < storagesize; i++) {
   for (unsigned j = 0; j < storagesize; j++) {
     float gradient_temp[dim];

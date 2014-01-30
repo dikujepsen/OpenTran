@@ -40,7 +40,7 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define matsize 4800
+#define matsize 2048
 
 int main(int argc, char** argv)
 {
