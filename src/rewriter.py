@@ -194,6 +194,8 @@ class Rewriter(NodeVisitor):
             self.Local['size'] = ['16','16']
         
         innerbody = perfectForLoop.inner
+        if perfectForLoop.depth == 2 and self.ParDim == 1:
+            innerbody = perfectForLoop.outer
         firstLoop = ForLoops()
         firstLoop.visit(innerbody.compound)
         loopIndices = LoopIndices()

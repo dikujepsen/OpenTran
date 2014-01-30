@@ -233,6 +233,8 @@ class PerfectForLoop(NodeVisitor):
         self.depth = 0
         self.ast = None
         self.inner = None
+        self.outer = None
+        
 
     def visit_FuncDecl(self, node):
         funcstats = node.compound.statements
@@ -245,6 +247,7 @@ class PerfectForLoop(NodeVisitor):
                 loopstats = funcstats[0].compound.statements
                 if len(loopstats) == 1:
                     if isinstance(loopstats[0], ForLoop):
+                        self.outer = self.inner
                         self.depth += 1
                         self.inner = loopstats[0]
 

@@ -40,9 +40,12 @@ std::string KernelString()
   str << "  }" << endl;
   str << "  for (unsigned j = 0; j < NTRAIN; j++) {" << endl;
   str << "      float d = 0.0;" << endl;
-  str << "      for (unsigned k = 0; k < dim; k++) {" << endl;
-  str << "          float tmp = test_patterns_reg[k] - train_patterns[(j * hst_ptrtrain_patterns_dim1) + k];" << endl;
-  str << "          d += tmp * tmp;" << endl;
+  str << "      for (unsigned k = 0; k < dim; k+=4) {" << endl;
+  str << "          float tmp;" << endl;
+            for (unsigned kk = 0; kk < 4; kk++) {
+  str << "              tmp = test_patterns_reg[k + " << kk << "] - train_patterns[(j * hst_ptrtrain_patterns_dim1) + (k + " << kk << ")];" << endl;
+  str << "              d += tmp * tmp;" << endl;
+            }
   str << "      }" << endl;
   str << "      dist_matrix[(j * hst_ptrdist_matrix_dim1) + get_global_id(0)] = d;" << endl;
   str << "  }" << endl;

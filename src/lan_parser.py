@@ -614,7 +614,7 @@ def knearest():
         rw.initNewRepr(tempast)
 
         
-        
+        rw.SetLSIZE(['256'])
         ## rw.constantMemory(['Pos']) 
         #rw.transpose('train_patterns')
         rw.transpose('test_patterns')
@@ -630,8 +630,9 @@ def knearest():
                    'NTRAIN'])
         rw.placeInReg3({'test_patterns': [0]})
         rw.SetNoReadBack()
-        ## rw.dataStructures()
-        ## rw.Unroll2({'k' : 0})
+        rw.dataStructures()
+        #rw.Unroll2({'j' : 2}) #'k' : 4, 
+        rw.Unroll2({'k' : 4}) #'k' : 4, 
         
         rw.InSourceKernel(tempast2, filename = fileprefix + 'KNearest/'+funcname + '.cl')
         boilerast = rw.generateBoilerplateCode(ast)
