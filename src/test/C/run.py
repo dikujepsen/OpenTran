@@ -24,12 +24,12 @@ cmdlineoptsbasic = {'MatMul'  		    : '-n 512' ,
                		'Laplace' 		    : '-n 256 -k 3' ,
                		'GaussianDerivates' : '-n 512 -m 512 -k 3'}
 
-cmdlineoptsK20Max = {'MatMul'  		    : '-n 512' ,
-            		'Jacobi'  		    : '-n 1024' ,
-               		'KNearest'		    : '-n 1024 -k 16' ,
-               		'NBody'   		    : '-n 1024' ,
-               		'Laplace' 		    : '-n 256 -k 5' ,
-               		'GaussianDerivates' : '-n 512 -m 512 -k 3'}
+cmdlineoptsK20Max = {'MatMul'  		    : '-n 12544' ,
+            		'Jacobi'  		    : '-n 16384' ,
+               		'KNearest'		    : '-n 16384 -k 16' ,
+               		'NBody'   		    : '-n 1081600' ,
+               		'Laplace' 		    : '-n 215296 -k 5' ,
+               		'GaussianDerivates' : '-n 4608 -m 4608 -k 3'}
 
 ## benchmark = ['MatMul']
 
