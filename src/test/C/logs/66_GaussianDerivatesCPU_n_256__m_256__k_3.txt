@@ -1,0 +1,10 @@
+$Func GaussianDerivatesCPU, $Defines -n 256 -m 256 -k 3, $Time 0.261448
+$Func GaussianDerivatesCPU, $Defines -n 256 -m 256 -k 3, $Time 0.258633
+$Func GaussianDerivatesCPU, $Defines -n 256 -m 256 -k 3, $Time 0.260422
+$Func GaussianDerivatesCPU, $Defines -n 256 -m 256 -k 3, $Time 0.258083
+$Func GaussianDerivatesCPU, $Defines -n 256 -m 256 -k 3, $Time 0.261454
+$Func GaussianDerivatesCPU, $Defines -n 256 -m 256 -k 3, $Time 0.25841
+$Func GaussianDerivatesCPU, $Defines -n 256 -m 256 -k 3, $Time 0.26061
+$Func GaussianDerivatesCPU, $Defines -n 256 -m 256 -k 3, $Time 0.260535
+$Func GaussianDerivatesCPU, $Defines -n 256 -m 256 -k 3, $Time 0.260261
+$Func GaussianDerivatesCPU, $Defines -n 256 -m 256 -k 3, $Time 0.264894

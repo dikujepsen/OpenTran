@@ -75,7 +75,7 @@ if args.run is not None:
         uniqueid = open('logs/.uniqueid.txt','w')
         uniqueid.write(str(int(uid) + 1))
         log = open('logs/' + uid + '_' + m + cmdlineopts[n].replace(" ", "_") \
-                   .replace("-", "_"),'w')
+                   .replace("-", "_") + '.txt','w')
         os.chdir(n)
         for k in xrange(args.numberofiterations):
             p1 = subprocess.Popen('./' + m +'.exe ' + cmdlineopts[n], shell=True,\
@@ -88,8 +88,8 @@ if args.run is not None:
                     line = p1.stderr.readline()
                     if not line: break
                 acc += ', ' + line[:-1]
-            log.write(acc)
-            print acc + '\n'
+            log.write(acc + '\n')
+            #print acc + '\n'
         os.chdir('..')
         log.close()
         uniqueid.close()
