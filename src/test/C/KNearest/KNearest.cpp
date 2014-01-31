@@ -44,9 +44,10 @@ DEFINE_TIMER(1);
 int main( int argc, char* argv[] )
 {
   // problem parameters
-  size_t NTRAIN = 16384;
-  size_t NTEST = 3*NTRAIN;
-  size_t dim = 16;
+  unsigned NTRAIN;
+  unsigned dim;
+  ParseCommandLine(argc, argv, &NTRAIN, NULL, &dim);
+  unsigned NTEST = 3*NTRAIN;
   // size_t NTRAIN = 16;
   // size_t NTEST = 3*NTRAIN;
   // size_t dim = 16;
@@ -70,8 +71,8 @@ int main( int argc, char* argv[] )
     }
   }
   
-#if 0
-   START_TIMER(1); 
+#if CPU
+  timer.start();  
   float d,tmp;
   for (i=0;i<NTEST;i++) {
     // compute distances to all training patterns
@@ -85,9 +86,7 @@ int main( int argc, char* argv[] )
       dist_matrix[j*NTEST + i] = d;
     }
   }
-  STOP_TIMER(1);
-  
-  printf("\nElapsed time=%f\n", GET_TIME(1));
+  cout << "$Time " << timer.stop() << endl;  
   
 #else
   RunOCLKNearestForKernel(dim, test_patterns, dim, 

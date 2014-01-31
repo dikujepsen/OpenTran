@@ -58,13 +58,13 @@ for (int j=0; j<Lp; j++) {
       for (int g=0; g<dim; g++) {
 	// Vector3<int> db = da;
 	for (int k = 0; k < dim; k++) {
-	  db[k] = da[k];
+	  db[k] = da[k] + 1;
 	}
 	// db.set(db[g]+1,g) ?
 	// db[g] = db[g] + 1;
-	for (int k = 0; k < dim; k++) {
-	  db[g] = db[g] + 1;
-	}
+	// for (int k = 0; k < dim; k++) {
+	//   db[g] = db[g] + 1;
+	// }
 	  
 	D2Ks__ijbg_x[i +
 		     D2Ks__ijbg_dimsI[0] * j +
@@ -76,11 +76,11 @@ for (int j=0; j<Lp; j++) {
 	for (int d=0; d<dim; d++) {
 	  // Vector3<int> dc = db; dc.set(dc[d]+1,d);
 	  for (int k = 0; k < dim; k++) {
-	    dc[k] = db[k];
+	    dc[k] = db[k] + 1;
 	  }
-	  for (int k = 0; k < dim; k++) {
-	    dc[d] = dc[d] + 1;
-	  }	    
+	  // for (int k = 0; k < dim; k++) {
+	  //   dc[d] = dc[d] + 1;
+	  // }	    
 	  D3Ks__ijbgd_x[i +
 			D3Ks__ijbgd_dimsI[0] * j +
 			D3Ks__ijbgd_dimsI[1] * b +

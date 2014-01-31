@@ -184,11 +184,15 @@ printMat(double* mat, unsigned mat_size)
 
 
 // #define storage_size 166400
-#define storage_size 16640
-#define dim 3
+// #define storage_size 16640
+// #define dim 3
 
 int main(int argc, char** argv)
 {
+
+  unsigned storage_size;
+  unsigned dim;
+  ParseCommandLine(argc, argv, &storage_size, NULL, &dim);
   unsigned wLevel = dim;
   unsigned hLevel = storage_size;
   unsigned wLevel_int = dim;
@@ -222,8 +226,9 @@ int main(int argc, char** argv)
   zeroMatrix(result, 1, result_size);
   divMat(alpha, alpha_size, 100.0);
   divMat(level_int, level_int_size, 10000.0);
- 
-#if 0
+
+#if CPU
+  timer.start();  
   Laplace(level,
   	  level_int,
   	  index,
@@ -233,6 +238,7 @@ int main(int argc, char** argv)
   	  alpha,
   	  lambda,
   	  storage_size,  dim);
+  cout << "$Time " << timer.stop() << endl;  
 
 #else
   RunOCLLaplaceForKernel(

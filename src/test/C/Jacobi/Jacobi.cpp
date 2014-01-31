@@ -81,10 +81,11 @@ copyMat(float* mat1, float* mat2, unsigned wMat, unsigned hMat)
 }
 
 
-#define matsize 2048
-
 int main(int argc, char** argv)
 {
+  unsigned matsize;
+  ParseCommandLine(argc, argv, &matsize, NULL, NULL);
+
   unsigned hA = matsize+2;
   unsigned hB = matsize+1;
   unsigned hC = matsize+2;
@@ -106,8 +107,10 @@ int main(int argc, char** argv)
   createB(B_mat, wB, hB);
   // printMat2(B_mat, wB, hB);
 
-#if 1
-   Jacobi(B_mat, X1_mat, X2_mat, wA, wB);
+#if CPU
+  timer.start();  
+  Jacobi(B_mat, X1_mat, X2_mat, wA, wB);
+  cout << "$Time " << timer.stop() << endl;  
 #else 
   RunOCLJacobiForKernel(X2_mat, wC, hC,
 			X1_mat, wA, hA,
@@ -115,13 +118,13 @@ int main(int argc, char** argv)
 			wB, wA
 			);
 #endif
-  for (unsigned i = 0; i < 10; i++) {
-    for (unsigned j = 0; j < 10; j++) {
-      cout << X2_mat[i * wA + j] << " ";
-    }
-    cout << endl;
-  }
-  cout << endl;
+  // for (unsigned i = 0; i < 10; i++) {
+  //   for (unsigned j = 0; j < 10; j++) {
+  //     cout << X2_mat[i * wA + j] << " ";
+  //   }
+  //   cout << endl;
+  // }
+  // cout << endl;
   // printMat(X2_mat, 100);
 
   free(X1_mat);
