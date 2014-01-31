@@ -3,11 +3,14 @@ import subprocess
 import shutil
 import sys
 import argparse
-import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--make", help="run make clean && make on all files",
                     action="store_true")
 parser.add_argument("-r", "--run", help="run all binary files for the given device", choices=['CPU', 'GPU'])
+parser.add_argument("-i", "--input", help="input choice for the binarys", choices=['basic', 'K20Max'])
+
+parser.add_argument("-n", "--numberofiterations", help="the number of iterations we benchmark a given binary.", type=int)
+
 args = parser.parse_args()
    
 benchmark = ['MatMul',
@@ -22,7 +25,7 @@ cmdlineoptsbasic = {'MatMul'  		    : '-n 512' ,
                		'KNearest'		    : '-n 1024 -k 16' ,
                		'NBody'   		    : '-n 1024' ,
                		'Laplace' 		    : '-n 256 -k 3' ,
-               		'GaussianDerivates' : '-n 512 -m 512 -k 3'}
+               		'GaussianDerivates' : '-n 256 -m 256 -k 3'}
 
 cmdlineoptsK20Max = {'MatMul'  		    : '-n 12544' ,
             		'Jacobi'  		    : '-n 16384' ,
@@ -59,21 +62,36 @@ if args.make:
 if args.run is not None:
     dev = args.run
     # run each exe in benchmark
-    cmdlineopts = cmdlineoptsbasic
+    if args.input == 'K20Max':
+        cmdlineopts = cmdlineoptsK20Max
+    else:
+        cmdlineopts = cmdlineoptsbasic
+
     for n in benchmark:
         m = n + dev
+        uniqueid = open('logs/.uniqueid.txt','r')
+        uid = uniqueid.readline()
+        uniqueid.close()
+        uniqueid = open('logs/.uniqueid.txt','w')
+        uniqueid.write(str(int(uid) + 1))
+        log = open('logs/' + uid + '_' + m + cmdlineopts[n].replace(" ", "_") \
+                   .replace("-", "_"),'w')
         os.chdir(n)
-        p1 = subprocess.Popen('./' + m +'.exe ' + cmdlineopts[n], shell=True,\
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
-        acc = '$Func ' + m + ', $Defines ' + cmdlineopts[n]
-        while True:
-            line = p1.stdout.readline()
-            if not line:
-                line = p1.stderr.readline()
-                if not line: break
-            acc += ', ' + line[:-1] 
-        print acc + '\n'
+        for k in xrange(args.numberofiterations):
+            p1 = subprocess.Popen('./' + m +'.exe ' + cmdlineopts[n], shell=True,\
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+            acc = '$Func ' + m + ', $Defines ' + cmdlineopts[n]
+            while True:
+                line = p1.stdout.readline()
+                if not line:
+                    line = p1.stderr.readline()
+                    if not line: break
+                acc += ', ' + line[:-1]
+            log.write(acc)
+            print acc + '\n'
         os.chdir('..')
+        log.close()
+        uniqueid.close()
 	
 
