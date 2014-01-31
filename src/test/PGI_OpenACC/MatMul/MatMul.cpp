@@ -1,13 +1,18 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
-#include "boilerplate.cpp"
+#include "../../../utils/Stopwatch.cpp"
+Stopwatch timer;
+#include <openacc.h>
 
 using namespace std;
 
 void
 matmul(float* A, float* B, float* C, unsigned hA, unsigned wA, unsigned wB)
 {
+#if 1
+#pragma acc kernels loop copyin(A[0:hA*wA], B[0:wB*wA])  copyout(C[0:wB*hA] ) independent
+#endif
   for (unsigned i = 0; i < hA; i++) {
     for (unsigned j = 0; j < wB; j++) {
       float sum = 0;
@@ -40,6 +45,7 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
+// #define matsize 3584
 #define matsize 9216
 
 int main(int argc, char** argv)
@@ -64,15 +70,14 @@ int main(int argc, char** argv)
   randMat(A_mat,A_size);
   randMat(B_mat,B_size);
   randMat(C_mat,C_size);
+  acc_init( acc_device_nvidia );
 
-#if 0
+#if 1
+  timer.start();
   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
+  cout << timer.stop() << endl;
 #else
-  RunOCLMatMulForKernel(
-	 A_mat, wA, hA,
-	 C_mat, wC, hC,
-	 B_mat, wB, hB,
-	 wB, wA, hA);  
+
 #endif
 
   printMat(C_mat, 10);

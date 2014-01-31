@@ -300,7 +300,7 @@ class Transformation():
                             tidstr = 'get_local_id('+tid+')'
                             exchangeId = ExchangeId({loopname : tidstr})
                             exchangeId.visit(m)
-                            exchangeId2 = ExchangeId({loopname : loopname + ' + ' + tidstr})
+                            exchangeId2 = ExchangeId({loopname : '(' + loopname + ' + ' + tidstr + ')'})
                             exchangeId2.visit(glob_subs.subscript[k])
                 loc_ref = ArrayRef(Id(loc_name), loc_subs)
                 ## exchangeId = ExchangeId({loopname : loopname + ' + get_local_id(0)'})
