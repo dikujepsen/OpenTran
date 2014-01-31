@@ -1,0 +1,10 @@
+$Func MatMulCPU, $Defines -n 512, $Time 0.271983
+$Func MatMulCPU, $Defines -n 512, $Time 0.25881
+$Func MatMulCPU, $Defines -n 512, $Time 0.259406
+$Func MatMulCPU, $Defines -n 512, $Time 0.261775
+$Func MatMulCPU, $Defines -n 512, $Time 0.258092
+$Func MatMulCPU, $Defines -n 512, $Time 0.258643
+$Func MatMulCPU, $Defines -n 512, $Time 0.256747
+$Func MatMulCPU, $Defines -n 512, $Time 0.271608
+$Func MatMulCPU, $Defines -n 512, $Time 0.257286
+$Func MatMulCPU, $Defines -n 512, $Time 0.256032

@@ -96,8 +96,18 @@ void CheckNull(unsigned * ptr, const char* val) {
 
 void ParseCommandLine(int argc, char** argv,
 		      unsigned * val1, unsigned * val2, unsigned * val3) {
-
-  if (((argc-1) % 2 != 0) || argc < 3) {
+  unsigned len = 1;
+  if (val1 != NULL) {
+    len += 2;
+  }
+  if (val2 != NULL) {
+    len += 2;
+  }
+  if (val3 != NULL) {
+    len += 2;
+  }
+  
+  if (((argc-1) % 2 != 0) || argc != len || argc < 3) {
     std::cout << "Please set -n <x> -m <y> -k <z>\n";
     exit(-1);
   }

@@ -1,0 +1,10 @@
+$Func LaplaceCPU, $Defines -n 256 -k 3, $Time 0.0117891
+$Func LaplaceCPU, $Defines -n 256 -k 3, $Time 0.0115607
+$Func LaplaceCPU, $Defines -n 256 -k 3, $Time 0.0116879
+$Func LaplaceCPU, $Defines -n 256 -k 3, $Time 0.0117854
+$Func LaplaceCPU, $Defines -n 256 -k 3, $Time 0.0118655
+$Func LaplaceCPU, $Defines -n 256 -k 3, $Time 0.0112329
+$Func LaplaceCPU, $Defines -n 256 -k 3, $Time 0.0121573
+$Func LaplaceCPU, $Defines -n 256 -k 3, $Time 0.0112092
+$Func LaplaceCPU, $Defines -n 256 -k 3, $Time 0.0117462
+$Func LaplaceCPU, $Defines -n 256 -k 3, $Time 0.0115929
