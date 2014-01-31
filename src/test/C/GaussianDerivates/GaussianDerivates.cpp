@@ -117,13 +117,13 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
 	for (unsigned g=0; g<dim; g++) {
 	  // Vector3<unsigned> db = da;
 	  for (unsigned k = 0; k < dim; k++) {
-	    db[k] = da[k];
+	    db[k] = da[k] + 1;
 	  }
 	  // db.set(db[g]+1,g) ?
 	  // db[g] = db[g] + 1;
-	  for (unsigned k = 0; k < dim; k++) {
-	    db[g] = db[g] + 1;
-	  }
+	  // for (unsigned k = 0; k < dim; k++) {
+	  //   db[g] = db[g] + 1;
+	  // }
 	  
 	  D2Ks__ijbg_x[i +
 		       D2Ks__ijbg_dimsI[0] * j +
@@ -135,11 +135,11 @@ GaussianDerivates(unsigned Lp, unsigned Lq, unsigned dim,
 	  for (unsigned d=0; d<dim; d++) {
 	    // Vector3<unsigned> dc = db; dc.set(dc[d]+1,d);
 	    for (unsigned k = 0; k < dim; k++) {
-	      dc[k] = db[k];
+	      dc[k] = db[k] + 1;
 	    }
-	    for (unsigned k = 0; k < dim; k++) {
-	      dc[d] = dc[d] + 1;
-	    }	    
+	    // for (unsigned k = 0; k < dim; k++) {
+	    //   dc[d] = dc[d] + 1;
+	    // }	    
 	    D3Ks__ijbgd_x[i +
 			  D3Ks__ijbgd_dimsI[0] * j +
 			  D3Ks__ijbgd_dimsI[1] * b +
@@ -175,14 +175,18 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define LP 2048
-#define LQ 2048
+// #define LP 2048
+// #define LQ 2048
 
 int main(int argc, char** argv)
 {
-  unsigned Lp = LP;
-  unsigned Lq = LQ;
-  unsigned dim = 3;
+  unsigned Lp;
+  unsigned Lq;
+  unsigned dim;
+  ParseCommandLine(argc, argv, &Lp, &Lq, &dim);
+
+
+
   unsigned p_a_i_rows = dim;
   unsigned q_a_i_rows = dim;
   unsigned K__ij_rows = Lp;
@@ -241,8 +245,8 @@ int main(int argc, char** argv)
   
 
   
-#if 0
- timer.start();
+#if CPU
+  timer.start();
   GaussianDerivates( Lp,  Lq,  dim,
 		     p_a_i_x,  p_a_i_rows,
 		     q_a_i_x,  q_a_i_rows,
@@ -251,32 +255,33 @@ int main(int argc, char** argv)
 		     D1Ks__ijb_x,     D1Ks__ijb_dimsI,
 		     D2Ks__ijbg_x,    D2Ks__ijbg_dimsI,
 		     D3Ks__ijbgd_x,   D3Ks__ijbgd_dimsI);
- cout << timer.stop() << endl;
+  cout << "$Time " << timer.stop() << endl;  
+
 #else
 
  
-RunOCLGaussianDerivatesForKernel(
-	dim, D1Ks__ijb_dimsI, 2, 
-	scaleweight2_x, D3Ks__ijbgd_x, D3Ks__ijbgd_x_size, 
-	D2Ks__ijbg_dimsI, 3,
-	D3Ks__ijbgd_dimsI, 4,
-	q_a_i_x, q_a_i_rows, Lq,
-	scales2_x, Lp, Lq,
-	p_a_i_x, p_a_i_rows, Lp,
-	D1Ks__ijb_x, D1Ks__ijb_x_size, 
-	K__ij_x, Lq, Lp, 
-	D2Ks__ijbg_x, D2Ks__ijbg_x_size);
+  RunOCLGaussianDerivatesForKernel(
+				   dim, D1Ks__ijb_dimsI, 2, 
+				   scaleweight2_x, D3Ks__ijbgd_x, D3Ks__ijbgd_x_size, 
+				   D2Ks__ijbg_dimsI, 3,
+				   D3Ks__ijbgd_dimsI, 4,
+				   q_a_i_x, q_a_i_rows, Lq,
+				   scales2_x, Lp, Lq,
+				   p_a_i_x, p_a_i_rows, Lp,
+				   D1Ks__ijb_x, D1Ks__ijb_x_size, 
+				   K__ij_x, Lq, Lp, 
+				   D2Ks__ijbg_x, D2Ks__ijbg_x_size);
 #endif
 
 
-    // printMat(K__ij_x, K__ij_x_size); a
-    // printMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
-    // printMat(D2Ks__ijbg_x,  D2Ks__ijbg_x_size);
-    // printMat(D3Ks__ijbgd_x, D3Ks__ijbgd_x_size);
+  // printMat(K__ij_x, K__ij_x_size); a
+  // printMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
+  // printMat(D2Ks__ijbg_x,  D2Ks__ijbg_x_size);
+  // printMat(D3Ks__ijbgd_x, D3Ks__ijbgd_x_size);
 
-    // free(A_mat);
-    // free(B_mat);
-    // free(C_mat);
+  // free(A_mat);
+  // free(B_mat);
+  // free(C_mat);
   
 }
 

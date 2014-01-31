@@ -40,10 +40,13 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-#define matsize 2048
+//#define matsize 2048
 
 int main(int argc, char** argv)
 {
+  unsigned matsize;
+  ParseCommandLine(argc, argv, &matsize, NULL, NULL);
+  
   unsigned hA = matsize;
   unsigned hB = matsize;
   unsigned hC = matsize;
@@ -58,15 +61,16 @@ int main(int argc, char** argv)
   float* A_mat = new float[A_size];
   float* B_mat = new float[B_size];
   float* C_mat = new float[C_size];
-
   srand(2013);
 
   randMat(A_mat,A_size);
   randMat(B_mat,B_size);
   randMat(C_mat,C_size);
 
-#if 0
+#if CPU
+  timer.start();  
   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
+  cout << "$Time " << timer.stop() << endl;  
 #else
   RunOCLMatMulForKernel(
 	 A_mat, wA, hA,
@@ -75,7 +79,7 @@ int main(int argc, char** argv)
 	 wB, wA, hA);  
 #endif
 
-  printMat(C_mat, 10);
+  // printMat(C_mat, 10);
 
   free(A_mat);
   free(B_mat);

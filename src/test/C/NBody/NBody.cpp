@@ -146,11 +146,14 @@ void computeForces(float * Forces, float * Pos, float * Mas, unsigned N) {
 }
 
 
-#define matsize 256000
+// #define matsize 256000
 //#define matsize 256
 
 int main(int argc, char** argv)
 {
+  unsigned matsize;
+  ParseCommandLine(argc, argv, &matsize, NULL, NULL);
+
   unsigned hPos = 2;
   unsigned hM = 1;
   unsigned hVel = 2;
@@ -178,9 +181,10 @@ int main(int argc, char** argv)
   // float dt = 0.015;
   
 
-#if 0
+#if CPU
+  timer.start();  
   computeForces(Forces, Pos, M_mat, N);
-  
+  cout << "$Time " << timer.stop() << endl;  
 #else
   RunOCLNBodyForKernel(M_mat, wM,
 		       Pos, wPos, 2,

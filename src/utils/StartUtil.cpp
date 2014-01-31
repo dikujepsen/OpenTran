@@ -79,6 +79,42 @@ void oclCheckErr(cl_int err, const char * function) {
     }
 }
 
+void CheckNull(unsigned * ptr, const char* val) {
+      if (ptr == NULL) {
+	std::cout << "Command line option saved to null pointer. Exiting...\n";
+	exit(-1);
+      } else {
+	unsigned temp;
+	stringstream toInt(val);
+	if ( !(toInt >> temp) ) {
+	  std::cout << "Command line option: invalid number: " << val << std::endl;
+	  exit(-1);
+	}	  
+	*ptr = temp;
+      }
+}
+
+void ParseCommandLine(int argc, char** argv,
+		      unsigned * val1, unsigned * val2, unsigned * val3) {
+
+  if (((argc-1) % 2 != 0) || argc < 3) {
+    std::cout << "Please set -n <x> -m <y> -k <z>\n";
+    exit(-1);
+  }
+  
+  for (int i = 1; i < argc; i+=2) {
+    if (std::string(argv[i]) == "-n") {
+      CheckNull(val1, argv[i + 1]);
+    } else if (std::string(argv[i]) == "-m") {
+      CheckNull(val2, argv[i + 1]);
+    } else if (std::string(argv[i]) == "-k") {
+      CheckNull(val3, argv[i + 1]);
+    } else {
+      std::cout << "Unrecognized command line option\n";
+      exit(-1);
+    }      
+  }
+}
 
 void StartUpGPU() {
   // std::cout << "StartUpGPU" << std::endl;
@@ -96,8 +132,8 @@ void StartUpGPU() {
   err |= clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 0, NULL, &num_devices);
   oclCheckErr(err, "clGetDeviceIDs1");
   
-  num_devices = std::min<unsigned>(num_devices, NUMDEVS);
   std::cout << "$numDEV " << num_devices << std::endl;
+  num_devices = std::min<unsigned>(num_devices, NUMDEVS);
 
   device_ids = new cl_device_id[num_devices];
   
