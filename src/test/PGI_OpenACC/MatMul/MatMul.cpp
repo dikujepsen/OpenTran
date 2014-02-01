@@ -46,10 +46,12 @@ printMat(float* mat, unsigned mat_size)
 
 
 // #define matsize 3584
-#define matsize 9216
+//#define matsize 9216
 
 int main(int argc, char** argv)
 {
+  unsigned matsize;
+  ParseCommandLine(argc, argv, &matsize, NULL, NULL);
   unsigned hA = matsize;
   unsigned hB = matsize;
   unsigned hC = matsize;
@@ -72,15 +74,11 @@ int main(int argc, char** argv)
   randMat(C_mat,C_size);
   acc_init( acc_device_nvidia );
 
-#if 1
   timer.start();
   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
   cout << timer.stop() << endl;
-#else
 
-#endif
-
-  printMat(C_mat, 10);
+  // printMat(C_mat, 10);
 
   free(A_mat);
   free(B_mat);

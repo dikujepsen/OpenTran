@@ -7,39 +7,10 @@
 
 #include <assert.h>
 #include <float.h>
-#include <time.h>
-#include <sys/resource.h>
-#include <sys/time.h>
 
-#include <pthread.h>
-#include <sched.h>
 #include <string.h>
 #include "boilerplate.cpp"
 
-long get_system_time_in_microseconds(void){
-	struct timeval tempo;
-	gettimeofday(&tempo, NULL);
-	return tempo.tv_sec * 1000000 + tempo.tv_usec;	
-}
-
-#define TIMING
-
-#ifdef TIMING
-#define DEFINE_TIMER(num) long start_time##num = 0; double elapsed_time##num = 0.0f;
-#define DECLARE_TIMER(num) extern long start_time##num; extern double elapsed_time##num;
-#define START_TIMER(num) start_time##num = get_system_time_in_microseconds();
-#define STOP_TIMER(num) elapsed_time##num = (((double)get_system_time_in_microseconds())-((double)start_time##num));
-#define GET_TIME(num) (double)(1.0*elapsed_time##num / 1000000.0)
-#else
-#define DEFINE_TIMER(num) 
-#define DECLARE_TIMER(num)
-#define START_TIMER(num) 
-#define STOP_TIMER(num) 
-#define GET_TIME(num)
-#endif
-
-DEFINE_TIMER(1); 
- 
 
 int main( int argc, char* argv[] )
 {
