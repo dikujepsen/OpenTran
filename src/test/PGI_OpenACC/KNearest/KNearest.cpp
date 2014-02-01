@@ -20,10 +20,12 @@
 Stopwatch timer;
 
 
+using namespace std;
+
 
 void knearest(unsigned NTEST, unsigned NTRAIN, unsigned dim, float *__restrict__ test_patterns, float *__restrict__ train_patterns, float *__restrict__ dist_matrix) {
 
-#if 1
+#ifndef CPU
 #pragma acc kernels loop copyin(test_patterns[0:NTEST*dim], train_patterns[0:NTRAIN*dim])  copyout(dist_matrix[0:NTEST*NTRAIN] ) independent
 #endif
   for (unsigned i = 0; i < NTEST; i++) {
@@ -75,7 +77,7 @@ int main( int argc, char* argv[] )
   }
   timer.start();  
   
-
+#ifndef CPU
 #pragma acc kernels loop copyin(test_patterns[0:NTEST*dim], train_patterns[0:NTRAIN*dim])  copyout(dist_matrix[0:NTEST*NTRAIN] ) independent
 #endif
   for (unsigned i = 0; i < NTEST; i++) {

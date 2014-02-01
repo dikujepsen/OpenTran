@@ -1,0 +1,10 @@
+$Func MatMulCPU, $Defines -n 1024, 0.12603
+$Func MatMulCPU, $Defines -n 1024, 0.126247
+$Func MatMulCPU, $Defines -n 1024, 0.126548
+$Func MatMulCPU, $Defines -n 1024, 0.126348
+$Func MatMulCPU, $Defines -n 1024, 0.127236
+$Func MatMulCPU, $Defines -n 1024, 0.126445
+$Func MatMulCPU, $Defines -n 1024, 0.126357
+$Func MatMulCPU, $Defines -n 1024, 0.126771
+$Func MatMulCPU, $Defines -n 1024, 0.127018
+$Func MatMulCPU, $Defines -n 1024, 0.126919

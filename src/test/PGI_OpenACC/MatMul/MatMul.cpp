@@ -10,7 +10,7 @@ using namespace std;
 void
 matmul(float* A, float* B, float* C, unsigned hA, unsigned wA, unsigned wB)
 {
-#if 1
+  #ifndef CPU
 #pragma acc kernels loop copyin(A[0:hA*wA], B[0:wB*wA])  copyout(C[0:wB*hA] ) independent
 #endif
   for (unsigned i = 0; i < hA; i++) {
