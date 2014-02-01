@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <iostream>
 #include <cmath>
-#include "../../../src/utils/Stopwatch.cpp"
+#include "../../../utils/Stopwatch.cpp"
 Stopwatch timer;
 #include <openacc.h>
 
@@ -122,7 +122,7 @@ void VelStorVer(float * Forces, float * Pos, float * Vel,
 
 void computeForces(float * Forces, float * Pos, float * Mas, unsigned N) {
 
-#if 1
+  #ifndef CPU
 #pragma acc kernels loop copyin(Pos[0:2*N], Mas[0:N])  copyout(Forces[0:N] ) independent
 #endif
   for (unsigned i = 0; i < N; i++) {
@@ -202,6 +202,4 @@ int main(int argc, char** argv)
   free(Forces);
   
 }
-
-// 1620.000000 670.000000 4660.000000 13590.000000 27460.000000 46270.000000 70020.000000 98710.000000 0.000000 0.000000
 

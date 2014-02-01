@@ -1,0 +1,1 @@
+$Func KNearestCPU, $Defines -n 1024 -k 16, $Time 0.0229302

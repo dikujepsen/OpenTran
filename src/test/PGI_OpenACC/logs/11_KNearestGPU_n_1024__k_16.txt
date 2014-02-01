@@ -1,0 +1,1 @@
+$Func KNearestGPU, $Defines -n 1024 -k 16, $Time 0.326756

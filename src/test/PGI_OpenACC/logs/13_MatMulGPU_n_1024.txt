@@ -1,0 +1,10 @@
+$Func MatMulGPU, $Defines -n 1024, 0.126113
+$Func MatMulGPU, $Defines -n 1024, 0.126322
+$Func MatMulGPU, $Defines -n 1024, 0.126411
+$Func MatMulGPU, $Defines -n 1024, 0.126137
+$Func MatMulGPU, $Defines -n 1024, 0.126544
+$Func MatMulGPU, $Defines -n 1024, 0.128248
+$Func MatMulGPU, $Defines -n 1024, 0.126096
+$Func MatMulGPU, $Defines -n 1024, 0.126932
+$Func MatMulGPU, $Defines -n 1024, 0.126267
+$Func MatMulGPU, $Defines -n 1024, 0.126465

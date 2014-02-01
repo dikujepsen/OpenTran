@@ -14,7 +14,7 @@ using namespace std;
 void
 Jacobi(float*  B, float*  X1, float*  X2, unsigned wA, unsigned wB)
 {
-  #if 1
+  #ifndef CPU
 #pragma acc kernels loop copyin(B[0:wB*wB], X1[0:wA*wA]) local(X2[0:wA*wA]) independent
   #endif
   for (unsigned i = 1; i < wB; i++) {

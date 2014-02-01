@@ -11,8 +11,8 @@ CC = pgCC
 OPTS = -O3 
 
 $(EXEC): $(EXECDEP)
-	$(CC) $(OPTS) -I$(INC_LIB) $(@:.exe=.cpp) -o $@ $(LNK_LIB)
-
+	$(CC) $(OPTS) -DCPU -I$(INC_LIB) $(@:.exe=.cpp) -o $(@:.exe=CPU.exe) $(LNK_LIB)
+	$(CC) $(OPTS) -I$(INC_LIB) $(@:.exe=.cpp) -o $(@:.exe=GPU.exe) $(LNK_LIB)
 
 clean: 
 	rm -f *~ *.o $(EXEC)
