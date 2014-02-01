@@ -16,32 +16,8 @@
 #include <string.h>
 #include <openacc.h>
 
-#include "../../../src/utils/Stopwatch.cpp"
+#include "../../../utils/Stopwatch.cpp"
 Stopwatch timer;
-
-long get_system_time_in_microseconds(void){
-	struct timeval tempo;
-	gettimeofday(&tempo, NULL);
-	return tempo.tv_sec * 1000000 + tempo.tv_usec;	
-}
-
-#define TIMING
-
-#ifdef TIMING
-#define DEFINE_TIMER(num) long start_time##num = 0; double elapsed_time##num = 0.0f;
-#define DECLARE_TIMER(num) extern long start_time##num; extern double elapsed_time##num;
-#define START_TIMER(num) start_time##num = get_system_time_in_microseconds();
-#define STOP_TIMER(num) elapsed_time##num = (((double)get_system_time_in_microseconds())-((double)start_time##num));
-#define GET_TIME(num) (double)(1.0*elapsed_time##num / 1000000.0)
-#else
-#define DEFINE_TIMER(num) 
-#define DECLARE_TIMER(num)
-#define START_TIMER(num) 
-#define STOP_TIMER(num) 
-#define GET_TIME(num)
-#endif
-
-DEFINE_TIMER(1); 
 
 
 
@@ -67,9 +43,13 @@ void knearest(unsigned NTEST, unsigned NTRAIN, unsigned dim, float *__restrict__
 int main( int argc, char* argv[] )
 {
   // problem parameters
-  size_t NTRAIN = 4096;
-  size_t NTEST = 3*NTRAIN;
-  size_t dim = 16;
+  unsigned NTRAIN;
+  unsigned dim;
+  ParseCommandLine(argc, argv, &NTRAIN, NULL, &dim);
+  unsigned NTEST = 3*NTRAIN;
+  // size_t NTRAIN = 4096;
+  // size_t NTEST = 3*NTRAIN;
+  // size_t dim = 16;
   // size_t NTRAIN = 16;
   // size_t NTEST = 3*NTRAIN;
   // size_t dim = 16;
@@ -93,11 +73,9 @@ int main( int argc, char* argv[] )
       test_patterns[i*dim + k] = (float)cos(i);
     }
   }
+  timer.start();  
   
-#if 1
-  START_TIMER(1); 
 
-#if 1
 #pragma acc kernels loop copyin(test_patterns[0:NTEST*dim], train_patterns[0:NTRAIN*dim])  copyout(dist_matrix[0:NTEST*NTRAIN] ) independent
 #endif
   for (unsigned i = 0; i < NTEST; i++) {
@@ -114,22 +92,16 @@ int main( int argc, char* argv[] )
   }
   // knearest(NTEST, NTRAIN, dim, test_patterns, train_patterns,
   // 	   dist_matrix);
+  cout << "$Time " << timer.stop() << endl;  
    
    
-  STOP_TIMER(1);
-  
-  printf("\nElapsed time=%f\n", GET_TIME(1));
-  
-#else
-#endif
-
   // print matrix
-  for (i=0;i<10;i++){    
-    for (j=0;j<10;j++){
-      printf("%f ", dist_matrix[j*NTEST+i]);
-    }
-    printf("\n");
-  }
+  // for (i=0;i<10;i++){    
+  //   for (j=0;j<10;j++){
+  //     printf("%f ", dist_matrix[j*NTEST+i]);
+  //   }
+  //   printf("\n");
+  // }
 
   // final timing results
     

@@ -152,11 +152,13 @@ void computeForces(float * Forces, float * Pos, float * Mas, unsigned N) {
 
 
 // #define matsize 256000
-#define matsize 76800
+// #define matsize 76800
 //#define matsize 256
 
 int main(int argc, char** argv)
 {
+  unsigned matsize;
+  ParseCommandLine(argc, argv, &matsize, NULL, NULL);
   unsigned hPos = 2;
   unsigned hM = 1;
   unsigned hVel = 2;
@@ -185,18 +187,10 @@ int main(int argc, char** argv)
   acc_init( acc_device_nvidia );
 
 
-#if 1
   timer.start();
   computeForces(Forces, Pos, M_mat, N);
   cout << timer.stop() << endl;
  
-#else
-  // RunOCLNBodyForKernel(M_mat, wM,
-  // 		       Pos, wPos, 2,
-  // 		       Forces, wVel, 2,
-  // 		       N);
-  
-#endif
   // printMat2(M_mat, wM, hM);
   // printMat2(Pos   , wPos, hPos);
   // printMat2(Vel   , wVel, hVel);

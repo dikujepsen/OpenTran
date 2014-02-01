@@ -3,13 +3,13 @@
 #include <iostream>
 #include <cmath>
 #include <openacc.h>
+#include "../../../utils/Stopwatch.cpp"
+Stopwatch timer;
+
 
 
 using namespace std;
-#include <sys/time.h>
-#define gettime(a) gettimeofday(a,NULL)
-#define usec(t1,t2) (((t2).tv_sec-(t1).tv_sec)*1000000+((t2).tv_usec-(t1).tv_usec))
-typedef struct timeval timestruct;
+
 
 void
 Jacobi(float*  B, float*  X1, float*  X2, unsigned wA, unsigned wB)
@@ -87,12 +87,10 @@ copyMat(float* mat1, float* mat2, unsigned wMat, unsigned hMat)
 }
 
 
-#define matsize 8192
-
 int main(int argc, char** argv)
 {
-  timestruct t1, t2;
-  long long cgpu;
+  unsigned matsize;
+  ParseCommandLine(argc, argv, &matsize, NULL, NULL);
 
   unsigned hA = matsize+2;
   unsigned hB = matsize+1;
@@ -115,26 +113,12 @@ int main(int argc, char** argv)
   createB(B_mat, wB, hB);
   acc_init( acc_device_nvidia );
 
-  // printMat2(B_mat, wB, hB);
-// 376082
-#if 1
-  gettime( &t1 );
+  
+  timer.start();  
   Jacobi(B_mat, X1_mat, X2_mat, wA, wB);
-  gettime( &t2 );
-  cgpu = usec(t1,t2);
+  cout << "$Time " << timer.stop() << endl;  
 
-#else 
-#endif
-  for (unsigned i = 0; i < 10; i++) {
-    for (unsigned j = 0; j < 10; j++) {
-      cout << X2_mat[i * wA + j] << " ";
-    }
-    cout << endl;
-  }
-  cout << endl;
   // printMat(X2_mat, 100);
-  printf( "matrix %d x %d, %d iterations\n", matsize, matsize, 1);
-  printf( "%f seconds\n", (double)cgpu / 1000000.0);
 
   free(X1_mat);
   free(B_mat);

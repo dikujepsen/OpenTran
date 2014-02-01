@@ -9,7 +9,7 @@ parser.add_argument("-m", "--make", help="run make clean && make on all files",
 parser.add_argument("-r", "--run", help="run all binary files for the given device", choices=['CPU', 'GPU'])
 parser.add_argument("-i", "--input", help="input choice for the binarys", choices=['basic', 'K20Max'])
 
-parser.add_argument("-n", "--numberofiterations", help="the number of iterations we benchmark a given binary.", type=int)
+parser.add_argument("-n", "--numberofiterations", help="the number of iterations we benchmark a given binary.", type=int, default=1)
 
 args = parser.parse_args()
    
@@ -20,7 +20,7 @@ benchmark = ['MatMul',
              'Laplace',
              'GaussianDerivates']
 
-cmdlineoptsbasic = {'MatMul'  		    : '-n 512' ,
+cmdlineoptsbasic = {'MatMul'  		    : '-n 1024' ,
             		'Jacobi'  		    : '-n 1024' ,
                		'KNearest'		    : '-n 1024 -k 16' ,
                		'NBody'   		    : '-n 1024' ,
@@ -89,6 +89,8 @@ if args.run is not None:
                     if not line: break
                 acc += ', ' + line[:-1]
             log.write(acc + '\n')
+            log.flush()
+            os.fsync(log)
             #print acc + '\n'
         os.chdir('..')
         log.close()
