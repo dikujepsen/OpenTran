@@ -92,6 +92,8 @@ class Rewriter(NodeVisitor):
         self.SubscriptNoId = dict()
         # Decides whether we read back data from GPU
         self.NoReadBack = False
+        # A mapping from array references to the loops they appear in.
+        self.RefToLoop = dict()
         # List of arguments for the kernel
         ## self.KernelArgs = list()
         ########################################################
@@ -351,7 +353,8 @@ class Rewriter(NodeVisitor):
 
         refToLoop = RefToLoop(self.GridIndices)
         refToLoop.visit(ast)
-
+        self.RefToLoop = refToLoop.RefToLoop
+        
     def DataStructures(self):
         print "self.index " , self.index
         print "self.UpperLimit " , self.UpperLimit
@@ -392,7 +395,8 @@ class Rewriter(NodeVisitor):
         print "self.GlobalVars ", self.GlobalVars
         print "self.ConstantMem " , self.ConstantMem
         print "self.Loops " , self.Loops
-
+        print "self.RefToLoop ", self.RefToLoop
+        
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
     	abstraction level.

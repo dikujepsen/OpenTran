@@ -139,7 +139,39 @@ class Transformation():
             rw.KernelArgs.pop(var)
 
             
-    def placeInReg3(self, arrDict):
+    def placeInReg2(self, arrDict):
+        rw = self.rw
+        stats = rw.Kernel.statements
+        initstats = []
+        loadings = []
+        writes = []
+        # Create the loadings
+        for i,n in enumerate(arrDict):
+            for m in arrDict[n]:
+                idx = m
+                sub = copy.deepcopy(rw.LoopArrays[n][idx])
+                type = rw.Type[n][0]
+                regid = Id(n + str(m) + '_reg')
+                reg = TypeId([type], regid)
+                writes.append(regid)
+                assign = Assignment(reg, sub)
+                initstats.append(assign)
+        
+        stats.insert(0, GroupCompound(initstats))
+ 
+        # Replace the global Arefs with the register Arefs
+        count = 0
+        for i,n in enumerate(arrDict):
+            for m in arrDict[n]:
+                idx = m
+                aref_new = writes[count]
+                aref_old = rw.LoopArrays[n][idx]
+                # Copying the internal data of the two arefs
+                aref_old.name.name = aref_new.name
+                aref_old.subscript = []
+                count += 1
+
+    def placeInReg3(self, arrDict, insideList):
         """ Check if the arrayref is inside a loop and use a static
             array for the allocation of the registers
         """
@@ -149,20 +181,29 @@ class Transformation():
         loadings = []
         writes = []
 
-        insideloop = ''
-        # check what loop we are inside
-        for n in arrDict:
-            # assume all refs are inside the same loop
-            idx = arrDict[n]
-            sublist = rw.SubscriptNoId[n]
-            for sub in sublist[idx[0]]:
-                if sub not in rw.GridIndices:
-                    insideloop = sub
-                    break
-            break
+        if not arrDict:
+            return
+        
+        if not insideList:
+            self.placeInReg2(arrDict)
+            return
 
+        insideloop = insideList[0]
+        # check what loop we are inside
+        ## for n in arrDict:
+        ##     # assume all refs are inside the same loop
+        ##     idx = arrDict[n]
+        ##     sublist = rw.SubscriptNoId[n]
+        ##     for sub in sublist[idx[0]]:
+        ##         print sub, rw.GridIndices
+        ##         if sub not in rw.GridIndices:
+        ##             insideloop = sub
+        ##             break
+        ##     break
+        
         if insideloop == '':
             print "placeInReg3 only works when the ArrayRef is inside a loop"
+            print arrDict
             return
 
         # Add allocation of registers to the initiation stage

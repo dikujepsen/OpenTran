@@ -71,6 +71,20 @@ printMat2(float* mat, unsigned wMat, unsigned hMat)
 }
 
 void
+printMat3(float* mat, unsigned size, unsigned wMat, unsigned hMat)
+{
+  unsigned count = 0;
+  for (unsigned i = 1; i < (hMat) && count < size; i++) {
+    for (unsigned j = 1; j < (wMat) && count < size; j++) {
+      cout << mat[i * wMat + j] << " ";
+      count++;
+    }
+    cout << endl;
+  }
+  cout << endl;
+}
+
+void
 copyMat(float* mat1, float* mat2, unsigned wMat, unsigned hMat)
 {
   for (unsigned i = 0; i < hMat; i++) {
@@ -125,6 +139,9 @@ int main(int argc, char** argv)
   //   cout << endl;
   // }
   // cout << endl;
+#if PRINT
+  printMat3(X2_mat, 100, wA, hA);
+#endif
   // printMat(X2_mat, 100);
 
   free(X1_mat);

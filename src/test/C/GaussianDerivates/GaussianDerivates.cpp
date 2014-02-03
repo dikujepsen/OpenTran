@@ -274,7 +274,10 @@ int main(int argc, char** argv)
 #endif
 
 
-  // printMat(K__ij_x, K__ij_x_size); a
+#if PRINT
+  printMat(K__ij_x, 100);
+#endif
+  // printMat(K__ij_x, K__ij_x_size); 
   // printMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
   // printMat(D2Ks__ijbg_x,  D2Ks__ijbg_x_size);
   // printMat(D3Ks__ijbgd_x, D3Ks__ijbgd_x_size);

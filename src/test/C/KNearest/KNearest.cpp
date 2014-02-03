@@ -11,6 +11,17 @@
 #include <string.h>
 #include "boilerplate.cpp"
 
+void
+printMat(float* mat, unsigned mat_size)
+{
+  for (unsigned i = 0; i < mat_size; ++i) {
+    cout << mat[i] << " ";
+    if (i % 10 == 0) {
+      cout << endl;
+    }
+  }
+  cout << endl;
+}
 
 int main( int argc, char* argv[] )
 {
@@ -67,6 +78,9 @@ int main( int argc, char* argv[] )
 
 #endif
 
+#if PRINT
+  printMat(dist_matrix, 100);
+#endif
   // print matrix
   // for (i=0;i<10;i++){    
   //   for (j=0;j<10;j++){

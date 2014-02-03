@@ -39,7 +39,7 @@ class Analysis():
 
     def Transpose(self):
         """ Find all arrays that *should* be transposed
-        	 and transpose them
+        	and transpose them
         """
         rw = self.rw
         # self.SubscriptNoId
@@ -62,3 +62,44 @@ class Analysis():
         ## print maybetranspose - notranspose - transpose
         for n in transpose:
             self.tf.transpose(n)
+
+
+    def PlaceInReg(self):
+        """ Find all array references that can be cached in registers.
+        	Then rewrite the code in this fashion.
+        """
+        rw = self.rw
+        tf = self.tf
+		# subscriptnoid, RefToLoop
+        optim = dict()
+        for n in rw.RefToLoop:
+            optim[n] = []
+        insideloop = set()
+        for n in rw.RefToLoop:
+            if n in rw.WriteOnly:
+                continue
+            ## for (ref, sub) in (rw.RefToLoop[n], rw.SubscriptNoId[n]):
+            ref1 = rw.RefToLoop[n]
+            sub1 = rw.SubscriptNoId[n]
+            
+            for (ref, sub, i) in zip(ref1, sub1, range(len(ref1))):
+                ## print rw.GridIndices, sub
+                if set(rw.GridIndices) & set(sub):
+                    outerloops = set(ref) - set(sub)
+                    if outerloops:
+                        insideloop |= set(sub) - set(rw.GridIndices)
+                        optim[n].append(i)
+                        
+                        ## print i, n, outerloops, rw.GridIndices, sub, \
+                        ##   set(sub) - set(rw.GridIndices)
+    
+                        
+        ## print optim
+        insideloop = {k for k in insideloop if k in rw.Loops}
+        if len(insideloop) > 1:
+            print """ PlaceInReg: array references was inside
+    				  two loops. No optimization """
+            return
+        ## print insideloop
+        tf.placeInReg3({k : v for k, v in optim.items() if v}, list(insideloop))
+ 

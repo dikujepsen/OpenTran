@@ -7,7 +7,7 @@ from transformation import *
 from analysis import *
 fileprefix = "../test/C/"
 
-
+SetNoReadBack = False
 
 def LexAndParse(name, createTemp):
     import ply.yacc as yacc
@@ -79,9 +79,11 @@ def jacobi():
     an = Analysis(rw, tf)
     an.Transpose()
     an.DefineArguments()
-    tf.SetNoReadBack()
+    an.PlaceInReg()
 
     tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
+    if SetNoReadBack:
+        tf.SetNoReadBack()
 
     CGen(name, funcname, rw, tempast2, ast)
 
@@ -98,8 +100,10 @@ def matmul():
     an = Analysis(rw, tf)
     ## an.Transpose()
     an.DefineArguments()
+    an.PlaceInReg()
     tf.localMemory3({'A' : [0], 'B' : [0]})
-    tf.SetNoReadBack()
+    if SetNoReadBack:    
+        tf.SetNoReadBack()
         
     CGen(name, funcname, rw, tempast2, ast)
     
@@ -113,11 +117,13 @@ def nbody():
     an = Analysis(rw, tf)
     an.Transpose()
     an.DefineArguments()
+    an.PlaceInReg()
 
     ## rw.dataStructures()
     ## rw.localMemory2(['Mas', 'Pos'])
     ## rw.localMemory3({'Mas' : [1] , 'Pos' : [2,3]})
-    tf.SetNoReadBack()
+    if SetNoReadBack:
+        tf.SetNoReadBack()
     ## rw.Unroll2({'j': 32})
     CGen(name, funcname, rw, tempast2, ast)
 
@@ -133,10 +139,11 @@ def knearest():
     an = Analysis(rw, tf)
     an.Transpose()
     an.DefineArguments()
-
-    tf.placeInReg3({'test_patterns': [0]})
-    tf.SetNoReadBack()
-    ## rw.dataStructures()
+    an.PlaceInReg()
+    ## tf.placeInReg3({'test_patterns': [0]})
+    if SetNoReadBack:
+        tf.SetNoReadBack()
+    ## rw.DataStructures()
     ## rw.Unroll2({'k' : 0})
     
     CGen(name, funcname, rw, tempast2, ast)
@@ -152,35 +159,40 @@ def gaussian():
     an = Analysis(rw, tf)
     an.Transpose()
     an.DefineArguments()
+    an.PlaceInReg()
     ## tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
     ## rw.transpose('C')
     ## rw.localMemory(['A','B'])
     ## rw.DataStructures()
-    tf.SetNoReadBack()
+    if SetNoReadBack:
+        tf.SetNoReadBack()
     CGen(name, funcname, rw, tempast2, ast)
 
 def laplace():
     name = 'Laplace'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
-    rw.initNewRepr(tempast)
     tf = Transformation(rw)
+    tf.SetParDim(1)
+    rw.initNewRepr(tempast)
     an = Analysis(rw, tf)
     an.Transpose()
     an.DefineArguments()
+    an.PlaceInReg()
     
-    tf.placeInReg3({'level': [0], 'level_int' : [0], 'index' : [0]})
-    tf.SetNoReadBack()
+    ## tf.placeInReg3({'level': [0], 'level_int' : [0], 'index' : [0]})
+    if SetNoReadBack:
+        tf.SetNoReadBack()
     
-    ## rw.DataStructures()
+    rw.DataStructures()
     
-    tf.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
+    ## tf.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
     CGen(name, funcname, rw, tempast2, ast)
     
 
 if __name__ == "__main__":
-    jacobi()
-    matmul()
-    nbody()
+    ## jacobi()
+    ## matmul()
+    ## nbody()
     laplace()
-    knearest()
-    gaussian()
+    ## knearest()
+    ## gaussian()

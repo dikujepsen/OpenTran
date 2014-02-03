@@ -43,7 +43,7 @@ void CheckNull(unsigned * ptr, const char* val) {
 
 void ParseCommandLine(int argc, char** argv,
 		      unsigned * val1, unsigned * val2, unsigned * val3) {
-  unsigned len = 1;
+  int len = 1;
   if (val1 != NULL) {
     len += 2;
   }

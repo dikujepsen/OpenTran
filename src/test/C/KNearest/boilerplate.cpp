@@ -128,8 +128,16 @@ void ExecKNearestFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrdist_matrix, CL_TRUE, 
+	0, hst_ptrdist_matrix_mem_size, hst_ptrdist_matrix, 
+	1, &GPUExecution, NULL
+	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
 }
 
 void RunOCLKNearestForKernel(

@@ -3,12 +3,12 @@ float * Pos;
 float * Forces;
 size_t N;
 for (unsigned i = 0; i < N; i++) {
-  float a_x = Pos[0][i]; 
-  float a_y = Pos[1][i];
-  float a_m = Mas[i];
   float f_x = 0;
   float f_y = 0;
   for (unsigned j = 0; j < N; j++) {
+    float a_x = Pos[0][i]; 
+    float a_y = Pos[1][i];
+    float a_m = Mas[i];
     float b_x = Pos[0][j]; 
     float b_y = Pos[1][j];
     float b_m = Mas[j];

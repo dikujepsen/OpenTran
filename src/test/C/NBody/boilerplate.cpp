@@ -30,12 +30,15 @@ std::string KernelString()
   str << "__kernel void NBodyFor(" << endl;
   str << "	__global float * Mas, __global float * Pos, __global float * Forces" << endl;
   str << "	) {" << endl;
-  str << "  float a_x = Pos[(0 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
-  str << "  float a_y = Pos[(1 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
-  str << "  float a_m = Mas[get_global_id(0)];" << endl;
+  str << "  float Mas0_reg = Mas[get_global_id(0)];" << endl;
+  str << "  float Pos0_reg = Pos[(0 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
+  str << "  float Pos1_reg = Pos[(1 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
   str << "  float f_x = 0;" << endl;
   str << "  float f_y = 0;" << endl;
   str << "  for (unsigned j = 0; j < N; j++) {" << endl;
+  str << "      float a_x = Pos0_reg;" << endl;
+  str << "      float a_y = Pos1_reg;" << endl;
+  str << "      float a_m = Mas0_reg;" << endl;
   str << "      float b_x = Pos[(0 * hst_ptrPos_dim1) + j];" << endl;
   str << "      float b_y = Pos[(1 * hst_ptrPos_dim1) + j];" << endl;
   str << "      float b_m = Mas[j];" << endl;
@@ -125,8 +128,16 @@ void ExecNBodyFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrForces, CL_TRUE, 
+	0, hst_ptrForces_mem_size, hst_ptrForces, 
+	1, &GPUExecution, NULL
+	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
 }
 
 void RunOCLNBodyForKernel(

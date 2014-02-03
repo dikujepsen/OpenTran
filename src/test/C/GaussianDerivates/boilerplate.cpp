@@ -258,8 +258,31 @@ void ExecGaussianDerivatesFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrD3Ks__ijbgd_x, CL_TRUE, 
+	0, hst_ptrD3Ks__ijbgd_x_mem_size, hst_ptrD3Ks__ijbgd_x, 
+	1, &GPUExecution, NULL
+	);
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrD1Ks__ijb_x, CL_TRUE, 
+	0, hst_ptrD1Ks__ijb_x_mem_size, hst_ptrD1Ks__ijb_x, 
+	1, &GPUExecution, NULL
+	);
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrK__ij_x, CL_TRUE, 
+	0, hst_ptrK__ij_x_mem_size, hst_ptrK__ij_x, 
+	1, &GPUExecution, NULL
+	);
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrD2Ks__ijbg_x, CL_TRUE, 
+	0, hst_ptrD2Ks__ijbg_x_mem_size, hst_ptrD2Ks__ijbg_x, 
+	1, &GPUExecution, NULL
+	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
 }
 
 void RunOCLGaussianDerivatesForKernel(

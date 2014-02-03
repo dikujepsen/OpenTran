@@ -80,8 +80,9 @@ int main(int argc, char** argv)
 	 wB, wA, hA);  
 #endif
 
-  // printMat(C_mat, 10);
-
+#if PRINT
+  printMat(C_mat, 100);
+#endif
   free(A_mat);
   free(B_mat);
   free(C_mat);

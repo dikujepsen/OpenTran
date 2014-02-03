@@ -252,6 +252,9 @@ int main(int argc, char** argv)
 #endif
   // printMat(alpha, alpha_size);
     
+#if PRINT
+  printMat(result, 100);
+#endif
   // printMat(result, result_size);
 
   free(level);

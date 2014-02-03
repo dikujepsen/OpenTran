@@ -196,6 +196,9 @@ int main(int argc, char** argv)
   // printMat2(Pos   , wPos, hPos);
   // printMat2(Vel   , wVel, hVel);
   // printMat2(Forces, wVel, hVel);
+#if PRINT
+  printMat(Forces, 100);
+#endif
 
   free(Pos);
   free(M_mat);
