@@ -7,7 +7,7 @@ from transformation import *
 from analysis import *
 fileprefix = "../test/C/"
 
-SetNoReadBack = False
+SetNoReadBack = True
 
 def LexAndParse(name, createTemp):
     import ply.yacc as yacc
@@ -183,7 +183,7 @@ def laplace():
     if SetNoReadBack:
         tf.SetNoReadBack()
     
-    rw.DataStructures()
+    ## rw.DataStructures()
     
     ## tf.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
     CGen(name, funcname, rw, tempast2, ast)
