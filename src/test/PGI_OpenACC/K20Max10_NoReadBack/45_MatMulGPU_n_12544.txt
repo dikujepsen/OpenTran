@@ -1,0 +1,10 @@
+$Func MatMulGPU, $Defines -n 12544, 55.0162
+$Func MatMulGPU, $Defines -n 12544, 55.0164
+$Func MatMulGPU, $Defines -n 12544, 55.0183
+$Func MatMulGPU, $Defines -n 12544, 55.0096
+$Func MatMulGPU, $Defines -n 12544, 55.0123
+$Func MatMulGPU, $Defines -n 12544, 55.0091
+$Func MatMulGPU, $Defines -n 12544, 55.0112
+$Func MatMulGPU, $Defines -n 12544, 55.0148
+$Func MatMulGPU, $Defines -n 12544, 54.9991
+$Func MatMulGPU, $Defines -n 12544, 55.0117

@@ -69,12 +69,12 @@ std::string KernelString()
   str << "  double gradient_temp[dim];" << endl;
   str << "  double dot_temp[dim];" << endl;
     for (unsigned d = 0; d < dim; d+=dim) {
-  str << "      double level_j;" << endl;
   str << "      double index_i;" << endl;
-  str << "      double index_j;" << endl;
   str << "      double level_i;" << endl;
   str << "      double level_int_i;" << endl;
   str << "      double level_int_j;" << endl;
+  str << "      double index_j;" << endl;
+  str << "      double level_j;" << endl;
         for (unsigned dd = 0; dd < dim; dd++) {
   str << "          level_i = level_reg[" << d << " + " << dd << "];" << endl;
   str << "          level_j = level[((" << d << " + " << dd << ") * hst_ptrlevel_dim1) + get_global_id(0)];" << endl;

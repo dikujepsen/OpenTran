@@ -78,7 +78,7 @@ int main( int argc, char* argv[] )
   timer.start();  
   
 #ifndef CPU
-#pragma acc kernels loop copyin(test_patterns[0:NTEST*dim], train_patterns[0:NTRAIN*dim])  copyout(dist_matrix[0:NTEST*NTRAIN] ) independent
+#pragma acc kernels loop copyin(test_patterns[0:NTEST*dim], train_patterns[0:NTRAIN*dim])  local(dist_matrix[0:NTEST*NTRAIN] ) independent
 #endif
   for (unsigned i = 0; i < NTEST; i++) {
     for (unsigned j = 0; j < NTRAIN; j++) {

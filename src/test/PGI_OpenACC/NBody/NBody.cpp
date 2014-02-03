@@ -123,7 +123,7 @@ void VelStorVer(float * Forces, float * Pos, float * Vel,
 void computeForces(float * Forces, float * Pos, float * Mas, unsigned N) {
 
   #ifndef CPU
-#pragma acc kernels loop copyin(Pos[0:2*N], Mas[0:N])  copyout(Forces[0:N] ) independent
+#pragma acc kernels loop copyin(Pos[0:2*N], Mas[0:N])  local(Forces[0:N] ) independent
 #endif
   for (unsigned i = 0; i < N; i++) {
     float a_x = Pos[i]; 

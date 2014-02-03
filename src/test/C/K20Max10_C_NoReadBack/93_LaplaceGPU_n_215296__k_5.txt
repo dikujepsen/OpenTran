@@ -1,0 +1,10 @@
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 34.692
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 34.6999
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 34.692
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 34.7111
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 34.6951
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 34.7006
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 34.6831
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 34.6944
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 34.6949
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 34.6977

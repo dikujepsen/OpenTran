@@ -79,6 +79,7 @@ def jacobi():
     an = Analysis(rw, tf)
     an.Transpose()
     an.DefineArguments()
+    tf.SetNoReadBack()
 
     tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
 
@@ -98,7 +99,7 @@ def matmul():
     ## an.Transpose()
     an.DefineArguments()
     tf.localMemory3({'A' : [0], 'B' : [0]})
-    ## tf.SetNoReadBack()
+    tf.SetNoReadBack()
         
     CGen(name, funcname, rw, tempast2, ast)
     
@@ -116,7 +117,7 @@ def nbody():
     ## rw.dataStructures()
     ## rw.localMemory2(['Mas', 'Pos'])
     ## rw.localMemory3({'Mas' : [1] , 'Pos' : [2,3]})
-    ## rw.SetNoReadBack()
+    tf.SetNoReadBack()
     ## rw.Unroll2({'j': 32})
     CGen(name, funcname, rw, tempast2, ast)
 
@@ -155,7 +156,7 @@ def gaussian():
     ## rw.transpose('C')
     ## rw.localMemory(['A','B'])
     ## rw.DataStructures()
-    #rw.SetNoReadBack()
+    tf.SetNoReadBack()
     CGen(name, funcname, rw, tempast2, ast)
 
 def laplace():

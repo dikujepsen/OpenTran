@@ -123,16 +123,8 @@ void ExecMatMulFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrC, CL_TRUE, 
-	0, hst_ptrC_mem_size, hst_ptrC, 
-	1, &GPUExecution, NULL
-	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
-  oclErrNum = clFinish(command_queue);
-  oclCheckErr(
-	oclErrNum, "clFinish");
 }
 
 void RunOCLMatMulForKernel(
