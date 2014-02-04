@@ -14,9 +14,13 @@ using namespace std;
 void
 Jacobi(float*  B, float*  X1, float*  X2, unsigned wA, unsigned wB)
 {
-  #ifndef CPU
+#ifndef CPU
+#ifdef READBACK
+#pragma acc kernels loop copyin(B[0:wB*wB], X1[0:wA*wA]) copyout(X2[0:wA*wA]) independent
+#else
 #pragma acc kernels loop copyin(B[0:wB*wB], X1[0:wA*wA]) local(X2[0:wA*wA]) independent
-  #endif
+#endif
+#endif
   for (unsigned i = 1; i < wB; i++) {
     for (unsigned j = 1; j < wB; j++) {
       X2[i*wA + j] = -0.25 * (B[i * wB + j] -
@@ -118,7 +122,10 @@ int main(int argc, char** argv)
   Jacobi(B_mat, X1_mat, X2_mat, wA, wB);
   cout << "$Time " << timer.stop() << endl;  
 
-  // printMat(X2_mat, 100);
+#if PRINT
+  printMat3(X2_mat, 100, wA, hA);
+#endif
+
 
   free(X1_mat);
   free(B_mat);

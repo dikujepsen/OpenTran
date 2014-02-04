@@ -10,8 +10,12 @@ using namespace std;
 void
 matmul(float* A, float* B, float* C, unsigned hA, unsigned wA, unsigned wB)
 {
-  #ifndef CPU
+#ifndef CPU
+#ifdef READBACK
+#pragma acc kernels loop copyin(A[0:hA*wA], B[0:wB*wA])  copyout(C[0:wB*hA] ) independent
+#else
 #pragma acc kernels loop copyin(A[0:hA*wA], B[0:wB*wA])  local(C[0:wB*hA] ) independent
+#endif
 #endif
   for (unsigned i = 0; i < hA; i++) {
     for (unsigned j = 0; j < wB; j++) {
@@ -78,7 +82,9 @@ int main(int argc, char** argv)
   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
   cout << timer.stop() << endl;
 
-  // printMat(C_mat, 10);
+#if PRINT
+  printMat(C_mat, 100);
+#endif
 
   free(A_mat);
   free(B_mat);

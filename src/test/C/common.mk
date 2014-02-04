@@ -23,6 +23,5 @@ $(EXECCPU): $(EXECDEP)
 $(EXECGPU): $(EXECDEP)
 	$(CC) $(OPTS) $(DEFS) -I$(INC_LIB) $(EXECDEP) -o $(@) $(LNK_LIB)
 
-
 clean: 
 	rm -f *~ *.o $(EXECCPU) $(EXECGPU)
