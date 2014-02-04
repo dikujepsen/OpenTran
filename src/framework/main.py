@@ -85,6 +85,7 @@ def jacobi():
     if SetNoReadBack:
         tf.SetNoReadBack()
 
+    an.PlaceInLocalMemory()
     CGen(name, funcname, rw, tempast2, ast)
 
 def matmul():
@@ -105,6 +106,8 @@ def matmul():
     if SetNoReadBack:    
         tf.SetNoReadBack()
         
+    ## rw.DataStructures()
+    an.PlaceInLocalMemory()
     CGen(name, funcname, rw, tempast2, ast)
     
 
@@ -119,19 +122,19 @@ def nbody():
     an.DefineArguments()
     an.PlaceInReg()
 
-    ## rw.dataStructures()
     ## rw.localMemory2(['Mas', 'Pos'])
     ## rw.localMemory3({'Mas' : [1] , 'Pos' : [2,3]})
     if SetNoReadBack:
         tf.SetNoReadBack()
     ## rw.Unroll2({'j': 32})
+    an.PlaceInLocalMemory()
     CGen(name, funcname, rw, tempast2, ast)
 
 def knearest():
     name = 'KNearest'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     tf = Transformation(rw)
-    tf.SetParDim(1)
+    ## tf.SetParDim(1)
     rw.initNewRepr(tempast)
     
     ## rw.constantMemory(['Pos']) 
@@ -146,6 +149,7 @@ def knearest():
     ## rw.DataStructures()
     ## rw.Unroll2({'k' : 0})
     
+    an.PlaceInLocalMemory()
     CGen(name, funcname, rw, tempast2, ast)
 
 def gaussian():
@@ -166,13 +170,14 @@ def gaussian():
     ## rw.DataStructures()
     if SetNoReadBack:
         tf.SetNoReadBack()
+    an.PlaceInLocalMemory()
     CGen(name, funcname, rw, tempast2, ast)
 
 def laplace():
     name = 'Laplace'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     tf = Transformation(rw)
-    tf.SetParDim(1)
+    ## tf.SetParDim(1)
     rw.initNewRepr(tempast)
     an = Analysis(rw, tf)
     an.Transpose()
@@ -186,13 +191,14 @@ def laplace():
     ## rw.DataStructures()
     
     ## tf.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
+    an.PlaceInLocalMemory()
     CGen(name, funcname, rw, tempast2, ast)
     
 
 if __name__ == "__main__":
-    ## jacobi()
-    ## matmul()
-    ## nbody()
+    jacobi()
+    matmul()
+    nbody()
     laplace()
-    ## knearest()
-    ## gaussian()
+    knearest()
+    gaussian()

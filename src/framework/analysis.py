@@ -103,3 +103,19 @@ class Analysis():
         ## print insideloop
         tf.placeInReg3({k : v for k, v in optim.items() if v}, list(insideloop))
  
+    def PlaceInLocalMemory(self):
+        """ Find all array references that can be optimized
+        	through the use of shared memory.
+            Then rewrite the code in this fashion.
+        """
+        rw = self.rw
+        tf = self.tf
+
+        for k, v in rw.SubscriptNoId.items():
+            for n in v:
+                if set(n) & set(rw.GridIndices) and \
+                    set(n) & set(rw.Loops.keys()):
+                    if rw.ParDim == 2:
+                        print k , n
+                
+        

@@ -128,16 +128,8 @@ void ExecNBodyFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrForces, CL_TRUE, 
-	0, hst_ptrForces_mem_size, hst_ptrForces, 
-	1, &GPUExecution, NULL
-	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
-  oclErrNum = clFinish(command_queue);
-  oclCheckErr(
-	oclErrNum, "clFinish");
 }
 
 void RunOCLNBodyForKernel(
