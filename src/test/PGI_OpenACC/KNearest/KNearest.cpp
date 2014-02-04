@@ -21,6 +21,17 @@ Stopwatch timer;
 
 
 using namespace std;
+void
+printMat(float* mat, unsigned mat_size)
+{
+  for (unsigned i = 0; i < mat_size; ++i) {
+    cout << mat[i] << " ";
+    if (i % 10 == 0) {
+      cout << endl;
+    }
+  }
+  cout << endl;
+}
 
 
 void knearest(unsigned NTEST, unsigned NTRAIN, unsigned dim, float *__restrict__ test_patterns, float *__restrict__ train_patterns, float *__restrict__ dist_matrix) {
@@ -78,7 +89,11 @@ int main( int argc, char* argv[] )
   timer.start();  
   
 #ifndef CPU
+#ifdef READBACK
+#pragma acc kernels loop copyin(test_patterns[0:NTEST*dim], train_patterns[0:NTRAIN*dim])  copyout(dist_matrix[0:NTEST*NTRAIN] ) independent
+#else
 #pragma acc kernels loop copyin(test_patterns[0:NTEST*dim], train_patterns[0:NTRAIN*dim])  local(dist_matrix[0:NTEST*NTRAIN] ) independent
+#endif
 #endif
   for (unsigned i = 0; i < NTEST; i++) {
     for (unsigned j = 0; j < NTRAIN; j++) {
@@ -92,20 +107,13 @@ int main( int argc, char* argv[] )
       dist_matrix[j*NTEST + i] = d;
     }
   }
-  // knearest(NTEST, NTRAIN, dim, test_patterns, train_patterns,
-  // 	   dist_matrix);
   cout << "$Time " << timer.stop() << endl;  
    
-   
-  // print matrix
-  // for (i=0;i<10;i++){    
-  //   for (j=0;j<10;j++){
-  //     printf("%f ", dist_matrix[j*NTEST+i]);
-  //   }
-  //   printf("\n");
-  // }
+#if PRINT
+  printMat(dist_matrix, 100);
+#endif
 
-  // final timing results
+  
     
   return 0;
 }
