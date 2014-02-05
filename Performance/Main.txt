@@ -5,3 +5,5 @@ KNearest: 18.9439/0.060467 = 313.29320125
 Nbody: 141.55/18.7957 = 7.53097783
 Laplace: 34.7006
 GaussianDerivates: 0.216421
+
+============ PERFORMANCE COMPARISON; READBACK  ====================
