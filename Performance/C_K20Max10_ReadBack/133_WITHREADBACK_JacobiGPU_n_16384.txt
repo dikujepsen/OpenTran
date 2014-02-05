@@ -1,0 +1,10 @@
+$Func JacobiGPU, $Defines -n 16384, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=16385 -DwA=16386 -Dhst_ptrX1_dim1=16386 -Dhst_ptrX2_dim1=16386 , $Time 0.726757
+$Func JacobiGPU, $Defines -n 16384, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=16385 -DwA=16386 -Dhst_ptrX1_dim1=16386 -Dhst_ptrX2_dim1=16386 , $Time 0.728475
+$Func JacobiGPU, $Defines -n 16384, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=16385 -DwA=16386 -Dhst_ptrX1_dim1=16386 -Dhst_ptrX2_dim1=16386 , $Time 0.734291
+$Func JacobiGPU, $Defines -n 16384, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=16385 -DwA=16386 -Dhst_ptrX1_dim1=16386 -Dhst_ptrX2_dim1=16386 , $Time 0.730809
+$Func JacobiGPU, $Defines -n 16384, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=16385 -DwA=16386 -Dhst_ptrX1_dim1=16386 -Dhst_ptrX2_dim1=16386 , $Time 0.721346
+$Func JacobiGPU, $Defines -n 16384, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=16385 -DwA=16386 -Dhst_ptrX1_dim1=16386 -Dhst_ptrX2_dim1=16386 , $Time 0.73319
+$Func JacobiGPU, $Defines -n 16384, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=16385 -DwA=16386 -Dhst_ptrX1_dim1=16386 -Dhst_ptrX2_dim1=16386 , $Time 0.730041
+$Func JacobiGPU, $Defines -n 16384, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=16385 -DwA=16386 -Dhst_ptrX1_dim1=16386 -Dhst_ptrX2_dim1=16386 , $Time 0.739607
+$Func JacobiGPU, $Defines -n 16384, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=16385 -DwA=16386 -Dhst_ptrX1_dim1=16386 -Dhst_ptrX2_dim1=16386 , $Time 0.731334
+$Func JacobiGPU, $Defines -n 16384, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=16385 -DwA=16386 -Dhst_ptrX1_dim1=16386 -Dhst_ptrX2_dim1=16386 , $Time 0.736431

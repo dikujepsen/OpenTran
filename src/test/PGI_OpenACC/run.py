@@ -6,6 +6,11 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--make", help="run make clean && make on all files",
                     action="store_true")
+parser.add_argument("-p", "--printresult", help="Compiles the code with printing of the result enabled",
+                    action="store_true")
+parser.add_argument("-b", "--backcopy", help="Compiles the code so that the result is copied back from the GPU",
+                    action="store_true")
+parser.add_argument("-t", "--tag", help="tag this benchmark with a string")
 parser.add_argument("-r", "--run", help="run all binary files for the given device", choices=['CPU', 'GPU'])
 parser.add_argument("-i", "--input", help="input choice for the binarys", choices=['basic', 'K20Max'])
 
@@ -42,9 +47,14 @@ for n in benchmark:
 
 if args.make:
     # run the makefile in each folder
+    command = "make clean && make"
+    if args.printresult:
+        command += " DEF=PRINT"
+    if args.backcopy:
+        command += " DEF=READBACK"
     for n in benchmark:
         os.chdir(n)
-        p1 = subprocess.Popen("make clean && make", shell=True,\
+        p1 = subprocess.Popen(command, shell=True,\
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
         erracc = ''
@@ -66,6 +76,10 @@ if args.run is not None:
     else:
         cmdlineopts = cmdlineoptsbasic
 
+    tag = ''
+    if args.tag:
+        tag = args.tag + '_'
+        
     for n in benchmark:
         m = n + dev
         uniqueid = open('logs/.uniqueid.txt','r')
@@ -73,7 +87,7 @@ if args.run is not None:
         uniqueid.close()
         uniqueid = open('logs/.uniqueid.txt','w')
         uniqueid.write(str(int(uid) + 1))
-        log = open('logs/' + uid + '_' + m + cmdlineopts[n].replace(" ", "_") \
+        log = open('logs/' + uid + '_' + tag + m + cmdlineopts[n].replace(" ", "_") \
                    .replace("-", "_") + '.txt','w')
         os.chdir(n)
         for k in xrange(args.numberofiterations):

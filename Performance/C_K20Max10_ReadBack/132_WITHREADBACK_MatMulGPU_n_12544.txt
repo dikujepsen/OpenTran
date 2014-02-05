@@ -1,0 +1,10 @@
+$Func MatMulGPU, $Defines -n 12544, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=12544 -DwA=12544 -Dhst_ptrA_dim1=12544 -Dhst_ptrC_dim1=12544 , $Time 19.5144
+$Func MatMulGPU, $Defines -n 12544, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=12544 -DwA=12544 -Dhst_ptrA_dim1=12544 -Dhst_ptrC_dim1=12544 , $Time 19.511
+$Func MatMulGPU, $Defines -n 12544, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=12544 -DwA=12544 -Dhst_ptrA_dim1=12544 -Dhst_ptrC_dim1=12544 , $Time 19.5119
+$Func MatMulGPU, $Defines -n 12544, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=12544 -DwA=12544 -Dhst_ptrA_dim1=12544 -Dhst_ptrC_dim1=12544 , $Time 19.5161
+$Func MatMulGPU, $Defines -n 12544, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=12544 -DwA=12544 -Dhst_ptrA_dim1=12544 -Dhst_ptrC_dim1=12544 , $Time 19.5112
+$Func MatMulGPU, $Defines -n 12544, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=12544 -DwA=12544 -Dhst_ptrA_dim1=12544 -Dhst_ptrC_dim1=12544 , $Time 19.5116
+$Func MatMulGPU, $Defines -n 12544, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=12544 -DwA=12544 -Dhst_ptrA_dim1=12544 -Dhst_ptrC_dim1=12544 , $Time 19.516
+$Func MatMulGPU, $Defines -n 12544, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=12544 -DwA=12544 -Dhst_ptrA_dim1=12544 -Dhst_ptrC_dim1=12544 , $Time 19.5162
+$Func MatMulGPU, $Defines -n 12544, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=12544 -DwA=12544 -Dhst_ptrA_dim1=12544 -Dhst_ptrC_dim1=12544 , $Time 19.5135
+$Func MatMulGPU, $Defines -n 12544, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrB_dim1=12544 -DwA=12544 -Dhst_ptrA_dim1=12544 -Dhst_ptrC_dim1=12544 , $Time 19.5162
