@@ -219,8 +219,16 @@ void ExecLaplaceFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrresult, CL_TRUE, 
+	0, hst_ptrresult_mem_size, hst_ptrresult, 
+	1, &GPUExecution, NULL
+	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
 }
 
 void RunOCLLaplaceForKernel(

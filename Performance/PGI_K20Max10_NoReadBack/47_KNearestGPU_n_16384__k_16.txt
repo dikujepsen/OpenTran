@@ -1,0 +1,10 @@
+$Func KNearestGPU, $Defines -n 16384 -k 16, $Time 18.9374
+$Func KNearestGPU, $Defines -n 16384 -k 16, $Time 18.9349
+$Func KNearestGPU, $Defines -n 16384 -k 16, $Time 18.9377
+$Func KNearestGPU, $Defines -n 16384 -k 16, $Time 18.9445
+$Func KNearestGPU, $Defines -n 16384 -k 16, $Time 18.9439
+$Func KNearestGPU, $Defines -n 16384 -k 16, $Time 18.9289
+$Func KNearestGPU, $Defines -n 16384 -k 16, $Time 18.9474
+$Func KNearestGPU, $Defines -n 16384 -k 16, $Time 18.9364
+$Func KNearestGPU, $Defines -n 16384 -k 16, $Time 18.9314
+$Func KNearestGPU, $Defines -n 16384 -k 16, $Time 18.9376

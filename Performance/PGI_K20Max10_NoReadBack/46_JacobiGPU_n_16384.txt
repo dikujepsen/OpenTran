@@ -1,0 +1,10 @@
+$Func JacobiGPU, $Defines -n 16384, $Time 0.783355
+$Func JacobiGPU, $Defines -n 16384, $Time 0.781436
+$Func JacobiGPU, $Defines -n 16384, $Time 0.786114
+$Func JacobiGPU, $Defines -n 16384, $Time 0.783586
+$Func JacobiGPU, $Defines -n 16384, $Time 0.776999
+$Func JacobiGPU, $Defines -n 16384, $Time 0.788051
+$Func JacobiGPU, $Defines -n 16384, $Time 0.782275
+$Func JacobiGPU, $Defines -n 16384, $Time 0.791816
+$Func JacobiGPU, $Defines -n 16384, $Time 0.781462
+$Func JacobiGPU, $Defines -n 16384, $Time 0.784049

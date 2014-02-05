@@ -1,0 +1,10 @@
+$Func NBodyGPU, $Defines -n 1081600, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrForces_dim1=1081600 -DN=1081600 -Dhst_ptrPos_dim1=1081600 , $Time 19.5789
+$Func NBodyGPU, $Defines -n 1081600, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrForces_dim1=1081600 -DN=1081600 -Dhst_ptrPos_dim1=1081600 , $Time 19.5791
+$Func NBodyGPU, $Defines -n 1081600, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrForces_dim1=1081600 -DN=1081600 -Dhst_ptrPos_dim1=1081600 , $Time 19.5791
+$Func NBodyGPU, $Defines -n 1081600, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrForces_dim1=1081600 -DN=1081600 -Dhst_ptrPos_dim1=1081600 , $Time 19.5788
+$Func NBodyGPU, $Defines -n 1081600, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrForces_dim1=1081600 -DN=1081600 -Dhst_ptrPos_dim1=1081600 , $Time 19.579
+$Func NBodyGPU, $Defines -n 1081600, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrForces_dim1=1081600 -DN=1081600 -Dhst_ptrPos_dim1=1081600 , $Time 19.5791
+$Func NBodyGPU, $Defines -n 1081600, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrForces_dim1=1081600 -DN=1081600 -Dhst_ptrPos_dim1=1081600 , $Time 19.5789
+$Func NBodyGPU, $Defines -n 1081600, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrForces_dim1=1081600 -DN=1081600 -Dhst_ptrPos_dim1=1081600 , $Time 19.5789
+$Func NBodyGPU, $Defines -n 1081600, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrForces_dim1=1081600 -DN=1081600 -Dhst_ptrPos_dim1=1081600 , $Time 19.5789
+$Func NBodyGPU, $Defines -n 1081600, $numDEV 2, $Devicename Tesla K20c, $Defines -Dhst_ptrForces_dim1=1081600 -DN=1081600 -Dhst_ptrPos_dim1=1081600 , $Time 19.579

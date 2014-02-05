@@ -8,6 +8,8 @@ parser.add_argument("-m", "--make", help="run make clean && make on all files",
                     action="store_true")
 parser.add_argument("-p", "--printresult", help="Compiles the code with printing of the result enabled",
                     action="store_true")
+parser.add_argument("-b", "--backcopy", help="Compiles the code so that the result is copied back from the GPU",
+                    action="store_true")
 parser.add_argument("-t", "--tag", help="tag this benchmark with a string")
 parser.add_argument("-r", "--run", help="run all binary files for the given device", choices=['CPU', 'GPU'])
 parser.add_argument("-i", "--input", help="input choice for the binarys", choices=['basic', 'K20Max'])
@@ -50,6 +52,8 @@ if args.make:
     command = "make clean && make"
     if args.printresult:
         command += " DEF=PRINT"
+    if args.backcopy:
+        command += " DEF=READBACK"
     for n in benchmark:
         os.chdir(n)
         p1 = subprocess.Popen(command, shell=True,\

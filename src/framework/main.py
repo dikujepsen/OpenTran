@@ -7,7 +7,7 @@ from transformation import *
 from analysis import *
 fileprefix = "../test/C/"
 
-SetNoReadBack = True
+SetNoReadBack = False
 
 def LexAndParse(name, createTemp):
     import ply.yacc as yacc

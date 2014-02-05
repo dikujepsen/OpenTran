@@ -1,0 +1,10 @@
+$Func NBodyGPU, $Defines -n 1081600, 141.536
+$Func NBodyGPU, $Defines -n 1081600, 141.56
+$Func NBodyGPU, $Defines -n 1081600, 141.575
+$Func NBodyGPU, $Defines -n 1081600, 141.582
+$Func NBodyGPU, $Defines -n 1081600, 141.55
+$Func NBodyGPU, $Defines -n 1081600, 141.72
+$Func NBodyGPU, $Defines -n 1081600, 141.602
+$Func NBodyGPU, $Defines -n 1081600, 141.565
+$Func NBodyGPU, $Defines -n 1081600, 141.593
+$Func NBodyGPU, $Defines -n 1081600, 141.624

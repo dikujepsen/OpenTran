@@ -1,0 +1,10 @@
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dstoragesize=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 31.6401
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dstoragesize=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 31.4799
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dstoragesize=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 31.5149
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dstoragesize=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 31.4723
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dstoragesize=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 31.2038
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dstoragesize=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 31.6219
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dstoragesize=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 31.6413
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dstoragesize=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 31.2304
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dstoragesize=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 31.6113
+$Func LaplaceGPU, $Defines -n 215296 -k 5, $numDEV 2, $Devicename Tesla K20c, $Defines -Ddim=5 -Dhst_ptrlevel_dim1=215296 -Dhst_ptrindex_dim1=215296 -Dstoragesize=215296 -Dhst_ptrlevel_int_dim1=215296 , $Time 31.2179
