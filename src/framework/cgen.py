@@ -256,6 +256,21 @@ class CGenerator(object):
         self.indent_level -= 2
         return 'if (' + cond + ')' + newline + compound
 
+    def visit_IfThenElse(self, n):
+        newline = self.newline
+        start = self.start
+        if debug:
+            newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ + start
+
+        cond = self.visit(n.cond)
+        self.indent_level += 2
+        compound1 = self.visit(n.compound1) 
+        compound2 = self.visit(n.compound2)
+        self.indent_level -= 2
+        return 'if (' + cond + ')' + newline + compound1 \
+          		+ newline + self._make_indent() + 'else' + newline + compound2
+
         
     def visit_Id(self, n):
         return n.name

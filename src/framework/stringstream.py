@@ -42,7 +42,7 @@ class SSGenerator(object):
         except IOError:
             print "createTemp: Unable to write file"
             
-    def createKernelStringStream(self, ast, newast, UnrollLoops, filename = 'temp.cpp'):
+    def createKernelStringStream(self, ast, newast, UnrollLoops, kernelstringname, filename = 'temp.cpp'):
 
         self.UnrollLoops = UnrollLoops
         
@@ -61,7 +61,7 @@ class SSGenerator(object):
             
         # Create the function where we generate the code for the
         # kernel function
-        kernelfunc = EmptyFuncDecl('KernelString', type = ['std::string'])
+        kernelfunc = EmptyFuncDecl(kernelstringname, type = ['std::string'])
         # insert the stringstream typeid
         self.statements.insert(0, TypeId(['std::stringstream'], Id('str')))
         kernelfunc.compound.statements = self.statements

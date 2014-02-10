@@ -29,7 +29,7 @@ size_t isFirstTime = 1;
 std::string KernelDefines = "";
 Stopwatch timer;
 
-std::string KernelString()
+std::string KNearestBase()
 {
   std::stringstream str;
   str << "__kernel void KNearestFor(" << endl;
@@ -47,6 +47,44 @@ std::string KernelString()
 }
 
 
+std::string KNearestPlaceInLocal()
+{
+  std::stringstream str;
+  str << "__kernel void KNearestFor(" << endl;
+  str << "	__global float * dist_matrix, __global float * train_patterns, __global float * test_patterns" << endl;
+  str << "	) {" << endl;
+  str << "  __local float train_patterns_local[16*16];" << endl;
+  str << "  __local float test_patterns_local[16*16];" << endl;
+  str << "  float d = 0.0;" << endl;
+  str << "  for (unsigned k = 0; k < dim; k+=16) {" << endl;
+  str << "      train_patterns_local[(get_local_id(1) * 16) + get_local_id(0)] = train_patterns[((k + get_local_id(1)) * hst_ptrtrain_patterns_dim1) + get_global_id(0)];" << endl;
+  str << "      test_patterns_local[(get_local_id(1) * 16) + get_local_id(0)] = test_patterns[(get_global_id(1) * hst_ptrtest_patterns_dim1) + (k + get_local_id(0))];" << endl;
+  str << "      barrier(CLK_LOCAL_MEM_FENCE);" << endl;
+  str << "      for (unsigned kk = 0; kk < 16; kk++) {" << endl;
+  str << "          float tmp = test_patterns_local[(get_local_id(1) * 16) + kk] - train_patterns_local[(kk * 16) + get_local_id(0)];" << endl;
+  str << "          d += tmp * tmp;" << endl;
+  str << "      }" << endl;
+  str << "      barrier(CLK_LOCAL_MEM_FENCE);" << endl;
+  str << "  }" << endl;
+  str << "  dist_matrix[(get_global_id(1) * hst_ptrdist_matrix_dim1) + get_global_id(0)] = d;" << endl;
+  str << "}" << endl;
+  
+  return str.str();
+}
+
+
+std::string GetKernelCode()
+{
+  if (((dim - 0) % 16) == 0)
+    {
+      return  KNearestPlaceInLocal();
+    }
+  else
+    {
+      return  KNearestBase();
+    }
+}
+
 void AllocateBuffers()
 {
   hst_ptrtrain_patterns_mem_size = hst_ptrtrain_patterns_dim2 * (hst_ptrtrain_patterns_dim1 * sizeof(float));
@@ -58,6 +96,7 @@ void AllocateBuffers()
   transpose<float>(
 	hst_ptrtrain_patterns, hst_ptrtrain_patterns_trans, hst_ptrtrain_patterns_dim1, 
 	hst_ptrtrain_patterns_dim2);
+  hst_ptrdist_matrix_trans = new float[hst_ptrdist_matrix_mem_size];
   
   // Constant Memory
   
@@ -122,8 +161,19 @@ void ExecKNearestFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrdist_matrix, CL_TRUE, 
+	0, hst_ptrdist_matrix_mem_size, hst_ptrdist_matrix_trans, 
+	1, &GPUExecution, NULL
+	);
   oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
+  transpose<float>(
+	hst_ptrdist_matrix_trans, hst_ptrdist_matrix, hst_ptrdist_matrix_dim2, 
+	hst_ptrdist_matrix_dim1);
 }
 
 void RunOCLKNearestForKernel(
@@ -151,7 +201,7 @@ void RunOCLKNearestForKernel(
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
       compileKernel(
-	"KNearestFor", "KNearestFor.cl", KernelString(), 
+	"KNearestFor", "KNearestFor.cl", GetKernelCode(), 
 	false, &KNearestForKernel, KernelDefines
 	);
       SetArgumentsKNearestFor();

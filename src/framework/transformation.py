@@ -552,12 +552,12 @@ class Transformation():
         dimName = rw.ArrayIdToDimName[arrName]
         rw.NameSwap[dimName[0]] = dimName[1]
 
-        if arrName not in rw.WriteOnly:
-            lval = Id(hstTransName)
-            natType = rw.Type[arrName][0]
-            rval = Id('new ' + natType + '['\
+        lval = Id(hstTransName)
+        natType = rw.Type[arrName][0]
+        rval = Id('new ' + natType + '['\
                       + rw.Mem[arrName] + ']')
-            rw.Transposition.statements.append(Assignment(lval,rval))
+        rw.Transposition.statements.append(Assignment(lval,rval))
+        if arrName not in rw.WriteOnly:
             arglist = ArgList([Id(hstName),\
                        Id(hstTransName),\
                        Id(dimName[0]),\
@@ -565,6 +565,17 @@ class Transformation():
             trans = FuncDecl(Id('transpose<'+natType+'>'), arglist, Compound([]))
             rw.Transposition.statements.append(trans)
 
+        if arrName in rw.ReadWrite:
+            if 'write' in rw.ReadWrite[arrName]:
+                arglist = ArgList([Id(hstTransName),\
+                                   Id(hstName),\
+                                   Id(dimName[1]),\
+                                   Id(dimName[0])])
+                trans = FuncDecl(Id('transpose<'+natType+'>'), arglist, Compound([]))
+                rw.WriteTranspose.append(trans)
+
+
+            
         # Forget this and just swap subscripts immediately
         ## rw.SubSwap[arrName] = True
 

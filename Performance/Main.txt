@@ -1,9 +1,39 @@
 ============ PERFORMANCE COMPARISON; NOREADBACK  ====================
-MatMul: 55.0162/19.3267 = 2.84664221
-Jacobi: 0.776999/0.402197 = 1.931886613
+MatMul: 55.0162/19.3267    = 2.84664221
+Jacobi: 0.776999/0.402197  = 1.931886613
 KNearest: 18.9439/0.060467 = 313.29320125
-Nbody: 141.55/18.7957 = 7.53097783
+NBody: 141.55/18.7957      = 7.53097783
 Laplace: 34.7006
 GaussianDerivates: 0.216421
 
 ============ PERFORMANCE COMPARISON; READBACK  ====================
+MatMul: 55.2995/19.5112   = 2.834243921
+Jacobi: 1.26749/0.721346  = 1.757117943
+KNearest: 18.9144/2.25984 = 8.369796092
+NBody: 141.712/19.5788    = 7.238032974
+Laplace: 31.4723
+GaussianDerivates: 2.54386
+
+
+============ PERFORMANCE COMPARISON; NOREADBACK2  ====================
+MatMul: 55.0162/19.3267     = 2.84664221
+Jacobi: 0.776999/0.402197   = 1.931886613
+KNearest: 18.9439/0.0633156 = 313.29320125
+NBody: 141.55/18.7957       = 7.53097783
+Laplace: 33.9244
+GaussianDerivates: 0.216421
+
+============ PERFORMANCE COMPARISON; READBACK2 ====================
+MatMul: 55.2995/19.5112   = 2.834243921
+Jacobi: 1.26749/0.721346  = 1.757117943
+KNearest: 18.9144/2.32392 = 8.369796092
+NBody: 141.712/19.5788    = 7.238032974
+Laplace: 33.9136
+GaussianDerivates: 2.54386
+
+
+============ PERFORMANCE COMPARISON; CPU ====================
+MatMul: 36261.6
+Jacobi: 0.840458
+KNearest: 21.929
+NBody: 

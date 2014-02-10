@@ -63,9 +63,11 @@ def LexAndParse(name, createTemp):
         tempast2 = copy.deepcopy(ast)
         return (rw, ast, tempast, tempast2, funcname)
 
-def CGen(name, funcname, rw, tempast2, ast):
+def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
         cprint = CGenerator()
-        rw.InSourceKernel(tempast2, filename = fileprefix + name + '/'+funcname + '.cl')
+        rw = an.rw
+        an.GenerateKernels(tempast2, name, fileprefix)
+        ## rw.InSourceKernel(tempast2, filename = fileprefix + name + '/'+funcname + '.cl', kernelstringname = kernelstringname)
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = fileprefix + name + '/'+'boilerplate.cpp')
 
@@ -81,34 +83,30 @@ def jacobi():
     an.DefineArguments()
     an.PlaceInReg()
 
-    tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
+    ## tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
     if SetNoReadBack:
         tf.SetNoReadBack()
 
     an.PlaceInLocalMemory()
-    CGen(name, funcname, rw, tempast2, ast)
+    CGen(name, funcname, an, tempast2, ast)
 
 def matmul():
     name = 'MatMul'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
-    ## rw.rewriteToSequentialC(ast)
-    ## cprint.createTemp(ast, filename = 'ctemp.cpp')
-    ## rw.rewriteToDeviceCTemp(tempast, False)
-    ## cprint.createTemp(tempast, filename = 'devtemp.cpp')
 
     an = Analysis(rw, tf)
     ## an.Transpose()
     an.DefineArguments()
     an.PlaceInReg()
-    tf.localMemory3({'A' : [0], 'B' : [0]})
+    ## tf.localMemory3({'A' : [0], 'B' : [0]})
     if SetNoReadBack:    
         tf.SetNoReadBack()
         
     ## rw.DataStructures()
     an.PlaceInLocalMemory()
-    CGen(name, funcname, rw, tempast2, ast)
+    CGen(name, funcname, an, tempast2, ast)
     
 
 def nbody():
@@ -128,7 +126,7 @@ def nbody():
         tf.SetNoReadBack()
     ## rw.Unroll2({'j': 32})
     an.PlaceInLocalMemory()
-    CGen(name, funcname, rw, tempast2, ast)
+    CGen(name, funcname, an, tempast2, ast)
 
 def knearest():
     name = 'KNearest'
@@ -150,7 +148,7 @@ def knearest():
     ## rw.Unroll2({'k' : 0})
     
     an.PlaceInLocalMemory()
-    CGen(name, funcname, rw, tempast2, ast)
+    CGen(name, funcname, an, tempast2, ast)
 
 def gaussian():
     name = 'GaussianDerivates'
@@ -171,28 +169,28 @@ def gaussian():
     if SetNoReadBack:
         tf.SetNoReadBack()
     an.PlaceInLocalMemory()
-    CGen(name, funcname, rw, tempast2, ast)
+    CGen(name, funcname, an, tempast2, ast)
 
 def laplace():
     name = 'Laplace'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     tf = Transformation(rw)
-    ## tf.SetParDim(1)
+    tf.SetParDim(1)
     rw.initNewRepr(tempast)
     an = Analysis(rw, tf)
     an.Transpose()
     an.DefineArguments()
     an.PlaceInReg()
     
-    ## tf.placeInReg3({'level': [0], 'level_int' : [0], 'index' : [0]})
+    ## tf.placeInReg3({'level': [0], 'level_int' : [0], 'index' : [0]}) 
     if SetNoReadBack:
         tf.SetNoReadBack()
     
     ## rw.DataStructures()
     
     ## tf.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
-    an.PlaceInLocalMemory()
-    CGen(name, funcname, rw, tempast2, ast)
+    ## an.PlaceInLocalMemory()
+    CGen(name, funcname, an, tempast2, ast)
     
 
 if __name__ == "__main__":

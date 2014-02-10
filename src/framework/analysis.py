@@ -22,7 +22,11 @@ class Analysis():
         self.rw = rw
         # The transformer
         self.tf = tf
-
+        self.PlaceInRegArgs = list()
+        self.PlaceInRegCond = None
+        self.PlaceInLocalArgs = list()
+        self.PlaceInLocalCond = None
+        
     def DefineArguments(self):
         """ Find all kernel arguments that can be defined
         	at compilation time. Then defines them.
@@ -94,14 +98,20 @@ class Analysis():
                         ##   set(sub) - set(rw.GridIndices)
     
                         
-        ## print optim
+        
         insideloop = {k for k in insideloop if k in rw.Loops}
         if len(insideloop) > 1:
             print """ PlaceInReg: array references was inside
     				  two loops. No optimization """
             return
         ## print insideloop
-        tf.placeInReg3({k : v for k, v in optim.items() if v}, list(insideloop))
+        args = {k : v for k, v in optim.items() if v}
+        if args:
+            print 'Register ' , args
+            self.PlaceInRegArgs.append((args, list(insideloop)))
+            
+        
+
  
     def PlaceInLocalMemory(self):
         """ Find all array references that can be optimized
@@ -111,11 +121,74 @@ class Analysis():
         rw = self.rw
         tf = self.tf
 
+        args = dict()
+        loopindex = set()
         for k, v in rw.SubscriptNoId.items():
-            for n in v:
+            for i, n in enumerate(v):
                 if set(n) & set(rw.GridIndices) and \
                     set(n) & set(rw.Loops.keys()):
                     if rw.ParDim == 2:
-                        print k , n
-                
+                        args[k] = [i]
+                        loopindex = loopindex.union(set(n) & set(rw.Loops.keys()))
+
+        loopindex = list(loopindex)
+        if args:
+            print 'Local ' , args
+            print 'LoopIndex ', (loopindex)
+            self.PlaceInLocalArgs.append(args)
+
+        for m in loopindex:
+            cond = BinOp(BinOp(BinOp(Id(rw.UpperLimit[m]), '-', Id(rw.LowerLimit[m])), '%', Constant(rw.Local['size'][0])), '==', Constant(0))
+            self.PlaceInLocalCond = (cond)
+
         
+
+    def GenerateKernels(self, ast, name, fileprefix):
+        rw = self.rw
+        tf = self.tf
+        # Create base version and possible version with Local and
+        # Register optimizations
+        funcname = name + 'Base'
+        
+        
+        if self.PlaceInRegArgs and self.PlaceInLocalArgs:
+            raise Exception("""GenerateKernels: Currently unimplemented to perform 
+        					PlaceInReg and PlaceInLocal together from the analysis""")
+
+            
+        rw.InSourceKernel(copy.deepcopy(ast), Id('true'), filename = fileprefix + name + '/'+ funcname + '.cl', kernelstringname = funcname)
+        for (arg, insideloop) in self.PlaceInRegArgs:
+            funcname = name + 'PlaceInReg'
+            tf.placeInReg3(arg, list(insideloop))
+            rw.InSourceKernel(copy.deepcopy(ast), Id('true'), filename = fileprefix + name + '/'+ funcname + '.cl', kernelstringname = funcname)
+
+            
+        for arg in self.PlaceInLocalArgs:
+            funcname = name + 'PlaceInLocal'
+            tf.localMemory3(arg)
+            rw.InSourceKernel(copy.deepcopy(ast), self.PlaceInLocalCond, filename = fileprefix + name + '/'+ funcname + '.cl', kernelstringname = funcname)
+
+        MyCond = None
+        if self.PlaceInLocalCond:
+            MyCond = self.PlaceInLocalCond
+        if self.PlaceInRegCond:
+            MyCond = self.PlaceInRegCond
+
+        if MyCond:
+            name = rw.KernelStringStream[0]['name']
+            func = EmptyFuncDecl(name, type = [])
+            returnfunc1 = Assignment(Id('return'), func, op='')
+            name = rw.KernelStringStream[1]['name']
+            func = EmptyFuncDecl(name, type = [])
+            returnfunc2 = Assignment(Id('return'), func, op='')
+            ifthenelse = IfThenElse(MyCond, \
+                        Compound([returnfunc2]), Compound([returnfunc1]))
+
+
+            rw.IfThenElse = ifthenelse
+        else:
+            name = rw.KernelStringStream[0]['name']
+            func = EmptyFuncDecl(name, type = [])
+            returnfunc1 = Assignment(Id('return'), func, op='')
+            rw.IfThenElse = returnfunc1
+      

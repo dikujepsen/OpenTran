@@ -92,6 +92,9 @@ class Rewriter(NodeVisitor):
         self.SubscriptNoId = dict()
         # Decides whether we read back data from GPU
         self.NoReadBack = False
+        # A list of calls to the transpose function which we perform
+        # after data was read back from the GPU.
+        self.WriteTranspose = list()
         # A mapping from array references to the loops they appear in.
         self.RefToLoop = dict()
         # List of arguments for the kernel
@@ -137,14 +140,15 @@ class Rewriter(NodeVisitor):
         # Holds includes for the kernel
         self.Includes = list()
         # Holds the ast for a function that returns the kernelstring
-        self.KernelStringStream = None
+        self.KernelStringStream = list()
         # Holds a list of which loops we will unroll
         self.UnrollLoops = list()
         # True is SetDefine were called.
         self.DefinesAreMade = False
         # List of what kernel arguments changes
         self.Change = list()
-        
+
+        self.IfThenElse = None
         
         
     def initOriginal(self, ast):
@@ -464,13 +468,15 @@ class Rewriter(NodeVisitor):
            
         
 
-    def InSourceKernel(self, ast, filename):
+    def InSourceKernel(self, ast, cond, filename, kernelstringname):
         self.rewriteToDeviceCRelease(ast)
         
         ssprint = SSGenerator()
         newast = FileAST([])
-        ssprint.createKernelStringStream(ast, newast, self.UnrollLoops,filename = filename)
-        self.KernelStringStream = newast
+        ssprint.createKernelStringStream(ast, newast, self.UnrollLoops, kernelstringname, filename = filename)
+        self.KernelStringStream.append({'name' : kernelstringname, \
+                                        'ast' : newast,
+                                        'cond' : cond})
         
     def rewriteToDeviceCRelease(self, ast):
 
@@ -500,23 +506,24 @@ class Rewriter(NodeVisitor):
         ##     addToIds = AddToId(n, self.Add[n])
         ##     addToIds.visit(self.InsideKernel.compound)
 
+        MyKernel = copy.deepcopy(self.Kernel)
         rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName, self)
-        rewriteArrayRef.visit(self.Kernel)
+        rewriteArrayRef.visit(MyKernel)
 
         arrays = self.ArrayIds
         
         exchangeIndices = ExchangeId(self.IndexToThreadId)
-        exchangeIndices.visit(self.Kernel)
+        exchangeIndices.visit(MyKernel)
 
 
         exchangeTypes = ExchangeTypes()
-        exchangeTypes.visit(self.Kernel)
+        exchangeTypes.visit(MyKernel)
         
         
         typeid = copy.deepcopy(self.DevFuncTypeId)
         typeid.type.insert(0, '__kernel')
 
-        ext = self.Includes
+        ext = copy.deepcopy(self.Includes)
         newast = FileAST(ext)
         for n in arglist:
             if len(n.type) == 3:
@@ -530,7 +537,7 @@ class Rewriter(NodeVisitor):
                     break
                 
 
-        ext.append(FuncDecl(typeid, ArgList(arglist), self.Kernel))
+        ext.append(FuncDecl(typeid, ArgList(arglist), MyKernel))
         ast.ext = list()
         ## ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
         ast.ext.append(newast)
@@ -764,9 +771,20 @@ class Rewriter(NodeVisitor):
         
         fileAST.ext.append(GroupCompound(misc))
 
-        if self.KernelStringStream is not None:
-            fileAST.ext.append(self.KernelStringStream)
+        # Generate the GetKernelCode function
         
+        for optim in self.KernelStringStream:
+            fileAST.ext.append(optim['ast'])
+            
+        getKernelCode = EmptyFuncDecl('GetKernelCode', type = ['std::string'])
+        getKernelStats = []
+        getKernelCode.compound.statements = getKernelStats
+        getKernelStats.append(self.IfThenElse)
+        ## getKernelStats.append(Id('return str.str();'))
+        fileAST.ext.append(getKernelCode)
+
+
+            
         allocateBuffer = EmptyFuncDecl('AllocateBuffers')
         fileAST.ext.append(allocateBuffer)
 
@@ -942,22 +960,28 @@ class Rewriter(NodeVisitor):
         if not self.NoReadBack:
             for n in self.WriteOnly:
                 lval = Id(ErrName)
+                Hstn = self.HstId[n]
+                try:
+                    Hstn = self.NameSwap[Hstn]
+                except KeyError:
+                    pass
                 arglist = ArgList([Id('command_queue'),\
                                    Id(self.DevId[n]),\
                                    Id('CL_TRUE'),\
                                    Constant(0),\
                                    Id(self.Mem[n]),\
-                                   Id(self.HstId[n]),\
+                                   Id(Hstn),\
                                    Constant(1),
                                    Id('&' + eventName.name),Id('NULL')])
                 rval = FuncDecl(Id('clEnqueueReadBuffer'),arglist, Compound([]))
                 execBody.append(Assignment(lval,rval))
 
-        arglist = ArgList([Id(ErrName), Constant('clEnqueueReadBuffer')])
-        ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
-        execBody.append(ErrCheck)
+                arglist = ArgList([Id(ErrName), Constant('clEnqueueReadBuffer')])
+                ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
+                execBody.append(ErrCheck)
 
-        if not self.NoReadBack:
+        
+        
             # add clFinish statement
             arglist = ArgList([Id('command_queue')])
             finish = FuncDecl(Id('clFinish'), arglist, Compound([]))
@@ -967,7 +991,11 @@ class Rewriter(NodeVisitor):
             ErrCheck = FuncDecl(ErrId, arglist, Compound([]))
             execBody.append(ErrCheck)
 
+            for n in self.WriteTranspose:
+                execBody.append(n)
 
+
+            
         runOCL = EmptyFuncDecl('RunOCL' + self.KernelName)
         fileAST.ext.append(runOCL)
         runOCLBody = runOCL.compound.statements
@@ -1005,13 +1033,13 @@ class Rewriter(NodeVisitor):
         ifThenList.append(FuncDecl(Id('StartUpGPU'), arglist, Compound([])))
         ifThenList.append(FuncDecl(Id('AllocateBuffers'), arglist, Compound([])))
         useFile = 'true'
-        if self.KernelStringStream is not None:
+        if self.KernelStringStream:
             useFile = 'false'
             
         ifThenList.append(Id('cout << "$Defines " << KernelDefines << endl;'))
         arglist = ArgList([Constant(self.DevFuncId),
                            Constant(self.DevFuncId+'.cl'),
-                           Id('KernelString()'),
+                           Id('GetKernelCode()'),
                            Id(useFile),
                            Id('&' + self.KernelName),
                            Id('KernelDefines')])

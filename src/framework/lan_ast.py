@@ -340,3 +340,20 @@ class IfThen(Node):
         return tuple(nodelist)
     attr_names = ()
 
+class IfThenElse(Node):
+    def __init__(self, cond, compound1, compound2, coord = None):
+        self.cond = cond
+        self.compound1 = compound1
+        self.compound2 = compound2
+    def __repr__(self):
+        return "If(%r) then {%r} else {%r}" % ( self.cond, \
+                                      self.compound1,\
+            						  self.compound2)
+    def children(self):
+        nodelist = []
+        nodelist.append(("cond", self.cond))
+        nodelist.append(("compoundthen", self.compound1))
+        nodelist.append(("compoundelse", self.compound2))
+        return tuple(nodelist)
+    attr_names = ()
+
