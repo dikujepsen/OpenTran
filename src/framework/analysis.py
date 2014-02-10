@@ -2,7 +2,7 @@ import copy
 import os
 from visitor import *
 from stringstream import *
-
+from itertools import chain
 
 class Analysis():
     """ Apply transformations to the original AST. Includes:
@@ -61,9 +61,6 @@ class Analysis():
                         notranspose.add(n)
                     elif rw.ParDim == 2 and lsub[0] == rw.IdxToDim[1]:
                         maybetranspose.add(n)     
-        ## print notranspose
-        ## print transpose
-        ## print maybetranspose - notranspose - transpose
         for n in transpose:
             self.tf.transpose(n)
 
@@ -106,12 +103,19 @@ class Analysis():
             return
         ## print insideloop
         args = {k : v for k, v in optim.items() if v}
+        insideloop = list(insideloop)
         if args:
-            print 'Register ' , args
-            self.PlaceInRegArgs.append((args, list(insideloop)))
-            
-        
+            ## print 'Register ' , args
+            self.PlaceInRegArgs.append((args, insideloop))
 
+            numref = len(list(chain.from_iterable(args.values())))
+            if insideloop:
+                m = insideloop[0]
+                lhs = BinOp(Id(rw.UpperLimit[m]), '-', Id(rw.LowerLimit[m]))
+            else:
+                lhs = Constant(1)
+            self.PlaceInRegCond = BinOp(BinOp(lhs, '*' , Constant(numref)), '<', Constant(40))
+            
  
     def PlaceInLocalMemory(self):
         """ Find all array references that can be optimized
@@ -133,8 +137,7 @@ class Analysis():
 
         loopindex = list(loopindex)
         if args:
-            print 'Local ' , args
-            print 'LoopIndex ', (loopindex)
+            ## print 'Local ' , args
             self.PlaceInLocalArgs.append(args)
 
         for m in loopindex:

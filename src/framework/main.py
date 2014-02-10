@@ -83,7 +83,7 @@ def jacobi():
     an.DefineArguments()
     an.PlaceInReg()
 
-    ## tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
+    tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
     if SetNoReadBack:
         tf.SetNoReadBack()
 
@@ -100,7 +100,6 @@ def matmul():
     ## an.Transpose()
     an.DefineArguments()
     an.PlaceInReg()
-    ## tf.localMemory3({'A' : [0], 'B' : [0]})
     if SetNoReadBack:    
         tf.SetNoReadBack()
         
@@ -120,8 +119,6 @@ def nbody():
     an.DefineArguments()
     an.PlaceInReg()
 
-    ## rw.localMemory2(['Mas', 'Pos'])
-    ## rw.localMemory3({'Mas' : [1] , 'Pos' : [2,3]})
     if SetNoReadBack:
         tf.SetNoReadBack()
     ## rw.Unroll2({'j': 32})
@@ -132,16 +129,13 @@ def knearest():
     name = 'KNearest'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     tf = Transformation(rw)
-    ## tf.SetParDim(1)
+    tf.SetParDim(1)
     rw.initNewRepr(tempast)
     
-    ## rw.constantMemory(['Pos']) 
-    ## rw.transpose('train_patterns')
     an = Analysis(rw, tf)
     an.Transpose()
     an.DefineArguments()
     an.PlaceInReg()
-    ## tf.placeInReg3({'test_patterns': [0]})
     if SetNoReadBack:
         tf.SetNoReadBack()
     ## rw.DataStructures()
@@ -163,8 +157,6 @@ def gaussian():
     an.DefineArguments()
     an.PlaceInReg()
     ## tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
-    ## rw.transpose('C')
-    ## rw.localMemory(['A','B'])
     ## rw.DataStructures()
     if SetNoReadBack:
         tf.SetNoReadBack()
@@ -182,14 +174,13 @@ def laplace():
     an.DefineArguments()
     an.PlaceInReg()
     
-    ## tf.placeInReg3({'level': [0], 'level_int' : [0], 'index' : [0]}) 
     if SetNoReadBack:
         tf.SetNoReadBack()
     
     ## rw.DataStructures()
     
     ## tf.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
-    ## an.PlaceInLocalMemory()
+    an.PlaceInLocalMemory()
     CGen(name, funcname, an, tempast2, ast)
     
 

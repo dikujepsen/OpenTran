@@ -91,7 +91,14 @@ std::string NBodyPlaceInReg()
 
 std::string GetKernelCode()
 {
-  return  NBodyBase();
+  if ((1 * 3) < 40)
+    {
+      return  NBodyPlaceInReg();
+    }
+  else
+    {
+      return  NBodyBase();
+    }
 }
 
 void AllocateBuffers()

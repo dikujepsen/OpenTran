@@ -145,7 +145,14 @@ std::string LaplacePlaceInReg()
 
 std::string GetKernelCode()
 {
-  return  LaplaceBase();
+  if (((dim - 0) * 3) < 40)
+    {
+      return  LaplacePlaceInReg();
+    }
+  else
+    {
+      return  LaplaceBase();
+    }
 }
 
 void AllocateBuffers()

@@ -32,7 +32,15 @@ std::string JacobiBase()
   str << "__kernel void JacobiFor(" << endl;
   str << "	__global float * B, __global float * X2, __global float * X1" << endl;
   str << "	) {" << endl;
-  str << "  X2[(get_global_id(1) * hst_ptrX2_dim1) + get_global_id(0)] = (-0.25) * ((B[(get_global_id(1) * hst_ptrB_dim1) + get_global_id(0)] - (X1[((get_global_id(1) - 1) * hst_ptrX1_dim1) + get_global_id(0)] + X1[((get_global_id(1) + 1) * hst_ptrX1_dim1) + get_global_id(0)])) - (X1[(get_global_id(1) * hst_ptrX1_dim1) + (get_global_id(0) - 1)] + X1[(get_global_id(1) * hst_ptrX1_dim1) + (get_global_id(0) + 1)]));" << endl;
+  str << "  __local float X1_local[18*18];" << endl;
+  str << "  unsigned li = get_local_id(1) + 1;" << endl;
+  str << "  unsigned lj = get_local_id(0) + 1;" << endl;
+  str << "  X1_local[((li - 1) * 16) + lj] = X1[((get_global_id(1) - 1) * hst_ptrX1_dim1) + get_global_id(0)];" << endl;
+  str << "  X1_local[((li + 1) * 16) + lj] = X1[((get_global_id(1) + 1) * hst_ptrX1_dim1) + get_global_id(0)];" << endl;
+  str << "  X1_local[(li * 16) + (lj - 1)] = X1[(get_global_id(1) * hst_ptrX1_dim1) + (get_global_id(0) - 1)];" << endl;
+  str << "  X1_local[(li * 16) + (lj + 1)] = X1[(get_global_id(1) * hst_ptrX1_dim1) + (get_global_id(0) + 1)];" << endl;
+  str << "  barrier(CLK_LOCAL_MEM_FENCE);" << endl;
+  str << "  X2[(get_global_id(1) * hst_ptrX2_dim1) + get_global_id(0)] = (-0.25) * ((B[(get_global_id(1) * hst_ptrB_dim1) + get_global_id(0)] - (X1_local[((li - 1) * 16) + lj] + X1_local[((li + 1) * 16) + lj])) - (X1_local[(li * 16) + (lj - 1)] + X1_local[(li * 16) + (lj + 1)]));" << endl;
   str << "}" << endl;
   
   return str.str();
