@@ -8,6 +8,8 @@ from analysis import *
 fileprefix = "../test/C/"
 
 SetNoReadBack = False
+DoOptimizations = True
+
 
 def LexAndParse(name, createTemp):
     import ply.yacc as yacc
@@ -79,15 +81,17 @@ def jacobi():
     tf = Transformation(rw)
     
     an = Analysis(rw, tf)
-    an.Transpose()
-    an.DefineArguments()
-    an.PlaceInReg()
 
-    tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
+    if DoOptimizations:
+        an.Transpose()
+        an.DefineArguments()
+        an.PlaceInReg()
+
+        tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
+        an.PlaceInLocalMemory()
     if SetNoReadBack:
         tf.SetNoReadBack()
 
-    an.PlaceInLocalMemory()
     CGen(name, funcname, an, tempast2, ast)
 
 def matmul():
@@ -97,14 +101,15 @@ def matmul():
     tf = Transformation(rw)
 
     an = Analysis(rw, tf)
-    an.Transpose()
-    an.DefineArguments()
-    an.PlaceInReg()
+    if DoOptimizations:
+        an.Transpose()
+        an.DefineArguments()
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
     if SetNoReadBack:    
         tf.SetNoReadBack()
         
     ## rw.DataStructures()
-    an.PlaceInLocalMemory()
     CGen(name, funcname, an, tempast2, ast)
     
 
@@ -115,14 +120,15 @@ def nbody():
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
     an = Analysis(rw, tf)
-    an.Transpose()
-    an.DefineArguments()
-    an.PlaceInReg()
+    if DoOptimizations:
+        an.Transpose()
+        an.DefineArguments()
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
 
     if SetNoReadBack:
         tf.SetNoReadBack()
     ## rw.Unroll2({'j': 32})
-    an.PlaceInLocalMemory()
     CGen(name, funcname, an, tempast2, ast)
 
 def knearest():
@@ -133,15 +139,16 @@ def knearest():
     rw.initNewRepr(tempast)
     
     an = Analysis(rw, tf)
-    an.Transpose()
-    an.DefineArguments()
-    an.PlaceInReg()
+    if DoOptimizations:
+        an.Transpose()
+        an.DefineArguments()
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
     if SetNoReadBack:
         tf.SetNoReadBack()
     ## rw.DataStructures()
     ## rw.Unroll2({'k' : 0})
     
-    an.PlaceInLocalMemory()
     CGen(name, funcname, an, tempast2, ast)
 
 def gaussian():
@@ -153,14 +160,16 @@ def gaussian():
 
     
     an = Analysis(rw, tf)
-    an.Transpose()
-    an.DefineArguments()
-    an.PlaceInReg()
-    ## tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
+    if DoOptimizations:
+        an.Transpose()
+        an.DefineArguments()
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
+
+        ## tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
     ## rw.DataStructures()
     if SetNoReadBack:
         tf.SetNoReadBack()
-    an.PlaceInLocalMemory()
     CGen(name, funcname, an, tempast2, ast)
 
 def laplace():
@@ -170,17 +179,18 @@ def laplace():
     tf.SetParDim(1)
     rw.initNewRepr(tempast)
     an = Analysis(rw, tf)
-    an.Transpose()
-    an.DefineArguments()
-    an.PlaceInReg()
-    
+    if DoOptimizations:
+        an.Transpose()
+        an.DefineArguments()
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
+
     if SetNoReadBack:
         tf.SetNoReadBack()
     
-    rw.DataStructures()
+    ## rw.DataStructures()
     
     ## tf.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
-    an.PlaceInLocalMemory()
     CGen(name, funcname, an, tempast2, ast)
     
 
