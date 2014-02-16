@@ -97,7 +97,7 @@ def matmul():
     tf = Transformation(rw)
 
     an = Analysis(rw, tf)
-    ## an.Transpose()
+    an.Transpose()
     an.DefineArguments()
     an.PlaceInReg()
     if SetNoReadBack:    
@@ -177,7 +177,7 @@ def laplace():
     if SetNoReadBack:
         tf.SetNoReadBack()
     
-    ## rw.DataStructures()
+    rw.DataStructures()
     
     ## tf.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
     an.PlaceInLocalMemory()

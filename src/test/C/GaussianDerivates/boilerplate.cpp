@@ -25,7 +25,6 @@ float scaleweight2_x;
 float scales2_x;
 unsigned Lp;
 unsigned Lq;
-float * hst_ptrq_a_i_x_trans;
 
 size_t hst_ptrD1Ks__ijb_dimsI_mem_size;
 size_t hst_ptrq_a_i_x_mem_size;
@@ -69,7 +68,7 @@ std::string GaussianDerivatesBase()
   str << "      xj[k] = p_a_i_x[(get_global_id(1) * hst_ptrp_a_i_x_dim1) + k];" << endl;
   str << "  }" << endl;
   str << "  for (int k = 0; k < dim; k++) {" << endl;
-  str << "      xi[k] = q_a_i_x[(k * hst_ptrq_a_i_x_dim1) + get_global_id(0)];" << endl;
+  str << "      xi[k] = q_a_i_x[(get_global_id(0) * hst_ptrq_a_i_x_dim1) + k];" << endl;
   str << "  }" << endl;
   str << "  // Vector3<scalar> xi(&q_a_i.x[q_a_i.rows*i]);" << endl;
   str << "  float ximxj[3];" << endl;
@@ -144,7 +143,7 @@ std::string GaussianDerivatesPlaceInLocal()
   str << "      xj[k] = p_a_i_x_local[(get_local_id(1) * 16) + kk];" << endl;
   str << "  }" << endl;
   str << "  for (int k = 0; k < dim; k++) {" << endl;
-  str << "      xi[k] = q_a_i_x_local[(kk * 16) + get_local_id(0)];" << endl;
+  str << "      xi[k] = q_a_i_x_local[(get_local_id(0) * 16) + kk];" << endl;
   str << "  }" << endl;
   str << "  // Vector3<scalar> xi(&q_a_i.x[q_a_i.rows*i]);" << endl;
   str << "  float ximxj[3];" << endl;
@@ -186,7 +185,7 @@ std::string GaussianDerivatesPlaceInLocal()
   str << "              // Vector3<int> dc = db; dc.set(dc[d]+1,d);" << endl;
   str << "              for (int k = 0; k < dim; k+=16) {" << endl;
   str << "                  p_a_i_x_local[(get_local_id(1) * 16) + get_local_id(0)] = p_a_i_x[(get_global_id(1) * hst_ptrp_a_i_x_dim1) + (k + get_local_id(0))];" << endl;
-  str << "                  q_a_i_x_local[(get_local_id(1) * 16) + get_local_id(0)] = q_a_i_x[((k + get_local_id(1)) * hst_ptrq_a_i_x_dim1) + get_global_id(0)];" << endl;
+  str << "                  q_a_i_x_local[(get_local_id(0) * 16) + get_local_id(0)] = q_a_i_x[(get_global_id(0) * hst_ptrq_a_i_x_dim1) + (k + get_local_id(0))];" << endl;
   str << "                  barrier(CLK_LOCAL_MEM_FENCE);" << endl;
   str << "                  for (unsigned kk = 0; kk < 16; kk++) {" << endl;
   str << "                      dc[k] = db[k] + 1;" << endl;
@@ -233,10 +232,6 @@ void AllocateBuffers()
   hst_ptrD2Ks__ijbg_x_mem_size = hst_ptrD2Ks__ijbg_x_dim1 * sizeof(float);
   
   // Transposition
-  hst_ptrq_a_i_x_trans = new float[hst_ptrq_a_i_x_mem_size];
-  transpose<float>(
-	hst_ptrq_a_i_x, hst_ptrq_a_i_x_trans, hst_ptrq_a_i_x_dim1, 
-	hst_ptrq_a_i_x_dim2);
   
   // Constant Memory
   
@@ -247,7 +242,7 @@ void AllocateBuffers()
   str << "-Dhst_ptrp_a_i_x_dim1=" << hst_ptrp_a_i_x_dim1 << " ";
   str << "-Dhst_ptrK__ij_x_dim1=" << hst_ptrK__ij_x_dim1 << " ";
   str << "-Dscales2_x=" << scales2_x << " ";
-  str << "-Dhst_ptrq_a_i_x_dim1=" << hst_ptrq_a_i_x_dim2 << " ";
+  str << "-Dhst_ptrq_a_i_x_dim1=" << hst_ptrq_a_i_x_dim1 << " ";
   KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
@@ -259,7 +254,7 @@ void AllocateBuffers()
 	oclErrNum, "clCreateBuffer dev_ptrD1Ks__ijb_dimsI");
   dev_ptrq_a_i_x = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrq_a_i_x_mem_size, 
-	hst_ptrq_a_i_x_trans, &oclErrNum);
+	hst_ptrq_a_i_x, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrq_a_i_x");
   dev_ptrD3Ks__ijbgd_x = clCreateBuffer(

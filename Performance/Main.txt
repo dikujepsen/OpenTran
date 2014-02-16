@@ -36,4 +36,24 @@ GaussianDerivates: 2.54386
 MatMul: 36261.6
 Jacobi: 0.840458
 KNearest: 21.929
-NBody: 
+NBody: 13717.8
+Laplace: 7566.18
+GaussianDerivates: 126.008
+
+
+
+============ PERFORMANCE COMPARISON; READBACK3; AUTO  ==============
+MatMul: 19.5363
+Jacobi: 0.748039 (0.8775135)
+KNearest: 2.38083
+NBody: 19.5661
+Laplace: 31.6308
+GaussianDerivates: 2.34822
+
+============ PERFORMANCE COMPARISON; NOREADBACK3; AUTO  ==============
+MatMul: 19.3319
+Jacobi: 0.402282
+KNearest: 0.063184
+NBody: 19.5722
+Laplace: 31.4359
+GaussianDerivates: 0.21612
