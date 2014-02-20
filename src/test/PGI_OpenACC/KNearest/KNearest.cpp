@@ -34,7 +34,7 @@ printMat(float* mat, unsigned mat_size)
 }
 
 
-void knearest(unsigned NTEST, unsigned NTRAIN, unsigned dim, float *__restrict__ test_patterns, float *__restrict__ train_patterns, float *__restrict__ dist_matrix) {
+void knearest(unsigned NTEST, unsigned NTRAIN, unsigned dim, float * test_patterns, float * train_patterns, float * dist_matrix) {
 
 #ifndef CPU
 #ifdef READBACK
