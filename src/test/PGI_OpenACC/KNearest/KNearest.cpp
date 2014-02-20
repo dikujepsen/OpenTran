@@ -37,9 +37,13 @@ printMat(float* mat, unsigned mat_size)
 void knearest(unsigned NTEST, unsigned NTRAIN, unsigned dim, float *__restrict__ test_patterns, float *__restrict__ train_patterns, float *__restrict__ dist_matrix) {
 
 #ifndef CPU
+#ifdef READBACK
 #pragma acc kernels loop copyin(test_patterns[0:NTEST*dim], train_patterns[0:NTRAIN*dim])  copyout(dist_matrix[0:NTEST*NTRAIN] ) independent
+#else
+#pragma acc kernels loop copyin(test_patterns[0:NTEST*dim], train_patterns[0:NTRAIN*dim])  local(dist_matrix[0:NTEST*NTRAIN] ) independent
 #endif
-  for (unsigned i = 0; i < NTEST; i++) {
+#endif
+ for (unsigned i = 0; i < NTEST; i++) {
     for (unsigned j = 0; j < NTRAIN; j++) {
       float d,tmp;
       d = 0.0;
@@ -88,25 +92,7 @@ int main( int argc, char* argv[] )
   }
   timer.start();  
   
-#ifndef CPU
-#ifdef READBACK
-#pragma acc kernels loop copyin(test_patterns[0:NTEST*dim], train_patterns[0:NTRAIN*dim])  copyout(dist_matrix[0:NTEST*NTRAIN] ) independent
-#else
-#pragma acc kernels loop copyin(test_patterns[0:NTEST*dim], train_patterns[0:NTRAIN*dim])  local(dist_matrix[0:NTEST*NTRAIN] ) independent
-#endif
-#endif
-  for (unsigned i = 0; i < NTEST; i++) {
-    for (unsigned j = 0; j < NTRAIN; j++) {
-      float d,tmp;
-      d = 0.0;
-      // for each feature
-      for (unsigned k = 0; k < dim; k++) {
-	tmp = test_patterns[i*dim+k]-train_patterns[j*dim+k];
-	d += tmp*tmp;
-      }
-      dist_matrix[j*NTEST + i] = d;
-    }
-  }
+  knearest(NTEST, NTRAIN, dim, test_patterns, train_patterns, dist_matrix);
   cout << "$Time " << timer.stop() << endl;  
    
 #if PRINT

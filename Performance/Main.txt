@@ -57,3 +57,21 @@ KNearest: 0.063184
 NBody: 19.5722
 Laplace: 31.4359
 GaussianDerivates: 0.21612
+
+
+============ PERFORMANCE COMPARISON; READBACK; NOOPTIM  ==============
+MatMul: 59.4991
+Jacobi: 0.950272
+KNearest: 5.75856
+NBody: 63.5626
+Laplace: 114.0035
+GaussianDerivates: 2.720357
+
+
+============ PERFORMANCE COMPARISON; NOREADBACK; NOOPTIM  ==============
+MatMul: 59.1416
+Jacobi: 0.39875
+KNearest: 3.52719
+NBody: 63.2218
+Laplace: 113.693
+GaussianDerivates: 0.359046
