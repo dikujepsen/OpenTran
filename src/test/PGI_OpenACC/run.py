@@ -18,12 +18,13 @@ parser.add_argument("-n", "--numberofiterations", help="the number of iterations
 
 args = parser.parse_args()
    
-benchmark = ['MatMul',
-             'Jacobi',
-             'KNearest',
-             'NBody',
-             'Laplace',
-             'GaussianDerivates'
+benchmark = [
+    'MatMul',
+    'Jacobi',
+    ## 'KNearest',
+    ## 'NBody',
+    ## 'Laplace',
+    ## 'GaussianDerivates'
              ]
 
 cmdlineoptsbasic = {'MatMul'  		    : '-n 1024' ,
