@@ -32,12 +32,12 @@ Laplace: 31.6308
 GaussianDerivates: 2.54386
 
 ============ PERFORMANCE COMPARISON; CPU ====================
-MatMul: 36261.6
-Jacobi: 0.840458
-KNearest: 21.929
-NBody: 13717.8
-Laplace: 7566.18
-GaussianDerivates: 126.008
+MatMul: 36261.6 	 	     / 19.3319		= 1875.739063413
+Jacobi: 0.840458		     / 0.402282		= 2.089225966
+KNearest: 21.929    		     / 0.063184		= 347.065712839
+NBody: 13717.8			     / 19.5722		= 700.881863051
+Laplace: 7566.18		     / 31.4359		= 240.685967318
+GaussianDerivates: 126.008	     / 0.21612		= 583.046455673
 
 ============ PERFORMANCE COMPARISON; NOREADBACK3; AUTO  ==============
 MatMul: 19.3319
@@ -70,4 +70,41 @@ KNearest: 5.75856
 NBody: 63.5626
 Laplace: 114.0035
 GaussianDerivates: 2.720357
+
+
+============ PERFORMANCE COMPARISON; NOREADBACK; NOOPTIM to OPTIM ==============
+MatMul: 59.1416/19.3267  	     	3.060098206
+Jacobi: 0.398759/0.402197		0.99145195
+KNearest: 3.52719/0.0633156		55.708071944
+NBody: 63.2218/18.7957			3.363631043
+Laplace: 113.693/31.4359		3.616661206
+GaussianDerivates: 0.359046/0.216421	1.659016454
+
+
+============ PERFORMANCE COMPARISON; NOREADBACK2; NOOPTIM TO PGI  ====================
+MatMul: 55.0162/59.1416	 	     = 0.930245377
+Jacobi: 0.776999/0.39875	     = 1.948586834
+KNearest: 16.3005/3.52719   	     = 4.621384161
+NBody: 141.55/63.2218       	     = 2.238942896
+Laplace: 31.4359
+GaussianDerivates: 0.216421
+
+
+============ PERFORMANCE COMPARISON; NOREADBACK; PGI_14_10  ==============
+MatMul: 55.4627
+Jacobi: 0.830807
+KNearest: 19.9522
+NBody: 
+Laplace: 
+GaussianDerivates: 
+
+
+
+basic to optim
+PGI to optim
+PGI to basic 
+GFlop/s GPU
+CPU to PGI
+CPU to optim
+GFlop/s CPU 
 
