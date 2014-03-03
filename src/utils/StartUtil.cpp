@@ -89,12 +89,20 @@ void StartUpGPU() {
   
   platform_ids = new cl_platform_id[num_platforms];
   // get available platforms
-  // std::cout << "numPLAT: " << num_platforms << std::endl;
+  //std::cout << "$numPLAT: " << num_platforms << std::endl;
   err |= clGetPlatformIDs(num_platforms, platform_ids, NULL);
   oclCheckErr(err, "clGetPlatformIDs2");
 
-  platform_id = platform_ids[0];
-  err |= clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 0, NULL, &num_devices);
+  //#ifdef OCLCPU
+#if 1
+  cl_device_type devtype = CL_DEVICE_TYPE_CPU;
+  unsigned plat_id = 1;
+#else
+  cl_device_type devtype = CL_DEVICE_TYPE_GPU;
+  unsigned plat_id = 0;
+#endif  
+  platform_id = platform_ids[plat_id];
+  err |= clGetDeviceIDs(platform_id, devtype, 0, NULL, &num_devices);
   oclCheckErr(err, "clGetDeviceIDs1");
   
   std::cout << "$numDEV " << num_devices << std::endl;
@@ -102,7 +110,7 @@ void StartUpGPU() {
 
   device_ids = new cl_device_id[num_devices];
   
-  err |= clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, num_devices, device_ids, NULL);
+  err |= clGetDeviceIDs(platform_id, devtype, num_devices, device_ids, NULL);
   oclCheckErr(err, "clGetDeviceIDs2");
   size_t len;
   for(size_t i = 0; i < num_devices; i++)  {

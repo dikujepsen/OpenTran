@@ -194,7 +194,7 @@ class Rewriter(NodeVisitor):
         self.ArrayIds = arrays.ids - typeIds.ids
         self.NonArrayIds = otherIds
 
-    def initNewRepr(self, ast):
+    def initNewRepr(self, ast, dev = 'GPU'):
         ## findIncludes = FindIncludes()
         ## findIncludes.visit(ast)
         ## self.Includes = findIncludes.includes
@@ -207,9 +207,14 @@ class Rewriter(NodeVisitor):
 
         if self.ParDim == 1:
             self.Local['size'] = ['256']
+            if dev == 'CPU':
+                self.Local['size'] = ['16']
         else:
             self.Local['size'] = ['16','16']
+            if dev == 'CPU':
+                self.Local['size'] = ['4','4']
         
+            
         innerbody = perfectForLoop.inner
         if perfectForLoop.depth == 2 and self.ParDim == 1:
             innerbody = perfectForLoop.outer
