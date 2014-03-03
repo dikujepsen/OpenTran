@@ -74,25 +74,6 @@ def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
         cprint.createTemp(boilerast, filename = fileprefix + name + '/'+'boilerplate.cpp')
 
 
-def jacobi():
-    name = 'Jacobi'
-    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
-    rw.initNewRepr(tempast)
-    tf = Transformation(rw)
-    
-    an = Analysis(rw, tf)
-
-    if DoOptimizations:
-        an.Transpose()
-        an.DefineArguments()
-        an.PlaceInReg()
-
-        tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
-        an.PlaceInLocalMemory()
-    if SetNoReadBack:
-        tf.SetNoReadBack()
-
-    CGen(name, funcname, an, tempast2, ast)
 
 def matmul():
     name = 'MatMul'
@@ -112,23 +93,24 @@ def matmul():
     ## rw.DataStructures()
     CGen(name, funcname, an, tempast2, ast)
     
-
-def nbody():
-    name = 'NBody'
+def jacobi():
+    name = 'Jacobi'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
-
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
+    
     an = Analysis(rw, tf)
+
     if DoOptimizations:
         an.Transpose()
         an.DefineArguments()
         an.PlaceInReg()
-        an.PlaceInLocalMemory()
 
+        tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
+        an.PlaceInLocalMemory()
     if SetNoReadBack:
         tf.SetNoReadBack()
-    ## rw.Unroll2({'j': 32})
+
     CGen(name, funcname, an, tempast2, ast)
 
 def knearest():
@@ -151,14 +133,12 @@ def knearest():
     
     CGen(name, funcname, an, tempast2, ast)
 
-def gaussian():
-    name = 'GaussianDerivates'
+def nbody():
+    name = 'NBody'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
-    ## rw.SetParDim(1)
+
     rw.initNewRepr(tempast)
     tf = Transformation(rw)
-
-    
     an = Analysis(rw, tf)
     if DoOptimizations:
         an.Transpose()
@@ -166,11 +146,11 @@ def gaussian():
         an.PlaceInReg()
         an.PlaceInLocalMemory()
 
-        ## tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
-    ## rw.DataStructures()
     if SetNoReadBack:
         tf.SetNoReadBack()
+    ## rw.Unroll2({'j': 32})
     CGen(name, funcname, an, tempast2, ast)
+
 
 def laplace():
     name = 'Laplace'
@@ -194,10 +174,31 @@ def laplace():
     CGen(name, funcname, an, tempast2, ast)
     
 
+def gaussian():
+    name = 'GaussianDerivates'
+    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
+    ## rw.SetParDim(1)
+    rw.initNewRepr(tempast, dev = 'CPU')
+    tf = Transformation(rw)
+
+    
+    an = Analysis(rw, tf)
+    if DoOptimizations:
+        an.Transpose()
+        an.DefineArguments()
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
+
+        ## tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
+    ## rw.DataStructures()
+    if SetNoReadBack:
+        tf.SetNoReadBack()
+    CGen(name, funcname, an, tempast2, ast)
+
 if __name__ == "__main__":
-    jacobi()
     matmul()
+    jacobi()
+    knearest()
     nbody()
     laplace()
-    knearest()
     gaussian()
