@@ -1,92 +1,0 @@
-10
-
-dir
-3386
-svn+ssh://jepsen@atsccs30.informatik.tu-muenchen.de/home_local/repositories/svn/SGpp/branches/LaplaceVector_GPU/datasets
-svn+ssh://jepsen@atsccs30.informatik.tu-muenchen.de/home_local/repositories/svn/SGpp
-
-
-
-2012-05-25T08:46:10.816203Z
-2264
-khakhutv
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-4eea3252-f0fb-4393-894d-40516dce545b
-
-musk1
-dir
-
-regression
-dir
-
-circle
-dir
-
-ripley
-dir
-
-friedman
-dir
-
-optdigits
-dir
-
-twospirals
-dir
-
-bupa_liver
-dir
-
-README.txt
-file
-
-
-
-
-2013-04-12T15:01:56.704134Z
-4e4bb8f24c57a5d54adb54940b595461
-2010-06-06T16:29:17.471688Z
-692
-pflueged
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-280
-
-chessboard
-dir
-
-cube
-dir
-

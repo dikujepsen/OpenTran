@@ -1,5 +1,0 @@
-#!/bin/bash                                                                   
-
-python chgBatch.py $1 $2
-
-sbatch batchtmp $1 $2
