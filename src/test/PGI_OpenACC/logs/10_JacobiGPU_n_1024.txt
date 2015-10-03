@@ -1,1 +1,0 @@
-$Func JacobiGPU, $Defines -n 1024, $Time 0.0175489

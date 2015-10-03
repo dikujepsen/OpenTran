@@ -1,1 +1,0 @@
-$Func NBodyGPU, $Defines -n 1024, 0.0162852

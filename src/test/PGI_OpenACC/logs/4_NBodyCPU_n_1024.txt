@@ -1,1 +1,0 @@
-$Func NBodyCPU, $Defines -n 1024, 0.00696025
