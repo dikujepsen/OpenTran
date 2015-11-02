@@ -25,26 +25,10 @@ class Transformation():
     def __init__(self, rw):
         # The rewriter
         self.rw = rw
-        
+
     def SetParDim(self, number):
         rw = self.rw
         rw.ParDim = number
-
-    def SetChange(self, varList):
-        if self.DefinesAreMade:
-            raise MyError("SetChange needs to be called before SetDefine")
-        
-        rw = self.rw
-        rw.Change.append(varList)
-        
-
-    def SetLSIZE(self, lsizelist):
-        rw = self.rw
-        if len(lsizelist) == 1 and rw.ParDim == 1 \
-               or len(lsizelist) == 2 and rw.ParDim == 2:
-            rw.Local['size'] = lsizelist
-        else:
-            raise MyError("""SetLSIZE: the local work-group size must be 1D or 2D and it must have the same number of dimensions as we are parallelizing """)
 
     def SetNoReadBack(self):
         rw = self.rw

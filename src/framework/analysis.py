@@ -20,7 +20,7 @@ class Analysis():
     def __init__(self, rw, tf):
         # The rewriter
         self.rw = rw
-        # The transformer
+        # The TRANSFORMER
         self.tf = tf
         self.PlaceInRegArgs = list()
         self.PlaceInRegCond = None
@@ -152,11 +152,10 @@ class Analysis():
         # Create base version and possible version with Local and
         # Register optimizations
         funcname = name + 'Base'
-        
-        
+
         if self.PlaceInRegArgs and self.PlaceInLocalArgs:
-            raise Exception("""GenerateKernels: Currently unimplemented to perform 
-        					PlaceInReg and PlaceInLocal together from the analysis""")
+            raise Exception("""GenerateKernels: Currently unimplemented to perform
+                                PlaceInReg and PlaceInLocal together from the analysis""")
 
             
         rw.InSourceKernel(copy.deepcopy(ast), Id('true'), filename = fileprefix + name + '/'+ funcname + '.cl', kernelstringname = funcname)
