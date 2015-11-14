@@ -17,6 +17,7 @@ from framework import cgen, transformation, analysis, lan
 import framework
 import representation
 import rewriter
+import transf_repr
 
 import ply.yacc as yacc
 
@@ -59,10 +60,10 @@ def LexAndParse(name, createTemp):
         astrepr = representation.Representation()
         astrepr.initOriginal(ast)
         rw = rewriter.Rewriter(astrepr)
-        tempfilename = fileprefix + name + '/'+'temp' +name.lower() + '.cpp'
+        tempfilename = fileprefix + name + '/'+'temp' + name.lower() + '.cpp'
         if createTemp:
-            rw.rewrite(ast, funcname, changeAST = True)
-            cprint.createTemp(ast, filename = tempfilename)
+            rw.rewrite(ast, funcname, changeAST=True)
+            cprint.createTemp(ast, filename=tempfilename)
 
         run = 0
         filename = tempfilename
@@ -78,7 +79,7 @@ def LexAndParse(name, createTemp):
         ## ## ast.show()
         tempast = copy.deepcopy(ast)
         tempast2 = copy.deepcopy(ast)
-        return (astrepr, ast, tempast, tempast2, funcname)
+        return (rw, ast, tempast, tempast2, funcname)
 
 def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
         cprint = cgen.CGenerator()
@@ -94,6 +95,8 @@ def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
 def matmul():
     name = 'MatMul'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
+    transf_rp = transf_repr.Transf_Repr()
+    transf_rp.initNewRepr(tempast)
     # rw.initNewRepr(tempast)
     # tf = transformation.Transformation(rw)
     #

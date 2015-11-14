@@ -36,7 +36,6 @@ class LoopIndices(NodeVisitor):
         except AttributeError:
             self.end[ids[0]] = 'Unknown'
             self.start[ids[0]] = 'Unknown'
-            
 
 class ForLoops(NodeVisitor):
     """ Returns first loop it encounters 
@@ -147,8 +146,6 @@ class TypeIds(NodeVisitor):
             ## self.dictIds[name].append('*')
             pass
 
-
-
 class _NumBinOps(NodeVisitor):
     """ Finds the number of BinOp in an 1D array subscript
     """
@@ -158,7 +155,6 @@ class _NumBinOps(NodeVisitor):
         self.ops.append(node.op)
         self.visit(node.lval)
         self.visit(node.rval)
-
 
 class Norm(NodeVisitor):
     """ Normalizes subscripts to the form i * (width of j) + j
@@ -189,4 +185,3 @@ class Norm(NodeVisitor):
                         # convert to 2D
                         node.subscript = [Id(binop.lval.lval.name,node.coord),\
                                           binop.rval]
-                
