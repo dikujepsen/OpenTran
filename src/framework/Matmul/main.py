@@ -95,11 +95,10 @@ def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
 def matmul():
     name = 'MatMul'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
-    transf_rp = transf_repr.Transf_Repr()
+    transf_rp = transf_repr.Transf_Repr(rw.astrepr)
     transf_rp.initNewRepr(tempast)
-    # rw.initNewRepr(tempast)
-    # tf = transformation.Transformation(rw)
-    #
+    tf = transformation.Transformation(rw)
+
     # an = analysis.Analysis(rw, tf)
     # if DoOptimizations:
     #     an.Transpose()
@@ -116,79 +115,3 @@ def matmul():
 if __name__ == "__main__":
     matmul()
 
-# FileAST <top>:
-#   TypeId <ext[0]>: type=['unsigned']
-#     Id <name>: name=hA
-#   TypeId <ext[1]>: type=['unsigned']
-#     Id <name>: name=wB
-#   TypeId <ext[2]>: type=['unsigned']
-#     Id <name>: name=wA
-#   TypeId <ext[3]>: type=['float', '*']
-#     Id <name>: name=A
-#   TypeId <ext[4]>: type=['float', '*']
-#     Id <name>: name=B
-#   TypeId <ext[5]>: type=['float', '*']
-#     Id <name>: name=C
-#   ForLoop <ext[6]>:
-#     Assignment <init>: op==
-#       TypeId <lval>: type=['unsigned']
-#         Id <name>: name=i
-#       Constant <rval>: value=0
-#     BinOp <cond>: op=<
-#       Id <lval>: name=i
-#       Id <rval>: name=hA
-#     Increment <inc>: op=++
-#       Id <name>: name=i
-#     Compound <compound>:
-#       ForLoop <stmt[0]>:
-#         Assignment <init>: op==
-#           TypeId <lval>: type=['unsigned']
-#             Id <name>: name=j
-#           Constant <rval>: value=0
-#         BinOp <cond>: op=<
-#           Id <lval>: name=j
-#           Id <rval>: name=wB
-#         Increment <inc>: op=++
-#           Id <name>: name=j
-#         Compound <compound>:
-#           Assignment <stmt[0]>: op==
-#             TypeId <lval>: type=['float']
-#               Id <name>: name=sum
-#             Constant <rval>: value=0
-#           ForLoop <stmt[1]>:
-#             Assignment <init>: op==
-#               TypeId <lval>: type=['unsigned']
-#                 Id <name>: name=k
-#               Constant <rval>: value=0
-#             BinOp <cond>: op=<
-#               Id <lval>: name=k
-#               Id <rval>: name=wA
-#             Increment <inc>: op=++
-#               Id <name>: name=k
-#             Compound <compound>:
-#               Assignment <stmt[0]>: op=+=
-#                 Id <lval>: name=sum
-#                 BinOp <rval>: op=*
-#                   ArrayRef <lval>:
-#                     Id <name>: name=A
-#                     BinOp <subscript 0>: op=+
-#                       BinOp <lval>: op=*
-#                         Id <lval>: name=i
-#                         Id <rval>: name=wA
-#                       Id <rval>: name=k
-#                   ArrayRef <rval>:
-#                     Id <name>: name=B
-#                     BinOp <subscript 0>: op=+
-#                       Id <lval>: name=j
-#                       BinOp <rval>: op=*
-#                         Id <lval>: name=k
-#                         Id <rval>: name=wB
-#           Assignment <stmt[2]>: op==
-#             ArrayRef <lval>:
-#               Id <name>: name=C
-#               BinOp <subscript 0>: op=+
-#                 BinOp <lval>: op=*
-#                   Id <lval>: name=wB
-#                   Id <rval>: name=i
-#                 Id <rval>: name=j
-#             Id <rval>: name=sum

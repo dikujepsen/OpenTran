@@ -12,25 +12,15 @@ class Transf_Repr(NodeVisitor):
     """
 
     
-    def __init__(self):
-        # List of loop indices
-        self.index = list()
-        # dict of the upper limit of the loop indices
-        self.UpperLimit = dict()
-        # dict of the lower limit of the loop indices
-        self.LowerLimit = dict()
+    def __init__(self, astrepr):
+        # Original repr
+        self.astrepr = astrepr
+        # The types of the arguments for the kernel
+        self.Type = astrepr.Type
         # The local work group size
         self.Local = dict()
         self.Local['name'] = 'LSIZE'
         self.Local['size'] = ['64']
-        # The number of dimensions of each array 
-        self.NumDims = dict()
-        # The Ids of arrays, or pointers
-        self.ArrayIds = set()
-        # The indices that appear in the subscript of each array
-        self.IndexInSubscript = dict()
-        # All Ids that are not arrays, or pointers
-        self.NonArrayIds = set()
         # Ids that we remove due to parallelization of loops
         self.RemovedIds = set()
         # The mapping from the indices that we parallelize
@@ -62,9 +52,7 @@ class Transf_Repr(NodeVisitor):
         self.DevId = dict()
         # The host names of the pointers in the boilerplate code
         self.HstId = dict()
-        # The types of the arguments for the kernel
-        self.Type = dict()
-        # The name of the variable denoting the memory size 
+        # The name of the variable denoting the memory size
         self.Mem = dict()
         # Dimension of the parallelization
         self.ParDim = None
@@ -150,16 +138,7 @@ class Transf_Repr(NodeVisitor):
 
 
     def initNewRepr(self, ast, dev = 'GPU'):
-        loops = ForLoops()
-        loops.visit(ast)
-        forLoopAst = loops.ast
-        loopIndices = LoopIndices()
-        loopIndices.visit(forLoopAst)
-        self.index = loopIndices.index
-        self.UpperLimit = loopIndices.end
-        self.LowerLimit = loopIndices.start
 
-        
         perfectForLoop = PerfectForLoop()
         perfectForLoop.visit(ast)
         
@@ -189,7 +168,7 @@ class Transf_Repr(NodeVisitor):
             self.InsideKernel = firstLoop.ast
 
 
-        arrays = Arrays(self.index)
+        arrays = Arrays(self.astrepr.index)
         
         arrays.visit(innerbody.compound)
 
@@ -236,16 +215,14 @@ class Transf_Repr(NodeVisitor):
         findDim = FindDim(self.NumDims)
         findDim.visit(ast)
         self.ArrayIdToDimName = findDim.dimNames
-
         
-        
-        self.RemovedIds = set(self.UpperLimit[i] for i in self.GridIndices)
+        self.RemovedIds = set(self.astrepr.UpperLimit[i] for i in self.GridIndices)
 
         idsStillInKernel = Ids()
         idsStillInKernel.visit(self.Kernel)
         self.RemovedIds = self.RemovedIds - idsStillInKernel.ids
 
-        otherIds = self.ArrayIds.union(self.NonArrayIds)
+        otherIds = self.astrepr.ArrayIds.union(self.astrepr.NonArrayIds)
         findDeviceArgs = FindDeviceArgs(otherIds)
         findDeviceArgs.visit(ast)
         self.DevArgList = findDeviceArgs.arglist
@@ -254,7 +231,7 @@ class Transf_Repr(NodeVisitor):
         self.DevFuncTypeId = findFunction.typeid
         self.DevFuncId = self.DevFuncTypeId.name.name
 
-        for n in self.ArrayIds:
+        for n in self.astrepr.ArrayIds:
             self.DevId[n] = 'dev_ptr' + n
             self.HstId[n] = 'hst_ptr' + n
             self.Mem[n] = 'hst_ptr' + n + '_mem_size'
@@ -276,7 +253,7 @@ class Transf_Repr(NodeVisitor):
         self.Worksize['local'] = kernelName + '_local_worksize'
         self.Worksize['global'] = kernelName + '_global_worksize'
         self.Worksize['offset'] = kernelName + '_global_offset'
-        findReadWrite = FindReadWrite(self.ArrayIds)
+        findReadWrite = FindReadWrite(self.astrepr.ArrayIds)
         findReadWrite.visit(ast)
         self.ReadWrite = findReadWrite.ReadWrite
 
@@ -288,7 +265,7 @@ class Transf_Repr(NodeVisitor):
                 else:
                     self.ReadOnly.append(n)
 
-        argIds = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
+        argIds = self.astrepr.NonArrayIds.union(self.astrepr.ArrayIds) - self.RemovedIds
 
         for n in argIds:
             tmplist = [n]
@@ -304,7 +281,7 @@ class Transf_Repr(NodeVisitor):
         self.ConstantMemory = GroupCompound([Comment('// Constant Memory')])
         self.Define = GroupCompound([Comment('// Defines for the kernel')])
 
-        arrays = Arrays(self.index)
+        arrays = Arrays(self.astrepr.index)
         arrays.visit(ast)
         self.Subscript = arrays.Subscript
         self.SubIdx = arrays.SubIdx
@@ -373,9 +350,8 @@ class Transf_Repr(NodeVisitor):
         forLoopAst = loops.ast
         loopIndices = LoopIndices()
         loopIndices.visit(forLoopAst)
-        self.index = loopIndices.index
 
-        arrays2 = Arrays(self.index)
+        arrays2 = Arrays(loopIndices.index)
         arrays2.visit(ast)
         findDim = FindDim(arrays2.numIndices)
         findDim.visit(ast)
@@ -479,135 +455,6 @@ class Transf_Repr(NodeVisitor):
         ast.ext = list()
         ## ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
         ast.ext.append(newast)
-
-
-
-
-
-
-    def constantMemory2(self, arrDict):
-        arrNames = arrDict.keys()
-
-        # find out if we need to split into global and constant memory space
-        split = dict()
-        for name in arrNames:
-            if len(arrDict[name]) != len(self.Subscript[name]):
-                # Every aref to name is not put in constant memory
-                # so we split.
-                split[name] = True
-            else:
-                split[name] = False
-
-        # Add new constant pointer
-        ptrname = 'Constant' + ''.join(arrNames)
-        hst_ptrname = 'hst_ptr' + ptrname
-        dev_ptrname = 'dev_ptr' + ptrname
-        typeset = set()
-        for name in arrNames:
-            typeset.add(self.Type[name][0])
-        
-        if len(typeset) > 1:
-            print "Conflicting types in constant memory transformation... Aborting"
-            return
-
-        ptrtype = [typeset.pop(), '*']
-        
-        # Add the ptr to central data structures
-        self.Type[ptrname] = ptrtype
-        self.DevId[ptrname] = dev_ptrname
-        self.HstId[ptrname] = hst_ptrname
-        self.Mem[ptrname] = self.HstId[ptrname]+'_mem_size'
-
-        # Add the ptr to be a kernel argument
-        self.KernelArgs[ptrname] = ['__constant'] +  ptrtype
-        self.GlobalVars[ptrname] = ''
-        self.ConstantMem[ptrname] = arrNames
-
-        # Delete original arguments if we split
-        for n in split:
-            if not split[n]:
-                self.KernelArgs.pop(n)
-                self.DevId.pop(n)
-        # Add pointer allocation to AllocateBuffers
-        lval = Id(self.HstId[ptrname])
-        rval = Id('new ' + self.Type[ptrname][0] + '['\
-                  + self.Mem[ptrname] + ']')
-        self.ConstantMemory.statements.append(Assignment(lval, rval))
-
-        # find the loop the we need to add to the allocation section
-        # Do it by looking at the loop indices in the subscripts
-        ids = []
-        for s in arrDict:
-            # Just look at only the first subscript at the moment
-            array = arrDict[s]
-            subs = self.LoopArrays[s]
-            try:
-                sub = subs[array[0]]
-            except IndexError:
-                print array[0]
-                print subs
-                print "ConstantMemory: Wrong index... Are you using zero indexing for the beginning of the loop?"
-                return
-            
-            arrays = Arrays(self.Loops.keys())
-            arrays.visit(sub)
-            ids = set(arrays.SubIdx[s][0]) - set([None]) - set(self.GridIndices)
-            
-            break
-
-        if len(ids) > 1:
-            print "Constant memory only supported for one loop at the moment"
-            return
-
-        
-        # Add the loop to the allocation code
-        forloop = copy.deepcopy(self.Loops[iter(ids).next()])
-        newcomp = []
-        forcomp = []
-        groupComp = GroupCompound(newcomp)
-        forloop.compound = Compound(forcomp)
-        loopcount = forloop.init.lval.name.name
-        # Add the for loop from the kernel
-        newcomp.append(forloop)
-
-        # find dimension of the constant ptr
-        constantdim = sum([ (len(arrDict[m])) for m in arrDict])
-
-        # add constant writes
-        writes = []
-        for i in xrange(constantdim):
-            writes.append((
-             [BinOp(BinOp(Id(str(constantdim)), '*', \
-                          Id(loopcount)), '+', Id(str(i)))]))
-
-        # for rewriting the ARefs that we copy
-        rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName, self)
-        # add global loadings
-        count = 0
-        for n in arrDict:
-            for i in arrDict[n]:
-                aref = copy.deepcopy(self.LoopArrays[n][i])
-                name = aref.name.name
-                rewriteArrayRef.visit(aref)
-                aref.name.name = self.HstId[name]
-                lval = ArrayRef(Id(self.HstId[ptrname]), writes[count])
-                assign = Assignment(lval, aref)
-                forcomp.append(assign)
-                count += 1
-
-        # Must now replace global arefs with constant arefs
-        count = 0
-        for n in arrDict:
-            for i in (arrDict[n]):
-                aref_new = writes[count]
-                aref_old = self.LoopArrays[n][i]
-                # Copying the internal data of the two arefs
-                aref_old.name.name = ptrname
-                aref_old.subscript = aref_new
-                count += 1
-
-        self.ConstantMemory.statements.append(groupComp)
-        
 
 
 

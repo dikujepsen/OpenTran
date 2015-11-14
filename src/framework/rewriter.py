@@ -471,9 +471,6 @@ class Rewriter(NodeVisitor):
             ast.ext.append(newast)
 
 
-           
-        
-
     def InSourceKernel(self, ast, cond, filename, kernelstringname):
         self.rewriteToDeviceCRelease(ast)
         
