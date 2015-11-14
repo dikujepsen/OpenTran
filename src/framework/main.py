@@ -42,7 +42,7 @@ def LexAndParse(name, createTemp):
         cprint = CGenerator()
         ## printres = cprint.visit(ast)
         ## print printres
-        rw = Rewriter()
+        rw = Representation()
         rw.initOriginal(ast)
         tempfilename = fileprefix + name + '/'+'temp' +name.lower() + '.cpp'
         if createTemp:

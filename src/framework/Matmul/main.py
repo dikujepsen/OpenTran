@@ -15,6 +15,7 @@ from framework import cgen, transformation, analysis, lan
 # from framework.lan import *
 # import framework.lan
 import framework
+import representation
 import rewriter
 
 import ply.yacc as yacc
@@ -55,8 +56,9 @@ def LexAndParse(name, createTemp):
 
         ## printres = cprint.visit(ast)
         ## print printres
-        rw = rewriter.Rewriter()
-        rw.initOriginal(ast)
+        astrepr = representation.Representation()
+        astrepr.initOriginal(ast)
+        rw = rewriter.Rewriter(astrepr)
         tempfilename = fileprefix + name + '/'+'temp' +name.lower() + '.cpp'
         if createTemp:
             rw.rewrite(ast, funcname, changeAST = True)
@@ -76,7 +78,7 @@ def LexAndParse(name, createTemp):
         ## ## ast.show()
         tempast = copy.deepcopy(ast)
         tempast2 = copy.deepcopy(ast)
-        return (rw, ast, tempast, tempast2, funcname)
+        return (astrepr, ast, tempast, tempast2, funcname)
 
 def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
         cprint = cgen.CGenerator()
@@ -84,7 +86,7 @@ def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
         an.GenerateKernels(tempast2, name, fileprefix)
         ## rw.InSourceKernel(tempast2, filename = fileprefix + name + '/'+funcname + '.cl', kernelstringname = kernelstringname)
         boilerast = rw.generateBoilerplateCode(ast)
-        cprint.createTemp(boilerast, filename = fileprefix + name + '/'+'boilerplate.cpp')
+        cprint.createTemp(boilerast, filename=fileprefix + name + '/'+'boilerplate.cpp')
 
 
 
