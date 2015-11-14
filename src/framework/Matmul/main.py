@@ -12,6 +12,9 @@ import sys
 if "../.." not in sys.path: sys.path.insert(0,"../..")
 from framework import cgen, rewriter, transformation, analysis
 from framework.lan_parser import *
+# from framework.lan import *
+# import framework.lan
+
 
 import ply.yacc as yacc
 
@@ -44,8 +47,8 @@ def LexAndParse(name, createTemp):
             ## print tok
 
         ast = cparser.parse(s)
-        ## ast.show()
-        ## print ast
+        # ast.show()
+        # print ast
         ## print slist
         cprint = cgen.CGenerator()
 
@@ -106,3 +109,10 @@ def matmul():
 
 if __name__ == "__main__":
     matmul()
+
+# BinOp(BinOp(Id('i') '*' Id('wA')) '+' Id('k'))
+# BinOp(Id('i') '*' Id('wA'))
+# BinOp(BinOp(Id('k') '*' Id('wB')) '+' Id('j'))
+# BinOp(Id('k') '*' Id('wB'))
+# BinOp(BinOp(Id('wB') '*' Id('i')) '+' Id('j'))
+# BinOp(Id('wB') '*' Id('i'))

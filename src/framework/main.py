@@ -197,8 +197,8 @@ def gaussian():
 
 if __name__ == "__main__":
     matmul()
-    jacobi()
-    knearest()
-    nbody()
-    laplace()
-    gaussian()
+    # jacobi()
+    # knearest()
+    # nbody()
+    # laplace()
+    # gaussian()
