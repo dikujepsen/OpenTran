@@ -1,4 +1,4 @@
-from framework.lan_ast import *
+from framework.lan.lan_ast import *
 import copy
 
 class AddToId(NodeVisitor):

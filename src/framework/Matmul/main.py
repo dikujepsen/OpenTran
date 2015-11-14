@@ -10,11 +10,12 @@ import ply.lex as lex
 import os
 import sys
 if "../.." not in sys.path: sys.path.insert(0,"../..")
-from framework import cgen, rewriter, transformation, analysis
-from framework.lan_parser import *
+from framework import cgen, transformation, analysis, lan
+# from framework.lan_parser import *
 # from framework.lan import *
 # import framework.lan
-
+import framework
+import rewriter
 
 import ply.yacc as yacc
 
@@ -24,8 +25,8 @@ DoOptimizations = True
 
 def LexAndParse(name, createTemp):
 
-    cparser = yacc.yacc()
-    lex.lex()
+    cparser = yacc.yacc(module=framework.lan)
+    lex.lex(module=framework.lan)
 
     run = 1
     while run:
@@ -91,28 +92,98 @@ def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
 def matmul():
     name = 'MatMul'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
-    rw.initNewRepr(tempast)
-    tf = transformation.Transformation(rw)
-
-    an = analysis.Analysis(rw, tf)
-    if DoOptimizations:
-        an.Transpose()
-        an.DefineArguments()
-        an.PlaceInReg()
-        an.PlaceInLocalMemory()
-    if SetNoReadBack:
-        tf.SetNoReadBack()
+    # rw.initNewRepr(tempast)
+    # tf = transformation.Transformation(rw)
+    #
+    # an = analysis.Analysis(rw, tf)
+    # if DoOptimizations:
+    #     an.Transpose()
+    #     an.DefineArguments()
+    #     an.PlaceInReg()
+    #     an.PlaceInLocalMemory()
+    # if SetNoReadBack:
+    #     tf.SetNoReadBack()
 
     ## rw.DataStructures()
-    CGen(name, funcname, an, tempast2, ast)
+    # CGen(name, funcname, an, tempast2, ast)
 
 
 if __name__ == "__main__":
     matmul()
 
-# BinOp(BinOp(Id('i') '*' Id('wA')) '+' Id('k'))
-# BinOp(Id('i') '*' Id('wA'))
-# BinOp(BinOp(Id('k') '*' Id('wB')) '+' Id('j'))
-# BinOp(Id('k') '*' Id('wB'))
-# BinOp(BinOp(Id('wB') '*' Id('i')) '+' Id('j'))
-# BinOp(Id('wB') '*' Id('i'))
+# FileAST <top>:
+#   TypeId <ext[0]>: type=['unsigned']
+#     Id <name>: name=hA
+#   TypeId <ext[1]>: type=['unsigned']
+#     Id <name>: name=wB
+#   TypeId <ext[2]>: type=['unsigned']
+#     Id <name>: name=wA
+#   TypeId <ext[3]>: type=['float', '*']
+#     Id <name>: name=A
+#   TypeId <ext[4]>: type=['float', '*']
+#     Id <name>: name=B
+#   TypeId <ext[5]>: type=['float', '*']
+#     Id <name>: name=C
+#   ForLoop <ext[6]>:
+#     Assignment <init>: op==
+#       TypeId <lval>: type=['unsigned']
+#         Id <name>: name=i
+#       Constant <rval>: value=0
+#     BinOp <cond>: op=<
+#       Id <lval>: name=i
+#       Id <rval>: name=hA
+#     Increment <inc>: op=++
+#       Id <name>: name=i
+#     Compound <compound>:
+#       ForLoop <stmt[0]>:
+#         Assignment <init>: op==
+#           TypeId <lval>: type=['unsigned']
+#             Id <name>: name=j
+#           Constant <rval>: value=0
+#         BinOp <cond>: op=<
+#           Id <lval>: name=j
+#           Id <rval>: name=wB
+#         Increment <inc>: op=++
+#           Id <name>: name=j
+#         Compound <compound>:
+#           Assignment <stmt[0]>: op==
+#             TypeId <lval>: type=['float']
+#               Id <name>: name=sum
+#             Constant <rval>: value=0
+#           ForLoop <stmt[1]>:
+#             Assignment <init>: op==
+#               TypeId <lval>: type=['unsigned']
+#                 Id <name>: name=k
+#               Constant <rval>: value=0
+#             BinOp <cond>: op=<
+#               Id <lval>: name=k
+#               Id <rval>: name=wA
+#             Increment <inc>: op=++
+#               Id <name>: name=k
+#             Compound <compound>:
+#               Assignment <stmt[0]>: op=+=
+#                 Id <lval>: name=sum
+#                 BinOp <rval>: op=*
+#                   ArrayRef <lval>:
+#                     Id <name>: name=A
+#                     BinOp <subscript 0>: op=+
+#                       BinOp <lval>: op=*
+#                         Id <lval>: name=i
+#                         Id <rval>: name=wA
+#                       Id <rval>: name=k
+#                   ArrayRef <rval>:
+#                     Id <name>: name=B
+#                     BinOp <subscript 0>: op=+
+#                       Id <lval>: name=j
+#                       BinOp <rval>: op=*
+#                         Id <lval>: name=k
+#                         Id <rval>: name=wB
+#           Assignment <stmt[2]>: op==
+#             ArrayRef <lval>:
+#               Id <name>: name=C
+#               BinOp <subscript 0>: op=+
+#                 BinOp <lval>: op=*
+#                   Id <lval>: name=wB
+#                   Id <rval>: name=i
+#                 Id <rval>: name=j
+#             Id <rval>: name=sum

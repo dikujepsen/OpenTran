@@ -1,6 +1,5 @@
-import copy
-import os
-from visitor import *
+
+from framework.Matmul.visitor import *
 from stringstream import *
 
 class Rewriter(NodeVisitor):
