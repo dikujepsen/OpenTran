@@ -5,12 +5,10 @@ import copy
 # from cgen import *
 # from transformation import *
 # from analysis import *
-fileprefix = "../../test/C/"
 import ply.lex as lex
 import os
 import sys
 if "../.." not in sys.path: sys.path.insert(0,"../..")
-from framework import cgen, transformation, analysis, lan
 # from framework.lan_parser import *
 # from framework.lan import *
 # import framework.lan
@@ -18,17 +16,21 @@ import framework
 import representation
 import rewriter
 import transf_repr
-
+import transformation
+import analysis
 import ply.yacc as yacc
+import cgen
+import lan
 
+fileprefix = "../../test/C/"
 SetNoReadBack = False
 DoOptimizations = True
 
 
 def LexAndParse(name, createTemp):
 
-    cparser = yacc.yacc(module=framework.lan)
-    lex.lex(module=framework.lan)
+    cparser = yacc.yacc(module=lan)
+    lex.lex(module=lan)
 
     run = 1
     while run:
@@ -97,19 +99,19 @@ def matmul():
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     transf_rp = transf_repr.Transf_Repr(rw.astrepr)
     transf_rp.initNewRepr(tempast)
-    tf = transformation.Transformation(rw)
+    tf = transformation.Transformation(transf_rp)
 
-    # an = analysis.Analysis(rw, tf)
-    # if DoOptimizations:
-    #     an.Transpose()
-    #     an.DefineArguments()
-    #     an.PlaceInReg()
-    #     an.PlaceInLocalMemory()
-    # if SetNoReadBack:
-    #     tf.SetNoReadBack()
+    an = analysis.Analysis(transf_rp, tf)
+    if DoOptimizations:
+        an.Transpose()
+        an.DefineArguments()
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
+    if SetNoReadBack:
+        tf.SetNoReadBack()
 
     ## rw.DataStructures()
-    # CGen(name, funcname, an, tempast2, ast)
+    CGen(name, funcname, an, tempast2, ast)
 
 
 if __name__ == "__main__":

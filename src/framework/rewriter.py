@@ -155,7 +155,7 @@ class Rewriter(NodeVisitor):
         loops = ForLoops()
         loops.visit(ast)
         forLoopAst = loops.ast
-        loopIndices = LoopIndices()        
+        loopIndices = LoopIndices()
         loopIndices.visit(forLoopAst)
         self.index = loopIndices.index
         self.UpperLimit = loopIndices.end

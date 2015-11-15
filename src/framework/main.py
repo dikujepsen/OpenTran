@@ -36,13 +36,13 @@ def LexAndParse(name, createTemp):
             ## print tok
         
         ast = cparser.parse(s)
-        ast.show()
+        # ast.show()
         ## print ast
         ## print slist
         cprint = CGenerator()
         ## printres = cprint.visit(ast)
         ## print printres
-        rw = Representation()
+        rw = Rewriter()
         rw.initOriginal(ast)
         tempfilename = fileprefix + name + '/'+'temp' +name.lower() + '.cpp'
         if createTemp:

@@ -1,20 +1,27 @@
 import os
-from lan_ast import *
+
+import lan
+import transf_repr
+import transf_visitor as tvisitor
+import cgen
 
 debug = False
 
-class CGenerator(object):
+
+class SSGenerator(object):
     """ Uses the same visitor pattern as the NodeVisitor, but modified to
-        return a value from each visit method, using string accumulation in 
+        return a stringstream from each visit method, using string accumulation in 
         generic_visit.
     """
     def __init__(self):
         self.output = ''
-        self.quotes = '\"'
-        self.newline = '\n'
+        self.quotes = '\\"'
+        self.newline = '" << endl;\n'
         self.semi = ';'
-        self.start = ''
-        
+        self.start = 'str << "'
+        self.UnrollLoops = []
+        self.statements = []
+    
         # Statements start with indentation of self.indent_level spaces, using
         # the _make_indent method
         #
@@ -35,12 +42,44 @@ class CGenerator(object):
             fileobj.write(code)
             fileobj.close()
         except IOError:
-            print "Unable to write file"
-       
+            print "createTemp: Unable to write file"
+            
+    def createKernelStringStream(self, ast, newast, UnrollLoops, kernelstringname, filename = 'temp.cpp'):
+
+        self.UnrollLoops = UnrollLoops
+        
+        # Swap the IDs that contain the loop indexes before
+        # generating the code
+        swapUnrollID = tvisitor.SwapUnrollID(self.UnrollLoops)
+        swapUnrollID.visit(ast)
+        oldcode = self.visit(ast)
+        
+        
+        split = oldcode.split('\n')
+        for s in split:
+            self.statements.append(lan.Id(s))
+
+        
+            
+        # Create the function where we generate the code for the
+        # kernel function
+        kernelfunc = transf_repr.EmptyFuncDecl(kernelstringname, type = ['std::string'])
+        # insert the stringstream typeid
+        self.statements.insert(0, lan.TypeId(['std::stringstream'], lan.Id('str')))
+        kernelfunc.compound.statements = self.statements
+        # insert conversion to std::string
+        self.statements.append(lan.Id('return str.str();'))
+        
+        newast.ext = [kernelfunc]
+        cprint = cgen.CGenerator()
+        cprint.createTemp(newast, filename = filename)
+            
+            
+
     def simple_node(self, n):
         """ Returns True for nodes that are "simple"
         """
-        return not isinstance(n, (Constant, Id, ArrayRef))
+        return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef))
     
     def parenthesize_if(self, n, condition):
         """ Visits 'n' and returns its string representation, parenthesized
@@ -66,6 +105,7 @@ class CGenerator(object):
         else:
             return ''.join(self.visit(c[1]) if len(c) == 2 \
                            else self.visit(c) for c in node.children())
+
     
     def visit_FileAST(self, n):
         newline = self.newline
@@ -74,36 +114,43 @@ class CGenerator(object):
             newline = n.__class__.__name__ +  newline
             start = n.__class__.__name__ + start
         s = ''
-
         for ext in n.ext:
-            if isinstance(ext, Compound):
+            if isinstance(ext, lan.Compound):
                 s += self.visit_GlobalCompound(ext)
             else:
-                s += start + self.visit(ext) + newline
+                s += self.visit(ext)
         return s
 
     
     def visit_GlobalCompound(self, n):
-        s =  ''
+        newline = self.newline
+        start = self.start
+        if debug:
+            newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ + start
+        s = ''
         for stat in n.statements:
            s += self.visit(stat)
-        s += n.__class__.__name__ + self.newline
+        s = start + s + self.newline
         return s
 
 
     def visit_GroupCompound(self, n):
         newline = self.newline
         start = self.start
+        
         if debug:
             newline = n.__class__.__name__ +  newline
             start = n.__class__.__name__ + start
-        s =  ''
+        s = ''
         for i,stat in enumerate(n.statements):
             start1 = ''
-            if i != 0:
-                start1 = start
-            s += start1 + self.visit(stat) + newline + self._make_indent()
-        s += start
+            ## if i != 0:
+            newline1 = ''
+            if not isinstance(stat, lan.ForLoop):
+                newline1 = newline
+                start1 = start+ self._make_indent()
+            s += start1  + self.visit(stat) + newline1
         return s
 
     def visit_Comment(self, n):
@@ -118,12 +165,10 @@ class CGenerator(object):
         return n.op + s
 
     def visit_TypeId(self, n):
-        s = self.visit(n.name)
+        s1 = self.visit(n.name)
         if n.type:
-            s1 = ' '.join(n.type)
-            s1 += ' ' + s
-        else:
-            s1 = s
+            s = ' '.join(n.type)
+            s1 = s + ' ' + s1
         if not self.inside_ArgList:
             s1 += self.semi
         return s1
@@ -162,12 +207,15 @@ class CGenerator(object):
             newline = n.__class__.__name__ +  newline
             start = n.__class__.__name__ +  start
             
-        s = start + self._make_indent() + '{' + newline
+        s = '' #start + self._make_indent() + '{' + newline
         self.indent_level += 2
         for stat in n.statements:
-            s += start + self._make_indent() + self.visit(stat) + newline 
+            if isinstance(stat, lan.ForLoop) or isinstance(stat, lan.GroupCompound):
+                s += self.visit(stat)
+            else:
+                s += start + self._make_indent() + self.visit(stat) + newline 
         self.indent_level -= 2
-        s += start + self._make_indent() + '}'  
+        ## s += start + self._make_indent() + '}'  
         return s
 
     def visit_ArgList(self, n):
@@ -180,16 +228,17 @@ class CGenerator(object):
         s = '('
         count = 1
         if len(n.arglist) == 1:
-            return '(' + self.visit(n.arglist[0]) + ')'
+            retval = '(' + self.visit(n.arglist[0]) + ')'
+            return retval
             
         for arg in n.arglist:
             if count == 1:
-                s += newline + '\t' + start
+                s += newline + start  + '\t' 
             s += self.visit(arg)
             if count != (len(n.arglist)):
                 s += ', '
             if count % 3 == 0:
-                s += newline + '\t' + start
+                s += newline + start + '\t' 
             count += 1
         ## if n.arglist:
         ##     s = s[:-2]
@@ -210,8 +259,10 @@ class CGenerator(object):
 
     def visit_FuncDecl(self, n):
         newline = self.newline
+        start = self.start
         if debug:
             newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ +  start
             
         self.inside_ArgList = True
         typeid = self.visit(n.typeid)
@@ -223,26 +274,34 @@ class CGenerator(object):
             compound = ''
             end = ''
         elif n.compound.statements:
-            typeid = self.start + typeid
-            arglist += newline
-            compound = self.visit(n.compound) + newline
+            typeid = start + typeid
+            arglist += ' {' + newline
+            compound = self.visit(n.compound) + start + '}' + newline
         else:
             compound = self.semi
-        return typeid + arglist + compound
+        retval = typeid + arglist + compound  
+        return retval
 
     def visit_ForLoop(self, n):
         newline = self.newline
+        start = self.start
         if debug:
             newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ +  start
 
+        name = n.init.lval.name.name
         init = self.visit(n.init) # already has a semi at the end
         cond = self.visit(n.cond)
         inc = self.visit(n.inc)
+
         self.indent_level += 2
         compound = self.visit(n.compound)
         self.indent_level -= 2
-        return 'for (' + init + ' ' + cond + self.semi + ' ' + inc + ')'\
-          + newline + compound
+        if name in self.UnrollLoops:
+            start = ''
+            newline = '\n'
+        return start + self._make_indent() + 'for (' + init + ' ' + cond + self.semi + ' ' + inc + ') {'\
+          + newline  + compound + start + self._make_indent() + '}' + newline
 
     def visit_IfThen(self, n):
         newline = self.newline
@@ -257,27 +316,17 @@ class CGenerator(object):
         self.indent_level -= 2
         return 'if (' + cond + ')' + newline + compound
 
-    def visit_IfThenElse(self, n):
-        newline = self.newline
-        start = self.start
-        if debug:
-            newline = n.__class__.__name__ +  newline
-            start = n.__class__.__name__ + start
-
-        cond = self.visit(n.cond)
-        self.indent_level += 2
-        compound1 = self.visit(n.compound1) 
-        compound2 = self.visit(n.compound2)
-        self.indent_level -= 2
-        return 'if (' + cond + ')' + newline + compound1 \
-          		+ newline + self._make_indent() + 'else' + newline + compound2
-
         
     def visit_Id(self, n):
         return n.name
 
     def visit_Include(self, n):
-        return "#include " + n.name
+        newline = self.newline
+        start = self.start
+        if debug:
+            newline = n.__class__.__name__ +  newline
+            start = n.__class__.__name__ + start
+        return start + "#include " + '\\"'+ n.name[1:-1] + '\\"' + newline
  
     
     def visit_Constant(self, n):

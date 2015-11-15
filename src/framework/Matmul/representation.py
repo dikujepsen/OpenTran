@@ -1,7 +1,6 @@
 
 
-# from framework.Matmul.visitor import *
-import framework.Matmul.visitor as visitor
+import visitor
 
 class Representation(visitor.NodeVisitor):
     """ Class for rewriting of the original AST. Includes:

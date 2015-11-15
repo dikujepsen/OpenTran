@@ -1,5 +1,5 @@
 
-import framework.lan as lan
+import lan
 
 
 

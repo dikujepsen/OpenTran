@@ -344,149 +344,28 @@ class Transf_Repr(NodeVisitor):
         print "self.Loops " , self.Loops
         print "self.RefToLoop ", self.RefToLoop
 
-    def rewriteToSequentialC(self, ast): 
-        loops = ForLoops()
-        loops.visit(ast)
-        forLoopAst = loops.ast
-        loopIndices = LoopIndices()
-        loopIndices.visit(forLoopAst)
-
-        arrays2 = Arrays(loopIndices.index)
-        arrays2.visit(ast)
-        findDim = FindDim(arrays2.numIndices)
-        findDim.visit(ast)
-        rewriteArrayRef = RewriteArrayRef(self.NumDims,
-                                          self.ArrayIdToDimName,
-                                          self)
-        rewriteArrayRef.visit(ast)
-
-    def rewriteToDeviceCTemp(self, ast, changeAST = True):
-
-
-        findDeviceArgs = FindDeviceArgs(self.NonArrayIds)
-        findDeviceArgs.visit(ast)
-        findFunction = FindFunction()
-        findFunction.visit(ast)
-
-        # add OpenCL keywords to indicate the kernel function.
-        findFunction.typeid.type.insert(0, '__kernel')
-        
-        exchangeIndices = ExchangeIndices(self.IndexToThreadId)
-        exchangeIndices.visit(self.Kernel)
-        newast =  FuncDecl(findFunction.typeid, ArgList(findDeviceArgs.arglist,ast.coord), self.Kernel, ast.coord)
-        if changeAST:
-            ast.ext = list()
-            ast.ext.append(newast)
-
-
-           
-        
-
-    def InSourceKernel(self, ast, cond, filename, kernelstringname):
-        self.rewriteToDeviceCRelease(ast)
-        
-        ssprint = SSGenerator()
-        newast = FileAST([])
-        ssprint.createKernelStringStream(ast, newast, self.UnrollLoops, kernelstringname, filename = filename)
-        self.KernelStringStream.append({'name' : kernelstringname, \
-                                        'ast' : newast,
-                                        'cond' : cond})
-        
-    def rewriteToDeviceCRelease(self, ast):
-
-        arglist = list()
-        argIds = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
-        # The list of arguments for the kernel
-        dictTypeHostPtrs = copy.deepcopy(self.Type)
-        for n in self.ArrayIds:
-            dictTypeHostPtrs[self.ArrayIdToDimName[n][0]] = ['size_t']
-
-        for n in self.KernelArgs:
-            type = copy.deepcopy(self.KernelArgs[n])
-            if type[0] == 'size_t':
-                type[0] = 'unsigned'
-            if len(type) == 2:
-                type.insert(0, '__global')
-            arglist.append(TypeId(type, Id(n)))
-
-
-        exchangeArrayId = ExchangeArrayId(self.LocalSwap)
-
-        for n in self.LoopArrays.values():
-            for m in n:
-                exchangeArrayId.visit(m)
-
-        ## for n in self.Add:
-        ##     addToIds = AddToId(n, self.Add[n])
-        ##     addToIds.visit(self.InsideKernel.compound)
-
-        MyKernel = copy.deepcopy(self.Kernel)
-        rewriteArrayRef = RewriteArrayRef(self.NumDims, self.ArrayIdToDimName, self)
-        rewriteArrayRef.visit(MyKernel)
-
-        arrays = self.ArrayIds
-        
-        exchangeIndices = ExchangeId(self.IndexToThreadId)
-        exchangeIndices.visit(MyKernel)
-
-
-        exchangeTypes = ExchangeTypes()
-        exchangeTypes.visit(MyKernel)
-        
-        
-        typeid = copy.deepcopy(self.DevFuncTypeId)
-        typeid.type.insert(0, '__kernel')
-
-        ext = copy.deepcopy(self.Includes)
-        newast = FileAST(ext)
-        for n in arglist:
-            if len(n.type) == 3:
-                if n.type[1] == 'double':
-                    ext.insert(0, Compound([Id("#pragma OPENCL EXTENSION cl_khr_fp64: enable")]))
-                    break
-            else:
-                if n.type[0] == 'double':
-                    ext.insert(0,Compound([Id("#pragma OPENCL EXTENSION cl_khr_fp64: enable")]))
-
-                    break
-                
-
-        ext.append(FuncDecl(typeid, ArgList(arglist), MyKernel))
-        ast.ext = list()
-        ## ast.ext.append(Id('#define LSIZE ' + str(self.Local['size'])))
-        ast.ext.append(newast)
-
-
-
-        
     def generateBoilerplateCode(self, ast):
 
 
-        dictNToNumScripts = self.NumDims
         dictNToDimNames = self.ArrayIdToDimName
 
-        idMap = self.IndexToThreadId
-        gridIds = self.GridIndices
-        NonArrayIds = copy.deepcopy(self.NonArrayIds)
-        otherIds = self.ArrayIds.union(self.NonArrayIds) - self.RemovedIds
+        NonArrayIds = copy.deepcopy(self.astrepr.NonArrayIds)
 
 
         fileAST = FileAST([])
 
         fileAST.ext.append(Id('#include \"../../../utils/StartUtil.cpp\"'))
         fileAST.ext.append(Id('using namespace std;'))
-        ## fileAST.ext.append(Id('#define LSIZE ' + str(self.Local['size'][0])))
 
 
         kernelId = Id(self.KernelName)
         kernelTypeid = TypeId(['cl_kernel'], kernelId, 0)
         fileAST.ext.append(kernelTypeid)
 
-        ## fileAST.show()
 
         listDevBuffers = []
 
-        for n in self.ArrayIds:
+        for n in self.astrepr.ArrayIds:
             try:
                 name = self.DevId[n]
                 listDevBuffers.append(TypeId(['cl_mem'], Id(name)))
@@ -503,8 +382,6 @@ class Transf_Repr(NodeVisitor):
         fileAST.ext.append(listDevBuffers)
 
         listHostPtrs = []
-        dictTypeHostPtrs = dict()
-        dictNToHstPtr = dict()
         for n in self.DevArgList:
             name = n.name.name
             type = self.Type[name]
@@ -526,19 +403,16 @@ class Transf_Repr(NodeVisitor):
 
         listMemSize = []
         listDimSize = []
-        listMemSizeCalcTemp = []
-        dictMemSizeCalc = dict()
         dictNToSize = self.Mem
         for n in self.Mem:
             sizeName = self.Mem[n]
             listMemSize.append(TypeId(['size_t'], Id(sizeName)))
 
-        for n in self.ArrayIds:
+        for n in self.astrepr.ArrayIds:
             for dimName in self.ArrayIdToDimName[n]:
                 listDimSize.append(\
                 TypeId(['size_t'], Id(dimName)))
 
-                
         fileAST.ext.append(GroupCompound(listMemSize))
         fileAST.ext.append(GroupCompound(listDimSize))
         misc = []
@@ -557,24 +431,20 @@ class Transf_Repr(NodeVisitor):
         fileAST.ext.append(GroupCompound(misc))
 
         # Generate the GetKernelCode function
-        
         for optim in self.KernelStringStream:
             fileAST.ext.append(optim['ast'])
             
-        getKernelCode = EmptyFuncDecl('GetKernelCode', type = ['std::string'])
+        getKernelCode = EmptyFuncDecl('GetKernelCode', type=['std::string'])
         getKernelStats = []
         getKernelCode.compound.statements = getKernelStats
         getKernelStats.append(self.IfThenElse)
-        ## getKernelStats.append(Id('return str.str();'))
         fileAST.ext.append(getKernelCode)
 
-
-            
         allocateBuffer = EmptyFuncDecl('AllocateBuffers')
         fileAST.ext.append(allocateBuffer)
 
         listSetMemSize = []
-        for entry in self.ArrayIds:
+        for entry in self.astrepr.ArrayIds:
             n = self.ArrayIdToDimName[entry]
             lval = Id(self.Mem[entry])
             rval = BinOp(Id(n[0]),'*', Id('sizeof('+\
@@ -707,13 +577,13 @@ class Transf_Repr(NodeVisitor):
             elif n == 'global':
                 initlist = []
                 for m in reversed(self.GridIndices):
-                    initlist.append(Id(self.UpperLimit[m]\
-                                       +' - '+ self.LowerLimit[m]))
+                    initlist.append(Id(self.astrepr.UpperLimit[m]\
+                                       +' - '+ self.astrepr.LowerLimit[m]))
                 rval = ArrayInit(initlist)
             else:
                 initlist = []
                 for m in reversed(self.GridIndices):
-                    initlist.append(Id(self.LowerLimit[m]))
+                    initlist.append(Id(self.astrepr.LowerLimit[m]))
                 rval = ArrayInit(initlist)
                 
             execBody.append(Assignment(lval,rval))
@@ -785,7 +655,7 @@ class Transf_Repr(NodeVisitor):
         fileAST.ext.append(runOCL)
         runOCLBody = runOCL.compound.statements
 
-        argIds = self.NonArrayIds.union(self.ArrayIds) #
+        argIds = self.astrepr.NonArrayIds.union(self.astrepr.ArrayIds) #
 
         typeIdList = []
         ifThenList = []

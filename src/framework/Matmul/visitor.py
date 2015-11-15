@@ -1,4 +1,4 @@
-from framework.lan.lan_ast import *
+from lan.lan_ast import *
 import copy
 
 class Ids(NodeVisitor):

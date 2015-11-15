@@ -1,4 +1,4 @@
-from framework.lan.lan_ast import *
+from lan.lan_ast import *
 import copy
 
 class AddToId(NodeVisitor):
@@ -238,8 +238,8 @@ class PerfectForLoop(NodeVisitor):
 
     def visit_FuncDecl(self, node):
         funcstats = node.compound.statements
-        
-        if len(funcstats) == 1: # 
+
+        if len(funcstats) == 1: #
             if isinstance(funcstats[0], ForLoop):
                 self.ast = funcstats[0]
                 self.inner = funcstats[0]
@@ -250,11 +250,6 @@ class PerfectForLoop(NodeVisitor):
                         self.outer = self.inner
                         self.depth += 1
                         self.inner = loopstats[0]
-
-        ## stats = node.compound.statements
-        ## if len(stats) == 1:
-        ##     if isinstance(stats[0], ForLoop):
-                
 
 
 class RewriteArrayRef(NodeVisitor):

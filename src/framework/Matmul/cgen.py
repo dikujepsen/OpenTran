@@ -1,5 +1,6 @@
 import os
-from lan_ast import *
+import lan
+
 
 debug = False
 
@@ -40,7 +41,7 @@ class CGenerator(object):
     def simple_node(self, n):
         """ Returns True for nodes that are "simple"
         """
-        return not isinstance(n, (Constant, Id, ArrayRef))
+        return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef))
     
     def parenthesize_if(self, n, condition):
         """ Visits 'n' and returns its string representation, parenthesized
@@ -76,7 +77,7 @@ class CGenerator(object):
         s = ''
 
         for ext in n.ext:
-            if isinstance(ext, Compound):
+            if isinstance(ext, lan.Compound):
                 s += self.visit_GlobalCompound(ext)
             else:
                 s += start + self.visit(ext) + newline
@@ -191,10 +192,6 @@ class CGenerator(object):
             if count % 3 == 0:
                 s += newline + '\t' + start
             count += 1
-        ## if n.arglist:
-        ##     s = s[:-2]
-        ## if (count-1) % 3 == 0 and count != 1:
-        ##     s = s[:-2]
         return s + ')'
 
     def visit_ArrayRef(self, n):
@@ -295,4 +292,3 @@ class CGenerator(object):
                 return self.quotes + n.value + self.quotes
         else:
             return str(n.value)
-        

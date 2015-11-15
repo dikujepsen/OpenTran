@@ -1,4 +1,4 @@
-from framework.lan_ast import *
+from lan_ast import *
 import copy
 
 class AddToId(NodeVisitor):
@@ -613,7 +613,6 @@ class Norm(NodeVisitor):
             numBinOps.visit(binop)
             if len(numBinOps.ops) == 2:
                 if '+' in numBinOps.ops and '*' in numBinOps.ops:
-
                     if not isinstance(binop.lval, BinOp):
                         (binop.lval, binop.rval) = (binop.rval, binop.lval)
                     twoIndices = NumIndices(2, self.indices)
