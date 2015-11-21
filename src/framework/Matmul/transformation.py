@@ -1,9 +1,10 @@
 
 import copy
 import visitor
-import stringstream
 import lan
 import transf_visitor as tvisitor
+import ast_buildingblock as ast_bb
+
 
 class MyError(Exception):
      def __init__(self, value):
@@ -282,7 +283,7 @@ class Transformation():
             # new inner loop
             innerloop.cond = lan.BinOp(lan.Id(inneridx), '<' , lan.Constant(rw.Local['size'][0]))
             innerloop.inc = lan.Increment(lan.Id(inneridx), '++')
-            innerloop.init = tvisitor.ConstantAssignment(inneridx)
+            innerloop.init = ast_bb.ConstantAssignment(inneridx)
             rw.Loops[inneridx] = innerloop
       
         for n in arrDict:
@@ -336,7 +337,7 @@ class Transformation():
             rw.NumDims[loc_name] = rw.NumDims[n]
         # Must also create the barrier
         arglist = lan.ArgList([lan.Id('CLK_LOCAL_MEM_FENCE')])
-        func = tvisitor.EmptyFuncDecl('barrier', type=[])
+        func = ast_bb.EmptyFuncDecl('barrier', type=[])
         func.arglist = arglist
         loadings.append(func)
 

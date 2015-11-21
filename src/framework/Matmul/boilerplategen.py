@@ -1,7 +1,7 @@
 
 import lan
 import copy
-import transf_visitor as tvisitor
+import ast_buildingblock as ast_bb
 
 class Boilerplate(object):
 
@@ -94,13 +94,13 @@ class Boilerplate(object):
         for optim in transf_repr.KernelStringStream:
             fileAST.ext.append(optim['ast'])
 
-        getKernelCode = tvisitor.EmptyFuncDecl('GetKernelCode', type=['std::string'])
+        getKernelCode = ast_bb.EmptyFuncDecl('GetKernelCode', type=['std::string'])
         getKernelStats = []
         getKernelCode.compound.statements = getKernelStats
         getKernelStats.append(transf_repr.IfThenElse)
         fileAST.ext.append(getKernelCode)
 
-        allocateBuffer = tvisitor.EmptyFuncDecl('AllocateBuffers')
+        allocateBuffer = ast_bb.EmptyFuncDecl('AllocateBuffers')
         fileAST.ext.append(allocateBuffer)
 
         listSetMemSize = []
@@ -171,7 +171,7 @@ class Boilerplate(object):
             ErrCheck = lan.FuncDecl(lan.Id('oclCheckErr'),arglist, lan.Compound([]))
             allocateBuffer.compound.statements.append(ErrCheck)
 
-        setArgumentsKernel = tvisitor.EmptyFuncDecl('SetArguments'+transf_repr.DevFuncId)
+        setArgumentsKernel = ast_bb.EmptyFuncDecl('SetArguments'+transf_repr.DevFuncId)
         fileAST.ext.append(setArgumentsKernel)
         ArgBody = setArgumentsKernel.compound.statements
         ArgBody.append(clSuc)
@@ -221,7 +221,7 @@ class Boilerplate(object):
         ArgBody.append(ErrCheck)
 
 
-        execKernel = tvisitor.EmptyFuncDecl('Exec' + transf_repr.DevFuncTypeId.name.name)
+        execKernel = ast_bb.EmptyFuncDecl('Exec' + transf_repr.DevFuncTypeId.name.name)
         fileAST.ext.append(execKernel)
         execBody = execKernel.compound.statements
         execBody.append(clSuc)
@@ -311,7 +311,7 @@ class Boilerplate(object):
 
 
 
-        runOCL = tvisitor.EmptyFuncDecl('RunOCL' + transf_repr.KernelName)
+        runOCL = ast_bb.EmptyFuncDecl('RunOCL' + transf_repr.KernelName)
         fileAST.ext.append(runOCL)
         runOCLBody = runOCL.compound.statements
 

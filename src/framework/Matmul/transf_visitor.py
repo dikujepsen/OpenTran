@@ -623,20 +623,3 @@ class Norm(NodeVisitor):
                         # convert to 2D
                         node.subscript = [Id(binop.lval.lval.name,node.coord),\
                                           binop.rval]
-                
-def EmptyFuncDecl(name, type = ['void']):
-    """ Returns a FuncDecl with no arguments or body """
-    allocateBufferTypeId = TypeId(type, Id(name))
-    allocateBufferArgList = ArgList([])
-    allocateBufferCompound = Compound([])
-    allocateBuffer = FuncDecl(allocateBufferTypeId,\
-                              allocateBufferArgList,\
-                              allocateBufferCompound)
-
-
-    return allocateBuffer
-
-def ConstantAssignment(name, constant = 0, type = ['unsigned']):
-    lval = TypeId(type, Id(name))
-    rval = Constant(constant)
-    return Assignment(lval,rval)

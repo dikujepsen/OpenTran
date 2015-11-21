@@ -4,7 +4,7 @@ from itertools import chain
 import snippetgen
 import lan
 import copy
-import transf_visitor as tvisitor
+import ast_buildingblock as ast_bb
 
 class Analysis():
     """ Apply transformations to the original AST. Includes:
@@ -182,10 +182,10 @@ class Analysis():
 
         if MyCond:
             name = rw.KernelStringStream[0]['name']
-            func = tvisitor.EmptyFuncDecl(name, type = [])
+            func = ast_bb.EmptyFuncDecl(name, type = [])
             returnfunc1 = lan.Assignment(lan.Id('return'), func, op='')
             name = rw.KernelStringStream[1]['name']
-            func = tvisitor.EmptyFuncDecl(name, type = [])
+            func = ast_bb.EmptyFuncDecl(name, type = [])
             returnfunc2 = lan.Assignment(lan.Id('return'), func, op='')
             ifthenelse = lan.IfThenElse(MyCond, \
                         lan.Compound([returnfunc2]), lan.Compound([returnfunc1]))
@@ -194,6 +194,6 @@ class Analysis():
             rw.IfThenElse = ifthenelse
         else:
             name = rw.KernelStringStream[0]['name']
-            func = tvisitor.EmptyFuncDecl(name, type = [])
+            func = ast_bb.EmptyFuncDecl(name, type = [])
             returnfunc1 = lan.Assignment(lan.Id('return'), func, op='')
             rw.IfThenElse = returnfunc1

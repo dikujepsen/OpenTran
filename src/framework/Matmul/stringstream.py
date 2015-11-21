@@ -4,6 +4,7 @@ import lan
 import transf_repr
 import transf_visitor as tvisitor
 import cgen
+import ast_buildingblock as ast_bb
 
 debug = False
 
@@ -63,7 +64,7 @@ class SSGenerator(object):
             
         # Create the function where we generate the code for the
         # kernel function
-        kernelfunc = transf_repr.EmptyFuncDecl(kernelstringname, type = ['std::string'])
+        kernelfunc = ast_bb.EmptyFuncDecl(kernelstringname, type = ['std::string'])
         # insert the stringstream typeid
         self.statements.insert(0, lan.TypeId(['std::stringstream'], lan.Id('str')))
         kernelfunc.compound.statements = self.statements
