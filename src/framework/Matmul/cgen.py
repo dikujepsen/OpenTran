@@ -24,7 +24,7 @@ class CGenerator(object):
         self.inside_ArgList = False
         self.inside_Assignment = False
         
-    def create_temp(self, ast, filename ='temp.cpp'):
+    def print_ast(self, ast, filename ='temp.cpp'):
         code = self.visit(ast)
         currentdir = os.getcwd()
         fullFilename = currentdir + '/' + filename

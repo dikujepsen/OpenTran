@@ -68,7 +68,7 @@ def LexAndParse(name, createTemp):
         tempfilename = fileprefix + name + '/'+'temp' + name.lower() + '.cpp'
         if createTemp:
             rw.rewrite(ast, funcname, changeAST=True)
-            cprint.create_temp(ast, filename=tempfilename)
+            cprint.print_ast(ast, filename=tempfilename)
 
         run = 0
         filename = tempfilename
@@ -93,7 +93,7 @@ def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
         ## rw.InSourceKernel(tempast2, filename = fileprefix + name + '/'+funcname + '.cl', kernelstringname = kernelstringname)
         boilerplate = boilerplategen.Boilerplate()
         boilerast = boilerplate.generate_code(rw)
-        cprint.create_temp(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
+        cprint.print_ast(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
 
 
