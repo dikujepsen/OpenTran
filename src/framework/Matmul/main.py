@@ -8,7 +8,8 @@ import copy
 import ply.lex as lex
 import os
 import sys
-if "../.." not in sys.path: sys.path.insert(0,"../..")
+if "../.." not in sys.path:
+    sys.path.insert(0, "../..")
 # from framework.lan_parser import *
 # from framework.lan import *
 # import framework.lan
@@ -21,6 +22,8 @@ import analysis
 import ply.yacc as yacc
 import cgen
 import lan
+import boilerplategen
+
 
 fileprefix = "../../test/C/"
 SetNoReadBack = False
@@ -65,7 +68,7 @@ def LexAndParse(name, createTemp):
         tempfilename = fileprefix + name + '/'+'temp' + name.lower() + '.cpp'
         if createTemp:
             rw.rewrite(ast, funcname, changeAST=True)
-            cprint.createTemp(ast, filename=tempfilename)
+            cprint.create_temp(ast, filename=tempfilename)
 
         run = 0
         filename = tempfilename
@@ -88,8 +91,9 @@ def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
         rw = an.rw
         an.GenerateKernels(tempast2, name, fileprefix)
         ## rw.InSourceKernel(tempast2, filename = fileprefix + name + '/'+funcname + '.cl', kernelstringname = kernelstringname)
-        boilerast = rw.generateBoilerplateCode(ast)
-        cprint.createTemp(boilerast, filename=fileprefix + name + '/'+'boilerplate.cpp')
+        boilerplate = boilerplategen.Boilerplate()
+        boilerast = boilerplate.generate_code(rw)
+        cprint.create_temp(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
 
 

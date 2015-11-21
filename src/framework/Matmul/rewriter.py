@@ -2,19 +2,15 @@
 import lan
 
 
-
-
-
 class Rewriter(object):
-
 
     def __init__(self, astrepr):
         self.astrepr = astrepr
 
-
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
-        """ Rewrites a few things in the AST to increase the
-    	abstraction level.
+        """ Rewrites a few things in the AST, ast, to increase the
+            abstraction level.
+            :param ast: abstract syntax tree
         """
 
         typeid = lan.TypeId(['void'], lan.Id(functionname),ast.coord)

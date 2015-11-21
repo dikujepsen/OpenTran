@@ -4,6 +4,7 @@ import lan
 
 debug = False
 
+
 class CGenerator(object):
     """ Uses the same visitor pattern as the NodeVisitor, but modified to
         return a value from each visit method, using string accumulation in 
@@ -23,7 +24,7 @@ class CGenerator(object):
         self.inside_ArgList = False
         self.inside_Assignment = False
         
-    def createTemp(self, ast, filename = 'temp.cpp'):
+    def create_temp(self, ast, filename ='temp.cpp'):
         code = self.visit(ast)
         currentdir = os.getcwd()
         fullFilename = currentdir + '/' + filename
@@ -32,7 +33,7 @@ class CGenerator(object):
         except OSError:
             pass
         try:
-            fileobj =  open(fullFilename,'w')
+            fileobj = open(fullFilename,'w')
             fileobj.write(code)
             fileobj.close()
         except IOError:
