@@ -73,7 +73,7 @@ class SSGenerator(object):
         
         newast.ext = [kernelfunc]
         cprint = cgen.CGenerator()
-        cprint.print_ast(newast, filename = filename)
+        cprint.write_ast_to_file(newast, filename = filename)
             
             
 

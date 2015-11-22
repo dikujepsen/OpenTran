@@ -18,6 +18,7 @@ class AddToId(NodeVisitor):
                 return node
         else:
             return node
+
     def visit_BinOp(self, node):
         self.visit(node.lval)
         node.lval = self.changeIdNode(node.lval)

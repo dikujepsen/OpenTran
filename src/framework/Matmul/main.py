@@ -1,19 +1,9 @@
-##from rewriter import *
+
 from os.path import basename
 import copy
-##from lan_parser import *
-# from cgen import *
-# from transformation import *
-# from analysis import *
 import ply.lex as lex
 import os
 import sys
-if "../.." not in sys.path:
-    sys.path.insert(0, "../..")
-# from framework.lan_parser import *
-# from framework.lan import *
-# import framework.lan
-import framework
 import representation
 import rewriter
 import transf_repr
@@ -23,6 +13,8 @@ import ply.yacc as yacc
 import cgen
 import lan
 import boilerplategen
+if "../.." not in sys.path:
+    sys.path.insert(0, "../..")
 
 
 fileprefix = "../../test/C/"
@@ -35,72 +27,71 @@ def LexAndParse(name, createTemp):
     cparser = yacc.yacc(module=lan)
     lex.lex(module=lan)
 
-    run = 1
-    while run:
-        filename = fileprefix + name + '/' + name + 'For.cpp'
-        funcname = basename(os.path.splitext(filename)[0])
-        try:
-            f = open(filename, 'r')
-            s = f.read()
-            f.close()
-            ## print s
-        except EOFError:
-            break
+    filename = fileprefix + name + '/' + name + 'For.cpp'
+    funcname = basename(os.path.splitext(filename)[0])
+    try:
+        f = open(filename, 'r')
+        s = f.read()
+        f.close()
+        ## print s
+    except EOFError:
+        print('file %s wasn\'t found', filename)
+
+    lex.input(s)
+    while 1:
+        tok = lex.token()
+        if not tok: break
+        ## print tok
+
+    ast = cparser.parse(s)
+    # ast.show()
+    # print ast
+    ## print slist
+    cprint = cgen.CGenerator()
+
+    ## printres = cprint.visit(ast)
+    ## print printres
+    astrepr = representation.Representation()
+    astrepr.initOriginal(ast)
+    rw = rewriter.Rewriter(astrepr)
+    baseform_filename = fileprefix + name + '/baseform_' + name.lower() + '.cpp'
+    if createTemp:
+        rw.rewrite_to_baseform(ast, funcname, changeAST=True)
+        cprint.write_ast_to_file(ast, filename=baseform_filename)
+
+    filename = baseform_filename
+    try:
+        f = open(filename, 'r')
+        s = f.read()
+        f.close()
+    except EOFError:
+        print('file %s wasn\'t found', filename)
+
+    ast = cparser.parse(s)
+    ## ## ast.show()
+    tempast = copy.deepcopy(ast)
+    tempast2 = copy.deepcopy(ast)
+    return rw, tempast, tempast2, funcname
 
 
-        lex.input(s)
-        while 1:
-            tok = lex.token()
-            if not tok: break
-            ## print tok
-
-        ast = cparser.parse(s)
-        # ast.show()
-        # print ast
-        ## print slist
-        cprint = cgen.CGenerator()
-
-        ## printres = cprint.visit(ast)
-        ## print printres
-        astrepr = representation.Representation()
-        astrepr.initOriginal(ast)
-        rw = rewriter.Rewriter(astrepr)
-        tempfilename = fileprefix + name + '/'+'temp' + name.lower() + '.cpp'
-        if createTemp:
-            rw.rewrite(ast, funcname, changeAST=True)
-            cprint.print_ast(ast, filename=tempfilename)
-
-        run = 0
-        filename = tempfilename
-        ## funcname = basename(os.path.splitext(filename)[0])
-        try:
-            f = open(filename, 'r')
-            s = f.read()
-            f.close()
-        except EOFError:
-            break
-
-        ast = cparser.parse(s)
-        ## ## ast.show()
-        tempast = copy.deepcopy(ast)
-        tempast2 = copy.deepcopy(ast)
-        return (rw, ast, tempast, tempast2, funcname)
-
-def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
+def gen_full_code(name, an, tempast2):
         cprint = cgen.CGenerator()
         rw = an.rw
         an.GenerateKernels(tempast2, name, fileprefix)
-        ## rw.InSourceKernel(tempast2, filename = fileprefix + name + '/'+funcname + '.cl', kernelstringname = kernelstringname)
         boilerplate = boilerplategen.Boilerplate()
         boilerast = boilerplate.generate_code(rw)
-        cprint.print_ast(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
+        cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
 
 
 
 def matmul():
     name = 'MatMul'
-    (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
+    (rw, tempast, tempast2, funcname) = LexAndParse(name, True)
+    # astrepr = representation.Representation()
+    # astrepr.initOriginal(ast)
+    # rw = rewriter.Rewriter(astrepr)
+
     transf_rp = transf_repr.Transf_Repr(rw.astrepr)
     transf_rp.initNewRepr(tempast)
     tf = transformation.Transformation(transf_rp)
@@ -115,7 +106,7 @@ def matmul():
         tf.SetNoReadBack()
 
     ## rw.DataStructures()
-    CGen(name, funcname, an, tempast2, ast)
+    gen_full_code(name, an, tempast2)
 
 
 if __name__ == "__main__":
