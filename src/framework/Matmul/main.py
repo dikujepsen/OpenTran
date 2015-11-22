@@ -1,8 +1,6 @@
 
-from os.path import basename
 import copy
 import ply.lex as lex
-import os
 import sys
 import representation
 import rewriter
@@ -47,12 +45,18 @@ def __get_baseform_name(name):
     return fileprefix + name + '/baseform_' + name.lower() + '.cpp'
 
 
-def _create_baseform(name):
+def __get_init_rewriter(name):
     ast = get_init_ast(name)
-    cprint = cgen.CGenerator()
-
     astrepr = representation.Representation()
     astrepr.initOriginal(ast)
+    return rewriter.Rewriter(astrepr)
+
+
+def _create_baseform(name):
+    ast = get_init_ast(name)
+    astrepr = representation.Representation()
+    astrepr.initOriginal(ast)
+    cprint = cgen.CGenerator()
     rw = rewriter.Rewriter(astrepr)
     baseform_filename = __get_baseform_name(name)
     rw.rewrite_to_baseform(ast, name + 'For', changeAST=True)
@@ -61,10 +65,7 @@ def _create_baseform(name):
 
 def lex_and_parse(name):
 
-    ast_init = get_init_ast(name)
-    astrepr = representation.Representation()
-    astrepr.initOriginal(ast_init)
-    rw = rewriter.Rewriter(astrepr)
+    rw = __get_init_rewriter(name)
 
     filename = __get_baseform_name(name)
     try:
@@ -96,9 +97,6 @@ def matmul():
     if True:
         _create_baseform(name)
     (rw, tempast, tempast2) = lex_and_parse(name)
-    # astrepr = representation.Representation()
-    # astrepr.initOriginal(ast)
-    # rw = rewriter.Rewriter(astrepr)
 
     transf_rp = transf_repr.Transf_Repr(rw.astrepr)
     transf_rp.initNewRepr(tempast)
