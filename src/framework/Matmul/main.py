@@ -21,19 +21,15 @@ fileprefix = "../../test/C/"
 SetNoReadBack = False
 DoOptimizations = True
 
-
-def LexAndParse(name, createTemp):
-
+def get_init_ast(name):
     cparser = yacc.yacc(module=lan)
     lex.lex(module=lan)
 
     filename = fileprefix + name + '/' + name + 'For.cpp'
-    funcname = basename(os.path.splitext(filename)[0])
     try:
         f = open(filename, 'r')
         s = f.read()
         f.close()
-        ## print s
     except EOFError:
         print('file %s wasn\'t found', filename)
 
@@ -44,22 +40,33 @@ def LexAndParse(name, createTemp):
         ## print tok
 
     ast = cparser.parse(s)
-    # ast.show()
-    # print ast
-    ## print slist
+    return ast
+
+
+def __get_baseform_name(name):
+    return fileprefix + name + '/baseform_' + name.lower() + '.cpp'
+
+
+def _create_baseform(name):
+    ast = get_init_ast(name)
     cprint = cgen.CGenerator()
 
-    ## printres = cprint.visit(ast)
-    ## print printres
     astrepr = representation.Representation()
     astrepr.initOriginal(ast)
     rw = rewriter.Rewriter(astrepr)
-    baseform_filename = fileprefix + name + '/baseform_' + name.lower() + '.cpp'
-    if createTemp:
-        rw.rewrite_to_baseform(ast, funcname, changeAST=True)
-        cprint.write_ast_to_file(ast, filename=baseform_filename)
+    baseform_filename = __get_baseform_name(name)
+    rw.rewrite_to_baseform(ast, name + 'For', changeAST=True)
+    cprint.write_ast_to_file(ast, filename=baseform_filename)
 
-    filename = baseform_filename
+
+def lex_and_parse(name):
+
+    ast_init = get_init_ast(name)
+    astrepr = representation.Representation()
+    astrepr.initOriginal(ast_init)
+    rw = rewriter.Rewriter(astrepr)
+
+    filename = __get_baseform_name(name)
     try:
         f = open(filename, 'r')
         s = f.read()
@@ -67,11 +74,12 @@ def LexAndParse(name, createTemp):
     except EOFError:
         print('file %s wasn\'t found', filename)
 
+    cparser = yacc.yacc(module=lan)
     ast = cparser.parse(s)
-    ## ## ast.show()
+
     tempast = copy.deepcopy(ast)
     tempast2 = copy.deepcopy(ast)
-    return rw, tempast, tempast2, funcname
+    return rw, tempast, tempast2
 
 
 def gen_full_code(name, an, tempast2):
@@ -83,11 +91,11 @@ def gen_full_code(name, an, tempast2):
         cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
 
-
-
 def matmul():
     name = 'MatMul'
-    (rw, tempast, tempast2, funcname) = LexAndParse(name, True)
+    if True:
+        _create_baseform(name)
+    (rw, tempast, tempast2) = lex_and_parse(name)
     # astrepr = representation.Representation()
     # astrepr.initOriginal(ast)
     # rw = rewriter.Rewriter(astrepr)
