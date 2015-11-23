@@ -11,15 +11,13 @@ import ply.yacc as yacc
 import cgen
 import lan
 import boilerplategen
-if "../.." not in sys.path:
-    sys.path.insert(0, "../..")
 
 
 fileprefix = "../../test/C/"
 SetNoReadBack = False
 DoOptimizations = True
 
-def get_init_ast(name):
+def __get_ast_from_file(name):
     cparser = yacc.yacc(module=lan)
     lex.lex(module=lan)
 
@@ -46,20 +44,21 @@ def __get_baseform_name(name):
 
 
 def __get_init_rewriter(name):
-    ast = get_init_ast(name)
+    ast = __get_ast_from_file(name)
     astrepr = representation.Representation()
-    astrepr.initOriginal(ast)
+    astrepr.init_original(ast)
     return rewriter.Rewriter(astrepr)
 
 
 def _create_baseform(name):
-    ast = get_init_ast(name)
+    ast = __get_ast_from_file(name)
     astrepr = representation.Representation()
-    astrepr.initOriginal(ast)
-    cprint = cgen.CGenerator()
-    rw = rewriter.Rewriter(astrepr)
+    astrepr.normalize_subcript(ast)
+
+    rw = __get_init_rewriter(name)
     baseform_filename = __get_baseform_name(name)
-    rw.rewrite_to_baseform(ast, name + 'For', changeAST=True)
+    rw.rewrite_to_baseform(ast, name + 'For', change_ast=True)
+    cprint = cgen.CGenerator()
     cprint.write_ast_to_file(ast, filename=baseform_filename)
 
 
@@ -74,6 +73,7 @@ def lex_and_parse(name):
         f.close()
     except EOFError:
         print('file %s wasn\'t found', filename)
+        raise EOFError
 
     cparser = yacc.yacc(module=lan)
     ast = cparser.parse(s)

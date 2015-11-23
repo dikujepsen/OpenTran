@@ -45,7 +45,8 @@ class SnippetGen(object):
 
 
         MyKernel = copy.deepcopy(self.astrepr.Kernel)
-        rewriteArrayRef = transf_visitor.RewriteArrayRef(initrepr.NumDims, self.astrepr.ArrayIdToDimName, self.astrepr)
+        rewriteArrayRef = transf_visitor.RewriteArrayRef(initrepr.num_array_dims,
+                                                         self.astrepr.ArrayIdToDimName, self.astrepr)
         rewriteArrayRef.visit(MyKernel)
 
 

@@ -168,7 +168,7 @@ class Transf_Repr(NodeVisitor):
             self.InsideKernel = firstLoop.ast
 
 
-        arrays = Arrays(self.astrepr.index)
+        arrays = Arrays(self.astrepr.loop_index)
         
         arrays.visit(innerbody.compound)
 
@@ -281,7 +281,7 @@ class Transf_Repr(NodeVisitor):
         self.ConstantMemory = GroupCompound([Comment('// Constant Memory')])
         self.Define = GroupCompound([Comment('// Defines for the kernel')])
 
-        arrays = Arrays(self.astrepr.index)
+        arrays = Arrays(self.astrepr.loop_index)
         arrays.visit(ast)
         self.Subscript = arrays.Subscript
         self.SubIdx = arrays.SubIdx

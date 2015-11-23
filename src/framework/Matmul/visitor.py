@@ -163,25 +163,22 @@ class Norm(NodeVisitor):
         self.subscript = dict()
         self.count = 0
         self.indices = indices
+
     def visit_ArrayRef(self, node):
         if len(node.subscript) == 1:
-            numBinOps = _NumBinOps()
+            num_binops = _NumBinOps()
             binop = node.subscript[0]
-            numBinOps.visit(binop)
-            if len(numBinOps.ops) == 2:
-                if '+' in numBinOps.ops and '*' in numBinOps.ops:
+            num_binops.visit(binop)
+            if len(num_binops.ops) == 2:
+                if '+' in num_binops.ops and '*' in num_binops.ops:
 
                     if not isinstance(binop.lval, BinOp):
                         (binop.lval, binop.rval) = (binop.rval, binop.lval)
-                    twoIndices = _NumIndices(2, self.indices)
-                    ## twoIndices.visit(binop.lval)
-                    ## twoIndices.reset()
-                    ## twoIndices.visit(binop.rval)
-                    twoIndices.visit(binop)
-                    if twoIndices.yes:
+                    two_indices = _NumIndices(2, self.indices)
+                    two_indices.visit(binop)
+                    if two_indices.yes:
                         if binop.lval.lval.name not in self.indices:
                             (binop.lval.lval.name, binop.lval.rval.name) = \
-                            (binop.lval.rval.name, binop.lval.lval.name)
+                                (binop.lval.rval.name, binop.lval.lval.name)
                         # convert to 2D
-                        node.subscript = [Id(binop.lval.lval.name,node.coord),\
-                                          binop.rval]
+                        node.subscript = [Id(binop.lval.lval.name, node.coord), binop.rval]

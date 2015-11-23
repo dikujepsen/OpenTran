@@ -12,16 +12,15 @@ class Representation(visitor.NodeVisitor):
     6. Creating the host code (boilerplate code) 
     """
 
-    
     def __init__(self):
         # List of loop indices
-        self.index = list()
+        self.loop_index = list()
         # dict of the upper limit of the loop indices
         self.UpperLimit = dict()
         # dict of the lower limit of the loop indices
         self.LowerLimit = dict()
         # The number of dimensions of each array
-        self.NumDims = dict()
+        self.num_array_dims = dict()
         # The Ids of arrays, or pointers
         self.ArrayIds = set()
         # The indices that appear in the subscript of each array
@@ -33,20 +32,25 @@ class Representation(visitor.NodeVisitor):
         # Holds includes for the kernel
         self.Includes = list()
 
-        
-    def initOriginal(self, ast):
+    def __detect_loop_index(self, ast):
         loops = visitor.ForLoops()
         loops.visit(ast)
-        forLoopAst = loops.ast
-        loopIndices = visitor.LoopIndices()
-        loopIndices.visit(forLoopAst)
-        self.index = loopIndices.index
-        self.UpperLimit = loopIndices.end
-        self.LowerLimit = loopIndices.start
+        self.for_loop_ast = loops.ast
+        loop_indices = visitor.LoopIndices()
+        loop_indices.visit(self.for_loop_ast)
+        self.loop_index = loop_indices.index
+        self.UpperLimit = loop_indices.end
+        self.LowerLimit = loop_indices.start
 
-        norm = visitor.Norm(self.index)
-        norm.visit(forLoopAst)
-        arrays = visitor.Arrays(self.index)
+    def normalize_subcript(self, ast):
+        self.__detect_loop_index(ast)
+        norm = visitor.Norm(self.loop_index)
+        norm.visit(self.for_loop_ast)
+
+    def init_original(self, ast):
+
+        self.normalize_subcript(ast)
+        arrays = visitor.Arrays(self.loop_index)
         arrays.visit(ast)
 
         for n in arrays.numIndices:
@@ -55,33 +59,31 @@ class Representation(visitor.NodeVisitor):
             elif arrays.numIndices[n] > 2:
                 arrays.numSubscripts[n] = 1
             
-        self.NumDims = arrays.numSubscripts
+        self.num_array_dims = arrays.numSubscripts
         self.IndexInSubscript = arrays.indexIds
-        typeIds = visitor.TypeIds()
-        typeIds.visit(loops.ast)
+        type_ids = visitor.TypeIds()
+        type_ids.visit(self.for_loop_ast)
 
-        
-        typeIds2 = visitor.TypeIds()
-        typeIds2.visit(ast)
-        for n in typeIds.ids:
-            typeIds2.dictIds.pop(n)
-        self.Type = typeIds2.dictIds
+        type_ids2 = visitor.TypeIds()
+        type_ids2.visit(ast)
+        for n in type_ids.ids:
+            type_ids2.dictIds.pop(n)
+        self.Type = type_ids2.dictIds
         ids = visitor.Ids()
         ids.visit(ast)
 
         # print "typeIds.ids ", typeIds.ids
         # print "arrays.ids ", arrays.ids
         # print "ids.ids ", ids.ids
-        otherIds = ids.ids - arrays.ids - typeIds.ids
-        self.ArrayIds = arrays.ids - typeIds.ids
-        self.NonArrayIds = otherIds
+        other_ids = ids.ids - arrays.ids - type_ids.ids
+        self.ArrayIds = arrays.ids - type_ids.ids
+        self.NonArrayIds = other_ids
 
-
-    def DataStructures(self):
-        print "self.index ", self.index
+    def data_structures(self):
+        print "self.index ", self.loop_index
         print "self.UpperLimit ", self.UpperLimit
         print "self.LowerLimit ", self.LowerLimit
-        print "self.NumDims ", self.NumDims
+        print "self.NumDims ", self.num_array_dims
         print "self.ArrayIds ", self.ArrayIds
         print "self.IndexInSubscript ", self.IndexInSubscript
         print "self.NonArrayIds ", self.NonArrayIds
