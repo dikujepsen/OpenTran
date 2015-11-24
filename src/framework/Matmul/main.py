@@ -1,4 +1,3 @@
-
 import copy
 import ply.lex as lex
 import sys
@@ -12,22 +11,22 @@ import cgen
 import lan
 import boilerplategen
 
-
 fileprefix = "../../test/C/"
 SetNoReadBack = False
 DoOptimizations = True
 
-def __get_ast_from_file(name):
+
+def __get_ast_from_file(foldername, filename):
     cparser = yacc.yacc(module=lan)
     lex.lex(module=lan)
 
-    filename = fileprefix + name + '/' + name + 'For.cpp'
+    fullfilename = fileprefix + foldername + '/' + filename
     try:
-        f = open(filename, 'r')
+        f = open(fullfilename, 'r')
         s = f.read()
         f.close()
     except EOFError:
-        print('file %s wasn\'t found', filename)
+        print('file %s wasn\'t found', fullfilename)
 
     lex.input(s)
     while 1:
@@ -40,63 +39,52 @@ def __get_ast_from_file(name):
 
 
 def __get_baseform_name(name):
-    return fileprefix + name + '/baseform_' + name.lower() + '.cpp'
+    return fileprefix + name + '/' + __get_baseform_filename(name)
 
 
-def __get_init_rewriter(name):
-    ast = __get_ast_from_file(name)
-    astrepr = representation.Representation()
-    astrepr.init_original(ast)
-    return rewriter.Rewriter(astrepr)
+def __get_baseform_filename(name):
+    return 'baseform_' + name.lower() + '.cpp'
 
 
 def _create_baseform(name):
-    ast = __get_ast_from_file(name)
-    astrepr = representation.Representation()
-    astrepr.normalize_subcript(ast)
-
-    rw = __get_init_rewriter(name)
-    baseform_filename = __get_baseform_name(name)
-    rw.rewrite_to_baseform(ast, name + 'For', change_ast=True)
+    rw, ast = __get_ast_from_init(name)
     cprint = cgen.CGenerator()
+    baseform_filename = __get_baseform_name(name)
     cprint.write_ast_to_file(ast, filename=baseform_filename)
 
 
-def lex_and_parse(name):
+def __get_ast_from_init(name):
+    ast = __get_ast_from_file(name, name + 'For.cpp')
+    astrepr = representation.Representation()
+    astrepr.init_original(ast)
+    rw = rewriter.Rewriter(astrepr)
+    rw.rewrite_to_baseform(ast, name + 'For')
+    return rw, ast
 
-    rw = __get_init_rewriter(name)
 
-    filename = __get_baseform_name(name)
-    try:
-        f = open(filename, 'r')
-        s = f.read()
-        f.close()
-    except EOFError:
-        print('file %s wasn\'t found', filename)
-        raise EOFError
-
-    cparser = yacc.yacc(module=lan)
-    ast = cparser.parse(s)
-
-    tempast = copy.deepcopy(ast)
-    tempast2 = copy.deepcopy(ast)
-    return rw, tempast, tempast2
+def __get_ast_from_base(name):
+    ast = __get_ast_from_file(name, __get_baseform_filename(name))
+    rw, _ = __get_ast_from_init(name)
+    return rw, ast
 
 
 def gen_full_code(name, an, tempast2):
-        cprint = cgen.CGenerator()
-        rw = an.rw
-        an.GenerateKernels(tempast2, name, fileprefix)
-        boilerplate = boilerplategen.Boilerplate()
-        boilerast = boilerplate.generate_code(rw)
-        cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
+    cprint = cgen.CGenerator()
+    rw = an.rw
+    an.GenerateKernels(tempast2, name, fileprefix)
+    boilerplate = boilerplategen.Boilerplate()
+    boilerast = boilerplate.generate_code(rw)
+    cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
 
 def matmul():
     name = 'MatMul'
-    if True:
-        _create_baseform(name)
-    (rw, tempast, tempast2) = lex_and_parse(name)
+    if False:
+        rw, ast = __get_ast_from_init(name)
+    else:
+        rw, ast = __get_ast_from_base(name)
+    tempast = copy.deepcopy(ast)
+    tempast2 = copy.deepcopy(ast)
 
     transf_rp = transf_repr.Transf_Repr(rw.astrepr)
     transf_rp.initNewRepr(tempast)
@@ -117,4 +105,3 @@ def matmul():
 
 if __name__ == "__main__":
     matmul()
-
