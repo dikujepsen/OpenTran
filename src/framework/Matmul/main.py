@@ -86,8 +86,8 @@ def matmul():
     tempast = copy.deepcopy(ast)
     tempast2 = copy.deepcopy(ast)
 
-    transf_rp = transf_repr.Transf_Repr(rw.astrepr)
-    transf_rp.initNewRepr(tempast)
+    transf_rp = transf_repr.TransfRepr(rw.astrepr)
+    transf_rp.init_rew_repr(tempast)
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)

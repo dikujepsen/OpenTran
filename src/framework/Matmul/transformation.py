@@ -292,7 +292,7 @@ class Transformation():
             localName = n + '_local'
             arrayinit = '['
             arrayinit += rw.Local['size'][0]
-            if rw.NumDims[n] == 2 and rw.ParDim == 2:
+            if rw.astrepr.num_array_dims[n] == 2 and rw.ParDim == 2:
                 arrayinit += '*' + rw.Local['size'][1]
             arrayinit += ']'
             
@@ -304,7 +304,7 @@ class Transformation():
         for n in arrDict:
             loc_name = n+'_local'
             for i in arrDict[n]:
-                glob_subs = copy.deepcopy(rw.LoopArrays[n][i])
+                glob_subs = copy.deepcopy(rw.astrepr.LoopArrays[n][i])
                 # Change loop idx to local idx
                 loopname = loopDict[(n,i)][0]
                 loc_subs = copy.deepcopy(glob_subs).subscript
@@ -326,7 +326,7 @@ class Transformation():
                     exchangeId = tvisitor.ExchangeId({rw.GridIndices[0]: 'get_local_id(0)'})
                 exchangeId.visit(loc_ref)
 
-                inner_loc = rw.LoopArrays[n][i]
+                inner_loc = rw.astrepr.LoopArrays[n][i]
                 inner_loc.name.name = loc_name
                 exchangeId2 = tvisitor.ExchangeId({loopname : loopname*2})
                 exchangeId2.visit(inner_loc)
@@ -334,7 +334,7 @@ class Transformation():
 
 
             rw.ArrayIdToDimName[loc_name] = rw.Local['size']
-            rw.NumDims[loc_name] = rw.NumDims[n]
+            rw.astrepr.num_array_dims[loc_name] = rw.astrepr.num_array_dims[n]
         # Must also create the barrier
         arglist = lan.ArgList([lan.Id('CLK_LOCAL_MEM_FENCE')])
         func = ast_bb.EmptyFuncDecl('barrier', type=[])

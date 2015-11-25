@@ -1,7 +1,7 @@
-
 from Matmul.transf_visitor import *
 
-class Transf_Repr(NodeVisitor):
+
+class TransfRepr(NodeVisitor):
     """ Class for rewriting of the original AST. Includes:
     1. the initial small rewritings,
     2. transformation into our representation,
@@ -11,7 +11,6 @@ class Transf_Repr(NodeVisitor):
     6. Creating the host code (boilerplate code) 
     """
 
-    
     def __init__(self, astrepr):
         # Original repr
         self.astrepr = astrepr
@@ -133,129 +132,117 @@ class Transf_Repr(NodeVisitor):
         self.DefinesAreMade = False
         # List of what kernel arguments changes
         self.Change = list()
-
+        self.ReverseIdx = dict()
         self.IfThenElse = None
 
+    def init_rew_repr(self, ast, dev='GPU'):
 
-    def initNewRepr(self, ast, dev = 'GPU'):
+        perfect_for_loop = PerfectForLoop()
+        perfect_for_loop.visit(ast)
 
-        perfectForLoop = PerfectForLoop()
-        perfectForLoop.visit(ast)
-        
         if self.ParDim is None:
-            self.ParDim = perfectForLoop.depth
+            self.ParDim = perfect_for_loop.depth
 
         if self.ParDim == 1:
             self.Local['size'] = ['256']
             if dev == 'CPU':
                 self.Local['size'] = ['16']
         else:
-            self.Local['size'] = ['16','16']
+            self.Local['size'] = ['16', '16']
             if dev == 'CPU':
-                self.Local['size'] = ['4','4']
-        
-            
-        innerbody = perfectForLoop.inner
-        if perfectForLoop.depth == 2 and self.ParDim == 1:
-            innerbody = perfectForLoop.outer
+                self.Local['size'] = ['4', '4']
+
+        innerbody = perfect_for_loop.inner
+        if perfect_for_loop.depth == 2 and self.ParDim == 1:
+            innerbody = perfect_for_loop.outer
         firstLoop = ForLoops()
-        
+
         firstLoop.visit(innerbody.compound)
-        loopIndices = LoopIndices()
+        loop_indices = LoopIndices()
         if firstLoop.ast is not None:
-            loopIndices.visit(innerbody.compound)
-            self.Loops = loopIndices.Loops        
+            loop_indices.visit(innerbody.compound)
+            self.Loops = loop_indices.Loops
             self.InsideKernel = firstLoop.ast
 
-
         arrays = Arrays(self.astrepr.loop_index)
-        
         arrays.visit(innerbody.compound)
 
-        self.NumDims = arrays.numSubscripts
-        self.LoopArrays = arrays.LoopArrays
-        
-        initIds = InitIds()
-        initIds.visit(perfectForLoop.ast.init)
-        gridIds = list()
-        idMap = dict()
-        localMap = dict()
-        localVarMap = dict()
-        firstIdx = initIds.index[0]
-        idMap[firstIdx] = 'get_global_id(0)'
-        localMap[firstIdx] = 'get_local_id(0)'
-        localVarMap[firstIdx] = 'l' + firstIdx
+        self.astrepr.num_array_dims = arrays.numSubscripts
+        self.astrepr.LoopArrays = arrays.LoopArrays
+
+        init_ids = InitIds()
+        init_ids.visit(perfect_for_loop.ast.init)
+
+        grid_ids = list()
+        id_map = dict()
+        local_map = dict()
+        local_var_map = dict()
+        first_idx = init_ids.index[0]
+        id_map[first_idx] = 'get_global_id(0)'
+        local_map[first_idx] = 'get_local_id(0)'
+        local_var_map[first_idx] = 'l' + first_idx
         self.ReverseIdx = dict()
         self.ReverseIdx[0] = 1
-        gridIds.extend(initIds.index)
-        kernel = perfectForLoop.ast.compound
         self.ReverseIdx[1] = 0
+        grid_ids.extend(init_ids.index)
+        kernel = perfect_for_loop.ast.compound
         if self.ParDim == 2:
-            initIds = InitIds()
-            initIds.visit(kernel.statements[0].init)
+            init_ids = InitIds()
+            init_ids.visit(kernel.statements[0].init)
             kernel = kernel.statements[0].compound
-            secondIdx = initIds.index[0]
-            idMap[secondIdx] = 'get_global_id(1)'
-            localMap[secondIdx] = 'get_local_id(1)'
-            localVarMap[secondIdx] = 'l' + secondIdx
-            gridIds.extend(initIds.index)
-            (idMap[gridIds[0]], idMap[gridIds[1]]) = (idMap[gridIds[1]], idMap[gridIds[0]])
-            (localMap[gridIds[0]], localMap[gridIds[1]]) = (localMap[gridIds[1]], localMap[gridIds[0]])
-            ## (localVarMap[gridIds[0]], localVarMap[gridIds[1]]) = (localVarMap[gridIds[1]], localVarMap[gridIds[0]])
+            second_idx = init_ids.index[0]
+            id_map[second_idx] = 'get_global_id(1)'
+            local_map[second_idx] = 'get_local_id(1)'
+            local_var_map[second_idx] = 'l' + second_idx
+            grid_ids.extend(init_ids.index)
+            (id_map[grid_ids[0]], id_map[grid_ids[1]]) = (id_map[grid_ids[1]], id_map[grid_ids[0]])
+            (local_map[grid_ids[0]], local_map[grid_ids[1]]) = (local_map[grid_ids[1]], local_map[grid_ids[0]])
 
-        self.IndexToLocalId = localMap
-        self.IndexToLocalVar = localVarMap
-        self.IndexToThreadId = idMap
-        self.GridIndices = gridIds
+        self.IndexToLocalId = local_map
+        self.IndexToLocalVar = local_var_map
+        self.IndexToThreadId = id_map
+        self.GridIndices = grid_ids
         self.Kernel = kernel
         for i, n in enumerate(reversed(self.GridIndices)):
             self.IdxToDim[i] = n
-            
 
-        findDim = FindDim(self.NumDims)
-        findDim.visit(ast)
-        self.ArrayIdToDimName = findDim.dimNames
-        
+        find_dim = FindDim(self.astrepr.num_array_dims)
+        find_dim.visit(ast)
+        self.ArrayIdToDimName = find_dim.dimNames
+
         self.RemovedIds = set(self.astrepr.UpperLimit[i] for i in self.GridIndices)
 
-        idsStillInKernel = Ids()
-        idsStillInKernel.visit(self.Kernel)
-        self.RemovedIds = self.RemovedIds - idsStillInKernel.ids
+        ids_still_in_kernel = Ids()
+        ids_still_in_kernel.visit(self.Kernel)
+        self.RemovedIds = self.RemovedIds - ids_still_in_kernel.ids
 
-        otherIds = self.astrepr.ArrayIds.union(self.astrepr.NonArrayIds)
-        findDeviceArgs = FindDeviceArgs(otherIds)
-        findDeviceArgs.visit(ast)
-        self.DevArgList = findDeviceArgs.arglist
-        findFunction = FindFunction()
-        findFunction.visit(ast)
-        self.DevFuncTypeId = findFunction.typeid
+        other_ids = self.astrepr.ArrayIds.union(self.astrepr.NonArrayIds)
+        find_device_args = FindDeviceArgs(other_ids)
+        find_device_args.visit(ast)
+        self.DevArgList = find_device_args.arglist
+        find_function = FindFunction()
+        find_function.visit(ast)
+        self.DevFuncTypeId = find_function.typeid
         self.DevFuncId = self.DevFuncTypeId.name.name
 
         for n in self.astrepr.ArrayIds:
             self.DevId[n] = 'dev_ptr' + n
             self.HstId[n] = 'hst_ptr' + n
             self.Mem[n] = 'hst_ptr' + n + '_mem_size'
-            
-        ## for n in self.DevArgList:
-        ##     name = n.name.name
-        ##     type = n.type[-2:]
-        ##     self.Type[name] = type
 
-            
         for n in self.ArrayIdToDimName:
             for m in self.ArrayIdToDimName[n]:
                 self.Type[m] = ['size_t']
-            
-            
-        kernelName = self.DevFuncTypeId.name.name
-        
-        self.KernelName = kernelName + 'Kernel'
-        self.Worksize['local'] = kernelName + '_local_worksize'
-        self.Worksize['global'] = kernelName + '_global_worksize'
-        self.Worksize['offset'] = kernelName + '_global_offset'
-        findReadWrite = FindReadWrite(self.astrepr.ArrayIds)
-        findReadWrite.visit(ast)
-        self.ReadWrite = findReadWrite.ReadWrite
+
+        kernel_name = self.DevFuncTypeId.name.name
+
+        self.KernelName = kernel_name + 'Kernel'
+        self.Worksize['local'] = kernel_name + '_local_worksize'
+        self.Worksize['global'] = kernel_name + '_global_worksize'
+        self.Worksize['offset'] = kernel_name + '_global_offset'
+        find_read_write = FindReadWrite(self.astrepr.ArrayIds)
+        find_read_write.visit(ast)
+        self.ReadWrite = find_read_write.ReadWrite
 
         for n in self.ReadWrite:
             pset = self.ReadWrite[n]
@@ -265,12 +252,12 @@ class Transf_Repr(NodeVisitor):
                 else:
                     self.ReadOnly.append(n)
 
-        argIds = self.astrepr.NonArrayIds.union(self.astrepr.ArrayIds) - self.RemovedIds
+        arg_ids = self.astrepr.NonArrayIds.union(self.astrepr.ArrayIds) - self.RemovedIds
 
-        for n in argIds:
+        for n in arg_ids:
             tmplist = [n]
             try:
-                if self.NumDims[n] == 2:
+                if self.astrepr.num_array_dims[n] == 2:
                     tmplist.append(self.ArrayIdToDimName[n][0])
             except KeyError:
                 pass
@@ -288,7 +275,7 @@ class Transf_Repr(NodeVisitor):
         self.SubscriptNoId = copy.deepcopy(self.Subscript)
         for n in self.SubscriptNoId.values():
             for m in n:
-                for i,k in enumerate(m):
+                for i, k in enumerate(m):
                     try:
                         m[i] = k.name
                     except AttributeError:
@@ -297,51 +284,38 @@ class Transf_Repr(NodeVisitor):
                         except AttributeError:
                             m[i] = 'unknown'
 
+        ref_to_loop = RefToLoop(self.GridIndices)
+        ref_to_loop.visit(ast)
+        self.RefToLoop = ref_to_loop.RefToLoop
 
-        refToLoop = RefToLoop(self.GridIndices)
-        refToLoop.visit(ast)
-        self.RefToLoop = refToLoop.RefToLoop
-        
-    def DataStructures(self):
-        print "self.index " , self.index
-        print "self.UpperLimit " , self.UpperLimit
-        print "self.LowerLimit " , self.LowerLimit
-        print "self.NumDims " , self.NumDims
-        print "self.ArrayIds " , self.ArrayIds
-        print "self.IndexInSubscript " , self.IndexInSubscript
-        print "self.NonArrayIds " , self.NonArrayIds
-        print "self.RemovedIds " , self.RemovedIds
-        print "self.IndexToThreadId " , self.IndexToThreadId
-        print "self.IndexToLocalId " , self.IndexToLocalId
-        print "self.IndexToLocalVar " , self.IndexToLocalVar
-        print "self.ReverseIdx ", self.ReverseIdx
-        print "self.GridIndices " , self.GridIndices
-        ## print "self.Kernel " , self.Kernel
-        print "self.ArrayIdToDimName " , self.ArrayIdToDimName
-        print "self.DevArgList " , self.DevArgList
-        print "self.DevFuncTypeId " , self.DevFuncTypeId
-        print "self.DevId " , self.DevId
-        print "self.HstId " , self.HstId
-        print "self.Type " , self.Type
-        print "self.Mem " , self.Mem
-        print "self.ParDim " , self.ParDim
-        print "self.Worksize " , self.Worksize
-        print "self.IdxToDim " , self.IdxToDim
-        print "self.WriteOnly " , self.WriteOnly
-        print "self.ReadOnly " , self.ReadOnly
-        print "self.Subscript " , self.Subscript
-        print "self.SubscriptNoId " , self.SubscriptNoId
+    def data_structures(self):
+        print "self.RemovedIds ", self.RemovedIds
+        print "self.IndexToThreadId ", self.IndexToThreadId
+        print "self.IndexToLocalId ", self.IndexToLocalId
+        print "self.IndexToLocalVar ", self.IndexToLocalVar
+        print "self.GridIndices ", self.GridIndices
+        print "self.ArrayIdToDimName ", self.ArrayIdToDimName
+        print "self.DevArgList ", self.DevArgList
+        print "self.DevFuncTypeId ", self.DevFuncTypeId
+        print "self.DevId ", self.DevId
+        print "self.HstId ", self.HstId
+        print "self.Type ", self.Type
+        print "self.Mem ", self.Mem
+        print "self.ParDim ", self.ParDim
+        print "self.Worksize ", self.Worksize
+        print "self.IdxToDim ", self.IdxToDim
+        print "self.WriteOnly ", self.WriteOnly
+        print "self.ReadOnly ", self.ReadOnly
+        print "self.Subscript ", self.Subscript
+        print "self.SubscriptNoId ", self.SubscriptNoId
         print "TRANSFORMATIONS"
-        print "self.Transposition " , self.Transposition
-        print "self.ConstantMemory " , self.ConstantMemory
-        print "self.KernelArgs " , self.KernelArgs
-        print "self.NameSwap " , self.NameSwap
-        print "self.LocalSwap " , self.LocalSwap
-        print "self.LoopArrays " , self.LoopArrays
+        print "self.Transposition ", self.Transposition
+        print "self.ConstantMemory ", self.ConstantMemory
+        print "self.KernelArgs ", self.KernelArgs
+        print "self.NameSwap ", self.NameSwap
+        print "self.LocalSwap ", self.LocalSwap
         print "self.Add ", self.Add
         print "self.GlobalVars ", self.GlobalVars
-        print "self.ConstantMem " , self.ConstantMem
-        print "self.Loops " , self.Loops
+        print "self.ConstantMem ", self.ConstantMem
+        print "self.Loops ", self.Loops
         print "self.RefToLoop ", self.RefToLoop
-
-

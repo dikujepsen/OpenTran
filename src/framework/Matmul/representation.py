@@ -31,6 +31,7 @@ class Representation(visitor.NodeVisitor):
         self.Type = dict()
         # Holds includes for the kernel
         self.Includes = list()
+        self.LoopArrays = dict()
 
     def __detect_loop_index(self, ast):
         loops = visitor.ForLoops()
@@ -60,6 +61,7 @@ class Representation(visitor.NodeVisitor):
                 arrays.numSubscripts[n] = 1
             
         self.num_array_dims = arrays.numSubscripts
+
         self.IndexInSubscript = arrays.indexIds
         type_ids = visitor.TypeIds()
         type_ids.visit(self.for_loop_ast)

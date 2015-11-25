@@ -265,7 +265,7 @@ class RewriteArrayRef(NodeVisitor):
     def visit_ArrayRef(self, node):
         n = node.name.name
         try:
-            if self.data.NumDims[n] == 2 and len(node.subscript) == 2:
+            if self.data.astrepr.num_array_dims[n] == 2 and len(node.subscript) == 2:
                 try:
                     if self.data.SubSwap[n]:
                         (node.subscript[0], node.subscript[1]) = \

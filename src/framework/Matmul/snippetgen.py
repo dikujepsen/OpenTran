@@ -39,7 +39,7 @@ class SnippetGen(object):
 
         exchangeArrayId = transf_visitor.ExchangeArrayId(self.astrepr.LocalSwap)
 
-        for n in self.astrepr.LoopArrays.values():
+        for n in initrepr.LoopArrays.values():
             for m in n:
                 exchangeArrayId.visit(m)
 
