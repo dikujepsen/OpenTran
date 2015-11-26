@@ -409,7 +409,7 @@ class Rewriter(NodeVisitor):
         
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
-    	abstraction level.
+            abstraction level.
         """
 
         typeid = TypeId(['void'], Id(functionname),ast.coord)

@@ -82,8 +82,6 @@ class TransfRepr(NodeVisitor):
         self.WriteTranspose = list()
         # A mapping from array references to the loops they appear in.
         self.RefToLoop = dict()
-        # List of arguments for the kernel
-        ## self.KernelArgs = list()
         ########################################################
         # Datastructures used when performing transformations  #
         ########################################################
@@ -131,7 +129,6 @@ class TransfRepr(NodeVisitor):
         # True is SetDefine were called.
         self.DefinesAreMade = False
         # List of what kernel arguments changes
-        self.Change = list()
         self.ReverseIdx = dict()
         self.IfThenElse = None
 
@@ -155,14 +152,14 @@ class TransfRepr(NodeVisitor):
         innerbody = perfect_for_loop.inner
         if perfect_for_loop.depth == 2 and self.ParDim == 1:
             innerbody = perfect_for_loop.outer
-        firstLoop = ForLoops()
+        first_loop = ForLoops()
 
-        firstLoop.visit(innerbody.compound)
+        first_loop.visit(innerbody.compound)
         loop_indices = LoopIndices()
-        if firstLoop.ast is not None:
+        if first_loop.ast is not None:
             loop_indices.visit(innerbody.compound)
             self.Loops = loop_indices.Loops
-            self.InsideKernel = firstLoop.ast
+            self.InsideKernel = first_loop.ast
 
         arrays = Arrays(self.astrepr.loop_index)
         arrays.visit(innerbody.compound)

@@ -113,8 +113,7 @@ class Transformation():
                 hstvar = rw.NameSwap[var]
             except KeyError:
                 hstvar = var
-            add = lan.Id(accname + ' << ' + '\"' + '-D' + var+ '=\"' + \
-                     ' << ' + hstvar + ' << \" \";')
+            add = lan.Id(accname + ' << ' + '\"' + '-D' + var+ '=\"' + ' << ' + hstvar + ' << \" \";')
             stats.append(add)
 
         # Set the string to the global variable

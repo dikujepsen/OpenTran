@@ -1,12 +1,11 @@
-
 from itertools import chain
-
 import snippetgen
 import lan
 import copy
 import ast_buildingblock as ast_bb
 
-class Analysis():
+
+class Analysis:
     """ Apply transformations to the original AST. Includes:
     1. Local Memory
     2. Stencil Local Memory
@@ -19,6 +18,7 @@ class Analysis():
     9. Setting if we should read data back from the GPU
     10. Setting which kernel arguments changes
     """
+
     def __init__(self, rw, tf):
         # The rewriter
         self.rw = rw
@@ -28,28 +28,26 @@ class Analysis():
         self.PlaceInRegCond = None
         self.PlaceInLocalArgs = list()
         self.PlaceInLocalCond = None
-        
+
     def DefineArguments(self):
         """ Find all kernel arguments that can be defined
-        	at compilation time. Then defines them.
+            at compilation time. Then defines them.
         """
         rw = self.rw
         defines = list()
         for n in rw.KernelArgs:
-            if n not in rw.Change and \
-                len(rw.Type[n]) < 2:
+            if len(rw.Type[n]) < 2:
                 defines.append(n)
 
         self.tf.SetDefine(defines)
-        
 
     def Transpose(self):
         """ Find all arrays that *should* be transposed
-        	and transpose them
+            and transpose them
         """
         rw = self.rw
         # self.SubscriptNoId
-        
+
         # self.IdxToDim idx to dim number
         notranspose = set()
         transpose = set()
@@ -58,22 +56,19 @@ class Analysis():
             # Every ArrayRef, Every list of subscripts
             if len(sub) == 2:
                 if sub[0] == rw.IdxToDim[0]:
-                    transpose.add(n)                    
+                    transpose.add(n)
                 elif sub[1] == rw.IdxToDim[0]:
                     notranspose.add(n)
                 elif rw.ParDim == 2 and sub[0] == rw.IdxToDim[1]:
-                    maybetranspose.add(n)     
+                    maybetranspose.add(n)
         for n in transpose:
             self.tf.transpose(n)
-
 
     def PlaceInReg(self):
         """ Find all array references that can be cached in registers.
         	Then rewrite the code in this fashion.
         """
         rw = self.rw
-        tf = self.tf
-		# subscriptnoid, RefToLoop
         optim = dict()
         for n in rw.RefToLoop:
             optim[n] = []
@@ -84,7 +79,7 @@ class Analysis():
             ## for (ref, sub) in (rw.RefToLoop[n], rw.SubscriptNoId[n]):
             ref1 = rw.RefToLoop[n]
             sub1 = rw.SubscriptNoId[n]
-            
+
             for (ref, sub, i) in zip(ref1, sub1, range(len(ref1))):
                 ## print rw.GridIndices, sub
                 if set(rw.GridIndices) & set(sub):
@@ -92,19 +87,17 @@ class Analysis():
                     if outerloops:
                         insideloop |= set(sub) - set(rw.GridIndices)
                         optim[n].append(i)
-                        
+
                         ## print i, n, outerloops, rw.GridIndices, sub, \
                         ##   set(sub) - set(rw.GridIndices)
-    
-                        
-        
+
         insideloop = {k for k in insideloop if k in rw.Loops}
         if len(insideloop) > 1:
             print """ PlaceInReg: array references was inside
     				  two loops. No optimization """
             return
         ## print insideloop
-        args = {k : v for k, v in optim.items() if v}
+        args = {k: v for k, v in optim.items() if v}
         insideloop = list(insideloop)
         if args:
             ## print 'Register ' , args
@@ -116,9 +109,8 @@ class Analysis():
                 lhs = lan.BinOp(lan.Id(rw.astrepr.UpperLimit[m]), '-', lan.Id(rw.astrepr.LowerLimit[m]))
             else:
                 lhs = lan.Constant(1)
-            self.PlaceInRegCond = lan.BinOp(lan.BinOp(lhs, '*' , lan.Constant(numref)), '<', lan.Constant(40))
-            
- 
+            self.PlaceInRegCond = lan.BinOp(lan.BinOp(lhs, '*', lan.Constant(numref)), '<', lan.Constant(40))
+
     def PlaceInLocalMemory(self):
         """ Find all array references that can be optimized
         	through the use of shared memory.
@@ -132,7 +124,7 @@ class Analysis():
         for k, v in rw.SubscriptNoId.items():
             for i, n in enumerate(v):
                 if set(n) & set(rw.GridIndices) and \
-                    set(n) & set(rw.Loops.keys()):
+                                set(n) & set(rw.Loops.keys()):
                     if rw.ParDim == 2:
                         args[k] = [i]
                         loopindex = loopindex.union(set(n) & set(rw.Loops.keys()))
@@ -144,11 +136,9 @@ class Analysis():
 
         for m in loopindex:
             cond = lan.BinOp(lan.BinOp(lan.BinOp(lan.Id(rw.astrepr.UpperLimit[m]), '-', \
-                                     lan.Id(rw.astrepr.LowerLimit[m])), '%', \
-                               lan.Constant(rw.Local['size'][0])), '==', lan.Constant(0))
+                                                 lan.Id(rw.astrepr.LowerLimit[m])), '%', \
+                                       lan.Constant(rw.Local['size'][0])), '==', lan.Constant(0))
             self.PlaceInLocalCond = (cond)
-
-        
 
     def GenerateKernels(self, ast, name, fileprefix):
         rw = self.rw
@@ -162,17 +152,19 @@ class Analysis():
                                 PlaceInReg and PlaceInLocal together from the analysis""")
 
         ss = snippetgen.SnippetGen(rw)
-        ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename = fileprefix + name + '/'+ funcname + '.cl', kernelstringname = funcname)
+        ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
+                          kernelstringname=funcname)
         for (arg, insideloop) in self.PlaceInRegArgs:
             funcname = name + 'PlaceInReg'
             tf.placeInReg3(arg, list(insideloop))
-            ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename = fileprefix + name + '/'+ funcname + '.cl', kernelstringname = funcname)
+            ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
+                              kernelstringname=funcname)
 
-            
         for arg in self.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
             tf.localMemory3(arg)
-            ss.InSourceKernel(copy.deepcopy(ast), self.PlaceInLocalCond, filename = fileprefix + name + '/'+ funcname + '.cl', kernelstringname = funcname)
+            ss.InSourceKernel(copy.deepcopy(ast), self.PlaceInLocalCond,
+                              filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
 
         MyCond = None
         if self.PlaceInLocalCond:
@@ -182,18 +174,17 @@ class Analysis():
 
         if MyCond:
             name = rw.KernelStringStream[0]['name']
-            func = ast_bb.EmptyFuncDecl(name, type = [])
+            func = ast_bb.EmptyFuncDecl(name, type=[])
             returnfunc1 = lan.Assignment(lan.Id('return'), func, op='')
             name = rw.KernelStringStream[1]['name']
-            func = ast_bb.EmptyFuncDecl(name, type = [])
+            func = ast_bb.EmptyFuncDecl(name, type=[])
             returnfunc2 = lan.Assignment(lan.Id('return'), func, op='')
             ifthenelse = lan.IfThenElse(MyCond, \
-                        lan.Compound([returnfunc2]), lan.Compound([returnfunc1]))
-
+                                        lan.Compound([returnfunc2]), lan.Compound([returnfunc1]))
 
             rw.IfThenElse = ifthenelse
         else:
             name = rw.KernelStringStream[0]['name']
-            func = ast_bb.EmptyFuncDecl(name, type = [])
+            func = ast_bb.EmptyFuncDecl(name, type=[])
             returnfunc1 = lan.Assignment(lan.Id('return'), func, op='')
             rw.IfThenElse = returnfunc1
