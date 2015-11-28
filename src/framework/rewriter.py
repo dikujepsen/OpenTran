@@ -187,6 +187,9 @@ class Rewriter(NodeVisitor):
         ids = Ids()
         ids.visit(ast)
 
+        print ids.ids
+        print arrays.ids
+        print typeIds.ids
         # print "typeIds.ids ", typeIds.ids
         # print "arrays.ids ", arrays.ids
         # print "ids.ids ", ids.ids
@@ -329,7 +332,10 @@ class Rewriter(NodeVisitor):
                     self.ReadOnly.append(n)
 
         argIds = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
-
+        print self.NonArrayIds
+        # print self.KernelArgs, "KA Rewr be"
+        # print self.ArrayIdToDimName, "rewriter"
+        print argIds
         for n in argIds:
             tmplist = [n]
             try:
@@ -337,8 +343,11 @@ class Rewriter(NodeVisitor):
                     tmplist.append(self.ArrayIdToDimName[n][0])
             except KeyError:
                 pass
+            # print tmplist, " tmp ", n
             for m in tmplist:
                 self.KernelArgs[m] = self.Type[m]
+
+        # print self.KernelArgs, "KA Rewrie"
 
         self.Transposition = GroupCompound([Comment('// Transposition')])
         self.ConstantMemory = GroupCompound([Comment('// Constant Memory')])

@@ -34,11 +34,16 @@ class Analysis:
             at compilation time. Then defines them.
         """
         rw = self.rw
+        print "2131"
+        print rw.KernelArgs
+
         defines = list()
         for n in rw.KernelArgs:
             if len(rw.Type[n]) < 2:
                 defines.append(n)
 
+        print defines
+        print "3123"
         self.tf.SetDefine(defines)
 
     def Transpose(self):

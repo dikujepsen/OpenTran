@@ -10,6 +10,7 @@ import ply.yacc as yacc
 import cgen
 import lan
 import boilerplategen
+import define_arguments as darg
 
 fileprefix = "../../test/C/"
 SetNoReadBack = False
@@ -85,6 +86,7 @@ def matmul():
         rw, ast = __get_ast_from_base(name)
     tempast = copy.deepcopy(ast)
     tempast2 = copy.deepcopy(ast)
+    tempast3 = copy.deepcopy(ast)
 
     transf_rp = transf_repr.TransfRepr(rw.astrepr)
     transf_rp.init_rew_repr(tempast)
@@ -93,7 +95,12 @@ def matmul():
     an = analysis.Analysis(transf_rp, tf)
     if DoOptimizations:
         an.Transpose()
-        an.DefineArguments()
+        dargs = darg.DefineArguments()
+        dargs.set_datastructures(tempast3)
+        dargs.define_arguments(transf_rp.NameSwap)
+        transf_rp.KernelArgs = dargs.kernel_args
+        transf_rp.Define = dargs.define_compound
+        # an.DefineArguments()
         an.PlaceInReg()
         an.PlaceInLocalMemory()
     if SetNoReadBack:

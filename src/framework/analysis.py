@@ -33,6 +33,7 @@ class Analysis():
         """
         rw = self.rw
         defines = list()
+        print rw.KernelArgs, "123"
         for n in rw.KernelArgs:
             if n not in rw.Change and \
                 len(rw.Type[n]) < 2:

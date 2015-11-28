@@ -104,7 +104,7 @@ class Transformation():
         stats = rw.Define.statements
         stats.append(sstream)
 
-        # add the defines to the string stream 
+        # add the defines to the string stream
         for var in varList:
             try:
                 hstvar = rw.NameSwap[var]
