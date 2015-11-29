@@ -1,6 +1,8 @@
 from lan_lex import *
 from lan_ast import *
-
+from rewriter import *
+from os.path import basename
+import copy
 precedence = (
     ('left','PLUS','MINUS'),
     ('left','TIMES','DIVIDE'),

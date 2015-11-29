@@ -74,7 +74,6 @@ class CGenerator(object):
             newline = n.__class__.__name__ +  newline
             start = n.__class__.__name__ + start
         s = ''
-
         for ext in n.ext:
             if isinstance(ext, Compound):
                 s += self.visit_GlobalCompound(ext)

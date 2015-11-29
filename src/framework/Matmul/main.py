@@ -11,9 +11,11 @@ import cgen
 import lan
 import boilerplategen
 import define_arguments as darg
+import transpose as tp
+
 
 fileprefix = "../../test/C/"
-SetNoReadBack = False
+SetNoReadBack = True
 DoOptimizations = True
 
 
@@ -94,7 +96,18 @@ def matmul():
 
     an = analysis.Analysis(transf_rp, tf)
     if DoOptimizations:
-        an.Transpose()
+        tps = tp.Transpose()
+        tps.set_datastructues(tempast3)
+        tps.transpose()
+        transf_rp.Subscript = tps.Subscript
+        transf_rp.WriteTranspose = tps.WriteTranspose
+        transf_rp.Transposition = tps.Transposition
+        transf_rp.NameSwap = tps.NameSwap
+        transf_rp.Type = tps.Type
+        transf_rp.HstId = tps.HstId
+        transf_rp.GlobalVars = tps.GlobalVars
+
+        # an.Transpose()
         dargs = darg.DefineArguments()
         dargs.set_datastructures(tempast3)
         dargs.define_arguments(transf_rp.NameSwap)
@@ -109,6 +122,49 @@ def matmul():
     ## rw.DataStructures()
     gen_full_code(name, an, tempast2)
 
+def knearest():
+    name = 'KNearest'
+    if True:
+        rw, ast = __get_ast_from_init(name)
+    else:
+        rw, ast = __get_ast_from_base(name)
+    tempast = copy.deepcopy(ast)
+    tempast2 = copy.deepcopy(ast)
+    tempast3 = copy.deepcopy(ast)
+
+    transf_rp = transf_repr.TransfRepr(rw.astrepr)
+    transf_rp.ParDim = 1
+    transf_rp.init_rew_repr(tempast)
+    tf = transformation.Transformation(transf_rp)
+    # tf.SetParDim(1)
+    an = analysis.Analysis(transf_rp, tf)
+    if DoOptimizations:
+        # tps = tp.Transpose()
+        # tps.set_datastructues(tempast3)
+        # tps.transpose()
+        # transf_rp.Subscript = tps.Subscript
+        # transf_rp.WriteTranspose = tps.WriteTranspose
+        # transf_rp.Transposition = tps.Transposition
+        # transf_rp.NameSwap = tps.NameSwap
+        # transf_rp.Type = tps.Type
+        # transf_rp.HstId = tps.HstId
+        # transf_rp.GlobalVars = tps.GlobalVars
+        an.Transpose()
+        # dargs = darg.DefineArguments()
+        # dargs.set_datastructures(tempast3)
+        # dargs.define_arguments(transf_rp.NameSwap)
+        # transf_rp.KernelArgs = dargs.kernel_args
+        # transf_rp.Define = dargs.define_compound
+        an.DefineArguments()
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
+    if SetNoReadBack:
+        tf.SetNoReadBack()
+
+    ## rw.DataStructures()
+    gen_full_code(name, an, tempast2)
+
 
 if __name__ == "__main__":
     matmul()
+    knearest()

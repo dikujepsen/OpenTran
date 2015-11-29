@@ -34,16 +34,16 @@ class Analysis:
             at compilation time. Then defines them.
         """
         rw = self.rw
-        print "2131"
-        print rw.KernelArgs
+        # print "2131"
+        # print rw.KernelArgs
 
         defines = list()
         for n in rw.KernelArgs:
             if len(rw.Type[n]) < 2:
                 defines.append(n)
 
-        print defines
-        print "3123"
+        # print defines
+        # print "3123"
         self.tf.SetDefine(defines)
 
     def Transpose(self):
@@ -57,15 +57,19 @@ class Analysis:
         notranspose = set()
         transpose = set()
         maybetranspose = set()
+        print rw.SubscriptNoId, "subnoid"
+        print rw.IdxToDim, "idxtodim"
         for (n, sub) in rw.SubscriptNoId.items():
             # Every ArrayRef, Every list of subscripts
-            if len(sub) == 2:
-                if sub[0] == rw.IdxToDim[0]:
-                    transpose.add(n)
-                elif sub[1] == rw.IdxToDim[0]:
-                    notranspose.add(n)
-                elif rw.ParDim == 2 and sub[0] == rw.IdxToDim[1]:
-                    maybetranspose.add(n)
+            for s in sub:
+                if len(s) == 2:
+                    if s[0] == rw.IdxToDim[0]:
+                        transpose.add(n)
+                    elif s[1] == rw.IdxToDim[0]:
+                        notranspose.add(n)
+                    elif rw.ParDim == 2 and s[0] == rw.IdxToDim[1]:
+                        maybetranspose.add(n)
+        print transpose, "transpose"
         for n in transpose:
             self.tf.transpose(n)
 

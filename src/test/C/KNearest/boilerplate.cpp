@@ -11,6 +11,7 @@ float * hst_ptrdist_matrix;
 unsigned dim;
 unsigned NTEST;
 unsigned NTRAIN;
+float * hst_ptrtest_patterns_trans;
 
 size_t hst_ptrtrain_patterns_mem_size;
 size_t hst_ptrtest_patterns_mem_size;
@@ -36,7 +37,7 @@ std::string KNearestBase()
   str << "  for (unsigned j = 0; j < NTRAIN; j++) {" << endl;
   str << "      float d = 0.0;" << endl;
   str << "      for (unsigned k = 0; k < dim; k++) {" << endl;
-  str << "          float tmp = test_patterns[(get_global_id(0) * hst_ptrtest_patterns_dim1) + k] - train_patterns[(j * hst_ptrtrain_patterns_dim1) + k];" << endl;
+  str << "          float tmp = test_patterns[(k * hst_ptrtest_patterns_dim1) + get_global_id(0)] - train_patterns[(j * hst_ptrtrain_patterns_dim1) + k];" << endl;
   str << "          d += tmp * tmp;" << endl;
   str << "      }" << endl;
   str << "      dist_matrix[(j * hst_ptrdist_matrix_dim1) + get_global_id(0)] = d;" << endl;
@@ -55,7 +56,7 @@ std::string KNearestPlaceInReg()
   str << "	) {" << endl;
   str << "  float test_patterns_reg[dim];" << endl;
   str << "  for (unsigned k = 0; k < dim; k++) {" << endl;
-  str << "      test_patterns_reg[k] = test_patterns[(get_global_id(0) * hst_ptrtest_patterns_dim1) + k];" << endl;
+  str << "      test_patterns_reg[k] = test_patterns[(k * hst_ptrtest_patterns_dim1) + get_global_id(0)];" << endl;
   str << "  }" << endl;
   str << "  for (unsigned j = 0; j < NTRAIN; j++) {" << endl;
   str << "      float d = 0.0;" << endl;
@@ -90,13 +91,17 @@ void AllocateBuffers()
   hst_ptrdist_matrix_mem_size = hst_ptrdist_matrix_dim2 * (hst_ptrdist_matrix_dim1 * sizeof(float));
   
   // Transposition
+  hst_ptrtest_patterns_trans = new float[hst_ptrtest_patterns_mem_size];
+  transpose<float>(
+	hst_ptrtest_patterns, hst_ptrtest_patterns_trans, hst_ptrtest_patterns_dim1, 
+	hst_ptrtest_patterns_dim2);
   
   // Constant Memory
   
   // Defines for the kernel
   std::stringstream str;
   str << "-Ddim=" << dim << " ";
-  str << "-Dhst_ptrtest_patterns_dim1=" << hst_ptrtest_patterns_dim1 << " ";
+  str << "-Dhst_ptrtest_patterns_dim1=" << hst_ptrtest_patterns_dim2 << " ";
   str << "-DNTRAIN=" << NTRAIN << " ";
   str << "-Dhst_ptrtrain_patterns_dim1=" << hst_ptrtrain_patterns_dim1 << " ";
   str << "-Dhst_ptrdist_matrix_dim1=" << hst_ptrdist_matrix_dim1 << " ";
@@ -111,7 +116,7 @@ void AllocateBuffers()
 	oclErrNum, "clCreateBuffer dev_ptrtrain_patterns");
   dev_ptrtest_patterns = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrtest_patterns_mem_size, 
-	hst_ptrtest_patterns, &oclErrNum);
+	hst_ptrtest_patterns_trans, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrtest_patterns");
   dev_ptrdist_matrix = clCreateBuffer(
@@ -152,16 +157,6 @@ void ExecKNearestFor()
 	);
   oclCheckErr(
 	oclErrNum, "clEnqueueNDRangeKernel");
-  oclErrNum = clFinish(command_queue);
-  oclCheckErr(
-	oclErrNum, "clFinish");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrdist_matrix, CL_TRUE, 
-	0, hst_ptrdist_matrix_mem_size, hst_ptrdist_matrix, 
-	1, &GPUExecution, NULL
-	);
-  oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");

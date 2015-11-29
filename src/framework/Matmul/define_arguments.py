@@ -9,6 +9,7 @@ class DefineArguments(object):
         self.type = dict()
         self.define_compound = None
         self.name_swap = dict()
+        self.ParDim = None  # int
 
 
     def set_datastructures(self, ast):
@@ -63,9 +64,9 @@ class DefineArguments(object):
         ids = visitor.Ids2()
         ids.visit(ast)
 
-        print ids.ids, "123"
-        print arrays.ids
-        print type_ids.ids
+        # print ids.ids, "123"
+        # print arrays.ids
+        # print type_ids.ids
         other_ids = ids.ids - arrays.ids - type_ids.ids
         self.ArrayIds = arrays.ids - type_ids.ids
         self.NonArrayIds = other_ids
@@ -84,7 +85,7 @@ class DefineArguments(object):
 
         arg_ids = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
 
-        print arg_ids
+        # print arg_ids
 
         for n in arg_ids:
             tmplist = [n]

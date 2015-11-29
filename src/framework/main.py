@@ -7,7 +7,7 @@ from transformation import *
 from analysis import *
 fileprefix = "../test/C/"
 
-SetNoReadBack = False
+SetNoReadBack = True
 DoOptimizations = True
 
 
@@ -36,7 +36,7 @@ def LexAndParse(name, createTemp):
             ## print tok
         
         ast = cparser.parse(s)
-        # ast.show()
+        ## ast.show()
         ## print ast
         ## print slist
         cprint = CGenerator()
@@ -164,7 +164,9 @@ def laplace():
         an.DefineArguments()
         an.PlaceInReg()
         an.PlaceInLocalMemory()
-
+    else:
+        tf.SetDefine(['dim'])
+        
     if SetNoReadBack:
         tf.SetNoReadBack()
     
@@ -178,7 +180,7 @@ def gaussian():
     name = 'GaussianDerivates'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     ## rw.SetParDim(1)
-    rw.initNewRepr(tempast, dev = 'CPU')
+    rw.initNewRepr(tempast)
     tf = Transformation(rw)
 
     
@@ -196,93 +198,9 @@ def gaussian():
     CGen(name, funcname, an, tempast2, ast)
 
 if __name__ == "__main__":
-    matmul()
+    # matmul()
     # jacobi()
-    # knearest()
+    knearest()
     # nbody()
     # laplace()
     # gaussian()
-
-
-# FileAST <top>:
-#   TypeId <ext[0]>: type=['unsigned']
-#     Id <name>: name=hA
-#   TypeId <ext[1]>: type=['unsigned']
-#     Id <name>: name=wB
-#   TypeId <ext[2]>: type=['unsigned']
-#     Id <name>: name=wA
-#   TypeId <ext[3]>: type=['float', '*']
-#     Id <name>: name=A
-#   TypeId <ext[4]>: type=['float', '*']
-#     Id <name>: name=B
-#   TypeId <ext[5]>: type=['float', '*']
-#     Id <name>: name=C
-#   ForLoop <ext[6]>:
-#     Assignment <init>: op==
-#       TypeId <lval>: type=['unsigned']
-#         Id <name>: name=i
-#       Constant <rval>: value=0
-#     BinOp <cond>: op=<
-#       Id <lval>: name=i
-#       Id <rval>: name=hA
-#     Increment <inc>: op=++
-#       Id <name>: name=i
-#     Compound <compound>:
-#       ForLoop <stmt[0]>:
-#         Assignment <init>: op==
-#           TypeId <lval>: type=['unsigned']
-#             Id <name>: name=j
-#           Constant <rval>: value=0
-#         BinOp <cond>: op=<
-#           Id <lval>: name=j
-#           Id <rval>: name=wB
-#         Increment <inc>: op=++
-#           Id <name>: name=j
-#         Compound <compound>:
-#           Assignment <stmt[0]>: op==
-#             TypeId <lval>: type=['float']
-#               Id <name>: name=sum
-#             Constant <rval>: value=0
-#           ForLoop <stmt[1]>:
-#             Assignment <init>: op==
-#               TypeId <lval>: type=['unsigned']
-#                 Id <name>: name=k
-#               Constant <rval>: value=0
-#             BinOp <cond>: op=<
-#               Id <lval>: name=k
-#               Id <rval>: name=wA
-#             Increment <inc>: op=++
-#               Id <name>: name=k
-#             Compound <compound>:
-#               Assignment <stmt[0]>: op=+=
-#                 Id <lval>: name=sum
-#                 BinOp <rval>: op=*
-#                   ArrayRef <lval>:
-#                     Id <name>: name=A
-#                     BinOp <subscript 0>: op=+
-#                       BinOp <lval>: op=*
-#                         Id <lval>: name=i
-#                         Id <rval>: name=wA
-#                       Id <rval>: name=k
-#                   ArrayRef <rval>:
-#                     Id <name>: name=B
-#                     BinOp <subscript 0>: op=+
-#                       Id <lval>: name=j
-#                       BinOp <rval>: op=*
-#                         Id <lval>: name=k
-#                         Id <rval>: name=wB
-#           Assignment <stmt[2]>: op==
-#             ArrayRef <lval>:
-#               Id <name>: name=C
-#               BinOp <subscript 0>: op=+
-#                 BinOp <lval>: op=*
-#                   Id <lval>: name=wB
-#                   Id <rval>: name=i
-#                 Id <rval>: name=j
-#             Id <rval>: name=sum
-# BinOp(BinOp(Id('i') '*' Id('wA')) '+' Id('k'))
-# BinOp(Id('i') '*' Id('wA'))
-# BinOp(BinOp(Id('k') '*' Id('wB')) '+' Id('j'))
-# BinOp(Id('k') '*' Id('wB'))
-# BinOp(BinOp(Id('wB') '*' Id('i')) '+' Id('j'))
-# BinOp(Id('wB') '*' Id('i'))

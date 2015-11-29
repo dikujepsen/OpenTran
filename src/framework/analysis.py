@@ -20,7 +20,7 @@ class Analysis():
     def __init__(self, rw, tf):
         # The rewriter
         self.rw = rw
-        # The TRANSFORMER
+        # The transformer
         self.tf = tf
         self.PlaceInRegArgs = list()
         self.PlaceInRegCond = None
@@ -33,7 +33,6 @@ class Analysis():
         """
         rw = self.rw
         defines = list()
-        print rw.KernelArgs, "123"
         for n in rw.KernelArgs:
             if n not in rw.Change and \
                 len(rw.Type[n]) < 2:
@@ -53,15 +52,19 @@ class Analysis():
         notranspose = set()
         transpose = set()
         maybetranspose = set()
+        print rw.SubscriptNoId, "subnoid"
+        print rw.IdxToDim, "idxtodim"
         for (n, sub) in rw.SubscriptNoId.items():
             # Every ArrayRef, Every list of subscripts
-            if len(sub) == 2:
-                if sub[0] == rw.IdxToDim[0]:
-                    transpose.add(n)                    
-                elif sub[1] == rw.IdxToDim[0]:
-                    notranspose.add(n)
-                elif rw.ParDim == 2 and sub[0] == rw.IdxToDim[1]:
-                    maybetranspose.add(n)     
+            for s in sub:
+                if len(s) == 2:         
+                    if s[0] == rw.IdxToDim[0]:
+                        transpose.add(n)                    
+                    elif s[1] == rw.IdxToDim[0]:
+                        notranspose.add(n)
+                    elif rw.ParDim == 2 and s[0] == rw.IdxToDim[1]:
+                        maybetranspose.add(n)
+        print transpose, "transpose"
         for n in transpose:
             self.tf.transpose(n)
 
@@ -153,10 +156,11 @@ class Analysis():
         # Create base version and possible version with Local and
         # Register optimizations
         funcname = name + 'Base'
-
+        
+        
         if self.PlaceInRegArgs and self.PlaceInLocalArgs:
-            raise Exception("""GenerateKernels: Currently unimplemented to perform
-                                PlaceInReg and PlaceInLocal together from the analysis""")
+            raise Exception("""GenerateKernels: Currently unimplemented to perform 
+        					PlaceInReg and PlaceInLocal together from the analysis""")
 
             
         rw.InSourceKernel(copy.deepcopy(ast), Id('true'), filename = fileprefix + name + '/'+ funcname + '.cl', kernelstringname = funcname)

@@ -123,16 +123,6 @@ void ExecJacobiFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrX2, CL_TRUE, 
-	0, hst_ptrX2_mem_size, hst_ptrX2, 
-	1, &GPUExecution, NULL
-	);
-  oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-  oclErrNum = clFinish(command_queue);
-  oclCheckErr(
-	oclErrNum, "clFinish");
 }
 
 void RunOCLJacobiForKernel(

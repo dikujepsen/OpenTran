@@ -25,6 +25,7 @@ float scaleweight2_x;
 float scales2_x;
 unsigned Lp;
 unsigned Lq;
+float * hst_ptrq_a_i_x_trans;
 
 size_t hst_ptrD1Ks__ijb_dimsI_mem_size;
 size_t hst_ptrq_a_i_x_mem_size;
@@ -68,7 +69,7 @@ std::string GaussianDerivatesBase()
   str << "      xj[k] = p_a_i_x[(get_global_id(1) * hst_ptrp_a_i_x_dim1) + k];" << endl;
   str << "  }" << endl;
   str << "  for (int k = 0; k < dim; k++) {" << endl;
-  str << "      xi[k] = q_a_i_x[(get_global_id(0) * hst_ptrq_a_i_x_dim1) + k];" << endl;
+  str << "      xi[k] = q_a_i_x[(k * hst_ptrq_a_i_x_dim1) + get_global_id(0)];" << endl;
   str << "  }" << endl;
   str << "  // Vector3<scalar> xi(&q_a_i.x[q_a_i.rows*i]);" << endl;
   str << "  float ximxj[3];" << endl;
@@ -135,15 +136,15 @@ std::string GaussianDerivatesPlaceInLocal()
   str << "	__global float * q_a_i_x, __global unsigned * D3Ks__ijbgd_dimsI, __global float * p_a_i_x, " << endl;
   str << "	__global float * D1Ks__ijb_x, __global float * K__ij_x, __global float * D2Ks__ijbg_x" << endl;
   str << "	) {" << endl;
-  str << "  __local float p_a_i_x_local[4*4];" << endl;
-  str << "  __local float q_a_i_x_local[4*4];" << endl;
+  str << "  __local float p_a_i_x_local[16*16];" << endl;
+  str << "  __local float q_a_i_x_local[16*16];" << endl;
   str << "  float xj[3];" << endl;
   str << "  float xi[3];" << endl;
   str << "  for (int k = 0; k < dim; k++) {" << endl;
-  str << "      xj[k] = p_a_i_x_local[(get_local_id(1) * 4) + kk];" << endl;
+  str << "      xj[k] = p_a_i_x_local[(get_local_id(1) * 16) + kk];" << endl;
   str << "  }" << endl;
   str << "  for (int k = 0; k < dim; k++) {" << endl;
-  str << "      xi[k] = q_a_i_x_local[(get_local_id(0) * 4) + kk];" << endl;
+  str << "      xi[k] = q_a_i_x_local[(kk * 16) + get_local_id(0)];" << endl;
   str << "  }" << endl;
   str << "  // Vector3<scalar> xi(&q_a_i.x[q_a_i.rows*i]);" << endl;
   str << "  float ximxj[3];" << endl;
@@ -183,11 +184,11 @@ std::string GaussianDerivatesPlaceInLocal()
   str << "	ks);" << endl;
   str << "          for (int d = 0; d < dim; d++) {" << endl;
   str << "              // Vector3<int> dc = db; dc.set(dc[d]+1,d);" << endl;
-  str << "              for (int k = 0; k < dim; k+=4) {" << endl;
-  str << "                  p_a_i_x_local[(get_local_id(1) * 4) + get_local_id(0)] = p_a_i_x[(get_global_id(1) * hst_ptrp_a_i_x_dim1) + (k + get_local_id(0))];" << endl;
-  str << "                  q_a_i_x_local[(get_local_id(0) * 4) + get_local_id(0)] = q_a_i_x[(get_global_id(0) * hst_ptrq_a_i_x_dim1) + (k + get_local_id(0))];" << endl;
+  str << "              for (int k = 0; k < dim; k+=16) {" << endl;
+  str << "                  p_a_i_x_local[(get_local_id(1) * 16) + get_local_id(0)] = p_a_i_x[(get_global_id(1) * hst_ptrp_a_i_x_dim1) + (k + get_local_id(0))];" << endl;
+  str << "                  q_a_i_x_local[(get_local_id(1) * 16) + get_local_id(0)] = q_a_i_x[((k + get_local_id(1)) * hst_ptrq_a_i_x_dim1) + get_global_id(0)];" << endl;
   str << "                  barrier(CLK_LOCAL_MEM_FENCE);" << endl;
-  str << "                  for (unsigned kk = 0; kk < 4; kk++) {" << endl;
+  str << "                  for (unsigned kk = 0; kk < 16; kk++) {" << endl;
   str << "                      dc[k] = db[k] + 1;" << endl;
   str << "                  }" << endl;
   str << "                  barrier(CLK_LOCAL_MEM_FENCE);" << endl;
@@ -209,7 +210,7 @@ std::string GaussianDerivatesPlaceInLocal()
 
 std::string GetKernelCode()
 {
-  if (((dim - 0) % 4) == 0)
+  if (((dim - 0) % 16) == 0)
     {
       return  GaussianDerivatesPlaceInLocal();
     }
@@ -232,6 +233,10 @@ void AllocateBuffers()
   hst_ptrD2Ks__ijbg_x_mem_size = hst_ptrD2Ks__ijbg_x_dim1 * sizeof(float);
   
   // Transposition
+  hst_ptrq_a_i_x_trans = new float[hst_ptrq_a_i_x_mem_size];
+  transpose<float>(
+	hst_ptrq_a_i_x, hst_ptrq_a_i_x_trans, hst_ptrq_a_i_x_dim1, 
+	hst_ptrq_a_i_x_dim2);
   
   // Constant Memory
   
@@ -242,7 +247,7 @@ void AllocateBuffers()
   str << "-Dhst_ptrp_a_i_x_dim1=" << hst_ptrp_a_i_x_dim1 << " ";
   str << "-Dhst_ptrK__ij_x_dim1=" << hst_ptrK__ij_x_dim1 << " ";
   str << "-Dscales2_x=" << scales2_x << " ";
-  str << "-Dhst_ptrq_a_i_x_dim1=" << hst_ptrq_a_i_x_dim1 << " ";
+  str << "-Dhst_ptrq_a_i_x_dim1=" << hst_ptrq_a_i_x_dim2 << " ";
   KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
@@ -254,7 +259,7 @@ void AllocateBuffers()
 	oclErrNum, "clCreateBuffer dev_ptrD1Ks__ijb_dimsI");
   dev_ptrq_a_i_x = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrq_a_i_x_mem_size, 
-	hst_ptrq_a_i_x, &oclErrNum);
+	hst_ptrq_a_i_x_trans, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrq_a_i_x");
   dev_ptrD3Ks__ijbgd_x = clCreateBuffer(
@@ -334,7 +339,7 @@ void ExecGaussianDerivatesFor()
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
   size_t GaussianDerivatesFor_global_worksize[] = {Lq - 0, Lp - 0};
-  size_t GaussianDerivatesFor_local_worksize[] = {4, 4};
+  size_t GaussianDerivatesFor_local_worksize[] = {16, 16};
   size_t GaussianDerivatesFor_global_offset[] = {0, 0};
   oclErrNum = clEnqueueNDRangeKernel(
 	command_queue, GaussianDerivatesForKernel, 2, 
@@ -343,37 +348,6 @@ void ExecGaussianDerivatesFor()
 	);
   oclCheckErr(
 	oclErrNum, "clEnqueueNDRangeKernel");
-  oclErrNum = clFinish(command_queue);
-  oclCheckErr(
-	oclErrNum, "clFinish");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrD3Ks__ijbgd_x, CL_TRUE, 
-	0, hst_ptrD3Ks__ijbgd_x_mem_size, hst_ptrD3Ks__ijbgd_x, 
-	1, &GPUExecution, NULL
-	);
-  oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrD1Ks__ijb_x, CL_TRUE, 
-	0, hst_ptrD1Ks__ijb_x_mem_size, hst_ptrD1Ks__ijb_x, 
-	1, &GPUExecution, NULL
-	);
-  oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrK__ij_x, CL_TRUE, 
-	0, hst_ptrK__ij_x_mem_size, hst_ptrK__ij_x, 
-	1, &GPUExecution, NULL
-	);
-  oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrD2Ks__ijbg_x, CL_TRUE, 
-	0, hst_ptrD2Ks__ijbg_x_mem_size, hst_ptrD2Ks__ijbg_x, 
-	1, &GPUExecution, NULL
-	);
-  oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");

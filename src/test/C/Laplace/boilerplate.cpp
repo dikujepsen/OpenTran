@@ -20,6 +20,9 @@ double * hst_ptralpha;
 double * hst_ptrlambda;
 size_t dim;
 size_t storagesize;
+double * hst_ptrlevel_trans;
+double * hst_ptrlevel_int_trans;
+double * hst_ptrindex_trans;
 
 size_t hst_ptrindex_mem_size;
 size_t hst_ptrlevel_int_mem_size;
@@ -59,12 +62,12 @@ std::string LaplaceBase()
   str << "      double gradient_temp[dim];" << endl;
   str << "      double dot_temp[dim];" << endl;
   str << "      for (unsigned d = 0; d < dim; d++) {" << endl;
-  str << "          double level_i = level[(get_global_id(0) * hst_ptrlevel_dim1) + d];" << endl;
-  str << "          double level_j = level[(j * hst_ptrlevel_dim1) + d];" << endl;
-  str << "          double level_int_i = level_int[(get_global_id(0) * hst_ptrlevel_int_dim1) + d];" << endl;
-  str << "          double level_int_j = level_int[(j * hst_ptrlevel_int_dim1) + d];" << endl;
-  str << "          double index_i = index[(get_global_id(0) * hst_ptrindex_dim1) + d];" << endl;
-  str << "          double index_j = index[(j * hst_ptrindex_dim1) + d];" << endl;
+  str << "          double level_i = level[(d * hst_ptrlevel_dim1) + get_global_id(0)];" << endl;
+  str << "          double level_j = level[(d * hst_ptrlevel_dim1) + j];" << endl;
+  str << "          double level_int_i = level_int[(d * hst_ptrlevel_int_dim1) + get_global_id(0)];" << endl;
+  str << "          double level_int_j = level_int[(d * hst_ptrlevel_int_dim1) + j];" << endl;
+  str << "          double index_i = index[(d * hst_ptrindex_dim1) + get_global_id(0)];" << endl;
+  str << "          double index_j = index[(d * hst_ptrindex_dim1) + j];" << endl;
   str << "          gradient_temp[d] = gradient(" << endl;
   str << "	level_i, index_i, level_j, " << endl;
   str << "	index_j, lcl_q_inv[d]);" << endl;
@@ -102,20 +105,20 @@ std::string LaplacePlaceInReg()
   str << "  double level_int_reg[dim];" << endl;
   str << "  double level_reg[dim];" << endl;
   str << "  for (unsigned d = 0; d < dim; d++) {" << endl;
-  str << "      index_reg[d] = index[(get_global_id(0) * hst_ptrindex_dim1) + d];" << endl;
-  str << "      level_int_reg[d] = level_int[(get_global_id(0) * hst_ptrlevel_int_dim1) + d];" << endl;
-  str << "      level_reg[d] = level[(get_global_id(0) * hst_ptrlevel_dim1) + d];" << endl;
+  str << "      index_reg[d] = index[(d * hst_ptrindex_dim1) + get_global_id(0)];" << endl;
+  str << "      level_int_reg[d] = level_int[(d * hst_ptrlevel_int_dim1) + get_global_id(0)];" << endl;
+  str << "      level_reg[d] = level[(d * hst_ptrlevel_dim1) + get_global_id(0)];" << endl;
   str << "  }" << endl;
   str << "  for (unsigned j = 0; j < storagesize; j++) {" << endl;
   str << "      double gradient_temp[dim];" << endl;
   str << "      double dot_temp[dim];" << endl;
   str << "      for (unsigned d = 0; d < dim; d++) {" << endl;
   str << "          double level_i = level_reg[d];" << endl;
-  str << "          double level_j = level[(j * hst_ptrlevel_dim1) + d];" << endl;
+  str << "          double level_j = level[(d * hst_ptrlevel_dim1) + j];" << endl;
   str << "          double level_int_i = level_int_reg[d];" << endl;
-  str << "          double level_int_j = level_int[(j * hst_ptrlevel_int_dim1) + d];" << endl;
+  str << "          double level_int_j = level_int[(d * hst_ptrlevel_int_dim1) + j];" << endl;
   str << "          double index_i = index_reg[d];" << endl;
-  str << "          double index_j = index[(j * hst_ptrindex_dim1) + d];" << endl;
+  str << "          double index_j = index[(d * hst_ptrindex_dim1) + j];" << endl;
   str << "          gradient_temp[d] = gradient(" << endl;
   str << "	level_i, index_i, level_j, " << endl;
   str << "	index_j, lcl_q_inv[d]);" << endl;
@@ -164,33 +167,45 @@ void AllocateBuffers()
   hst_ptrlambda_mem_size = hst_ptrlambda_dim1 * sizeof(double);
   
   // Transposition
+  hst_ptrindex_trans = new double[hst_ptrindex_mem_size];
+  transpose<double>(
+	hst_ptrindex, hst_ptrindex_trans, hst_ptrindex_dim1, 
+	hst_ptrindex_dim2);
+  hst_ptrlevel_int_trans = new double[hst_ptrlevel_int_mem_size];
+  transpose<double>(
+	hst_ptrlevel_int, hst_ptrlevel_int_trans, hst_ptrlevel_int_dim1, 
+	hst_ptrlevel_int_dim2);
+  hst_ptrlevel_trans = new double[hst_ptrlevel_mem_size];
+  transpose<double>(
+	hst_ptrlevel, hst_ptrlevel_trans, hst_ptrlevel_dim1, 
+	hst_ptrlevel_dim2);
   
   // Constant Memory
   
   // Defines for the kernel
   std::stringstream str;
   str << "-Ddim=" << dim << " ";
-  str << "-Dhst_ptrlevel_dim1=" << hst_ptrlevel_dim1 << " ";
-  str << "-Dhst_ptrindex_dim1=" << hst_ptrindex_dim1 << " ";
+  str << "-Dhst_ptrlevel_dim1=" << hst_ptrlevel_dim2 << " ";
+  str << "-Dhst_ptrindex_dim1=" << hst_ptrindex_dim2 << " ";
   str << "-Dstoragesize=" << storagesize << " ";
-  str << "-Dhst_ptrlevel_int_dim1=" << hst_ptrlevel_int_dim1 << " ";
+  str << "-Dhst_ptrlevel_int_dim1=" << hst_ptrlevel_int_dim2 << " ";
   KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
   
   dev_ptrindex = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrindex_mem_size, 
-	hst_ptrindex, &oclErrNum);
+	hst_ptrindex_trans, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrindex");
   dev_ptrlevel_int = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlevel_int_mem_size, 
-	hst_ptrlevel_int, &oclErrNum);
+	hst_ptrlevel_int_trans, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrlevel_int");
   dev_ptrlevel = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlevel_mem_size, 
-	hst_ptrlevel, &oclErrNum);
+	hst_ptrlevel_trans, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrlevel");
   dev_ptrlcl_q = clCreateBuffer(
@@ -266,16 +281,6 @@ void ExecLaplaceFor()
 	);
   oclCheckErr(
 	oclErrNum, "clEnqueueNDRangeKernel");
-  oclErrNum = clFinish(command_queue);
-  oclCheckErr(
-	oclErrNum, "clFinish");
-  oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrresult, CL_TRUE, 
-	0, hst_ptrresult_mem_size, hst_ptrresult, 
-	1, &GPUExecution, NULL
-	);
-  oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");

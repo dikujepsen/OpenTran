@@ -183,7 +183,7 @@ class Transformation():
         # Add allocation of registers to the initiation stage
         for n in arrDict:
             lval = lan.TypeId([rw.Type[n][0]], \
-                          lan.Id(n+'_reg['+ str(rw.UpperLimit[insideloop])\
+                          lan.Id(n+'_reg['+ str(rw.astrepr.UpperLimit[insideloop])\
                              + ']'))
             initstats.append(lval)
 
@@ -200,7 +200,7 @@ class Transformation():
         for i,n in enumerate(arrDict):
             for m in arrDict[n]:
                 idx = m
-                sub = copy.deepcopy(rw.LoopArrays[n][idx])
+                sub = copy.deepcopy(rw.astrepr.LoopArrays[n][idx])
                 regid = lan.ArrayRef(lan.Id(n + '_reg'), [lan.Id(insideloop)])
                 writes.append(regid)
                 assign = lan.Assignment(regid, sub)
@@ -213,7 +213,7 @@ class Transformation():
             for m in arrDict[n]:
                 idx = m
                 aref_new = copy.deepcopy(writes[count])
-                aref_old = rw.LoopArrays[n][idx]
+                aref_old = rw.astrepr.LoopArrays[n][idx]
                 # Copying the internal data of the two arefs
                 aref_old.name.name = aref_new.name.name
                 aref_old.subscript = aref_new.subscript
@@ -502,7 +502,7 @@ class Transformation():
             print "Transposed must be called before SetDefine, returning..."
             return
 
-        if rw.NumDims[arrName] != 2:
+        if rw.astrepr.num_array_dims[arrName] != 2:
             print "Array ", arrName , "of dimension " , \
                   rw.NumDims[arrName], "cannot be transposed"
             return

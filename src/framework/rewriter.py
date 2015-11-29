@@ -155,7 +155,7 @@ class Rewriter(NodeVisitor):
         loops = ForLoops()
         loops.visit(ast)
         forLoopAst = loops.ast
-        loopIndices = LoopIndices()
+        loopIndices = LoopIndices()        
         loopIndices.visit(forLoopAst)
         self.index = loopIndices.index
         self.UpperLimit = loopIndices.end
@@ -187,16 +187,12 @@ class Rewriter(NodeVisitor):
         ids = Ids()
         ids.visit(ast)
 
-        print ids.ids
-        print arrays.ids
-        print typeIds.ids
-        # print "typeIds.ids ", typeIds.ids
-        # print "arrays.ids ", arrays.ids
-        # print "ids.ids ", ids.ids
+        ## print "typeIds.ids ", typeIds.ids
+        ## print "arrays.ids ", arrays.ids
+        ## print "ids.ids ", ids.ids
         otherIds = ids.ids - arrays.ids - typeIds.ids
         self.ArrayIds = arrays.ids - typeIds.ids
         self.NonArrayIds = otherIds
-
 
     def initNewRepr(self, ast, dev = 'GPU'):
         ## findIncludes = FindIncludes()
@@ -272,6 +268,7 @@ class Rewriter(NodeVisitor):
         self.IndexToThreadId = idMap
         self.GridIndices = gridIds
         self.Kernel = kernel
+        print self.GridIndices, "gridIndices"
         for i, n in enumerate(reversed(self.GridIndices)):
             self.IdxToDim[i] = n
             
@@ -332,10 +329,7 @@ class Rewriter(NodeVisitor):
                     self.ReadOnly.append(n)
 
         argIds = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
-        print self.NonArrayIds
-        # print self.KernelArgs, "KA Rewr be"
-        # print self.ArrayIdToDimName, "rewriter"
-        print argIds
+
         for n in argIds:
             tmplist = [n]
             try:
@@ -343,11 +337,8 @@ class Rewriter(NodeVisitor):
                     tmplist.append(self.ArrayIdToDimName[n][0])
             except KeyError:
                 pass
-            # print tmplist, " tmp ", n
             for m in tmplist:
                 self.KernelArgs[m] = self.Type[m]
-
-        # print self.KernelArgs, "KA Rewrie"
 
         self.Transposition = GroupCompound([Comment('// Transposition')])
         self.ConstantMemory = GroupCompound([Comment('// Constant Memory')])
@@ -418,7 +409,7 @@ class Rewriter(NodeVisitor):
         
     def rewrite(self, ast, functionname = 'FunctionName', changeAST = True):
         """ Rewrites a few things in the AST to increase the
-            abstraction level.
+    	abstraction level.
         """
 
         typeid = TypeId(['void'], Id(functionname),ast.coord)
@@ -479,6 +470,9 @@ class Rewriter(NodeVisitor):
             ast.ext = list()
             ast.ext.append(newast)
 
+
+           
+        
 
     def InSourceKernel(self, ast, cond, filename, kernelstringname):
         self.rewriteToDeviceCRelease(ast)
