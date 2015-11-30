@@ -161,6 +161,7 @@ class Analysis:
                                 PlaceInReg and PlaceInLocal together from the analysis""")
 
         ss = snippetgen.SnippetGen(rw)
+
         ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                           kernelstringname=funcname)
         for (arg, insideloop) in self.PlaceInRegArgs:

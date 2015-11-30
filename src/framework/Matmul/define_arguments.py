@@ -19,7 +19,8 @@ class DefineArguments(object):
         perfect_for_loop = tvisitor.PerfectForLoop()
         perfect_for_loop.visit(ast)
 
-        self.ParDim = perfect_for_loop.depth
+        if self.ParDim is None:
+            self.ParDim = perfect_for_loop.depth
 
         grid_ids = list()
         init_ids = tvisitor.InitIds()
@@ -44,9 +45,10 @@ class DefineArguments(object):
         self.UpperLimit = loop_indices.end
 
         self.RemovedIds = set(self.UpperLimit[i] for i in self.GridIndices)
-
+        # print self.RemovedIds, "rem123"
         ids_still_in_kernel = tvisitor.Ids()
         ids_still_in_kernel.visit(self.Kernel)
+        # print self.Kernel, "kernel"
         self.RemovedIds = self.RemovedIds - ids_still_in_kernel.ids
 
         type_ids = visitor.TypeIds()
@@ -64,7 +66,7 @@ class DefineArguments(object):
         ids = visitor.Ids2()
         ids.visit(ast)
 
-        # print ids.ids, "123"
+        # print ids.ids, "123qwe"
         # print arrays.ids
         # print type_ids.ids
         other_ids = ids.ids - arrays.ids - type_ids.ids
@@ -82,10 +84,14 @@ class DefineArguments(object):
         find_dim.visit(ast)
         self.ArrayIdToDimName = find_dim.dimNames
 
+        # print self.RemovedIds, "remqwe123"
+        # print self.NonArrayIds, "qwe123"
+        # print self.ArrayIds, "qwe123"
 
         arg_ids = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
 
-        # print arg_ids
+        # print arg_ids, "qwe123"
+        # print self.ArrayIdToDimName, "qwe123"
 
         for n in arg_ids:
             tmplist = [n]

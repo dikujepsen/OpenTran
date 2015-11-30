@@ -200,7 +200,7 @@ class TransfRepr(NodeVisitor):
         self.IndexToThreadId = id_map
         self.GridIndices = grid_ids
         self.Kernel = kernel
-        print self.GridIndices, "gridIndices"
+
         for i, n in enumerate(reversed(self.GridIndices)):
             self.IdxToDim[i] = n
 

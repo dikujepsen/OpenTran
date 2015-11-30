@@ -1,7 +1,7 @@
 import transf_visitor as tvisitor
 import lan
 import visitor
-
+import copy
 
 class Transpose(object):
     def __init__(self):
@@ -22,11 +22,13 @@ class Transpose(object):
         self.WriteTranspose = list()
         self.Subscript = dict()
 
+
     def set_datastructues(self, ast):
         perfect_for_loop = tvisitor.PerfectForLoop()
         perfect_for_loop.visit(ast)
 
-        self.ParDim = perfect_for_loop.depth
+        if self.ParDim is None:
+            self.ParDim = perfect_for_loop.depth
 
         loops = visitor.ForLoops()
         loops.visit(ast)
@@ -46,6 +48,36 @@ class Transpose(object):
 
         self.num_array_dims = arrays.numSubscripts
         self.Subscript = arrays.Subscript
+
+        self.SubscriptNoId = copy.deepcopy(self.Subscript)
+        for n in self.SubscriptNoId.values():
+            for m in n:
+                for i, k in enumerate(m):
+                    try:
+                        m[i] = k.name
+                    except AttributeError:
+                        try:
+                            m[i] = k.value
+                        except AttributeError:
+                            m[i] = 'unknown'
+
+        grid_ids = list()
+        init_ids = tvisitor.InitIds()
+        init_ids.visit(perfect_for_loop.ast.init)
+        grid_ids.extend(init_ids.index)
+        kernel = perfect_for_loop.ast.compound
+        if self.ParDim == 2:
+            init_ids = tvisitor.InitIds()
+            init_ids.visit(kernel.statements[0].init)
+            kernel = kernel.statements[0].compound
+            grid_ids.extend(init_ids.index)
+
+        self.GridIndices = grid_ids
+        self.Kernel = kernel
+
+        for i, n in enumerate(reversed(self.GridIndices)):
+            self.IdxToDim[i] = n
+
 
         type_ids = visitor.TypeIds()
         type_ids.visit(for_loop_ast)
@@ -95,15 +127,19 @@ class Transpose(object):
         notranspose_arrays = set()
         transpose_arrays = set()
         maybetranspose_arrays = set()
+        # print self.SubscriptNoId, "qwe123"
+        # print self.IdxToDim, "qwe123"
         for (n, sub) in self.SubscriptNoId.items():
             # Every ArrayRef, Every list of subscripts
-            if len(sub) == 2:
-                if sub[0] == self.IdxToDim[0]:
-                    transpose_arrays.add(n)
-                elif sub[1] == self.IdxToDim[0]:
-                    notranspose_arrays.add(n)
-                elif self.ParDim == 2 and sub[0] == self.IdxToDim[1]:
-                    maybetranspose_arrays.add(n)
+            for s in sub:
+                if len(s) == 2:
+                    if s[0] == self.IdxToDim[0]:
+                        transpose_arrays.add(n)
+                    elif s[1] == self.IdxToDim[0]:
+                        notranspose_arrays.add(n)
+                    elif self.ParDim == 2 and s[0] == self.IdxToDim[1]:
+                        maybetranspose_arrays.add(n)
+        # print transpose_arrays, "qwe123"
         for n in transpose_arrays:
             self.__transpose(n)
 
@@ -151,6 +187,8 @@ class Transpose(object):
                 trans = lan.FuncDecl(lan.Id('transpose<' + natType + '>'), arglist, lan.Compound([]))
                 self.WriteTranspose.append(trans)
 
+
         for sub in self.Subscript[arr_name]:
             (sub[0], sub[1]) = \
                 (sub[1], sub[0])
+        # print self.Subscript[arr_name], "sub123"

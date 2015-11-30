@@ -124,8 +124,8 @@ def knearest():
     if DoOptimizations:
         an.Transpose()
         an.DefineArguments()
-        an.PlaceInReg()
-        an.PlaceInLocalMemory()
+        # an.PlaceInReg()
+        # an.PlaceInLocalMemory()
     if SetNoReadBack:
         tf.SetNoReadBack()
     ## rw.DataStructures()

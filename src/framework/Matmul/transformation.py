@@ -1,4 +1,3 @@
-
 import copy
 import visitor
 import lan
@@ -7,10 +6,12 @@ import ast_buildingblock as ast_bb
 
 
 class MyError(Exception):
-     def __init__(self, value):
-         self.value = value
-     def __str__(self):
-         return repr(self.value)
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
 
 class Transformation():
     """ Apply transformations to the original AST. Includes:
@@ -25,6 +26,7 @@ class Transformation():
     9. Setting if we should read data back from the GPU
     10. Setting which kernel arguments changes
     """
+
     def __init__(self, rw):
         # The rewriter
         self.rw = rw
@@ -37,7 +39,6 @@ class Transformation():
         rw = self.rw
         rw.NoReadBack = True
 
-        
     def Unroll(self, looplist):
         rw = self.rw
         # find loops and check that the loops given in the argument
@@ -49,12 +50,12 @@ class Transformation():
             if l not in kernelLoops:
                 print "Valid loops are %r. Your input contained %r. Aborting..." % (kernelLoops.keys(), l)
                 return
-        
+
         rw.UnrollLoops.extend(looplist)
-        
+
     def Unroll2(self, looplist):
         rw = self.rw
-        
+
         for n in looplist:
             outerloop = rw.Loops[n]
             outeridx = n
@@ -74,22 +75,20 @@ class Transformation():
             if upperbound == '0':
                 upperbound = outerloop.cond.rval.name
             # change increment of outer loop
-            outerloop.inc = lan.Increment(lan.Id(outeridx), '+='+upperbound)
-            inneridx = outeridx*2
+            outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + upperbound)
+            inneridx = outeridx * 2
             # For adding to this index in other subscripts
             rw.Add[outeridx] = inneridx
 
             # new inner loop
-            innerloop.cond = lan.BinOp(lan.Id(inneridx), '<' , lan.Id(upperbound))
+            innerloop.cond = lan.BinOp(lan.Id(inneridx), '<', lan.Id(upperbound))
             innerloop.inc = lan.Increment(lan.Id(inneridx), '++')
             innerloop.init = lan.ConstantAssignment(inneridx)
             rw.Loops[inneridx] = innerloop
 
-
-            
             # In the inner loop: Add the extra index to the index of the
             # outer loop
-            exchangeId = tvisitor.ExchangeIdWithBinOp({n : lan.BinOp(lan.Id(outeridx),'+', lan.Id(inneridx))})
+            exchangeId = tvisitor.ExchangeIdWithBinOp({n: lan.BinOp(lan.Id(outeridx), '+', lan.Id(inneridx))})
             exchangeId.visit(innerloop.compound)
 
             # unroll the inner index in stringstream
@@ -113,7 +112,7 @@ class Transformation():
                 hstvar = rw.NameSwap[var]
             except KeyError:
                 hstvar = var
-            add = lan.Id(accname + ' << ' + '\"' + '-D' + var+ '=\"' + ' << ' + hstvar + ' << \" \";')
+            add = lan.Id(accname + ' << ' + '\"' + '-D' + var + '=\"' + ' << ' + hstvar + ' << \" \";')
             stats.append(add)
 
         # Set the string to the global variable
@@ -124,7 +123,6 @@ class Transformation():
         for var in varList:
             rw.KernelArgs.pop(var)
 
-            
     def placeInReg2(self, arrDict):
         rw = self.rw
         stats = rw.Kernel.statements
@@ -132,7 +130,7 @@ class Transformation():
         loadings = []
         writes = []
         # Create the loadings
-        for i,n in enumerate(arrDict):
+        for i, n in enumerate(arrDict):
             for m in arrDict[n]:
                 idx = m
                 sub = copy.deepcopy(rw.LoopArrays[n][idx])
@@ -142,12 +140,12 @@ class Transformation():
                 writes.append(regid)
                 assign = lan.Assignment(reg, sub)
                 initstats.append(assign)
-        
+
         stats.insert(0, lan.GroupCompound(initstats))
- 
+
         # Replace the global Arefs with the register Arefs
         count = 0
-        for i,n in enumerate(arrDict):
+        for i, n in enumerate(arrDict):
             for m in arrDict[n]:
                 idx = m
                 aref_new = writes[count]
@@ -168,7 +166,7 @@ class Transformation():
 
         if not arrDict:
             return
-        
+
         if not insideList:
             self.placeInReg2(arrDict)
             return
@@ -183,21 +181,20 @@ class Transformation():
         # Add allocation of registers to the initiation stage
         for n in arrDict:
             lval = lan.TypeId([rw.Type[n][0]], \
-                          lan.Id(n+'_reg['+ str(rw.astrepr.UpperLimit[insideloop])\
-                             + ']'))
+                              lan.Id(n + '_reg[' + str(rw.astrepr.UpperLimit[insideloop]) \
+                                     + ']'))
             initstats.append(lval)
-
 
         # add the loop to the initiation stage
         loop = copy.deepcopy(rw.Loops[insideloop])
         loopstats = []
         # Exchange loop index
-        loop.compound.statements = loopstats       
+        loop.compound.statements = loopstats
 
         initstats.append(loop)
-       
+
         # Create the loadings
-        for i,n in enumerate(arrDict):
+        for i, n in enumerate(arrDict):
             for m in arrDict[n]:
                 idx = m
                 sub = copy.deepcopy(rw.astrepr.LoopArrays[n][idx])
@@ -205,7 +202,7 @@ class Transformation():
                 writes.append(regid)
                 assign = lan.Assignment(regid, sub)
                 loopstats.append(assign)
-        
+
         stats.insert(0, lan.GroupCompound(initstats))
         # Replace the global Arefs with the register Arefs
         count = 0
@@ -219,20 +216,19 @@ class Transformation():
                 aref_old.subscript = aref_new.subscript
                 count += 1
 
-
-    def localMemory3(self, arrDict, loopDict = None, blockDict = None):
+    def localMemory3(self, arrDict, loopDict=None, blockDict=None):
         rw = self.rw
         initstats = []
         initComp = lan.GroupCompound(initstats)
         rw.Kernel.statements.insert(0, initComp)
-        
+
         if loopDict is None:
             loopDict = dict()
             # So we create it
             for n in arrDict:
                 for i in arrDict[n]:
-                    loopDict[(n,i)] = []
-                
+                    loopDict[(n, i)] = []
+
             for n in arrDict:
                 for i in arrDict[n]:
                     subscript = rw.SubscriptNoId[n][i]
@@ -243,22 +239,22 @@ class Transformation():
                         except:
                             if m not in rw.GridIndices:
                                 acc.append(m)
-                    loopDict[(n,i)] = acc
+                    loopDict[(n, i)] = acc
 
         # Check that all ArrayRefs are blocked using only one loop
         # otherwise we do not know what to do
         for n in arrDict:
             for i in arrDict[n]:
-                if len(loopDict[(n,i)]) > 1:
+                if len(loopDict[(n, i)]) > 1:
                     print "Array %r is being blocked by %r. Returning..." \
-                          % (n, loopDict[(n,i)])
+                          % (n, loopDict[(n, i)])
                     return
 
         # Find which loops must be extended
         loopext = set()
         for n in arrDict:
             for i in arrDict[n]:
-                loopext.add(loopDict[(n,i)][0])
+                loopext.add(loopDict[(n, i)][0])
 
         # do the extending
         for n in loopext:
@@ -274,17 +270,17 @@ class Transformation():
             loadComp = lan.GroupCompound(loadstats)
             outerstats.insert(0, loadComp)
             # change increment of outer loop
-            outerloop.inc = lan.Increment(lan.Id(outeridx), '+='+rw.Local['size'][0])
-            inneridx = outeridx*2
+            outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + rw.Local['size'][0])
+            inneridx = outeridx * 2
             # For adding to this index in other subscripts
             rw.Add[outeridx] = inneridx
 
             # new inner loop
-            innerloop.cond = lan.BinOp(lan.Id(inneridx), '<' , lan.Constant(rw.Local['size'][0]))
+            innerloop.cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(rw.Local['size'][0]))
             innerloop.inc = lan.Increment(lan.Id(inneridx), '++')
             innerloop.init = ast_bb.ConstantAssignment(inneridx)
             rw.Loops[inneridx] = innerloop
-      
+
         for n in arrDict:
             # Add array allocations
             ## dim = rw.NumDims[n]
@@ -294,43 +290,43 @@ class Transformation():
             if rw.astrepr.num_array_dims[n] == 2 and rw.ParDim == 2:
                 arrayinit += '*' + rw.Local['size'][1]
             arrayinit += ']'
-            
+
             localId = lan.Id(localName + arrayinit)
             localTypeId = lan.TypeId(['__local'] + [rw.Type[n][0]], localId)
             initstats.append(localTypeId)
 
         loadings = []
         for n in arrDict:
-            loc_name = n+'_local'
+            loc_name = n + '_local'
             for i in arrDict[n]:
                 glob_subs = copy.deepcopy(rw.astrepr.LoopArrays[n][i])
                 # Change loop idx to local idx
-                loopname = loopDict[(n,i)][0]
+                loopname = loopDict[(n, i)][0]
                 loc_subs = copy.deepcopy(glob_subs).subscript
                 for k, m in enumerate(loc_subs):
-                        if isinstance(m, lan.Id) and \
-                               m.name not in rw.GridIndices:
-                            tid = str(rw.ReverseIdx[k])
-                            tidstr = 'get_local_id('+tid+')'
-                            exchangeId = tvisitor.ExchangeId({loopname : tidstr})
-                            exchangeId.visit(m)
-                            exchangeId2 = tvisitor.ExchangeId({loopname : '(' + loopname + ' + ' + tidstr + ')'})
-                            exchangeId2.visit(glob_subs.subscript[k])
+                    if isinstance(m, lan.Id) and \
+                                    m.name not in rw.GridIndices:
+                        tid = str(rw.ReverseIdx[k])
+                        tidstr = 'get_local_id(' + tid + ')'
+                        exchangeId = tvisitor.ExchangeId({loopname: tidstr})
+                        exchangeId.visit(m)
+                        exchangeId2 = tvisitor.ExchangeId({loopname: '(' + loopname + ' + ' + tidstr + ')'})
+                        exchangeId2.visit(glob_subs.subscript[k])
                 loc_ref = lan.ArrayRef(lan.Id(loc_name), loc_subs)
 
                 loadings.append(lan.Assignment(loc_ref, glob_subs))
                 if rw.ParDim == 2:
-                    exchangeId = tvisitor.ExchangeId({rw.GridIndices[1]: 'get_local_id(0)', rw.GridIndices[0]: 'get_local_id(1)'})
-                else: 
+                    exchangeId = tvisitor.ExchangeId(
+                        {rw.GridIndices[1]: 'get_local_id(0)', rw.GridIndices[0]: 'get_local_id(1)'})
+                else:
                     exchangeId = tvisitor.ExchangeId({rw.GridIndices[0]: 'get_local_id(0)'})
                 exchangeId.visit(loc_ref)
 
                 inner_loc = rw.astrepr.LoopArrays[n][i]
                 inner_loc.name.name = loc_name
-                exchangeId2 = tvisitor.ExchangeId({loopname : loopname*2})
+                exchangeId2 = tvisitor.ExchangeId({loopname: loopname * 2})
                 exchangeId2.visit(inner_loc)
                 exchangeId.visit(inner_loc)
-
 
             rw.ArrayIdToDimName[loc_name] = rw.Local['size']
             rw.astrepr.num_array_dims[loc_name] = rw.astrepr.num_array_dims[n]
@@ -347,7 +343,7 @@ class Transformation():
         rw = self.rw
 
         isInsideLoop = False
-        try: 
+        try:
             # Find out if arrName is inside a loop
             forLoops = visitor.ForLoops()
             forLoops.visit(rw.Kernel)
@@ -366,40 +362,38 @@ class Transformation():
             loopIndices = visitor.LoopIndices()
             loopIndices.visit(forLoopAst)
             outeridx = loopIndices.index[0]
-            forLoopAst.inc = lan.Increment(lan.Id(outeridx), '+='+ rw.Local['size'][0])
-            
-            inneridx = outeridx*2
+            forLoopAst.inc = lan.Increment(lan.Id(outeridx), '+=' + rw.Local['size'][0])
+
+            inneridx = outeridx * 2
             rw.Add[outeridx] = inneridx
-            cond = lan.BinOp(lan.Id(inneridx), '<' , lan.Constant(rw.Local['size'][0]))
+            cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(rw.Local['size'][0]))
             innerinc = lan.Increment(lan.Id(inneridx), '++')
             innercomp = copy.copy(forLoopAst.compound)
             innerloop = lan.ForLoop(lan.ConstantAssignment(inneridx), cond, \
-                                innerinc, innercomp)
+                                    innerinc, innercomp)
             forLoopAst.compound = lan.Compound([innerloop])
 
         direction = [west, north, east, south, middle]
-        dirname = [(0,-1), (1,0), (0,1), (-1,0), (0,0)]
+        dirname = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
         loadings = [elem for i, elem in enumerate(dirname)
                     if direction[i] == 1]
         if not loadings:
-            loadings = [(0,0)]
-
+            loadings = [(0, 0)]
 
         ## finding the correct local memory size
         arrName = arrNames[0]
-        localDims = [int(rw.Local['size'][0])\
+        localDims = [int(rw.Local['size'][0]) \
                      for i in xrange(rw.NumDims[arrName])]
         if rw.ParDim == 1 and len(localDims) == 2:
             localDims[0] = 1;
         arrIdx = rw.IndexInSubscript[arrName]
-        localOffset = [int(rw.LowerLimit[i])\
-                     for i in arrIdx]
+        localOffset = [int(rw.LowerLimit[i]) \
+                       for i in arrIdx]
 
-        for (x,y) in loadings:
+        for (x, y) in loadings:
             localDims[0] += abs(x)
             if rw.NumDims[arrName] == 2:
                 localDims[1] += abs(y)
-
 
         stats = []
         for arrName in arrNames:
@@ -426,16 +420,16 @@ class Transformation():
         for i, offset in enumerate(localOffset):
             idd = rw.ReverseIdx[i] if len(localOffset) == 2 else i
             if offset != 0:
-                
-                rval = lan.BinOp(lan.Id('get_local_id('+str(idd)+')'), '+', \
-                             lan.Constant(offset))
-            else:
-                rval = lan.Id('get_local_id('+str(idd)+')')
-            lval = lan.TypeId(['unsigned'], lan.Id('l'+rw.GridIndices[i]))
-            stats.append(lan.Assignment(lval,rval))
 
-        exchangeIndices = tvisitor.ExchangeIndices(rw.IndexToLocalVar,  rw.LocalSwap.values())
-        
+                rval = lan.BinOp(lan.Id('get_local_id(' + str(idd) + ')'), '+', \
+                                 lan.Constant(offset))
+            else:
+                rval = lan.Id('get_local_id(' + str(idd) + ')')
+            lval = lan.TypeId(['unsigned'], lan.Id('l' + rw.GridIndices[i]))
+            stats.append(lan.Assignment(lval, rval))
+
+        exchangeIndices = tvisitor.ExchangeIndices(rw.IndexToLocalVar, rw.LocalSwap.values())
+
         ## Creating the loading of values into the local array.
         for arrName in arrNames:
             for k, l in enumerate(loadings):
@@ -446,8 +440,8 @@ class Transformation():
                 lsub = copy.deepcopy(subscript)
                 lval = lan.ArrayRef(lan.Id(rw.LocalSwap[arrName]), lsub)
                 rsub = copy.deepcopy(subscript)
-                rval = lan.ArrayRef(arrayId, rsub, extra = {'localMemory' : True})
-                load = lan.Assignment(lval,rval)
+                rval = lan.ArrayRef(arrayId, rsub, extra={'localMemory': True})
+                load = lan.Assignment(lval, rval)
                 exchangeId = tvisitor.ExchangeId(rw.IndexToLocalVar)
                 orisub = subscript
                 for m in orisub:
@@ -461,19 +455,19 @@ class Transformation():
                         if outeridx in addToId.ids:
                             orisub[i] = lan.Id(inneridx)
 
-                    for i, n in enumerate(rsub): # GlobalLoad
+                    for i, n in enumerate(rsub):  # GlobalLoad
                         idd = rw.ReverseIdx[i] if rw.NumDims[arrName] == 2 else i
-                        locIdx = 'get_local_id('+str(idd)+')'
+                        locIdx = 'get_local_id(' + str(idd) + ')'
                         addToId = lan.Ids()
                         addToId.visit(n)
                         if outeridx in addToId.ids:
-                            rsub[i] = lan.BinOp(rsub[i],'+',\
-                            lan.Id(locIdx))
-                    for i, n in enumerate(lsub): # Local Write
+                            rsub[i] = lan.BinOp(rsub[i], '+', \
+                                                lan.Id(locIdx))
+                    for i, n in enumerate(lsub):  # Local Write
                         idd = rw.ReverseIdx[i] if rw.NumDims[arrName] == 2 else i
-                        locIdx = 'get_local_id('+str(idd)+')'
-                        exchangeId = lan.ExchangeId({''+outeridx: locIdx})
-                        exchangeId.visit(n)                    
+                        locIdx = 'get_local_id(' + str(idd) + ')'
+                        exchangeId = lan.ExchangeId({'' + outeridx: locIdx})
+                        exchangeId.visit(n)
 
                 stats2.append(load)
 
@@ -483,18 +477,14 @@ class Transformation():
         func.arglist = arglist
         stats2.append(func)
 
-        
-        
         exchangeIndices.visit(InitComp)
         exchangeIndices.visit(LoadComp)
         if isInsideLoop:
-            forLoopAst.compound.statements.insert(0,LoadComp)
+            forLoopAst.compound.statements.insert(0, LoadComp)
             forLoopAst.compound.statements.append(func)
         else:
             rw.Kernel.statements.insert(0, LoadComp)
         rw.Kernel.statements.insert(0, InitComp)
-        
-        
 
     def transpose(self, arrName):
         rw = self.rw
@@ -503,8 +493,8 @@ class Transformation():
             return
 
         if rw.astrepr.num_array_dims[arrName] != 2:
-            print "Array ", arrName , "of dimension " , \
-                  rw.NumDims[arrName], "cannot be transposed"
+            print "Array ", arrName, "of dimension ", \
+                rw.NumDims[arrName], "cannot be transposed"
             return
         hstName = rw.HstId[arrName]
         hstTransName = hstName + '_trans'
@@ -519,32 +509,29 @@ class Transformation():
 
         lval = lan.Id(hstTransName)
         natType = rw.Type[arrName][0]
-        rval = lan.Id('new ' + natType + '['\
+        rval = lan.Id('new ' + natType + '[' \
                       + rw.Mem[arrName] + ']')
-        rw.Transposition.statements.append(lan.Assignment(lval,rval))
+        rw.Transposition.statements.append(lan.Assignment(lval, rval))
         if arrName not in rw.WriteOnly:
-            arglist = lan.ArgList([lan.Id(hstName),\
-                       lan.Id(hstTransName),\
-                       lan.Id(dimName[0]),\
-                       lan.Id(dimName[1])])
-            trans = lan.FuncDecl(lan.Id('transpose<'+natType+'>'), arglist, lan.Compound([]))
+            arglist = lan.ArgList([lan.Id(hstName), \
+                                   lan.Id(hstTransName), \
+                                   lan.Id(dimName[0]), \
+                                   lan.Id(dimName[1])])
+            trans = lan.FuncDecl(lan.Id('transpose<' + natType + '>'), arglist, lan.Compound([]))
             rw.Transposition.statements.append(trans)
 
         if arrName in rw.ReadWrite:
             if 'write' in rw.ReadWrite[arrName]:
-                arglist = lan.ArgList([lan.Id(hstTransName),\
-                                   lan.Id(hstName),\
-                                   lan.Id(dimName[1]),\
-                                   lan.Id(dimName[0])])
-                trans = lan.FuncDecl(lan.Id('transpose<'+natType+'>'), arglist, lan.Compound([]))
+                arglist = lan.ArgList([lan.Id(hstTransName), \
+                                       lan.Id(hstName), \
+                                       lan.Id(dimName[1]), \
+                                       lan.Id(dimName[0])])
+                trans = lan.FuncDecl(lan.Id('transpose<' + natType + '>'), arglist, lan.Compound([]))
                 rw.WriteTranspose.append(trans)
 
-
-            
         # Forget this and just swap subscripts immediately
         ## rw.SubSwap[arrName] = True
 
         for sub in rw.Subscript[arrName]:
             (sub[0], sub[1]) = \
-                     (sub[1], sub[0])
-
+                (sub[1], sub[0])
