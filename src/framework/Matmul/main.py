@@ -13,7 +13,6 @@ import boilerplategen
 import define_arguments as darg
 import transpose as tp
 
-
 fileprefix = "../../test/C/"
 SetNoReadBack = True
 DoOptimizations = True
@@ -96,23 +95,10 @@ def matmul():
 
     an = analysis.Analysis(transf_rp, tf)
     if DoOptimizations:
-        tps = tp.Transpose()
-        tps.set_datastructues(tempast3)
-        tps.transpose()
-        transf_rp.Subscript = tps.Subscript
-        transf_rp.WriteTranspose = tps.WriteTranspose
-        transf_rp.Transposition = tps.Transposition
-        transf_rp.NameSwap = tps.NameSwap
-        transf_rp.Type = tps.Type
-        transf_rp.HstId = tps.HstId
-        transf_rp.GlobalVars = tps.GlobalVars
-
+        __main_transpose(transf_rp, tempast3)
         # an.Transpose()
-        dargs = darg.DefineArguments()
-        dargs.set_datastructures(tempast3)
-        dargs.define_arguments(transf_rp.NameSwap)
-        transf_rp.KernelArgs = dargs.kernel_args
-        transf_rp.Define = dargs.define_compound
+
+        __main_definearg(transf_rp, tempast3)
         # an.DefineArguments()
         an.PlaceInReg()
         an.PlaceInLocalMemory()
@@ -121,6 +107,7 @@ def matmul():
 
     ## rw.DataStructures()
     gen_full_code(name, an, tempast2)
+
 
 def knearest():
     name = 'KNearest'
@@ -139,33 +126,10 @@ def knearest():
     # tf.SetParDim(1)
     an = analysis.Analysis(transf_rp, tf)
     if DoOptimizations:
-        tps = tp.Transpose()
-        tps.ParDim = 1
-        tps.set_datastructues(tempast3)
-        tps.transpose()
-        # transf_rp.Subscript = tps.Subscript
-        for (arr_name, idx_list_list) in tps.Subscript.items():
-            idx_list_list2 = an.rw.Subscript[arr_name]
-            for i, idx_list in enumerate(idx_list_list):
-                for j, idx in enumerate(idx_list):
-                    idx_list_list2[i][j].name = idx.name
-
-        transf_rp.WriteTranspose = tps.WriteTranspose
-        transf_rp.Transposition = tps.Transposition
-        transf_rp.NameSwap = tps.NameSwap
-        transf_rp.Type = tps.Type
-        transf_rp.HstId = tps.HstId
-        transf_rp.GlobalVars = tps.GlobalVars
+        __main_transpose(transf_rp, tempast3, par_dim=1)
         # an.Transpose()
 
-
-
-        dargs = darg.DefineArguments()
-        dargs.ParDim = 1
-        dargs.set_datastructures(tempast3)
-        dargs.define_arguments(transf_rp.NameSwap)
-        transf_rp.KernelArgs = dargs.kernel_args
-        transf_rp.Define = dargs.define_compound
+        __main_definearg(transf_rp, tempast3, par_dim=1)
 
         # an.DefineArguments()
         an.PlaceInReg()
@@ -174,6 +138,37 @@ def knearest():
         tf.SetNoReadBack()
 
     gen_full_code(name, an, tempast3)
+
+
+def __main_transpose(transf_rp, tempast3, par_dim=None):
+    tps = tp.Transpose()
+    if par_dim is not None:
+        tps.ParDim = par_dim
+    tps.set_datastructues(tempast3)
+    tps.transpose()
+    # transf_rp.Subscript = tps.Subscript
+    for (arr_name, idx_list_list) in tps.Subscript.items():
+        idx_list_list2 = transf_rp.Subscript[arr_name]
+        for i, idx_list in enumerate(idx_list_list):
+            for j, idx in enumerate(idx_list):
+                idx_list_list2[i][j].name = idx.name
+
+    transf_rp.WriteTranspose = tps.WriteTranspose
+    transf_rp.Transposition = tps.Transposition
+    transf_rp.NameSwap = tps.NameSwap
+    transf_rp.Type = tps.Type
+    transf_rp.HstId = tps.HstId
+    transf_rp.GlobalVars = tps.GlobalVars
+
+
+def __main_definearg(transf_rp, tempast3, par_dim=None):
+    dargs = darg.DefineArguments()
+    if par_dim is not None:
+        dargs.ParDim = par_dim
+    dargs.set_datastructures(tempast3)
+    dargs.define_arguments(transf_rp.NameSwap)
+    transf_rp.KernelArgs = dargs.kernel_args
+    transf_rp.Define = dargs.define_compound
 
 
 if __name__ == "__main__":
