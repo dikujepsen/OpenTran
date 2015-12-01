@@ -383,16 +383,16 @@ class Transformation():
         ## finding the correct local memory size
         arrName = arrNames[0]
         localDims = [int(rw.Local['size'][0]) \
-                     for i in xrange(rw.NumDims[arrName])]
+                     for i in xrange(rw.astrepr.num_array_dims[arrName])]
         if rw.ParDim == 1 and len(localDims) == 2:
             localDims[0] = 1;
-        arrIdx = rw.IndexInSubscript[arrName]
-        localOffset = [int(rw.LowerLimit[i]) \
+        arrIdx = rw.astrepr.IndexInSubscript[arrName]
+        localOffset = [int(rw.astrepr.LowerLimit[i]) \
                        for i in arrIdx]
 
         for (x, y) in loadings:
             localDims[0] += abs(x)
-            if rw.NumDims[arrName] == 2:
+            if rw.astrepr.num_array_dims[arrName] == 2:
                 localDims[1] += abs(y)
 
         stats = []
@@ -407,7 +407,7 @@ class Transformation():
 
             localId = lan.Id(localName + arrayinit)
             localTypeId = lan.TypeId(['__local'] + [rw.Type[arrName][0]], localId)
-            rw.NumDims[localName] = rw.NumDims[arrName]
+            rw.astrepr.num_array_dims[localName] = rw.astrepr.num_array_dims[arrName]
             rw.LocalSwap[arrName] = localName
             rw.ArrayIdToDimName[localName] = [rw.Local['size'][0], rw.Local['size'][0]]
             stats.append(localTypeId)
@@ -435,7 +435,7 @@ class Transformation():
             for k, l in enumerate(loadings):
                 arrayId = lan.Id(arrName)
                 # get first ArrayRef
-                aref = rw.LoopArrays[arrName][k]
+                aref = rw.astrepr.LoopArrays[arrName][k]
                 subscript = aref.subscript
                 lsub = copy.deepcopy(subscript)
                 lval = lan.ArrayRef(lan.Id(rw.LocalSwap[arrName]), lsub)
@@ -473,7 +473,7 @@ class Transformation():
 
         # Must also create the barrier
         arglist = lan.ArgList([lan.Id('CLK_LOCAL_MEM_FENCE')])
-        func = lan.EmptyFuncDecl('barrier', type=[])
+        func = ast_bb.EmptyFuncDecl('barrier', type=[])
         func.arglist = arglist
         stats2.append(func)
 

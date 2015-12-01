@@ -1,5 +1,5 @@
 from Matmul.transf_visitor import *
-
+import visitor
 
 class TransfRepr(NodeVisitor):
     """ Class for rewriting of the original AST. Includes:
@@ -266,8 +266,17 @@ class TransfRepr(NodeVisitor):
         self.ConstantMemory = GroupCompound([Comment('// Constant Memory')])
         self.Define = GroupCompound([Comment('// Defines for the kernel')])
 
+
+        # loops = visitor.ForLoops()
+        # loops.visit(ast2)
+        # for_loop_ast = loops.ast
+        # loop_indices = visitor.LoopIndices()
+        # loop_indices.visit(for_loop_ast)
+        # loop_index = loop_indices.index
+
         arrays = Arrays(self.astrepr.loop_index)
         arrays.visit(ast)
+
         self.Subscript = arrays.Subscript
         self.SubIdx = arrays.SubIdx
         self.SubscriptNoId = copy.deepcopy(self.Subscript)

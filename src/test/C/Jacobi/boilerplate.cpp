@@ -65,7 +65,6 @@ void AllocateBuffers()
   // Defines for the kernel
   std::stringstream str;
   str << "-Dhst_ptrB_dim1=" << hst_ptrB_dim1 << " ";
-  str << "-DwA=" << wA << " ";
   str << "-Dhst_ptrX1_dim1=" << hst_ptrX1_dim1 << " ";
   str << "-Dhst_ptrX2_dim1=" << hst_ptrX2_dim1 << " ";
   KernelDefines = str.str();

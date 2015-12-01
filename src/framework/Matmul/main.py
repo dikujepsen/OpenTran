@@ -121,23 +121,49 @@ def knearest():
 
     transf_rp = transf_repr.TransfRepr(rw.astrepr)
     transf_rp.ParDim = 1
-    transf_rp.init_rew_repr(tempast)
+    transf_rp.init_rew_repr(tempast, tempast3)
     tf = transformation.Transformation(transf_rp)
     # tf.SetParDim(1)
     an = analysis.Analysis(transf_rp, tf)
     if DoOptimizations:
         __main_transpose(transf_rp, tempast3, par_dim=1)
-        # an.Transpose()
-
         __main_definearg(transf_rp, tempast3, par_dim=1)
 
-        # an.DefineArguments()
         an.PlaceInReg()
         an.PlaceInLocalMemory()
     if SetNoReadBack:
         tf.SetNoReadBack()
 
     gen_full_code(name, an, tempast3)
+
+def jacobi():
+    name = 'Jacobi'
+    if True:
+        rw, ast = __get_ast_from_init(name)
+    else:
+        rw, ast = __get_ast_from_base(name)
+    tempast = copy.deepcopy(ast)
+    tempast2 = copy.deepcopy(ast)
+    tempast3 = copy.deepcopy(ast)
+
+    transf_rp = transf_repr.TransfRepr(rw.astrepr)
+    transf_rp.init_rew_repr(tempast)
+    tf = transformation.Transformation(transf_rp)
+
+    an = analysis.Analysis(transf_rp, tf)
+    if DoOptimizations:
+
+        __main_transpose(transf_rp, tempast3)
+        __main_definearg(transf_rp, tempast3)
+        an.PlaceInReg()
+        tf.localMemory(['X1'], west = 1, north = 1, east = 1, south = 1, middle = 0)
+        an.PlaceInLocalMemory()
+    if SetNoReadBack:
+        tf.SetNoReadBack()
+
+    gen_full_code(name, an, tempast3)
+
+
 
 
 def __main_transpose(transf_rp, tempast3, par_dim=None):
@@ -147,11 +173,16 @@ def __main_transpose(transf_rp, tempast3, par_dim=None):
     tps.set_datastructues(tempast3)
     tps.transpose()
     # transf_rp.Subscript = tps.Subscript
+    # print tps.Subscript
+    # print transf_rp.Subscript
     for (arr_name, idx_list_list) in tps.Subscript.items():
+
         idx_list_list2 = transf_rp.Subscript[arr_name]
+
         for i, idx_list in enumerate(idx_list_list):
             for j, idx in enumerate(idx_list):
-                idx_list_list2[i][j].name = idx.name
+                if isinstance(idx, lan.Id) and isinstance(idx_list_list2[i][j], lan.Id):
+                    idx_list_list2[i][j].name = idx.name
 
     transf_rp.WriteTranspose = tps.WriteTranspose
     transf_rp.Transposition = tps.Transposition
@@ -172,5 +203,6 @@ def __main_definearg(transf_rp, tempast3, par_dim=None):
 
 
 if __name__ == "__main__":
-    # matmul()
+    matmul()
     knearest()
+    jacobi()
