@@ -133,7 +133,7 @@ class Transformation():
         for i, n in enumerate(arrDict):
             for m in arrDict[n]:
                 idx = m
-                sub = copy.deepcopy(rw.LoopArrays[n][idx])
+                sub = copy.deepcopy(rw.astrepr.LoopArrays[n][idx])
                 type = rw.Type[n][0]
                 regid = lan.Id(n + str(m) + '_reg')
                 reg = lan.TypeId([type], regid)
@@ -149,7 +149,7 @@ class Transformation():
             for m in arrDict[n]:
                 idx = m
                 aref_new = writes[count]
-                aref_old = rw.LoopArrays[n][idx]
+                aref_old = rw.astrepr.LoopArrays[n][idx]
                 # Copying the internal data of the two arefs
                 aref_old.name.name = aref_new.name
                 aref_old.subscript = []

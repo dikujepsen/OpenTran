@@ -164,6 +164,92 @@ def jacobi():
     gen_full_code(name, an, tempast3)
 
 
+def nbody():
+    name = 'NBody'
+    if True:
+        rw, ast = __get_ast_from_init(name)
+    else:
+        rw, ast = __get_ast_from_base(name)
+    tempast = copy.deepcopy(ast)
+    tempast2 = copy.deepcopy(ast)
+    tempast3 = copy.deepcopy(ast)
+
+    transf_rp = transf_repr.TransfRepr(rw.astrepr)
+    transf_rp.init_rew_repr(tempast)
+    tf = transformation.Transformation(transf_rp)
+
+    an = analysis.Analysis(transf_rp, tf)
+    if DoOptimizations:
+        __main_transpose(transf_rp, tempast3)
+        __main_definearg(transf_rp, tempast3)
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
+
+    if SetNoReadBack:
+        tf.SetNoReadBack()
+    ## rw.Unroll2({'j': 32})
+    gen_full_code(name, an, tempast3)
+
+
+def laplace():
+    name = 'Laplace'
+    if True:
+        rw, ast = __get_ast_from_init(name)
+    else:
+        rw, ast = __get_ast_from_base(name)
+    tempast = copy.deepcopy(ast)
+    tempast2 = copy.deepcopy(ast)
+    tempast3 = copy.deepcopy(ast)
+
+    transf_rp = transf_repr.TransfRepr(rw.astrepr)
+    transf_rp.ParDim = 1
+    transf_rp.init_rew_repr(tempast)
+    tf = transformation.Transformation(transf_rp)
+
+    an = analysis.Analysis(transf_rp, tf)
+    if DoOptimizations:
+        __main_transpose(transf_rp, tempast3, par_dim=1)
+        __main_definearg(transf_rp, tempast3, par_dim=1)
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
+    else:
+        tf.SetDefine(['dim'])
+
+    if SetNoReadBack:
+        tf.SetNoReadBack()
+
+    ## rw.DataStructures()
+
+    ## tf.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
+    gen_full_code(name, an, tempast3)
+
+
+def gaussian():
+    name = 'GaussianDerivates'
+    if True:
+        rw, ast = __get_ast_from_init(name)
+    else:
+        rw, ast = __get_ast_from_base(name)
+    tempast = copy.deepcopy(ast)
+    tempast2 = copy.deepcopy(ast)
+    tempast3 = copy.deepcopy(ast)
+
+    transf_rp = transf_repr.TransfRepr(rw.astrepr)
+    transf_rp.init_rew_repr(tempast)
+    tf = transformation.Transformation(transf_rp)
+
+    an = analysis.Analysis(transf_rp, tf)
+    if DoOptimizations:
+        __main_transpose(transf_rp, tempast3)
+        __main_definearg(transf_rp, tempast3)
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
+
+        ## tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
+    ## rw.DataStructures()
+    if SetNoReadBack:
+        tf.SetNoReadBack()
+    gen_full_code(name, an, tempast3)
 
 
 def __main_transpose(transf_rp, tempast3, par_dim=None):
@@ -206,3 +292,6 @@ if __name__ == "__main__":
     matmul()
     knearest()
     jacobi()
+    nbody()
+    laplace()
+    gaussian()

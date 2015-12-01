@@ -59,8 +59,8 @@ std::string GaussianDerivatesBase()
   std::stringstream str;
   str << "#include \"GaussianDerivatesIncludes.hpp\"" << endl;
   str << "__kernel void GaussianDerivatesFor(" << endl;
-  str << "	__global unsigned * D1Ks__ijb_dimsI, __global float * D3Ks__ijbgd_x, __global unsigned * D2Ks__ijbg_dimsI, " << endl;
-  str << "	__global float * q_a_i_x, __global unsigned * D3Ks__ijbgd_dimsI, __global float * p_a_i_x, " << endl;
+  str << "	__global unsigned * D1Ks__ijb_dimsI, __global float * q_a_i_x, __global float * D3Ks__ijbgd_x, " << endl;
+  str << "	__global unsigned * D2Ks__ijbg_dimsI, __global unsigned * D3Ks__ijbgd_dimsI, __global float * p_a_i_x, " << endl;
   str << "	__global float * D1Ks__ijb_x, __global float * K__ij_x, __global float * D2Ks__ijbg_x" << endl;
   str << "	) {" << endl;
   str << "  float xj[3];" << endl;
@@ -132,8 +132,8 @@ std::string GaussianDerivatesPlaceInLocal()
   std::stringstream str;
   str << "#include \"GaussianDerivatesIncludes.hpp\"" << endl;
   str << "__kernel void GaussianDerivatesFor(" << endl;
-  str << "	__global unsigned * D1Ks__ijb_dimsI, __global float * D3Ks__ijbgd_x, __global unsigned * D2Ks__ijbg_dimsI, " << endl;
-  str << "	__global float * q_a_i_x, __global unsigned * D3Ks__ijbgd_dimsI, __global float * p_a_i_x, " << endl;
+  str << "	__global unsigned * D1Ks__ijb_dimsI, __global float * q_a_i_x, __global float * D3Ks__ijbgd_x, " << endl;
+  str << "	__global unsigned * D2Ks__ijbg_dimsI, __global unsigned * D3Ks__ijbgd_dimsI, __global float * p_a_i_x, " << endl;
   str << "	__global float * D1Ks__ijb_x, __global float * K__ij_x, __global float * D2Ks__ijbg_x" << endl;
   str << "	) {" << endl;
   str << "  __local float p_a_i_x_local[16*16];" << endl;
@@ -243,10 +243,8 @@ void AllocateBuffers()
   // Defines for the kernel
   std::stringstream str;
   str << "-Ddim=" << dim << " ";
-  str << "-Dscaleweight2_x=" << scaleweight2_x << " ";
   str << "-Dhst_ptrp_a_i_x_dim1=" << hst_ptrp_a_i_x_dim1 << " ";
   str << "-Dhst_ptrK__ij_x_dim1=" << hst_ptrK__ij_x_dim1 << " ";
-  str << "-Dscales2_x=" << scales2_x << " ";
   str << "-Dhst_ptrq_a_i_x_dim1=" << hst_ptrq_a_i_x_dim2 << " ";
   KernelDefines = str.str();
   
@@ -308,13 +306,13 @@ void SetArgumentsGaussianDerivatesFor()
 	(void *) &dev_ptrD1Ks__ijb_dimsI);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptrq_a_i_x);
+  oclErrNum |= clSetKernelArg(
+	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrD3Ks__ijbgd_x);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrD2Ks__ijbg_dimsI);
-  oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrq_a_i_x);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrD3Ks__ijbgd_dimsI);
