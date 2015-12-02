@@ -12,6 +12,7 @@ import lan
 import boilerplategen
 import define_arguments as darg
 import transpose as tp
+import place_in_reg as reg
 
 fileprefix = "../../test/C/"
 SetNoReadBack = True
@@ -182,7 +183,13 @@ def nbody():
     if DoOptimizations:
         __main_transpose(transf_rp, tempast3)
         __main_definearg(transf_rp, tempast3)
-        an.PlaceInReg()
+
+        pireg = reg.PlaceInReg()
+        pireg.set_datastructures(tempast3)
+        pireg.place_in_reg()
+        an.PlaceInRegArgs = pireg.PlaceInRegArgs
+        an.PlaceInRegCond = pireg.PlaceInRegCond
+        # an.PlaceInReg()
         an.PlaceInLocalMemory()
 
     if SetNoReadBack:
@@ -256,7 +263,7 @@ def __main_transpose(transf_rp, tempast3, par_dim=None):
     tps = tp.Transpose()
     if par_dim is not None:
         tps.ParDim = par_dim
-    tps.set_datastructues(tempast3)
+    tps.set_datastructures(tempast3)
     tps.transpose()
     # transf_rp.Subscript = tps.Subscript
     # print tps.Subscript

@@ -23,7 +23,7 @@ class Transpose(object):
         self.Subscript = dict()
 
 
-    def set_datastructues(self, ast):
+    def set_datastructures(self, ast):
         perfect_for_loop = tvisitor.PerfectForLoop()
         perfect_for_loop.visit(ast)
 

@@ -6,6 +6,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--make", help="run make clean && make on all files",
                     action="store_true")
+parser.add_argument("-c", "--check", help="run ./check.sh on all files",
+                    action="store_true")
 parser.add_argument("-p", "--printresult", help="Compiles the code with printing of the result enabled",
                     action="store_true")
 parser.add_argument("-t", "--tag", help="tag this benchmark with a string")
@@ -45,11 +47,14 @@ for n in benchmark:
     if not os.path.exists(n):
         raise Exception('Folder ' + n + 'does not exist')
 
-if args.make:
+if args.make or args.check:
     # run the makefile in each folder
-    command = "make clean && make"
-    if args.printresult:
-        command += " DEF=PRINT"
+    if args.make:
+        command = "make clean && make"
+        if args.printresult:
+            command += " DEF=PRINT"
+    if args.check:
+        command = "./check.sh"
     for n in benchmark:
         os.chdir(n)
         p1 = subprocess.Popen(command, shell=True,\
@@ -64,6 +69,8 @@ if args.make:
                 erracc += line
                 if line[0:9] == 'make: ***':
                     raise Exception('Program ' + n + ' did not compile: ' + erracc)
+            if args.check:
+                print line
         os.chdir('..')
     
 if args.run is not None:
