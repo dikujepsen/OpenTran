@@ -13,6 +13,7 @@ import boilerplategen
 import define_arguments as darg
 import transpose as tp
 import place_in_reg as reg
+import place_in_local as local
 
 fileprefix = "../../test/C/"
 SetNoReadBack = True
@@ -91,7 +92,7 @@ def matmul():
     tempast3 = copy.deepcopy(ast)
 
     transf_rp = transf_repr.TransfRepr(rw.astrepr)
-    transf_rp.init_rew_repr(tempast)
+    transf_rp.init_rew_repr(tempast, dev='CPU')
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
@@ -102,7 +103,8 @@ def matmul():
         __main_definearg(transf_rp, tempast3)
         # an.DefineArguments()
         __main_placeinreg(an, tempast3)
-        an.PlaceInLocalMemory()
+        __main_placeinlocal(an, tempast3)
+        # an.PlaceInLocalMemory()
     if SetNoReadBack:
         tf.SetNoReadBack()
 
@@ -122,16 +124,16 @@ def knearest():
 
     transf_rp = transf_repr.TransfRepr(rw.astrepr)
     transf_rp.ParDim = 1
-    transf_rp.init_rew_repr(tempast, tempast3)
+    transf_rp.init_rew_repr(tempast, dev='CPU')
     tf = transformation.Transformation(transf_rp)
     # tf.SetParDim(1)
     an = analysis.Analysis(transf_rp, tf)
     if DoOptimizations:
         __main_transpose(transf_rp, tempast3, par_dim=1)
         __main_definearg(transf_rp, tempast3, par_dim=1)
-
         __main_placeinreg(an, tempast3, par_dim=1)
-        an.PlaceInLocalMemory()
+        __main_placeinlocal(an, tempast3, par_dim=1)
+
     if SetNoReadBack:
         tf.SetNoReadBack()
 
@@ -149,7 +151,7 @@ def jacobi():
     tempast3 = copy.deepcopy(ast)
 
     transf_rp = transf_repr.TransfRepr(rw.astrepr)
-    transf_rp.init_rew_repr(tempast)
+    transf_rp.init_rew_repr(tempast, dev='CPU')
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
@@ -158,7 +160,7 @@ def jacobi():
         __main_definearg(transf_rp, tempast3)
         __main_placeinreg(an, tempast3)
         tf.localMemory(['X1'], west=1, north=1, east=1, south=1, middle=0)
-        an.PlaceInLocalMemory()
+        __main_placeinlocal(an, tempast3)
     if SetNoReadBack:
         tf.SetNoReadBack()
 
@@ -176,7 +178,7 @@ def nbody():
     tempast3 = copy.deepcopy(ast)
 
     transf_rp = transf_repr.TransfRepr(rw.astrepr)
-    transf_rp.init_rew_repr(tempast)
+    transf_rp.init_rew_repr(tempast, dev='CPU')
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
@@ -186,8 +188,8 @@ def nbody():
 
         __main_placeinreg(an, tempast3)
         # an.PlaceInReg()
-        an.PlaceInLocalMemory()
-
+        # an.PlaceInLocalMemory()
+        __main_placeinlocal(an, tempast3)
     if SetNoReadBack:
         tf.SetNoReadBack()
     ## rw.Unroll2({'j': 32})
@@ -206,7 +208,7 @@ def laplace():
 
     transf_rp = transf_repr.TransfRepr(rw.astrepr)
     transf_rp.ParDim = 1
-    transf_rp.init_rew_repr(tempast)
+    transf_rp.init_rew_repr(tempast, dev='CPU')
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
@@ -214,7 +216,7 @@ def laplace():
         __main_transpose(transf_rp, tempast3, par_dim=1)
         __main_definearg(transf_rp, tempast3, par_dim=1)
         __main_placeinreg(an, tempast3, par_dim=1)
-        an.PlaceInLocalMemory()
+        __main_placeinlocal(an, tempast3, par_dim=1)
     else:
         tf.SetDefine(['dim'])
 
@@ -238,17 +240,21 @@ def gaussian():
     tempast3 = copy.deepcopy(ast)
 
     transf_rp = transf_repr.TransfRepr(rw.astrepr)
-    transf_rp.init_rew_repr(tempast)
+    transf_rp.init_rew_repr(tempast, dev='CPU')
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
     if DoOptimizations:
+        # an.Transpose()
         __main_transpose(transf_rp, tempast3)
+        # an.DefineArguments()
         __main_definearg(transf_rp, tempast3)
+        # an.PlaceInReg()
         __main_placeinreg(an, tempast3)
-        an.PlaceInLocalMemory()
+        __main_placeinlocal(an, tempast3)
 
-        ## tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
+        # an.PlaceInLocalMemory()
+    #         ## tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
     ## rw.DataStructures()
     if SetNoReadBack:
         tf.SetNoReadBack()
@@ -288,6 +294,7 @@ def __main_definearg(transf_rp, tempast3, par_dim=None):
     dargs.set_datastructures(tempast3)
     dargs.define_arguments(transf_rp.NameSwap)
     transf_rp.KernelArgs = dargs.kernel_args
+
     transf_rp.Define = dargs.define_compound
 
 
@@ -299,6 +306,16 @@ def __main_placeinreg(an, tempast3, par_dim=None):
     pireg.place_in_reg()
     an.PlaceInRegArgs = pireg.PlaceInRegArgs
     an.PlaceInRegCond = pireg.PlaceInRegCond
+
+def __main_placeinlocal(an, tempast3, par_dim=None):
+    pilocal = local.PlaceInLocal()
+    if par_dim is not None:
+        pilocal.ParDim = par_dim
+    pilocal.set_datastructures(tempast3)
+    pilocal.place_in_local()
+    an.PlaceInLocalArgs = pilocal.PlaceInLocalArgs
+    an.PlaceInLocalCond = pilocal.PlaceInLocalCond
+    an.rw.Local = pilocal.Local
 
 
 if __name__ == "__main__":

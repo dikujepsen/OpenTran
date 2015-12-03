@@ -159,7 +159,7 @@ void ExecNBodyFor()
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
   size_t NBodyFor_global_worksize[] = {N - 0};
-  size_t NBodyFor_local_worksize[] = {256};
+  size_t NBodyFor_local_worksize[] = {16};
   size_t NBodyFor_global_offset[] = {0};
   oclErrNum = clEnqueueNDRangeKernel(
 	command_queue, NBodyForKernel, 1, 

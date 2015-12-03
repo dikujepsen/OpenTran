@@ -50,15 +50,15 @@ std::string MatMulPlaceInLocal()
   str << "__kernel void MatMulFor(" << endl;
   str << "	__global float * A, __global float * C, __global float * B" << endl;
   str << "	) {" << endl;
-  str << "  __local float A_local[16*16];" << endl;
-  str << "  __local float B_local[16*16];" << endl;
+  str << "  __local float A_local[4*4];" << endl;
+  str << "  __local float B_local[4*4];" << endl;
   str << "  float sum = 0;" << endl;
-  str << "  for (unsigned k = 0; k < wA; k+=16) {" << endl;
-  str << "      A_local[(get_local_id(1) * 16) + get_local_id(0)] = A[(get_global_id(1) * hst_ptrA_dim1) + (k + get_local_id(0))];" << endl;
-  str << "      B_local[(get_local_id(1) * 16) + get_local_id(0)] = B[((k + get_local_id(1)) * hst_ptrB_dim1) + get_global_id(0)];" << endl;
+  str << "  for (unsigned k = 0; k < wA; k+=4) {" << endl;
+  str << "      A_local[(get_local_id(1) * 4) + get_local_id(0)] = A[(get_global_id(1) * hst_ptrA_dim1) + (k + get_local_id(0))];" << endl;
+  str << "      B_local[(get_local_id(1) * 4) + get_local_id(0)] = B[((k + get_local_id(1)) * hst_ptrB_dim1) + get_global_id(0)];" << endl;
   str << "      barrier(CLK_LOCAL_MEM_FENCE);" << endl;
-  str << "      for (unsigned kk = 0; kk < 16; kk++) {" << endl;
-  str << "          sum += A_local[(get_local_id(1) * 16) + kk] * B_local[(kk * 16) + get_local_id(0)];" << endl;
+  str << "      for (unsigned kk = 0; kk < 4; kk++) {" << endl;
+  str << "          sum += A_local[(get_local_id(1) * 4) + kk] * B_local[(kk * 4) + get_local_id(0)];" << endl;
   str << "      }" << endl;
   str << "      barrier(CLK_LOCAL_MEM_FENCE);" << endl;
   str << "  }" << endl;
@@ -71,7 +71,7 @@ std::string MatMulPlaceInLocal()
 
 std::string GetKernelCode()
 {
-  if (((wA - 0) % 16) == 0)
+  if (((wA - 0) % 4) == 0)
     {
       return  MatMulPlaceInLocal();
     }
@@ -140,7 +140,7 @@ void ExecMatMulFor()
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
   size_t MatMulFor_global_worksize[] = {wB - 0, hA - 0};
-  size_t MatMulFor_local_worksize[] = {16, 16};
+  size_t MatMulFor_local_worksize[] = {4, 4};
   size_t MatMulFor_global_offset[] = {0, 0};
   oclErrNum = clEnqueueNDRangeKernel(
 	command_queue, MatMulForKernel, 2, 

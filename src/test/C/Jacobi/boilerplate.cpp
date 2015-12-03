@@ -32,15 +32,15 @@ std::string JacobiBase()
   str << "__kernel void JacobiFor(" << endl;
   str << "	__global float * B, __global float * X2, __global float * X1" << endl;
   str << "	) {" << endl;
-  str << "  __local float X1_local[18*18];" << endl;
+  str << "  __local float X1_local[6*6];" << endl;
   str << "  unsigned li = get_local_id(1) + 1;" << endl;
   str << "  unsigned lj = get_local_id(0) + 1;" << endl;
-  str << "  X1_local[((li - 1) * 16) + lj] = X1[((get_global_id(1) - 1) * hst_ptrX1_dim1) + get_global_id(0)];" << endl;
-  str << "  X1_local[((li + 1) * 16) + lj] = X1[((get_global_id(1) + 1) * hst_ptrX1_dim1) + get_global_id(0)];" << endl;
-  str << "  X1_local[(li * 16) + (lj - 1)] = X1[(get_global_id(1) * hst_ptrX1_dim1) + (get_global_id(0) - 1)];" << endl;
-  str << "  X1_local[(li * 16) + (lj + 1)] = X1[(get_global_id(1) * hst_ptrX1_dim1) + (get_global_id(0) + 1)];" << endl;
+  str << "  X1_local[((li - 1) * 4) + lj] = X1[((get_global_id(1) - 1) * hst_ptrX1_dim1) + get_global_id(0)];" << endl;
+  str << "  X1_local[((li + 1) * 4) + lj] = X1[((get_global_id(1) + 1) * hst_ptrX1_dim1) + get_global_id(0)];" << endl;
+  str << "  X1_local[(li * 4) + (lj - 1)] = X1[(get_global_id(1) * hst_ptrX1_dim1) + (get_global_id(0) - 1)];" << endl;
+  str << "  X1_local[(li * 4) + (lj + 1)] = X1[(get_global_id(1) * hst_ptrX1_dim1) + (get_global_id(0) + 1)];" << endl;
   str << "  barrier(CLK_LOCAL_MEM_FENCE);" << endl;
-  str << "  X2[(get_global_id(1) * hst_ptrX2_dim1) + get_global_id(0)] = (-0.25) * ((B[(get_global_id(1) * hst_ptrB_dim1) + get_global_id(0)] - (X1_local[((li - 1) * 16) + lj] + X1_local[((li + 1) * 16) + lj])) - (X1_local[(li * 16) + (lj - 1)] + X1_local[(li * 16) + (lj + 1)]));" << endl;
+  str << "  X2[(get_global_id(1) * hst_ptrX2_dim1) + get_global_id(0)] = (-0.25) * ((B[(get_global_id(1) * hst_ptrB_dim1) + get_global_id(0)] - (X1_local[((li - 1) * 4) + lj] + X1_local[((li + 1) * 4) + lj])) - (X1_local[(li * 4) + (lj - 1)] + X1_local[(li * 4) + (lj + 1)]));" << endl;
   str << "}" << endl;
   
   return str.str();
@@ -110,7 +110,7 @@ void ExecJacobiFor()
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
   size_t JacobiFor_global_worksize[] = {wB - 1, wB - 1};
-  size_t JacobiFor_local_worksize[] = {16, 16};
+  size_t JacobiFor_local_worksize[] = {4, 4};
   size_t JacobiFor_global_offset[] = {1, 1};
   oclErrNum = clEnqueueNDRangeKernel(
 	command_queue, JacobiForKernel, 2, 

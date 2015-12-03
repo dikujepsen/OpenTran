@@ -148,7 +148,7 @@ void ExecKNearestFor()
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
   size_t KNearestFor_global_worksize[] = {NTEST - 0};
-  size_t KNearestFor_local_worksize[] = {256};
+  size_t KNearestFor_local_worksize[] = {16};
   size_t KNearestFor_global_offset[] = {0};
   oclErrNum = clEnqueueNDRangeKernel(
 	command_queue, KNearestForKernel, 1, 

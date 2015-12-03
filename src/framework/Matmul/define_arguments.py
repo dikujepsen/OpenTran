@@ -66,6 +66,8 @@ class DefineArguments(object):
         ids = visitor.Ids2()
         ids.visit(ast)
 
+        # print ast
+        #
         # print ids.ids, "123qwe"
         # print arrays.ids
         # print type_ids.ids

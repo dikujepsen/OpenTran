@@ -272,7 +272,7 @@ void ExecLaplaceFor()
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
   size_t LaplaceFor_global_worksize[] = {storagesize - 0};
-  size_t LaplaceFor_local_worksize[] = {256};
+  size_t LaplaceFor_local_worksize[] = {16};
   size_t LaplaceFor_global_offset[] = {0};
   oclErrNum = clEnqueueNDRangeKernel(
 	command_queue, LaplaceForKernel, 1, 

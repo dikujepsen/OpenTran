@@ -78,7 +78,7 @@ def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
 def matmul():
     name = 'MatMul'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
-    rw.initNewRepr(tempast)
+    rw.initNewRepr(tempast, dev='CPU')
     tf = Transformation(rw)
 
     an = Analysis(rw, tf)
@@ -96,7 +96,7 @@ def matmul():
 def jacobi():
     name = 'Jacobi'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
-    rw.initNewRepr(tempast)
+    rw.initNewRepr(tempast, dev='CPU')
     tf = Transformation(rw)
     
     an = Analysis(rw, tf)
@@ -118,14 +118,14 @@ def knearest():
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     tf = Transformation(rw)
     tf.SetParDim(1)
-    rw.initNewRepr(tempast)
+    rw.initNewRepr(tempast, dev='CPU')
     
     an = Analysis(rw, tf)
     if DoOptimizations:
         an.Transpose()
         an.DefineArguments()
-        # an.PlaceInReg()
-        # an.PlaceInLocalMemory()
+        an.PlaceInReg()
+        an.PlaceInLocalMemory()
     if SetNoReadBack:
         tf.SetNoReadBack()
     ## rw.DataStructures()
@@ -137,7 +137,7 @@ def nbody():
     name = 'NBody'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
 
-    rw.initNewRepr(tempast)
+    rw.initNewRepr(tempast, dev='CPU')
     tf = Transformation(rw)
     an = Analysis(rw, tf)
     if DoOptimizations:
@@ -157,7 +157,7 @@ def laplace():
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     tf = Transformation(rw)
     tf.SetParDim(1)
-    rw.initNewRepr(tempast)
+    rw.initNewRepr(tempast, dev='CPU')
     an = Analysis(rw, tf)
     if DoOptimizations:
         an.Transpose()
@@ -180,7 +180,7 @@ def gaussian():
     name = 'GaussianDerivates'
     (rw, ast, tempast, tempast2, funcname) = LexAndParse(name, True)
     ## rw.SetParDim(1)
-    rw.initNewRepr(tempast)
+    rw.initNewRepr(tempast, dev='CPU')
     tf = Transformation(rw)
 
     

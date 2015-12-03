@@ -25,6 +25,8 @@ class Ids2(NodeVisitor):
     def visit_FuncDecl(self, node):
         if node.compound.statements != []:
             self.visit(node.compound)
+        elif node.compound.statements == []:
+            self.visit(node.arglist)
 
     def visit_Id(self, node):
         self.ids.add(node.name)
