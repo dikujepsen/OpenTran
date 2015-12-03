@@ -198,9 +198,9 @@ def gaussian():
     CGen(name, funcname, an, tempast2, ast)
 
 if __name__ == "__main__":
-    # matmul()
-    # jacobi()
+    matmul()
+    jacobi()
     knearest()
-    # nbody()
-    # laplace()
-    # gaussian()
+    nbody()
+    laplace()
+    gaussian()
