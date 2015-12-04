@@ -43,13 +43,13 @@ class SnippetGen(object):
             for m in n:
                 exchangeArrayId.visit(m)
 
-
         MyKernel = copy.deepcopy(self.astrepr.Kernel)
+        # print self.astrepr.ArrayIdToDimName
         rewriteArrayRef = transf_visitor.RewriteArrayRef(initrepr.num_array_dims,
                                                          self.astrepr.ArrayIdToDimName, self.astrepr)
         rewriteArrayRef.visit(MyKernel)
 
-
+        # print MyKernel
         exchangeIndices = transf_visitor.ExchangeId(self.astrepr.IndexToThreadId)
         exchangeIndices.visit(MyKernel)
 

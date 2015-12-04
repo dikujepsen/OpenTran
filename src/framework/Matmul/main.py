@@ -14,6 +14,7 @@ import define_arguments as darg
 import transpose as tp
 import place_in_reg as reg
 import place_in_local as local
+import stencil
 
 fileprefix = "../../test/C/"
 SetNoReadBack = True
@@ -159,7 +160,8 @@ def jacobi():
         __main_transpose(transf_rp, tempast3)
         __main_definearg(transf_rp, tempast3)
         __main_placeinreg(an, tempast3)
-        tf.localMemory(['X1'], west=1, north=1, east=1, south=1, middle=0)
+        # tf.localMemory(['X1'], west=1, north=1, east=1, south=1, middle=0)
+        __main_stencil(an, tempast3)
         __main_placeinlocal(an, tempast3)
     if SetNoReadBack:
         tf.SetNoReadBack()
@@ -317,6 +319,15 @@ def __main_placeinlocal(an, tempast3, par_dim=None):
     an.PlaceInLocalCond = pilocal.PlaceInLocalCond
     an.rw.Local = pilocal.Local
 
+def __main_stencil(an, tempast3):
+    sten = stencil.Stencil()
+    sten.set_datastructures(tempast3)
+    sten.stencil(['X1'], west=1, north=1, east=1, south=1, middle=0)
+    an.rw.astrepr.num_array_dims = sten.num_array_dims
+    an.rw.LocalSwap = sten.LocalSwap
+    an.rw.ArrayIdToDimName = sten.ArrayIdToDimName
+    an.rw.Kernel = sten.Kernel
+    an.rw.astrepr.LoopArrays = sten.LoopArrays
 
 if __name__ == "__main__":
     matmul()
