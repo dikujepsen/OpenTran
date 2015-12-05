@@ -15,6 +15,7 @@ import transpose as tp
 import place_in_reg as reg
 import place_in_local as local
 import stencil
+import kernelgen
 
 fileprefix = "../../test/C/"
 SetNoReadBack = True
@@ -76,7 +77,16 @@ def __get_ast_from_base(name):
 def gen_full_code(name, an, tempast2):
     cprint = cgen.CGenerator()
     rw = an.rw
-    an.GenerateKernels(tempast2, name, fileprefix)
+    kgen = kernelgen.KernelGen(an.tf, an.rw)
+    kgen.PlaceInLocalArgs = an.PlaceInLocalArgs
+    kgen.PlaceInLocalCond = an.PlaceInLocalCond
+    kgen.PlaceInRegArgs = an.PlaceInRegArgs
+    kgen.PlaceInRegCond = an.PlaceInRegCond
+    kgen.GenerateKernels(tempast2, name, fileprefix)
+
+    an.rw.IfThenElse = kgen.IfThenElse
+
+    # an.GenerateKernels(tempast2, name, fileprefix)
     boilerplate = boilerplategen.Boilerplate()
     boilerast = boilerplate.generate_code(rw)
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
