@@ -319,6 +319,7 @@ def __main_placeinreg(an, tempast3, par_dim=None):
     an.PlaceInRegArgs = pireg.PlaceInRegArgs
     an.PlaceInRegCond = pireg.PlaceInRegCond
 
+
 def __main_placeinlocal(an, tempast3, par_dim=None):
     pilocal = local.PlaceInLocal()
     if par_dim is not None:
@@ -329,6 +330,7 @@ def __main_placeinlocal(an, tempast3, par_dim=None):
     an.PlaceInLocalCond = pilocal.PlaceInLocalCond
     an.rw.Local = pilocal.Local
 
+
 def __main_stencil(an, tempast3):
     sten = stencil.Stencil()
     sten.set_datastructures(tempast3)
@@ -338,6 +340,7 @@ def __main_stencil(an, tempast3):
     an.rw.ArrayIdToDimName = sten.ArrayIdToDimName
     an.rw.Kernel = sten.Kernel
     an.rw.astrepr.LoopArrays = sten.LoopArrays
+
 
 if __name__ == "__main__":
     matmul()

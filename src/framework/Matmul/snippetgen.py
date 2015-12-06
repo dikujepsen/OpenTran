@@ -8,15 +8,29 @@ class SnippetGen(object):
 
     def __init__(self, astrepr):
         self.astrepr = astrepr
+        self.KernelStringStream = list()
+        self.RemovedIds = dict()
+        self.ArrayIdToDimName = dict()
+        self.NonArrayIds = set()
+        self.Type = dict()
+        self.ArrayIds = set()
+        self.KernelArgs = dict()
+        self.LocalSwap = dict()
+        self.LoopArrays = dict()
+        self.Kernel = None
+        self.IndexToThreadId = dict()
+        self.DevFuncTypeId = None
+        self.Includes = list()
+
 
     def InSourceKernel(self, ast, cond, filename, kernelstringname):
         self.rewriteToDeviceCRelease(ast)
 
         ssprint = stringstream.SSGenerator()
-        newast = lan.FileAST([])
-        ssprint.createKernelStringStream(ast, newast, self.astrepr.UnrollLoops, kernelstringname, filename = filename)
+        emptyast = lan.FileAST([])
+        ssprint.createKernelStringStream(ast, emptyast, kernelstringname, filename = filename)
         self.astrepr.KernelStringStream.append({'name' : kernelstringname, \
-                                        'ast' : newast,
+                                        'ast' : emptyast,
                                         'cond' : cond})
 
     def rewriteToDeviceCRelease(self, ast):
@@ -46,7 +60,7 @@ class SnippetGen(object):
         MyKernel = copy.deepcopy(self.astrepr.Kernel)
         # print self.astrepr.ArrayIdToDimName
         rewriteArrayRef = transf_visitor.RewriteArrayRef(initrepr.num_array_dims,
-                                                         self.astrepr.ArrayIdToDimName, self.astrepr)
+                                                         self.astrepr.ArrayIdToDimName, self.astrepr.SubSwap)
         rewriteArrayRef.visit(MyKernel)
 
         # print MyKernel

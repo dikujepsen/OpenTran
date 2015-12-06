@@ -257,17 +257,17 @@ class RewriteArrayRef(NodeVisitor):
     """ Rewrites the arrays references of form A[i][j] to
     A[i * JDIMSIZE + j]
     """
-    def __init__(self, NumDims, ArrayIdToDimName, data):
-        self.data = data
-        self.NumDims = NumDims
+    def __init__(self, num_array_dims, ArrayIdToDimName, SubSwap):
         self.ArrayIdToDimName = ArrayIdToDimName
+        self.num_array_dims = num_array_dims
+        self.SubSwap = SubSwap
     
     def visit_ArrayRef(self, node):
         n = node.name.name
         try:
-            if self.data.astrepr.num_array_dims[n] == 2 and len(node.subscript) == 2:
+            if self.num_array_dims[n] == 2 and len(node.subscript) == 2:
                 try:
-                    if self.data.SubSwap[n]:
+                    if self.SubSwap[n]:
                         (node.subscript[0], node.subscript[1]) = \
                         (node.subscript[1], node.subscript[0])
                 except KeyError:

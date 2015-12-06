@@ -1,4 +1,3 @@
-
 import lan
 import ast_buildingblock as ast_bb
 import snippetgen
@@ -16,7 +15,6 @@ class KernelGen(object):
         self.tf = tf
         self.rw = rw
 
-
     def GenerateKernels(self, ast, name, fileprefix):
         rw = self.rw
         tf = self.tf
@@ -29,7 +27,6 @@ class KernelGen(object):
                                 PlaceInReg and PlaceInLocal together from the analysis""")
 
         ss = snippetgen.SnippetGen(rw)
-
 
         ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                           kernelstringname=funcname)

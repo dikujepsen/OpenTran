@@ -22,6 +22,7 @@ class Stencil(object):
         self.IndexToLocalVar = dict()
         self.GridIndices = list()
         self.ParDim = None
+        self.num_array_dims = dict()
 
     def set_datastructures(self, ast, dev='CPU'):
         perfect_for_loop = tvisitor.PerfectForLoop()

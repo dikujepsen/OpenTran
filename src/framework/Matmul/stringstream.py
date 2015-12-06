@@ -45,14 +45,14 @@ class SSGenerator(object):
         except IOError:
             print "createTemp: Unable to write file"
             
-    def createKernelStringStream(self, ast, newast, UnrollLoops, kernelstringname, filename = 'temp.cpp'):
+    def createKernelStringStream(self, ast, newast, kernelstringname, filename = 'temp.cpp'):
 
-        self.UnrollLoops = UnrollLoops
+        # self.UnrollLoops = UnrollLoops
         
         # Swap the IDs that contain the loop indexes before
         # generating the code
-        swapUnrollID = tvisitor.SwapUnrollID(self.UnrollLoops)
-        swapUnrollID.visit(ast)
+        # swapUnrollID = tvisitor.SwapUnrollID(self.UnrollLoops)
+        # swapUnrollID.visit(ast)
         oldcode = self.visit(ast)
         
         
