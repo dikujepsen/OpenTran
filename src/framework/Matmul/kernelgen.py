@@ -26,7 +26,22 @@ class KernelGen(object):
             raise Exception("""GenerateKernels: Currently unimplemented to perform
                                 PlaceInReg and PlaceInLocal together from the analysis""")
 
-        ss = snippetgen.SnippetGen(rw)
+        ss = snippetgen.SnippetGen()
+        ss.set_datastructure(rw.KernelStringStream,
+                             rw.RemovedIds,
+                             rw.ArrayIdToDimName,
+                             rw.astrepr.NonArrayIds,
+                             rw.astrepr.Type,
+                             rw.astrepr.ArrayIds,
+                             rw.KernelArgs,
+                             rw.LocalSwap,
+                             rw.astrepr.LoopArrays,
+                             rw.Kernel,
+                             rw.IndexToThreadId,
+                             rw.DevFuncTypeId,
+                             rw.astrepr.Includes,
+                             rw.astrepr.num_array_dims,
+                             rw.SubSwap)
 
         ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                           kernelstringname=funcname)
