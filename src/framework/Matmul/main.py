@@ -16,6 +16,7 @@ import place_in_reg as reg
 import place_in_local as local
 import stencil
 import kernelgen
+import snippetgen
 
 fileprefix = "../../test/C/"
 SetNoReadBack = True
@@ -77,14 +78,31 @@ def __get_ast_from_base(name):
 def gen_full_code(name, an, tempast2):
     cprint = cgen.CGenerator()
     rw = an.rw
-    kgen = kernelgen.KernelGen(an.tf, an.rw)
+
+    ks = snippetgen.KernelStruct()
+    ks.ArrayIdToDimName = rw.ArrayIdToDimName
+    ks.Type = rw.astrepr.Type
+
+    ks.ArrayIds = rw.astrepr.ArrayIds
+    ks.KernelArgs = rw.KernelArgs
+    ks.LocalSwap = rw.LocalSwap
+    ks.LoopArrays = rw.astrepr.LoopArrays
+    ks.Kernel = rw.Kernel
+    ks.Includes = rw.astrepr.Includes
+    ks.num_array_dims = rw.astrepr.num_array_dims
+    ks.SubSwap = rw.SubSwap
+    ks.ParDim = rw.ParDim
+
+    kgen = kernelgen.KernelGen(an.tf, an.rw, ks)
+
     kgen.PlaceInLocalArgs = an.PlaceInLocalArgs
     kgen.PlaceInLocalCond = an.PlaceInLocalCond
     kgen.PlaceInRegArgs = an.PlaceInRegArgs
     kgen.PlaceInRegCond = an.PlaceInRegCond
     kgen.GenerateKernels(tempast2, name, fileprefix)
 
-    an.rw.IfThenElse = kgen.IfThenElse
+    rw.KernelStringStream = kgen.KernelStringStream
+    rw.IfThenElse = kgen.IfThenElse
 
     # an.GenerateKernels(tempast2, name, fileprefix)
     boilerplate = boilerplategen.Boilerplate()

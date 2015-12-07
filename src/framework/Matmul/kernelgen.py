@@ -5,7 +5,7 @@ import copy
 
 
 class KernelGen(object):
-    def __init__(self, tf, rw):
+    def __init__(self, tf, rw, ks):
         self.PlaceInLocalArgs = list()
         self.PlaceInLocalCond = None
         self.PlaceInRegArgs = list()
@@ -14,6 +14,7 @@ class KernelGen(object):
         self.IfThenElse = None
         self.tf = tf
         self.rw = rw
+        self.ks = ks
 
     def GenerateKernels(self, ast, name, fileprefix):
         rw = self.rw
@@ -27,21 +28,9 @@ class KernelGen(object):
                                 PlaceInReg and PlaceInLocal together from the analysis""")
 
         ss = snippetgen.SnippetGen()
-        ss.set_datastructure(rw.KernelStringStream,
-                             rw.RemovedIds,
-                             rw.ArrayIdToDimName,
-                             rw.astrepr.NonArrayIds,
-                             rw.astrepr.Type,
-                             rw.astrepr.ArrayIds,
-                             rw.KernelArgs,
-                             rw.LocalSwap,
-                             rw.astrepr.LoopArrays,
-                             rw.Kernel,
-                             rw.IndexToThreadId,
-                             rw.DevFuncTypeId,
-                             rw.astrepr.Includes,
-                             rw.astrepr.num_array_dims,
-                             rw.SubSwap)
+
+        ss.set_datastructure(self.ks,
+                             ast)
 
         ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                           kernelstringname=funcname)
@@ -57,7 +46,8 @@ class KernelGen(object):
             ss.InSourceKernel(copy.deepcopy(ast), self.PlaceInLocalCond,
                               filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
 
-        self.KernelStringStream = rw.KernelStringStream
+        self.KernelStringStream = ss.KernelStringStream
+
         MyCond = None
         if self.PlaceInLocalCond:
             MyCond = self.PlaceInLocalCond
