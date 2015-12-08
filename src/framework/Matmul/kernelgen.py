@@ -5,7 +5,7 @@ import copy
 
 
 class KernelGen(object):
-    def __init__(self, tf, rw, ks):
+    def __init__(self, tf, ks):
         self.PlaceInLocalArgs = list()
         self.PlaceInLocalCond = None
         self.PlaceInRegArgs = list()
@@ -13,11 +13,9 @@ class KernelGen(object):
         self.KernelStringStream = list()
         self.IfThenElse = None
         self.tf = tf
-        self.rw = rw
         self.ks = ks
 
     def GenerateKernels(self, ast, name, fileprefix):
-        rw = self.rw
         tf = self.tf
         # Create base version and possible version with Local and
         # Register optimizations

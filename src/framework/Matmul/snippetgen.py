@@ -20,6 +20,20 @@ class KernelStruct(object):
         self.SubSwap = dict()
         self.ParDim = None
 
+    def set_datastructure(self, tranf_rp):
+        self.ArrayIds = tranf_rp.astrepr.ArrayIds
+        self.Includes = tranf_rp.astrepr.Includes
+        self.SubSwap = tranf_rp.SubSwap
+        self.ParDim = tranf_rp.ParDim
+
+        self.ArrayIdToDimName = tranf_rp.ArrayIdToDimName #
+        self.Type = tranf_rp.astrepr.Type #
+        self.KernelArgs = tranf_rp.KernelArgs #
+        self.LocalSwap = tranf_rp.LocalSwap #
+        self.LoopArrays = tranf_rp.astrepr.LoopArrays #
+        self.Kernel = tranf_rp.Kernel #
+        self.num_array_dims = tranf_rp.astrepr.num_array_dims #
+
 
 class SnippetGen(object):
     def __init__(self):

@@ -75,25 +75,11 @@ def __get_ast_from_base(name):
     return rw, ast
 
 
-def gen_full_code(name, an, tempast2):
+def gen_full_code(name, an, ks, tempast2):
     cprint = cgen.CGenerator()
     rw = an.rw
 
-    ks = snippetgen.KernelStruct()
-    ks.ArrayIdToDimName = rw.ArrayIdToDimName
-    ks.Type = rw.astrepr.Type
-
-    ks.ArrayIds = rw.astrepr.ArrayIds
-    ks.KernelArgs = rw.KernelArgs
-    ks.LocalSwap = rw.LocalSwap
-    ks.LoopArrays = rw.astrepr.LoopArrays
-    ks.Kernel = rw.Kernel
-    ks.Includes = rw.astrepr.Includes
-    ks.num_array_dims = rw.astrepr.num_array_dims
-    ks.SubSwap = rw.SubSwap
-    ks.ParDim = rw.ParDim
-
-    kgen = kernelgen.KernelGen(an.tf, an.rw, ks)
+    kgen = kernelgen.KernelGen(an.tf, ks)
 
     kgen.PlaceInLocalArgs = an.PlaceInLocalArgs
     kgen.PlaceInLocalCond = an.PlaceInLocalCond
@@ -125,20 +111,22 @@ def matmul():
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
+    ks = snippetgen.KernelStruct()
+    ks.set_datastructure(transf_rp)
     if DoOptimizations:
-        __main_transpose(transf_rp, tempast3)
+        __main_transpose(transf_rp, ks, tempast3)
         # an.Transpose()
 
-        __main_definearg(transf_rp, tempast3)
+        __main_definearg(transf_rp, ks, tempast3)
         # an.DefineArguments()
-        __main_placeinreg(an, tempast3)
-        __main_placeinlocal(an, tempast3)
+        __main_placeinreg(an, ks, tempast3)
+        __main_placeinlocal(an, ks, tempast3)
         # an.PlaceInLocalMemory()
     if SetNoReadBack:
         tf.SetNoReadBack()
 
     ## rw.DataStructures()
-    gen_full_code(name, an, tempast2)
+    gen_full_code(name, an, ks, tempast2)
 
 
 def knearest():
@@ -157,16 +145,18 @@ def knearest():
     tf = transformation.Transformation(transf_rp)
     # tf.SetParDim(1)
     an = analysis.Analysis(transf_rp, tf)
+    ks = snippetgen.KernelStruct()
+    ks.set_datastructure(transf_rp)
     if DoOptimizations:
-        __main_transpose(transf_rp, tempast3, par_dim=1)
-        __main_definearg(transf_rp, tempast3, par_dim=1)
-        __main_placeinreg(an, tempast3, par_dim=1)
-        __main_placeinlocal(an, tempast3, par_dim=1)
+        __main_transpose(transf_rp, ks, tempast3, par_dim=1)
+        __main_definearg(transf_rp, ks, tempast3, par_dim=1)
+        __main_placeinreg(an, ks, tempast3, par_dim=1)
+        __main_placeinlocal(an, ks, tempast3, par_dim=1)
 
     if SetNoReadBack:
         tf.SetNoReadBack()
 
-    gen_full_code(name, an, tempast3)
+    gen_full_code(name, an, ks, tempast3)
 
 
 def jacobi():
@@ -184,17 +174,19 @@ def jacobi():
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
+    ks = snippetgen.KernelStruct()
+    ks.set_datastructure(transf_rp)
     if DoOptimizations:
-        __main_transpose(transf_rp, tempast3)
-        __main_definearg(transf_rp, tempast3)
-        __main_placeinreg(an, tempast3)
+        __main_transpose(transf_rp, ks, tempast3)
+        __main_definearg(transf_rp, ks, tempast3)
+        __main_placeinreg(an, ks, tempast3)
         # tf.localMemory(['X1'], west=1, north=1, east=1, south=1, middle=0)
-        __main_stencil(an, tempast3)
-        __main_placeinlocal(an, tempast3)
+        __main_stencil(an, ks, tempast3)
+        __main_placeinlocal(an, ks, tempast3)
     if SetNoReadBack:
         tf.SetNoReadBack()
 
-    gen_full_code(name, an, tempast3)
+    gen_full_code(name, an, ks, tempast3)
 
 
 def nbody():
@@ -212,18 +204,20 @@ def nbody():
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
+    ks = snippetgen.KernelStruct()
+    ks.set_datastructure(transf_rp)
     if DoOptimizations:
-        __main_transpose(transf_rp, tempast3)
-        __main_definearg(transf_rp, tempast3)
+        __main_transpose(transf_rp, ks, tempast3)
+        __main_definearg(transf_rp, ks, tempast3)
 
-        __main_placeinreg(an, tempast3)
+        __main_placeinreg(an, ks, tempast3)
         # an.PlaceInReg()
         # an.PlaceInLocalMemory()
-        __main_placeinlocal(an, tempast3)
+        __main_placeinlocal(an, ks, tempast3)
     if SetNoReadBack:
         tf.SetNoReadBack()
     ## rw.Unroll2({'j': 32})
-    gen_full_code(name, an, tempast3)
+    gen_full_code(name, an, ks, tempast3)
 
 
 def laplace():
@@ -242,11 +236,13 @@ def laplace():
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
+    ks = snippetgen.KernelStruct()
+    ks.set_datastructure(transf_rp)
     if DoOptimizations:
-        __main_transpose(transf_rp, tempast3, par_dim=1)
-        __main_definearg(transf_rp, tempast3, par_dim=1)
-        __main_placeinreg(an, tempast3, par_dim=1)
-        __main_placeinlocal(an, tempast3, par_dim=1)
+        __main_transpose(transf_rp, ks, tempast3, par_dim=1)
+        __main_definearg(transf_rp, ks, tempast3, par_dim=1)
+        __main_placeinreg(an, ks, tempast3, par_dim=1)
+        __main_placeinlocal(an, ks, tempast3, par_dim=1)
     else:
         tf.SetDefine(['dim'])
 
@@ -256,7 +252,7 @@ def laplace():
     ## rw.DataStructures()
 
     ## tf.Unroll2({'d' : 0, 'd_outer' : 0, 'd_inner' : 0})
-    gen_full_code(name, an, tempast3)
+    gen_full_code(name, an, ks, tempast3)
 
 
 def gaussian():
@@ -274,24 +270,26 @@ def gaussian():
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
+    ks = snippetgen.KernelStruct()
+    ks.set_datastructure(transf_rp)
     if DoOptimizations:
         # an.Transpose()
-        __main_transpose(transf_rp, tempast3)
+        __main_transpose(transf_rp, ks, tempast3)
         # an.DefineArguments()
-        __main_definearg(transf_rp, tempast3)
+        __main_definearg(transf_rp, ks, tempast3)
         # an.PlaceInReg()
-        __main_placeinreg(an, tempast3)
-        __main_placeinlocal(an, tempast3)
+        __main_placeinreg(an, ks, tempast3)
+        __main_placeinlocal(an, ks, tempast3)
 
         # an.PlaceInLocalMemory()
     #         ## tf.Unroll2({'k' : 0, 'd' : 0, 'g' : 0, 'b' : 0})
     ## rw.DataStructures()
     if SetNoReadBack:
         tf.SetNoReadBack()
-    gen_full_code(name, an, tempast3)
+    gen_full_code(name, an, ks, tempast3)
 
 
-def __main_transpose(transf_rp, tempast3, par_dim=None):
+def __main_transpose(transf_rp, ks, tempast3, par_dim=None):
     tps = tp.Transpose()
     if par_dim is not None:
         tps.ParDim = par_dim
@@ -316,48 +314,61 @@ def __main_transpose(transf_rp, tempast3, par_dim=None):
     transf_rp.HstId = tps.HstId
     transf_rp.GlobalVars = tps.GlobalVars
 
+    ks.Type = tps.Type
 
-def __main_definearg(transf_rp, tempast3, par_dim=None):
+
+def __main_definearg(transf_rp, ks, tempast3, par_dim=None):
     dargs = darg.DefineArguments()
     if par_dim is not None:
         dargs.ParDim = par_dim
     dargs.set_datastructures(tempast3)
     dargs.define_arguments(transf_rp.NameSwap)
-    transf_rp.KernelArgs = dargs.kernel_args
 
+    transf_rp.KernelArgs = dargs.kernel_args
     transf_rp.Define = dargs.define_compound
 
+    ks.KernelArgs = dargs.kernel_args
 
-def __main_placeinreg(an, tempast3, par_dim=None):
+
+def __main_placeinreg(an, ks, tempast3, par_dim=None):
     pireg = reg.PlaceInReg()
     if par_dim is not None:
         pireg.ParDim = par_dim
     pireg.set_datastructures(tempast3)
     pireg.place_in_reg()
+
     an.PlaceInRegArgs = pireg.PlaceInRegArgs
     an.PlaceInRegCond = pireg.PlaceInRegCond
 
 
-def __main_placeinlocal(an, tempast3, par_dim=None):
+def __main_placeinlocal(an, ks, tempast3, par_dim=None):
     pilocal = local.PlaceInLocal()
     if par_dim is not None:
         pilocal.ParDim = par_dim
     pilocal.set_datastructures(tempast3)
     pilocal.place_in_local()
+
     an.PlaceInLocalArgs = pilocal.PlaceInLocalArgs
     an.PlaceInLocalCond = pilocal.PlaceInLocalCond
     an.rw.Local = pilocal.Local
 
 
-def __main_stencil(an, tempast3):
+def __main_stencil(an, ks, tempast3):
     sten = stencil.Stencil()
     sten.set_datastructures(tempast3)
     sten.stencil(['X1'], west=1, north=1, east=1, south=1, middle=0)
+
     an.rw.astrepr.num_array_dims = sten.num_array_dims
     an.rw.LocalSwap = sten.LocalSwap
     an.rw.ArrayIdToDimName = sten.ArrayIdToDimName
     an.rw.Kernel = sten.Kernel
     an.rw.astrepr.LoopArrays = sten.LoopArrays
+
+    ks.Kernel = sten.Kernel
+    ks.LocalSwap = sten.LocalSwap
+    ks.num_array_dims = sten.num_array_dims
+    ks.ArrayIdToDimName = sten.ArrayIdToDimName
+    ks.LoopArrays = sten.LoopArrays
 
 
 if __name__ == "__main__":
