@@ -2,7 +2,7 @@ import lan
 import copy
 import visitor
 import transf_visitor as tvisitor
-
+import ast_buildingblock as ast_bb
 
 class PlaceInLocal(object):
     def __init__(self):
@@ -108,3 +108,126 @@ class PlaceInLocal(object):
                                                  lan.Id(self.LowerLimit[m])), '%', \
                                        lan.Constant(self.Local['size'][0])), '==', lan.Constant(0))
             self.PlaceInLocalCond = cond
+
+
+    def localMemory3(self, rw, ks, arrDict, loopDict=None, blockDict=None):
+        initstats = []
+        initComp = lan.GroupCompound(initstats)
+        ks.Kernel.statements.insert(0, initComp)
+
+        if loopDict is None:
+            loopDict = dict()
+            # So we create it
+            for n in arrDict:
+                for i in arrDict[n]:
+                    loopDict[(n, i)] = []
+
+            for n in arrDict:
+                for i in arrDict[n]:
+                    subscript = rw.SubscriptNoId[n][i]
+                    acc = []
+                    for m in subscript:
+                        try:
+                            _ = int(m)
+                        except:
+                            if m not in rw.GridIndices:
+                                acc.append(m)
+                    loopDict[(n, i)] = acc
+
+        # Check that all ArrayRefs are blocked using only one loop
+        # otherwise we do not know what to do
+        for n in arrDict:
+            for i in arrDict[n]:
+                if len(loopDict[(n, i)]) > 1:
+                    print "Array %r is being blocked by %r. Returning..." \
+                          % (n, loopDict[(n, i)])
+                    return
+
+        # Find which loops must be extended
+        loopext = set()
+        for n in arrDict:
+            for i in arrDict[n]:
+                loopext.add(loopDict[(n, i)][0])
+
+        # do the extending
+        for n in loopext:
+            outerloop = ks.Loops[n]
+            outeridx = n
+            compound = outerloop.compound
+            outerloop.compound = lan.Compound([])
+            innerloop = copy.deepcopy(outerloop)
+            innerloop.compound = compound
+            outerstats = outerloop.compound.statements
+            outerstats.insert(0, innerloop)
+            loadstats = []
+            loadComp = lan.GroupCompound(loadstats)
+            outerstats.insert(0, loadComp)
+            # change increment of outer loop
+            outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + rw.Local['size'][0])
+            inneridx = outeridx * 2
+            # For adding to this index in other subscripts
+            rw.Add[outeridx] = inneridx
+
+            # new inner loop
+            innerloop.cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(rw.Local['size'][0]))
+            innerloop.inc = lan.Increment(lan.Id(inneridx), '++')
+            innerloop.init = ast_bb.ConstantAssignment(inneridx)
+            rw.Loops[inneridx] = innerloop
+
+        for n in arrDict:
+            # Add array allocations
+            ## dim = rw.NumDims[n]
+            localName = n + '_local'
+            arrayinit = '['
+            arrayinit += rw.Local['size'][0]
+            if ks.num_array_dims[n] == 2 and ks.ParDim == 2:
+                arrayinit += '*' + rw.Local['size'][1]
+            arrayinit += ']'
+
+            localId = lan.Id(localName + arrayinit)
+            localTypeId = lan.TypeId(['__local'] + [ks.Type[n][0]], localId)
+            initstats.append(localTypeId)
+
+        loadings = []
+        for n in arrDict:
+            loc_name = n + '_local'
+            for i in arrDict[n]:
+                glob_subs = copy.deepcopy(ks.LoopArrays[n][i])
+                # Change loop idx to local idx
+                loopname = loopDict[(n, i)][0]
+                loc_subs = copy.deepcopy(glob_subs).subscript
+                for k, m in enumerate(loc_subs):
+                    if isinstance(m, lan.Id) and \
+                                    m.name not in rw.GridIndices:
+                        tid = str(rw.ReverseIdx[k])
+                        tidstr = 'get_local_id(' + tid + ')'
+                        exchangeId = tvisitor.ExchangeId({loopname: tidstr})
+                        exchangeId.visit(m)
+                        exchangeId2 = tvisitor.ExchangeId({loopname: '(' + loopname + ' + ' + tidstr + ')'})
+                        exchangeId2.visit(glob_subs.subscript[k])
+                loc_ref = lan.ArrayRef(lan.Id(loc_name), loc_subs)
+
+                loadings.append(lan.Assignment(loc_ref, glob_subs))
+                if ks.ParDim == 2:
+                    exchangeId = tvisitor.ExchangeId(
+                        {rw.GridIndices[1]: 'get_local_id(0)', rw.GridIndices[0]: 'get_local_id(1)'})
+                else:
+                    exchangeId = tvisitor.ExchangeId({rw.GridIndices[0]: 'get_local_id(0)'})
+                exchangeId.visit(loc_ref)
+
+                inner_loc = ks.LoopArrays[n][i]
+                inner_loc.name.name = loc_name
+                exchangeId2 = tvisitor.ExchangeId({loopname: loopname * 2})
+                exchangeId2.visit(inner_loc)
+                exchangeId.visit(inner_loc)
+
+            ks.ArrayIdToDimName[loc_name] = rw.Local['size']
+            ks.num_array_dims[loc_name] = ks.num_array_dims[n]
+        # Must also create the barrier
+        arglist = lan.ArgList([lan.Id('CLK_LOCAL_MEM_FENCE')])
+        func = ast_bb.EmptyFuncDecl('barrier', type=[])
+        func.arglist = arglist
+        loadings.append(func)
+
+        outerstats.insert(0, lan.GroupCompound(loadings))
+        outerstats.append(func)

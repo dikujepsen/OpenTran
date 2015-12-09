@@ -3,6 +3,7 @@ import ast_buildingblock as ast_bb
 import snippetgen
 import copy
 import place_in_reg as pireg
+import place_in_local as piloc
 
 class KernelGen(object):
     def __init__(self, tf, ks):
@@ -38,9 +39,11 @@ class KernelGen(object):
             ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                               kernelstringname=funcname)
 
+        pil = piloc.PlaceInLocal()
         for arg in self.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
-            tf.localMemory3(arg)
+            # tf.localMemory3(arg)
+            pil.localMemory3(tf.rw, self.ks, arg)
             ss.InSourceKernel(copy.deepcopy(ast), self.PlaceInLocalCond,
                               filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
 
