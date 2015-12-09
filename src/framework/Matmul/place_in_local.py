@@ -4,6 +4,7 @@ import visitor
 import transf_visitor as tvisitor
 import ast_buildingblock as ast_bb
 
+
 class PlaceInLocal(object):
     def __init__(self):
         self.SubscriptNoId = dict()
@@ -109,8 +110,7 @@ class PlaceInLocal(object):
                                        lan.Constant(self.Local['size'][0])), '==', lan.Constant(0))
             self.PlaceInLocalCond = cond
 
-
-    def localMemory3(self, rw, ks, arrDict, loopDict=None, blockDict=None):
+    def localMemory3(self, ks, arrDict, loopDict=None, blockDict=None):
         initstats = []
         initComp = lan.GroupCompound(initstats)
         ks.Kernel.statements.insert(0, initComp)
@@ -124,13 +124,13 @@ class PlaceInLocal(object):
 
             for n in arrDict:
                 for i in arrDict[n]:
-                    subscript = rw.SubscriptNoId[n][i]
+                    subscript = ks.SubscriptNoId[n][i]
                     acc = []
                     for m in subscript:
                         try:
                             _ = int(m)
                         except:
-                            if m not in rw.GridIndices:
+                            if m not in ks.GridIndices:
                                 acc.append(m)
                     loopDict[(n, i)] = acc
 
@@ -163,25 +163,25 @@ class PlaceInLocal(object):
             loadComp = lan.GroupCompound(loadstats)
             outerstats.insert(0, loadComp)
             # change increment of outer loop
-            outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + rw.Local['size'][0])
+            outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + ks.Local['size'][0])
             inneridx = outeridx * 2
             # For adding to this index in other subscripts
-            rw.Add[outeridx] = inneridx
+            ks.Add[outeridx] = inneridx
 
             # new inner loop
-            innerloop.cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(rw.Local['size'][0]))
+            innerloop.cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(ks.Local['size'][0]))
             innerloop.inc = lan.Increment(lan.Id(inneridx), '++')
             innerloop.init = ast_bb.ConstantAssignment(inneridx)
-            rw.Loops[inneridx] = innerloop
+            ks.Loops[inneridx] = innerloop
 
         for n in arrDict:
             # Add array allocations
-            ## dim = rw.NumDims[n]
+
             localName = n + '_local'
             arrayinit = '['
-            arrayinit += rw.Local['size'][0]
+            arrayinit += ks.Local['size'][0]
             if ks.num_array_dims[n] == 2 and ks.ParDim == 2:
-                arrayinit += '*' + rw.Local['size'][1]
+                arrayinit += '*' + ks.Local['size'][1]
             arrayinit += ']'
 
             localId = lan.Id(localName + arrayinit)
@@ -198,8 +198,8 @@ class PlaceInLocal(object):
                 loc_subs = copy.deepcopy(glob_subs).subscript
                 for k, m in enumerate(loc_subs):
                     if isinstance(m, lan.Id) and \
-                                    m.name not in rw.GridIndices:
-                        tid = str(rw.ReverseIdx[k])
+                                    m.name not in ks.GridIndices:
+                        tid = str(ks.ReverseIdx[k])
                         tidstr = 'get_local_id(' + tid + ')'
                         exchangeId = tvisitor.ExchangeId({loopname: tidstr})
                         exchangeId.visit(m)
@@ -210,9 +210,9 @@ class PlaceInLocal(object):
                 loadings.append(lan.Assignment(loc_ref, glob_subs))
                 if ks.ParDim == 2:
                     exchangeId = tvisitor.ExchangeId(
-                        {rw.GridIndices[1]: 'get_local_id(0)', rw.GridIndices[0]: 'get_local_id(1)'})
+                        {ks.GridIndices[1]: 'get_local_id(0)', ks.GridIndices[0]: 'get_local_id(1)'})
                 else:
-                    exchangeId = tvisitor.ExchangeId({rw.GridIndices[0]: 'get_local_id(0)'})
+                    exchangeId = tvisitor.ExchangeId({ks.GridIndices[0]: 'get_local_id(0)'})
                 exchangeId.visit(loc_ref)
 
                 inner_loc = ks.LoopArrays[n][i]
@@ -221,7 +221,7 @@ class PlaceInLocal(object):
                 exchangeId2.visit(inner_loc)
                 exchangeId.visit(inner_loc)
 
-            ks.ArrayIdToDimName[loc_name] = rw.Local['size']
+            ks.ArrayIdToDimName[loc_name] = ks.Local['size']
             ks.num_array_dims[loc_name] = ks.num_array_dims[n]
         # Must also create the barrier
         arglist = lan.ArgList([lan.Id('CLK_LOCAL_MEM_FENCE')])

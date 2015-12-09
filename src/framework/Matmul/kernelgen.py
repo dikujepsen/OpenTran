@@ -42,8 +42,8 @@ class KernelGen(object):
         pil = piloc.PlaceInLocal()
         for arg in self.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
-            # tf.localMemory3(arg)
-            pil.localMemory3(tf.rw, self.ks, arg)
+
+            pil.localMemory3(self.ks, arg)
             ss.InSourceKernel(copy.deepcopy(ast), self.PlaceInLocalCond,
                               filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
 

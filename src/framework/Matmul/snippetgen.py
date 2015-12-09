@@ -24,6 +24,12 @@ class KernelStruct(object):
         self.Loops = dict()
         self.UpperLimit = dict()
 
+        self.SubscriptNoId = dict()
+        self.GridIndices = list()
+        self.Local = dict()
+        self.Add = dict()
+        self.ReverseIdx = dict()
+
     def set_datastructure(self, tranf_rp):
         self.ArrayIds = tranf_rp.astrepr.ArrayIds
         self.Includes = tranf_rp.astrepr.Includes
@@ -37,9 +43,15 @@ class KernelStruct(object):
         self.LoopArrays = tranf_rp.astrepr.LoopArrays #
         self.Kernel = tranf_rp.Kernel #
         self.num_array_dims = tranf_rp.astrepr.num_array_dims #
+
         self.Loops = tranf_rp.Loops
         self.UpperLimit = tranf_rp.astrepr.UpperLimit
 
+        self.SubscriptNoId = tranf_rp.SubscriptNoId
+        self.GridIndices = tranf_rp.GridIndices
+        self.Local = tranf_rp.Local
+        self.Add = tranf_rp.Add
+        self.ReverseIdx = tranf_rp.ReverseIdx
 
 class SnippetGen(object):
     def __init__(self):
