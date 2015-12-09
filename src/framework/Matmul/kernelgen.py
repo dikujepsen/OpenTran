@@ -2,7 +2,7 @@ import lan
 import ast_buildingblock as ast_bb
 import snippetgen
 import copy
-
+import place_in_reg as pireg
 
 class KernelGen(object):
     def __init__(self, tf, ks):
@@ -27,14 +27,14 @@ class KernelGen(object):
 
         ss = snippetgen.SnippetGen()
 
-        ss.set_datastructure(self.ks,
-                             ast)
+        ss.set_datastructure(self.ks, ast)
 
         ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                           kernelstringname=funcname)
+        pir = pireg.PlaceInReg()
         for (arg, insideloop) in self.PlaceInRegArgs:
             funcname = name + 'PlaceInReg'
-            tf.placeInReg3(arg, list(insideloop))
+            pir.placeInReg3(self.ks, arg, list(insideloop))
             ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                               kernelstringname=funcname)
 

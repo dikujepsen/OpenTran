@@ -20,6 +20,10 @@ class KernelStruct(object):
         self.SubSwap = dict()
         self.ParDim = None
 
+        # Ikke aendret af nogen transformation
+        self.Loops = dict()
+        self.UpperLimit = dict()
+
     def set_datastructure(self, tranf_rp):
         self.ArrayIds = tranf_rp.astrepr.ArrayIds
         self.Includes = tranf_rp.astrepr.Includes
@@ -33,6 +37,8 @@ class KernelStruct(object):
         self.LoopArrays = tranf_rp.astrepr.LoopArrays #
         self.Kernel = tranf_rp.Kernel #
         self.num_array_dims = tranf_rp.astrepr.num_array_dims #
+        self.Loops = tranf_rp.Loops
+        self.UpperLimit = tranf_rp.astrepr.UpperLimit
 
 
 class SnippetGen(object):
