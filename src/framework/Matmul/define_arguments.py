@@ -44,15 +44,6 @@ class DefineArguments(object):
         self.loop_index = loop_indices.index
         self.UpperLimit = loop_indices.end
 
-        self.RemovedIds = set(self.UpperLimit[i] for i in self.GridIndices)
-        # print self.RemovedIds, "rem123"
-        ids_still_in_kernel = tvisitor.Ids()
-        ids_still_in_kernel.visit(self.Kernel)
-        # print self.Kernel, "kernel"
-        self.RemovedIds = self.RemovedIds - ids_still_in_kernel.ids
-
-        type_ids = visitor.TypeIds()
-        type_ids.visit(for_loop_ast)
         arrays = visitor.Arrays(self.loop_index)
         arrays.visit(ast)
         for n in arrays.numIndices:
@@ -62,6 +53,16 @@ class DefineArguments(object):
                 arrays.numSubscripts[n] = 1
 
         self.num_array_dims = arrays.numSubscripts
+
+        self.RemovedIds = set(self.UpperLimit[i] for i in self.GridIndices)
+        # print self.RemovedIds, "rem123"
+        ids_still_in_kernel = tvisitor.Ids()
+        ids_still_in_kernel.visit(self.Kernel)
+        # print self.Kernel, "kernel"
+        self.RemovedIds = self.RemovedIds - ids_still_in_kernel.ids
+
+        type_ids = visitor.TypeIds()
+        type_ids.visit(for_loop_ast)
 
         ids = visitor.Ids2()
         ids.visit(ast)

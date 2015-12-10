@@ -240,7 +240,7 @@ class PerfectForLoop(NodeVisitor):
     def visit_FuncDecl(self, node):
         funcstats = node.compound.statements
 
-        if len(funcstats) == 1: #
+        if len(funcstats) == 1:
             if isinstance(funcstats[0], ForLoop):
                 self.ast = funcstats[0]
                 self.inner = funcstats[0]

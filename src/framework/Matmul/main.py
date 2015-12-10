@@ -79,7 +79,7 @@ def gen_full_code(name, an, ks, tempast2):
     cprint = cgen.CGenerator()
     rw = an.rw
 
-    kgen = kernelgen.KernelGen(an.tf, ks)
+    kgen = kernelgen.KernelGen(ks)
 
     kgen.PlaceInLocalArgs = an.PlaceInLocalArgs
     kgen.PlaceInLocalCond = an.PlaceInLocalCond

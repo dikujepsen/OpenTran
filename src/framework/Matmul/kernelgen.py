@@ -6,18 +6,16 @@ import place_in_reg as pireg
 import place_in_local as piloc
 
 class KernelGen(object):
-    def __init__(self, tf, ks):
+    def __init__(self, ks):
         self.PlaceInLocalArgs = list()
         self.PlaceInLocalCond = None
         self.PlaceInRegArgs = list()
         self.PlaceInRegCond = None
         self.KernelStringStream = list()
         self.IfThenElse = None
-        self.tf = tf
         self.ks = ks
 
     def GenerateKernels(self, ast, name, fileprefix):
-        tf = self.tf
         # Create base version and possible version with Local and
         # Register optimizations
         funcname = name + 'Base'
