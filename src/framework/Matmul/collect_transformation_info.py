@@ -5,12 +5,17 @@ import visitor
 class FindPerfectForLoop(object):
     def __init__(self):
         self.perfect_for_loop = tvisitor.PerfectForLoop()
+        self.ParDim = None
 
     def collect(self, ast):
         self.perfect_for_loop.visit(ast)
 
+    @property
     def par_dim(self):
-        return self.perfect_for_loop.depth
+        if self.ParDim is None:
+            return self.perfect_for_loop.depth
+        else:
+            return self.ParDim
 
 
 class FindGridIndices(FindPerfectForLoop):
@@ -35,7 +40,6 @@ class FindGridIndices(FindPerfectForLoop):
         self.GridIndices = grid_ids
         self.Kernel = kernel
 
-
 class FindLoops(object):
     def __init__(self):
         self.loop_indices = visitor.LoopIndices()
@@ -58,16 +62,15 @@ class FindLoops(object):
         find_dim.visit(ast)
         self.ArrayIdToDimName = find_dim.dimNames
 
-
-    def loop_index(self):
-        return self.loop_indices.index
-
+    @property
     def upper_limit(self):
         return self.loop_indices.end
 
+    @property
     def num_array_dims(self):
         return self.arrays.numSubscripts
 
+    @property
     def for_loop_ast(self):
         return self.loops.ast
 
@@ -76,27 +79,29 @@ class RemovedLoopLimit(FindLoops):
     def __init__(self):
         super(RemovedLoopLimit, self).__init__()
         self.RemovedIds = set()
-
+        self.ParDim = None
 
     def collect(self, ast):
         super(RemovedLoopLimit, self).collect(ast)
         fgi = FindGridIndices()
+        fgi.ParDim = self.ParDim
         fgi.collect(ast)
 
-        self.RemovedIds = set(self.upper_limit() for i in fgi.GridIndices)
+
+        self.RemovedIds = set(self.upper_limit[i] for i in fgi.GridIndices)
         ids_still_in_kernel = tvisitor.Ids()
         ids_still_in_kernel.visit(fgi.Kernel)
         self.RemovedIds = self.RemovedIds - ids_still_in_kernel.ids
 
 
-
-class FindArrayIds(FindLoops):
+class FindArrayIds(RemovedLoopLimit):
     def __init__(self):
-        super(FindLoops, self).__init__()
+        super(FindArrayIds, self).__init__()
         self.ArrayIds = set()
         self.NonArrayIds = set()
         self.type = set()
-    
+        self.kernel_args = dict()
+
     def collect(self, ast):
         super(FindArrayIds, self).collect(ast)
         type_ids = visitor.TypeIds()
@@ -120,3 +125,18 @@ class FindArrayIds(FindLoops):
             type_ids2.dictIds.pop(n)
 
         self.type = type_ids2.dictIds
+
+        arg_ids = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
+
+        # print arg_ids, "qwe123"
+        # print self.ArrayIdToDimName, "qwe123"
+
+        for n in arg_ids:
+            tmplist = [n]
+            try:
+                if self.num_array_dims[n] == 2:
+                    tmplist.append(self.ArrayIdToDimName[n][0])
+            except KeyError:
+                pass
+            for m in tmplist:
+                self.kernel_args[m] = self.type[m]
