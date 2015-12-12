@@ -90,9 +90,41 @@ def gen_full_code(name, an, ks, tempast2):
     rw.KernelStringStream = kgen.KernelStringStream
     rw.IfThenElse = kgen.IfThenElse
 
-    # an.GenerateKernels(tempast2, name, fileprefix)
     boilerplate = boilerplategen.Boilerplate()
-    boilerast = boilerplate.generate_code(rw)
+    boilerplate.ArrayIdToDimName = ks.ArrayIdToDimName
+    boilerplate.NonArrayIds = rw.astrepr.NonArrayIds
+    boilerplate.ArrayIds = ks.ArrayIds
+    boilerplate.KernelName = rw.KernelName
+    boilerplate.DevId = rw.DevId
+    boilerplate.ConstantMem = rw.ConstantMem
+    boilerplate.DevArgList = rw.DevArgList
+    boilerplate.Type = ks.Type
+    boilerplate.HstId = rw.HstId
+    boilerplate.GlobalVars = rw.GlobalVars
+    boilerplate.Mem = rw.Mem
+    boilerplate.DevFuncId = rw.DevFuncId
+    boilerplate.DevFuncTypeId = rw.DevFuncTypeId
+    boilerplate.RemovedIds = rw.RemovedIds
+    boilerplate.KernelArgs = ks.KernelArgs
+    boilerplate.Local = ks.Local
+    boilerplate.GridIndices = ks.GridIndices
+    boilerplate.UpperLimit = ks.UpperLimit
+    boilerplate.LowerLimit = rw.astrepr.LowerLimit
+    boilerplate.ParDim = ks.ParDim
+
+    boilerplate.KernelStringStream = kgen.KernelStringStream
+    boilerplate.IfThenElse = kgen.IfThenElse
+    boilerplate.Transposition = rw.Transposition
+    boilerplate.ConstantMemory = rw.ConstantMemory
+    boilerplate.Define = rw.Define
+    boilerplate.NameSwap = rw.NameSwap
+    boilerplate.WriteOnly = rw.WriteOnly
+    boilerplate.ReadOnly = rw.ReadOnly
+    boilerplate.Worksize = rw.Worksize
+    boilerplate.NoReadBack = rw.NoReadBack
+    boilerplate.WriteTranspose = rw.WriteTranspose
+
+    boilerast = boilerplate.generate_code()
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
 
@@ -144,6 +176,7 @@ def knearest():
     else:
         rw, ast = __get_ast_from_base(name)
     __optimize(rw, ast, name, par_dim=1)
+
 
 def jacobi():
     name = 'Jacobi'
@@ -282,7 +315,7 @@ def __main_stencil(an, ks, tempast3):
     ks.num_array_dims = sten.num_array_dims
     ks.ArrayIdToDimName = sten.ArrayIdToDimName
     ks.LoopArrays = sten.LoopArrays
-    # ks.Add = sten.Add
+    ks.Add = sten.Add
 
 
 if __name__ == "__main__":
