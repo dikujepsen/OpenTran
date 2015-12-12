@@ -1,5 +1,6 @@
 import transf_visitor as tvisitor
 import visitor
+import copy
 
 
 class FindPerfectForLoop(object):
@@ -23,6 +24,7 @@ class FindGridIndices(FindPerfectForLoop):
         super(FindGridIndices, self).__init__()
         self.GridIndices = list()
         self.Kernel = None
+        self.IdxToDim = dict()
 
     def collect(self, ast):
         super(FindGridIndices, self).collect(ast)
@@ -39,6 +41,9 @@ class FindGridIndices(FindPerfectForLoop):
 
         self.GridIndices = grid_ids
         self.Kernel = kernel
+        for i, n in enumerate(reversed(self.GridIndices)):
+            self.IdxToDim[i] = n
+
 
 class FindLoops(object):
     def __init__(self):
@@ -75,6 +80,30 @@ class FindLoops(object):
         return self.loops.ast
 
 
+class FindSubscripts(FindLoops):
+    def __init__(self):
+        super(FindSubscripts, self).__init__()
+        self.Subscript = dict()
+        self.SubscriptNoId = dict()
+
+    def collect(self, ast):
+        super(FindSubscripts, self).collect(ast)
+
+        self.Subscript = self.arrays.Subscript
+
+        self.SubscriptNoId = copy.deepcopy(self.Subscript)
+        for n in self.SubscriptNoId.values():
+            for m in n:
+                for i, k in enumerate(m):
+                    try:
+                        m[i] = k.name
+                    except AttributeError:
+                        try:
+                            m[i] = k.value
+                        except AttributeError:
+                            m[i] = 'unknown'
+
+
 class RemovedLoopLimit(FindLoops):
     def __init__(self):
         super(RemovedLoopLimit, self).__init__()
@@ -86,7 +115,6 @@ class RemovedLoopLimit(FindLoops):
         fgi = FindGridIndices()
         fgi.ParDim = self.ParDim
         fgi.collect(ast)
-
 
         self.RemovedIds = set(self.upper_limit[i] for i in fgi.GridIndices)
         ids_still_in_kernel = tvisitor.Ids()
@@ -140,3 +168,35 @@ class FindArrayIds(RemovedLoopLimit):
                 pass
             for m in tmplist:
                 self.kernel_args[m] = self.type[m]
+
+
+class GenHostArrayData(FindArrayIds):
+    def __init__(self):
+        super(GenHostArrayData, self).__init__()
+        self.HstId = dict()
+        self.Mem = dict()
+
+    def generate(self):
+        for n in self.ArrayIds:
+            self.HstId[n] = 'hst_ptr' + n
+            self.Mem[n] = 'hst_ptr' + n + '_mem_size'
+
+
+class FindReadWrite(GenHostArrayData):
+    def __init__(self):
+        super(FindReadWrite, self).__init__()
+        self.ReadWrite = dict()
+        self.WriteOnly = list()
+
+    def collect(self, ast):
+        super(FindReadWrite, self).collect(ast)
+        self.generate()
+        find_read_write = tvisitor.FindReadWrite(self.ArrayIds)
+        find_read_write.visit(ast)
+        self.ReadWrite = find_read_write.ReadWrite
+
+        for n in self.ReadWrite:
+            pset = self.ReadWrite[n]
+            if len(pset) == 1:
+                if 'write' in pset:
+                    self.WriteOnly.append(n)

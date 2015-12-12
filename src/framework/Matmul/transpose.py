@@ -2,6 +2,8 @@ import transf_visitor as tvisitor
 import lan
 import visitor
 import copy
+import collect_transformation_info as cti
+
 
 class Transpose(object):
     def __init__(self):
@@ -22,100 +24,40 @@ class Transpose(object):
         self.WriteTranspose = list()
         self.Subscript = dict()
 
-
     def set_datastructures(self, ast):
-        perfect_for_loop = tvisitor.PerfectForLoop()
-        perfect_for_loop.visit(ast)
 
-        if self.ParDim is None:
-            self.ParDim = perfect_for_loop.depth
-
-        loops = visitor.ForLoops()
-        loops.visit(ast)
-        for_loop_ast = loops.ast
-        loop_indices = visitor.LoopIndices()
-        loop_indices.visit(for_loop_ast)
-        self.loop_index = loop_indices.index
-
-        arrays = visitor.Arrays(self.loop_index)
-        arrays.visit(ast)
-
-        for n in arrays.numIndices:
-            if arrays.numIndices[n] == 2:
-                arrays.numSubscripts[n] = 2
-            elif arrays.numIndices[n] > 2:
-                arrays.numSubscripts[n] = 1
-
-        self.num_array_dims = arrays.numSubscripts
-        self.Subscript = arrays.Subscript
-
-        self.SubscriptNoId = copy.deepcopy(self.Subscript)
-        for n in self.SubscriptNoId.values():
-            for m in n:
-                for i, k in enumerate(m):
-                    try:
-                        m[i] = k.name
-                    except AttributeError:
-                        try:
-                            m[i] = k.value
-                        except AttributeError:
-                            m[i] = 'unknown'
-
-        grid_ids = list()
-        init_ids = tvisitor.InitIds()
-        init_ids.visit(perfect_for_loop.ast.init)
-        grid_ids.extend(init_ids.index)
-        kernel = perfect_for_loop.ast.compound
-        if self.ParDim == 2:
-            init_ids = tvisitor.InitIds()
-            init_ids.visit(kernel.statements[0].init)
-            kernel = kernel.statements[0].compound
-            grid_ids.extend(init_ids.index)
-
-        self.GridIndices = grid_ids
-        self.Kernel = kernel
-
-        for i, n in enumerate(reversed(self.GridIndices)):
-            self.IdxToDim[i] = n
-
-
-        type_ids = visitor.TypeIds()
-        type_ids.visit(for_loop_ast)
-
-        ids = visitor.Ids2()
-        ids.visit(ast)
-
-        # print ids.ids, "123"
-        # print arrays.ids
-        # print type_ids.ids
-        other_ids = ids.ids - arrays.ids - type_ids.ids
-        self.ArrayIds = arrays.ids - type_ids.ids
-        self.NonArrayIds = other_ids
-
-        for n in self.ArrayIds:
-            self.HstId[n] = 'hst_ptr' + n
-            self.Mem[n] = 'hst_ptr' + n + '_mem_size'
-
-        type_ids2 = visitor.TypeIds()
-        type_ids2.visit(ast)
-        for n in type_ids.ids:
-            type_ids2.dictIds.pop(n)
-        self.Type = type_ids2.dictIds
-
-        find_dim = tvisitor.FindDim(self.num_array_dims)
-        find_dim.visit(ast)
-        self.ArrayIdToDimName = find_dim.dimNames
         self.Transposition = lan.GroupCompound([lan.Comment('// Transposition')])
 
-        find_read_write = tvisitor.FindReadWrite(self.ArrayIds)
-        find_read_write.visit(ast)
-        self.ReadWrite = find_read_write.ReadWrite
+        fpl = cti.FindGridIndices()
+        fpl.ParDim = self.ParDim
+        fpl.collect(ast)
 
-        for n in self.ReadWrite:
-            pset = self.ReadWrite[n]
-            if len(pset) == 1:
-                if 'write' in pset:
-                    self.WriteOnly.append(n)
+        fs = cti.FindSubscripts()
+        fs.collect(ast)
+
+        fai = cti.FindReadWrite()
+        fai.ParDim = self.ParDim
+        fai.collect(ast)
+
+        self.ParDim = fpl.ParDim
+
+        self.num_array_dims = fai.num_array_dims
+        self.Subscript = fs.Subscript
+        self.SubscriptNoId = fs.SubscriptNoId
+
+        self.IdxToDim = fpl.IdxToDim
+
+        self.ArrayIds = fai.ArrayIds
+
+        self.HstId = fai.HstId
+        self.Mem = fai.Mem
+        self.Type = fai.type
+
+        self.ArrayIdToDimName = fai.ArrayIdToDimName
+
+        self.ReadWrite = fai.ReadWrite
+
+        self.WriteOnly = fai.WriteOnly
 
     def transpose(self):
         """ Find all arrays that *should* be transposed
@@ -187,8 +129,7 @@ class Transpose(object):
                 trans = lan.FuncDecl(lan.Id('transpose<' + natType + '>'), arglist, lan.Compound([]))
                 self.WriteTranspose.append(trans)
 
-
         for sub in self.Subscript[arr_name]:
             (sub[0], sub[1]) = \
                 (sub[1], sub[0])
-        # print self.Subscript[arr_name], "sub123"
+            # print self.Subscript[arr_name], "sub123"
