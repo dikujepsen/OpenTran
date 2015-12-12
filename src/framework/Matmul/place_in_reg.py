@@ -3,6 +3,7 @@ import transf_visitor as tvisitor
 import copy
 import lan
 from itertools import chain
+import collect_transformation_info as cti
 
 
 class PlaceInReg(object):
@@ -21,84 +22,29 @@ class PlaceInReg(object):
         self.Loops = dict()
 
     def set_datastructures(self, ast):
-        perfect_for_loop = tvisitor.PerfectForLoop()
-        perfect_for_loop.visit(ast)
-        if self.ParDim is None:
-            self.ParDim = perfect_for_loop.depth
 
-        innerbody = perfect_for_loop.inner
-        if perfect_for_loop.depth == 2 and self.ParDim == 1:
-            innerbody = perfect_for_loop.outer
-        first_loop = tvisitor.ForLoops()
+        fpl = cti.FindGridIndices()
+        fpl.ParDim = self.ParDim
+        fpl.collect(ast)
 
-        first_loop.visit(innerbody.compound)
-        loop_indices = tvisitor.LoopIndices()
-        if first_loop.ast is not None:
-            loop_indices.visit(innerbody.compound)
-            self.Loops = loop_indices.Loops
+        fs = cti.FindSubscripts()
+        fs.collect(ast)
 
-        grid_ids = list()
-        init_ids = tvisitor.InitIds()
-        init_ids.visit(perfect_for_loop.ast.init)
-        grid_ids.extend(init_ids.index)
-        kernel = perfect_for_loop.ast.compound
-        if self.ParDim == 2:
-            init_ids = tvisitor.InitIds()
-            init_ids.visit(kernel.statements[0].init)
-            kernel = kernel.statements[0].compound
-            grid_ids.extend(init_ids.index)
+        fai = cti.FindReadWrite()
+        fai.ParDim = self.ParDim
+        fai.collect(ast)
 
-        self.GridIndices = grid_ids
-        self.Kernel = kernel
+        self.UpperLimit = fai.upper_limit
+        self.LowerLimit = fai.lower_limit
+        self.Loops = fs.Loops
+        self.GridIndices = fpl.GridIndices
+        self.RefToLoop = fpl.RefToLoop
+        self.ArrayIds = fai.ArrayIds
+        self.ReadWrite = fai.ReadWrite
+        self.WriteOnly = fai.WriteOnly
+        self.SubscriptNoId = fs.SubscriptNoId
 
-        ref_to_loop = tvisitor.RefToLoop(self.GridIndices)
-        ref_to_loop.visit(ast)
-        self.RefToLoop = ref_to_loop.RefToLoop
 
-        loops = visitor.ForLoops()
-        loops.visit(ast)
-        for_loop_ast = loops.ast
-        loop_indices = visitor.LoopIndices()
-        loop_indices.visit(for_loop_ast)
-        self.loop_index = loop_indices.index
-        self.UpperLimit = loop_indices.end
-        self.LowerLimit = loop_indices.start
-
-        arrays = visitor.Arrays(self.loop_index)
-        arrays.visit(ast)
-
-        type_ids = visitor.TypeIds()
-        type_ids.visit(for_loop_ast)
-
-        ids = visitor.Ids2()
-        ids.visit(ast)
-
-        other_ids = ids.ids - arrays.ids - type_ids.ids
-        self.ArrayIds = arrays.ids - type_ids.ids
-
-        find_read_write = tvisitor.FindReadWrite(self.ArrayIds)
-        find_read_write.visit(ast)
-        self.ReadWrite = find_read_write.ReadWrite
-
-        for n in self.ReadWrite:
-            pset = self.ReadWrite[n]
-            if len(pset) == 1:
-                if 'write' in pset:
-                    self.WriteOnly.append(n)
-
-        self.Subscript = arrays.Subscript
-
-        self.SubscriptNoId = copy.deepcopy(self.Subscript)
-        for n in self.SubscriptNoId.values():
-            for m in n:
-                for i, k in enumerate(m):
-                    try:
-                        m[i] = k.name
-                    except AttributeError:
-                        try:
-                            m[i] = k.value
-                        except AttributeError:
-                            m[i] = 'unknown'
 
     def place_in_reg(self):
         """ Find all array references that can be cached in registers.

@@ -282,6 +282,7 @@ def __main_stencil(an, ks, tempast3):
     ks.num_array_dims = sten.num_array_dims
     ks.ArrayIdToDimName = sten.ArrayIdToDimName
     ks.LoopArrays = sten.LoopArrays
+    # ks.Add = sten.Add
 
 
 if __name__ == "__main__":

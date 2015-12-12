@@ -25,6 +25,7 @@ class FindGridIndices(FindPerfectForLoop):
         self.GridIndices = list()
         self.Kernel = None
         self.IdxToDim = dict()
+        self.RefToLoop = dict()
 
     def collect(self, ast):
         super(FindGridIndices, self).collect(ast)
@@ -44,17 +45,35 @@ class FindGridIndices(FindPerfectForLoop):
         for i, n in enumerate(reversed(self.GridIndices)):
             self.IdxToDim[i] = n
 
+        ref_to_loop = tvisitor.RefToLoop(self.GridIndices)
+        ref_to_loop.visit(ast)
+        self.RefToLoop = ref_to_loop.RefToLoop
 
-class FindLoops(object):
+
+class FindLoops(FindPerfectForLoop):
     def __init__(self):
+        super(FindLoops, self).__init__()
         self.loop_indices = visitor.LoopIndices()
         self.arrays = None
-        self.loops = visitor.ForLoops()
+        self.forLoops = visitor.ForLoops()
         self.ArrayIdToDimName = dict()
+        self.Loops = dict()
 
     def collect(self, ast):
-        self.loops.visit(ast)
-        self.loop_indices.visit(self.loops.ast)
+        super(FindLoops, self).collect(ast)
+        innerbody = self.perfect_for_loop.inner
+        if self.perfect_for_loop.depth == 2 and self.ParDim == 1:
+            innerbody = self.perfect_for_loop.outer
+        first_loop = tvisitor.ForLoops()
+
+        first_loop.visit(innerbody.compound)
+        loop_indices = tvisitor.LoopIndices()
+        if first_loop.ast is not None:
+            loop_indices.visit(innerbody.compound)
+            self.Loops = loop_indices.Loops
+
+        self.forLoops.visit(ast)
+        self.loop_indices.visit(self.forLoops.ast)
         self.arrays = visitor.Arrays(self.loop_indices.index)
         self.arrays.visit(ast)
         for n in self.arrays.numIndices:
@@ -67,9 +86,33 @@ class FindLoops(object):
         find_dim.visit(ast)
         self.ArrayIdToDimName = find_dim.dimNames
 
+        #
+        # loop_indices = tvisitor.LoopIndices()
+        # innerbody = self.perfect_for_loop.inner
+        # if self.perfect_for_loop.depth == 2 and self.ParDim == 1:
+        #     innerbody = self.perfect_for_loop.outer
+        #
+        # first_loop = tvisitor.ForLoops()
+        # first_loop.visit(innerbody.compound)
+        # if first_loop.ast is not None:
+        #     loop_indices.visit(innerbody.compound)
+        #     self.loop_indices.visit(innerbody.compound)
+        #     # self.Loops = self.loop_indices.Loops
+        # self.Loops = loop_indices.Loops
+        #
+        # loops = visitor.ForLoops()
+        # loops.visit(ast)
+        # for_loop_ast = loops.ast
+        # loop_indices = visitor.LoopIndices()
+        # loop_indices.visit(for_loop_ast)
+
     @property
     def upper_limit(self):
         return self.loop_indices.end
+
+    @property
+    def lower_limit(self):
+        return self.loop_indices.start
 
     @property
     def num_array_dims(self):
@@ -77,7 +120,7 @@ class FindLoops(object):
 
     @property
     def for_loop_ast(self):
-        return self.loops.ast
+        return self.forLoops.ast
 
 
 class FindSubscripts(FindLoops):
@@ -158,7 +201,7 @@ class FindArrayIds(RemovedLoopLimit):
 
         # print arg_ids, "qwe123"
         # print self.ArrayIdToDimName, "qwe123"
-
+        # print arg_ids
         for n in arg_ids:
             tmplist = [n]
             try:

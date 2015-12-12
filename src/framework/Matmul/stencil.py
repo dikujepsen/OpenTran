@@ -23,6 +23,7 @@ class Stencil(object):
         self.GridIndices = list()
         self.ParDim = None
         self.num_array_dims = dict()
+        self.Add = dict()
 
     def set_datastructures(self, ast, dev='CPU'):
         perfect_for_loop = tvisitor.PerfectForLoop()
@@ -121,7 +122,7 @@ class Stencil(object):
             forLoopAst.inc = lan.Increment(lan.Id(outeridx), '+=' + self.Local['size'][0])
 
             inneridx = outeridx * 2
-            rw.Add[outeridx] = inneridx
+            self.Add[outeridx] = inneridx
             cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(self.Local['size'][0]))
             innerinc = lan.Increment(lan.Id(inneridx), '++')
             innercomp = copy.copy(forLoopAst.compound)
