@@ -133,7 +133,7 @@ def __optimize(rw, ast, name, par_dim=None):
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
-    ks = snippetgen.KernelStruct()
+    ks = struct.KernelStruct()
     ks.set_datastructure(transf_rp)
     bps = struct.BoilerPlateStruct()
     if DoOptimizations:
@@ -176,7 +176,7 @@ def jacobi():
     tf = transformation.Transformation(transf_rp)
 
     an = analysis.Analysis(transf_rp, tf)
-    ks = snippetgen.KernelStruct()
+    ks = struct.KernelStruct()
     ks.set_datastructure(transf_rp)
     bps = struct.BoilerPlateStruct()
     if DoOptimizations:
