@@ -16,7 +16,6 @@ import place_in_reg as reg
 import place_in_local as local
 import stencil
 import kernelgen
-import snippetgen
 import struct
 
 fileprefix = "../../test/C/"

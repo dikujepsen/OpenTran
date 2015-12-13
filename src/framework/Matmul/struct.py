@@ -20,6 +20,7 @@ class ChangedByTransformation(object):
 class KernelStruct(ChangedByTransformation):
     def __init__(self):
         super(KernelStruct, self).__init__()
+        # Heller ikke aendret af nogen transformation, ved ikke hvorfor de ikke staar nederst
         self.ArrayIds = set()
         self.Includes = list()
         self.SubSwap = dict()
@@ -28,11 +29,9 @@ class KernelStruct(ChangedByTransformation):
         # Ikke aendret af nogen transformation
         self.Loops = dict()
         self.UpperLimit = dict()
-
         self.SubscriptNoId = dict()
         self.GridIndices = list()
         self.Local = dict()
-
         self.ReverseIdx = dict()
 
     def set_datastructure(self, tranf_rp):
@@ -41,13 +40,6 @@ class KernelStruct(ChangedByTransformation):
         self.SubSwap = tranf_rp.SubSwap
         self.ParDim = tranf_rp.ParDim
 
-        self.ArrayIdToDimName = tranf_rp.ArrayIdToDimName  #
-        self.Type = tranf_rp.astrepr.Type  #
-        self.KernelArgs = tranf_rp.KernelArgs  #
-        self.LocalSwap = tranf_rp.LocalSwap  #
-        self.LoopArrays = tranf_rp.astrepr.LoopArrays  #
-        self.Kernel = tranf_rp.Kernel  #
-        self.num_array_dims = tranf_rp.astrepr.num_array_dims  #
 
         self.Loops = tranf_rp.Loops
         self.UpperLimit = tranf_rp.astrepr.UpperLimit
@@ -55,8 +47,15 @@ class KernelStruct(ChangedByTransformation):
         self.SubscriptNoId = tranf_rp.SubscriptNoId
         self.GridIndices = tranf_rp.GridIndices
         self.Local = tranf_rp.Local
-        self.Add = tranf_rp.Add
         self.ReverseIdx = tranf_rp.ReverseIdx
+
+        # Stencil
+        self.ArrayIdToDimName = tranf_rp.ArrayIdToDimName  #
+        self.LocalSwap = tranf_rp.LocalSwap  #
+        self.LoopArrays = tranf_rp.astrepr.LoopArrays  #
+        self.Kernel = tranf_rp.Kernel  #
+        self.num_array_dims = tranf_rp.astrepr.num_array_dims  #
+        self.Add = tranf_rp.Add  #
 
 
 class BoilerPlateStruct(object):
