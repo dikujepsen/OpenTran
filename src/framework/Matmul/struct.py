@@ -1,3 +1,6 @@
+import collect_transformation_info as cti
+
+
 class ChangedByTransformation(object):
     def __init__(self):
         # Kun sat af transformation
@@ -34,27 +37,37 @@ class KernelStruct(ChangedByTransformation):
         self.Local = dict()
         self.ReverseIdx = dict()
 
-    def set_datastructure(self, tranf_rp):
-        self.ArrayIds = tranf_rp.astrepr.ArrayIds
+    def set_datastructure(self, tranf_rp, ast):
+        fpl = cti.FindGridIndices()
+        fpl.ParDim = tranf_rp.ParDim
+        fpl.collect(ast)
+
+        fai = cti.FindArrayIds()
+        fai.ParDim = tranf_rp.ParDim
+        fai.collect(ast)
+
+        fs = cti.FindSubscripts()
+        fs.collect(ast)
+
+        self.ArrayIds = fai.ArrayIds
         self.Includes = tranf_rp.astrepr.Includes
         self.SubSwap = tranf_rp.SubSwap
         self.ParDim = tranf_rp.ParDim
 
+        self.Loops = fai.Loops
+        self.UpperLimit = fai.upper_limit
 
-        self.Loops = tranf_rp.Loops
-        self.UpperLimit = tranf_rp.astrepr.UpperLimit
-
-        self.SubscriptNoId = tranf_rp.SubscriptNoId
-        self.GridIndices = tranf_rp.GridIndices
+        self.SubscriptNoId = fs.SubscriptNoId
+        self.GridIndices = fpl.GridIndices
         self.Local = tranf_rp.Local
         self.ReverseIdx = tranf_rp.ReverseIdx
 
         # Stencil
-        self.ArrayIdToDimName = tranf_rp.ArrayIdToDimName  #
+        self.ArrayIdToDimName = fai.ArrayIdToDimName  #
         self.LocalSwap = tranf_rp.LocalSwap  #
         self.LoopArrays = tranf_rp.astrepr.LoopArrays  #
-        self.Kernel = tranf_rp.Kernel  #
-        self.num_array_dims = tranf_rp.astrepr.num_array_dims  #
+        self.Kernel = fpl.Kernel  #
+        self.num_array_dims = fai.num_array_dims  #
         self.Add = tranf_rp.Add  #
 
 

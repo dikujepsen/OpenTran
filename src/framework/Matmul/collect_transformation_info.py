@@ -86,25 +86,6 @@ class FindLoops(FindPerfectForLoop):
         find_dim.visit(ast)
         self.ArrayIdToDimName = find_dim.dimNames
 
-        #
-        # loop_indices = tvisitor.LoopIndices()
-        # innerbody = self.perfect_for_loop.inner
-        # if self.perfect_for_loop.depth == 2 and self.ParDim == 1:
-        #     innerbody = self.perfect_for_loop.outer
-        #
-        # first_loop = tvisitor.ForLoops()
-        # first_loop.visit(innerbody.compound)
-        # if first_loop.ast is not None:
-        #     loop_indices.visit(innerbody.compound)
-        #     self.loop_indices.visit(innerbody.compound)
-        #     # self.Loops = self.loop_indices.Loops
-        # self.Loops = loop_indices.Loops
-        #
-        # loops = visitor.ForLoops()
-        # loops.visit(ast)
-        # for_loop_ast = loops.ast
-        # loop_indices = visitor.LoopIndices()
-        # loop_indices.visit(for_loop_ast)
 
     @property
     def upper_limit(self):
