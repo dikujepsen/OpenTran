@@ -233,9 +233,7 @@ def __main_transpose(transf_rp, ks, bps, tempast3, par_dim=None):
         tps.ParDim = par_dim
     tps.set_datastructures(tempast3)
     tps.transpose()
-    # transf_rp.Subscript = tps.Subscript
-    # print tps.Subscript
-    # print transf_rp.Subscript
+
     for (arr_name, idx_list_list) in tps.Subscript.items():
 
         idx_list_list2 = transf_rp.Subscript[arr_name]
@@ -248,7 +246,6 @@ def __main_transpose(transf_rp, ks, bps, tempast3, par_dim=None):
     bps.WriteTranspose = tps.WriteTranspose
     bps.Transposition = tps.Transposition
     bps.NameSwap = tps.NameSwap
-    bps.Type = tps.Type
     bps.HstId = tps.HstId
     bps.GlobalVars = tps.GlobalVars
 
@@ -262,7 +259,6 @@ def __main_definearg(transf_rp, ks, bps, tempast3, par_dim=None):
     dargs.set_datastructures(tempast3)
     dargs.define_arguments(bps.NameSwap)
 
-    bps.kernel_args = dargs.kernel_args
     bps.define_compound = dargs.define_compound
 
     ks.KernelArgs = dargs.kernel_args
@@ -288,17 +284,11 @@ def __main_placeinlocal(an, ks, bps, tempast3, par_dim=None):
 
     ks.PlaceInLocalArgs = pilocal.PlaceInLocalArgs
     ks.PlaceInLocalCond = pilocal.PlaceInLocalCond
-    bps.Local = pilocal.Local
 
 
 def __main_stencil(an, ks, bps, tempast3):
     sten = stencil.Stencil()
     sten.set_datastructures(tempast3)
-    sten.stencil(['X1'], west=1, north=1, east=1, south=1, middle=0)
-
-    bps.ArrayIdToDimName = sten.ArrayIdToDimName
-    bps.Kernel = sten.Kernel
-    bps.LoopArrays = sten.LoopArrays
 
     ks.Kernel = sten.Kernel
     ks.LocalSwap = sten.LocalSwap

@@ -7,10 +7,12 @@ import place_in_local as piloc
 
 class KernelGen(object):
     def __init__(self, ks):
+        self.ks = ks
 
+        # Output
         self.KernelStringStream = list()
         self.IfThenElse = None
-        self.ks = ks
+
 
     def GenerateKernels(self, ast, name, fileprefix):
         # Create base version and possible version with Local and
