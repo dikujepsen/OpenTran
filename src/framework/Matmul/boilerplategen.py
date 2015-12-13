@@ -13,8 +13,6 @@ class Boilerplate(object):
         self.DevId = dict()
         self.ConstantMem = set()
         self.DevArgList = list()
-        self.HstId = dict()
-        self.GlobalVars = list()
         self.Mem = dict()
         self.DevFuncId = None
         self.DevFuncTypeId = None
@@ -23,15 +21,11 @@ class Boilerplate(object):
 
         self.KernelStringStream = list()
         self.IfThenElse = None
-        self.Transposition = None
         self.ConstantMemory = None
-        self.Define = None
-        self.NameSwap = dict()
         self.WriteOnly = list()
         self.ReadOnly = list()
         self.Worksize = dict()
         self.NoReadBack = None
-        self.WriteTranspose = list()
 
     def set_struct(self, kernelstruct, boilerplatestruct):
         self.ks = kernelstruct
@@ -75,17 +69,17 @@ class Boilerplate(object):
             name = n.name.name
             type = self.ks.Type[name]
             try:
-                name = self.HstId[name]
+                name = self.bps.HstId[name]
             except KeyError:
                 pass
             listHostPtrs.append(lan.TypeId(type, lan.Id(name), 0))
 
-        for n in self.GlobalVars:
+        for n in self.bps.GlobalVars:
             type = self.ks.Type[n]
-            name = self.HstId[n]
+            name = self.bps.HstId[n]
             listHostPtrs.append(lan.TypeId(type, lan.Id(name), 0))
 
-        dictNToHstPtr = self.HstId
+        dictNToHstPtr = self.bps.HstId
         dictTypeHostPtrs = copy.deepcopy(self.ks.Type)
         listHostPtrs = lan.GroupCompound(listHostPtrs)
         fileAST.ext.append(listHostPtrs)
@@ -154,13 +148,13 @@ class Boilerplate(object):
             lan.GroupCompound(listSetMemSize))
 
         allocateBuffer.compound.statements.append( \
-            self.Transposition)
+            self.bps.Transposition)
 
         allocateBuffer.compound.statements.append( \
             self.ConstantMemory)
 
         allocateBuffer.compound.statements.append( \
-            self.Define)
+            self.bps.define_compound)
 
         ErrName = 'oclErrNum'
         lval = lan.TypeId(['cl_int'], lan.Id(ErrName))
@@ -174,7 +168,7 @@ class Boilerplate(object):
             op = '='
             arrayn = dictNToHstPtr[n]
             try:
-                arrayn = self.NameSwap[arrayn]
+                arrayn = self.bps.NameSwap[arrayn]
             except KeyError:
                 pass
             if n in self.WriteOnly:
@@ -230,7 +224,7 @@ class Boilerplate(object):
                 rval = lan.FuncDecl(lan.Id('clSetKernelArg'), arglist, lan.Compound([]))
             else:
                 try:
-                    n = self.NameSwap[n]
+                    n = self.bps.NameSwap[n]
                 except KeyError:
                     pass
                 cl_type = type[0]
@@ -302,9 +296,9 @@ class Boilerplate(object):
         if not self.NoReadBack:
             for n in self.WriteOnly:
                 lval = lan.Id(ErrName)
-                Hstn = self.HstId[n]
+                Hstn = self.bps.HstId[n]
                 try:
-                    Hstn = self.NameSwap[Hstn]
+                    Hstn = self.bps.NameSwap[Hstn]
                 except KeyError:
                     pass
                 arglist = lan.ArgList([lan.Id('command_queue'), \
@@ -331,7 +325,7 @@ class Boilerplate(object):
             ErrCheck = lan.FuncDecl(ErrId, arglist, lan.Compound([]))
             execBody.append(ErrCheck)
 
-            for n in self.WriteTranspose:
+            for n in self.bps.WriteTranspose:
                 execBody.append(n)
 
         runOCL = ast_bb.EmptyFuncDecl('RunOCL' + self.KernelName)
@@ -347,7 +341,7 @@ class Boilerplate(object):
             argn = lan.Id('arg_' + n)
             typeIdList.append(lan.TypeId(type, argn))
             try:
-                newn = self.HstId[n]
+                newn = self.bps.HstId[n]
             except KeyError:
                 newn = n
             lval = lan.Id(newn)

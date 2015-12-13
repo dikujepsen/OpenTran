@@ -106,14 +106,6 @@ def gen_full_code(name, an, ks, bps, tempast2):
     boilerplate.Worksize = rw.Worksize
     boilerplate.NoReadBack = rw.NoReadBack
 
-    # Changed in Transformations AND not in kernel
-    boilerplate.Transposition = bps.Transposition
-    boilerplate.NameSwap = bps.NameSwap
-    boilerplate.GlobalVars = bps.GlobalVars
-    boilerplate.WriteTranspose = bps.WriteTranspose
-    boilerplate.HstId = bps.HstId
-    boilerplate.Define = bps.define_compound
-
     boilerast = boilerplate.generate_code()
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
