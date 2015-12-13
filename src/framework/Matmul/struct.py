@@ -1,14 +1,27 @@
-class KernelStruct(object):
+class ChangedByTransformation(object):
     def __init__(self):
-        self.ArrayIdToDimName = dict()
+        # Kun sat af transformation
+        self.PlaceInRegArgs = list()
+        self.PlaceInRegCond = None
+        self.PlaceInLocalArgs = list()
+        self.PlaceInLocalCond = None
         self.Type = dict()
-        self.ArrayIds = set()
         self.KernelArgs = dict()
-        self.LocalSwap = dict()
-        self.LoopArrays = dict()
+
+        # Stencil
         self.Kernel = None
-        self.Includes = list()
+        self.LocalSwap = dict()
         self.num_array_dims = dict()
+        self.ArrayIdToDimName = dict()
+        self.LoopArrays = dict()
+        self.Add = dict()
+
+
+class KernelStruct(ChangedByTransformation):
+    def __init__(self):
+        super(KernelStruct, self).__init__()
+        self.ArrayIds = set()
+        self.Includes = list()
         self.SubSwap = dict()
         self.ParDim = None
 
@@ -19,14 +32,8 @@ class KernelStruct(object):
         self.SubscriptNoId = dict()
         self.GridIndices = list()
         self.Local = dict()
-        self.Add = dict()
-        self.ReverseIdx = dict()
 
-        # Kun sat af transformation
-        self.PlaceInRegArgs = list()
-        self.PlaceInRegCond = None
-        self.PlaceInLocalArgs = list()
-        self.PlaceInLocalCond = None
+        self.ReverseIdx = dict()
 
     def set_datastructure(self, tranf_rp):
         self.ArrayIds = tranf_rp.astrepr.ArrayIds
