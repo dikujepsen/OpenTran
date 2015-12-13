@@ -5,7 +5,6 @@ import stringstream
 import visitor
 import transf_visitor as tvisitor
 
-
 class KernelStruct(object):
     def __init__(self):
         self.ArrayIdToDimName = dict()
@@ -36,20 +35,19 @@ class KernelStruct(object):
         self.PlaceInLocalArgs = list()
         self.PlaceInLocalCond = None
 
-
     def set_datastructure(self, tranf_rp):
         self.ArrayIds = tranf_rp.astrepr.ArrayIds
         self.Includes = tranf_rp.astrepr.Includes
         self.SubSwap = tranf_rp.SubSwap
         self.ParDim = tranf_rp.ParDim
 
-        self.ArrayIdToDimName = tranf_rp.ArrayIdToDimName #
-        self.Type = tranf_rp.astrepr.Type #
-        self.KernelArgs = tranf_rp.KernelArgs #
-        self.LocalSwap = tranf_rp.LocalSwap #
-        self.LoopArrays = tranf_rp.astrepr.LoopArrays #
-        self.Kernel = tranf_rp.Kernel #
-        self.num_array_dims = tranf_rp.astrepr.num_array_dims #
+        self.ArrayIdToDimName = tranf_rp.ArrayIdToDimName  #
+        self.Type = tranf_rp.astrepr.Type  #
+        self.KernelArgs = tranf_rp.KernelArgs  #
+        self.LocalSwap = tranf_rp.LocalSwap  #
+        self.LoopArrays = tranf_rp.astrepr.LoopArrays  #
+        self.Kernel = tranf_rp.Kernel  #
+        self.num_array_dims = tranf_rp.astrepr.num_array_dims  #
 
         self.Loops = tranf_rp.Loops
         self.UpperLimit = tranf_rp.astrepr.UpperLimit
@@ -59,6 +57,7 @@ class KernelStruct(object):
         self.Local = tranf_rp.Local
         self.Add = tranf_rp.Add
         self.ReverseIdx = tranf_rp.ReverseIdx
+
 
 class SnippetGen(object):
     def __init__(self):

@@ -1,6 +1,5 @@
 
 
-
 class BoilerPlateStruct(object):
     def __init__(self):
         # # From Transpose
@@ -28,3 +27,5 @@ class BoilerPlateStruct(object):
         self.GlobalVars = dict()
         self.WriteTranspose = list()
         self.define_compound = None
+
+

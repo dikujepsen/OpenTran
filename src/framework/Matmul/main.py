@@ -289,6 +289,7 @@ def __main_placeinlocal(an, ks, bps, tempast3, par_dim=None):
 def __main_stencil(an, ks, bps, tempast3):
     sten = stencil.Stencil()
     sten.set_datastructures(tempast3)
+    sten.stencil(['X1'], west=1, north=1, east=1, south=1, middle=0)
 
     ks.Kernel = sten.Kernel
     ks.LocalSwap = sten.LocalSwap

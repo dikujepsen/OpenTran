@@ -55,6 +55,7 @@ if args.make or args.check:
             command += " DEF=PRINT"
     if args.check:
         command = "./check.sh"
+        
     for n in benchmark:
         os.chdir(n)
         p1 = subprocess.Popen(command, shell=True,\
@@ -72,6 +73,8 @@ if args.make or args.check:
             if args.check:
                 print line
         os.chdir('..')
+
+        
     
 if args.run is not None:
     dev = args.run
