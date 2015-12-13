@@ -16,12 +16,8 @@ class BoilerPlateStruct(object):
         self.define_compound = None
 
         # From PlaceInReg
-        self.PlaceInRegArgs = list()
-        self.PlaceInRegCond = None
 
         # From PlaceInLocal
-        self.PlaceInLocalArgs = list()
-        self.PlaceInLocalCond = None
         self.Local = dict()
 
         # From Stencil

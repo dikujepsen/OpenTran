@@ -81,15 +81,7 @@ def gen_full_code(name, an, ks, bps, tempast2):
     rw = an.rw
 
     kgen = kernelgen.KernelGen(ks)
-
-    kgen.PlaceInLocalArgs = bps.PlaceInLocalArgs
-    kgen.PlaceInLocalCond = bps.PlaceInLocalCond
-    kgen.PlaceInRegArgs = bps.PlaceInRegArgs
-    kgen.PlaceInRegCond = bps.PlaceInRegCond
     kgen.GenerateKernels(tempast2, name, fileprefix)
-
-    rw.KernelStringStream = kgen.KernelStringStream
-    rw.IfThenElse = kgen.IfThenElse
 
     boilerplate = boilerplategen.Boilerplate()
     boilerplate.set_struct(ks, bps)
@@ -283,8 +275,8 @@ def __main_placeinreg(an, ks, bps, tempast3, par_dim=None):
     pireg.set_datastructures(tempast3)
     pireg.place_in_reg()
 
-    bps.PlaceInRegArgs = pireg.PlaceInRegArgs
-    bps.PlaceInRegCond = pireg.PlaceInRegCond
+    ks.PlaceInRegArgs = pireg.PlaceInRegArgs
+    ks.PlaceInRegCond = pireg.PlaceInRegCond
 
 
 def __main_placeinlocal(an, ks, bps, tempast3, par_dim=None):
@@ -294,8 +286,8 @@ def __main_placeinlocal(an, ks, bps, tempast3, par_dim=None):
     pilocal.set_datastructures(tempast3)
     pilocal.place_in_local()
 
-    bps.PlaceInLocalArgs = pilocal.PlaceInLocalArgs
-    bps.PlaceInLocalCond = pilocal.PlaceInLocalCond
+    ks.PlaceInLocalArgs = pilocal.PlaceInLocalArgs
+    ks.PlaceInLocalCond = pilocal.PlaceInLocalCond
     bps.Local = pilocal.Local
 
 

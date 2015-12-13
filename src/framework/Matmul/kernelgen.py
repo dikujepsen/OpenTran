@@ -7,10 +7,7 @@ import place_in_local as piloc
 
 class KernelGen(object):
     def __init__(self, ks):
-        self.PlaceInLocalArgs = list()
-        self.PlaceInLocalCond = None
-        self.PlaceInRegArgs = list()
-        self.PlaceInRegCond = None
+
         self.KernelStringStream = list()
         self.IfThenElse = None
         self.ks = ks
@@ -20,7 +17,7 @@ class KernelGen(object):
         # Register optimizations
         funcname = name + 'Base'
 
-        if self.PlaceInRegArgs and self.PlaceInLocalArgs:
+        if self.ks.PlaceInRegArgs and self.ks.PlaceInLocalArgs:
             raise Exception("""GenerateKernels: Currently unimplemented to perform
                                 PlaceInReg and PlaceInLocal together from the analysis""")
 
@@ -31,27 +28,27 @@ class KernelGen(object):
         ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                           kernelstringname=funcname)
         pir = pireg.PlaceInReg()
-        for (arg, insideloop) in self.PlaceInRegArgs:
+        for (arg, insideloop) in self.ks.PlaceInRegArgs:
             funcname = name + 'PlaceInReg'
             pir.placeInReg3(self.ks, arg, list(insideloop))
             ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                               kernelstringname=funcname)
 
         pil = piloc.PlaceInLocal()
-        for arg in self.PlaceInLocalArgs:
+        for arg in self.ks.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
 
             pil.localMemory3(self.ks, arg)
-            ss.InSourceKernel(copy.deepcopy(ast), self.PlaceInLocalCond,
+            ss.InSourceKernel(copy.deepcopy(ast), self.ks.PlaceInLocalCond,
                               filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
 
         self.KernelStringStream = ss.KernelStringStream
 
         MyCond = None
-        if self.PlaceInLocalCond:
-            MyCond = self.PlaceInLocalCond
-        if self.PlaceInRegCond:
-            MyCond = self.PlaceInRegCond
+        if self.ks.PlaceInLocalCond:
+            MyCond = self.ks.PlaceInLocalCond
+        if self.ks.PlaceInRegCond:
+            MyCond = self.ks.PlaceInRegCond
 
         if MyCond:
             name = self.KernelStringStream[0]['name']

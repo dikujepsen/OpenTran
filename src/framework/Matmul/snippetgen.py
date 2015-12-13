@@ -30,6 +30,13 @@ class KernelStruct(object):
         self.Add = dict()
         self.ReverseIdx = dict()
 
+        # Kun sat af transformation
+        self.PlaceInRegArgs = list()
+        self.PlaceInRegCond = None
+        self.PlaceInLocalArgs = list()
+        self.PlaceInLocalCond = None
+
+
     def set_datastructure(self, tranf_rp):
         self.ArrayIds = tranf_rp.astrepr.ArrayIds
         self.Includes = tranf_rp.astrepr.Includes
