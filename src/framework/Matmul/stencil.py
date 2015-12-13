@@ -15,15 +15,20 @@ class Stencil(object):
         self.IndexInSubscript = dict()
         self.LowerLimit = dict()
         self.type = dict()
-        self.LocalSwap = dict()
         self.ArrayIdToDimName = dict()
         self.ReverseIdx = dict()
         self.LoopArrays = dict()
         self.IndexToLocalVar = dict()
         self.GridIndices = list()
         self.ParDim = None
-        self.num_array_dims = dict()
         self.Add = dict()
+
+        self.num_array_dims = dict()
+        self.LocalSwap = dict()
+        self.ArrayIdToDimName = dict()
+        self.Kernel = None
+        self.LoopArrays = dict()
+
 
     def set_datastructures(self, ast, dev='CPU'):
         perfect_for_loop = tvisitor.PerfectForLoop()

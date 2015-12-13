@@ -15,11 +15,12 @@ class PlaceInReg(object):
         self.ReadWrite = dict()
         self.ArrayIds = set()
         self.SubscriptNoId = dict()
-        self.PlaceInRegArgs = list()
-        self.PlaceInRegCond = None
         self.UpperLimit = dict()
         self.LowerLimit = dict()
         self.Loops = dict()
+
+        self.PlaceInRegArgs = list()
+        self.PlaceInRegCond = None
 
     def set_datastructures(self, ast):
 

@@ -5,26 +5,21 @@ import ast_buildingblock as ast_bb
 
 class Boilerplate(object):
     def __init__(self):
-        self.ArrayIdToDimName = dict()
+        self.ks = None
+        self.bps = None
+
         self.NonArrayIds = set()
-        self.ArrayIds = set()
         self.KernelName = None
         self.DevId = dict()
         self.ConstantMem = set()
         self.DevArgList = list()
-        self.Type = dict()
         self.HstId = dict()
         self.GlobalVars = list()
         self.Mem = dict()
         self.DevFuncId = None
         self.DevFuncTypeId = None
         self.RemovedIds = list()
-        self.KernelArgs = list()
-        self.Local = list()
-        self.GridIndices = list()
-        self.UpperLimit = list()
         self.LowerLimit = list()
-        self.ParDim = None
 
         self.KernelStringStream = list()
         self.IfThenElse = None
@@ -38,9 +33,13 @@ class Boilerplate(object):
         self.NoReadBack = None
         self.WriteTranspose = list()
 
+    def set_struct(self, kernelstruct, boilerplatestruct):
+        self.ks = kernelstruct
+        self.bps = boilerplatestruct
+
     def generate_code(self):
 
-        dictNToDimNames = self.ArrayIdToDimName
+        dictNToDimNames = self.ks.ArrayIdToDimName
 
         NonArrayIds = copy.deepcopy(self.NonArrayIds)
 
@@ -55,7 +54,7 @@ class Boilerplate(object):
 
         listDevBuffers = []
 
-        for n in self.ArrayIds:
+        for n in self.ks.ArrayIds:
             try:
                 name = self.DevId[n]
                 listDevBuffers.append(lan.TypeId(['cl_mem'], lan.Id(name)))
@@ -74,7 +73,7 @@ class Boilerplate(object):
         listHostPtrs = []
         for n in self.DevArgList:
             name = n.name.name
-            type = self.Type[name]
+            type = self.ks.Type[name]
             try:
                 name = self.HstId[name]
             except KeyError:
@@ -82,12 +81,12 @@ class Boilerplate(object):
             listHostPtrs.append(lan.TypeId(type, lan.Id(name), 0))
 
         for n in self.GlobalVars:
-            type = self.Type[n]
+            type = self.ks.Type[n]
             name = self.HstId[n]
             listHostPtrs.append(lan.TypeId(type, lan.Id(name), 0))
 
         dictNToHstPtr = self.HstId
-        dictTypeHostPtrs = copy.deepcopy(self.Type)
+        dictTypeHostPtrs = copy.deepcopy(self.ks.Type)
         listHostPtrs = lan.GroupCompound(listHostPtrs)
         fileAST.ext.append(listHostPtrs)
 
@@ -98,8 +97,8 @@ class Boilerplate(object):
             sizeName = self.Mem[n]
             listMemSize.append(lan.TypeId(['size_t'], lan.Id(sizeName)))
 
-        for n in self.ArrayIds:
-            for dimName in self.ArrayIdToDimName[n]:
+        for n in self.ks.ArrayIds:
+            for dimName in self.ks.ArrayIdToDimName[n]:
                 listDimSize.append( \
                     lan.TypeId(['size_t'], lan.Id(dimName)))
 
@@ -133,11 +132,11 @@ class Boilerplate(object):
         fileAST.ext.append(allocateBuffer)
 
         listSetMemSize = []
-        for entry in self.ArrayIds:
-            n = self.ArrayIdToDimName[entry]
+        for entry in self.ks.ArrayIds:
+            n = self.ks.ArrayIdToDimName[entry]
             lval = lan.Id(self.Mem[entry])
             rval = lan.BinOp(lan.Id(n[0]), '*', lan.Id('sizeof(' + \
-                                                       self.Type[entry][0] + ')'))
+                                                       self.ks.Type[entry][0] + ')'))
             if len(n) == 2:
                 rval = lan.BinOp(lan.Id(n[1]), '*', rval)
             listSetMemSize.append(lan.Assignment(lval, rval))
@@ -219,10 +218,10 @@ class Boilerplate(object):
             dictTypeHostPtrs.pop(n, None)
 
         ## clSetKernelArg for Arrays
-        for n in self.KernelArgs:
+        for n in self.ks.KernelArgs:
             lval = lan.Id(ErrName)
             op = '|='
-            type = self.Type[n]
+            type = self.ks.Type[n]
             if len(type) == 2:
                 arglist = lan.ArgList([kernelId, \
                                        lan.Increment(cntName, '++'), \
@@ -260,17 +259,17 @@ class Boilerplate(object):
         for n in self.Worksize:
             lval = lan.TypeId(['size_t'], lan.Id(self.Worksize[n] + '[]'))
             if n == 'local':
-                local_worksize = [lan.Id(i) for i in self.Local['size']]
+                local_worksize = [lan.Id(i) for i in self.ks.Local['size']]
                 rval = lan.ArrayInit(local_worksize)
             elif n == 'global':
                 initlist = []
-                for m in reversed(self.GridIndices):
-                    initlist.append(lan.Id(self.UpperLimit[m] \
+                for m in reversed(self.ks.GridIndices):
+                    initlist.append(lan.Id(self.ks.UpperLimit[m] \
                                            + ' - ' + self.LowerLimit[m]))
                 rval = lan.ArrayInit(initlist)
             else:
                 initlist = []
-                for m in reversed(self.GridIndices):
+                for m in reversed(self.ks.GridIndices):
                     initlist.append(lan.Id(self.LowerLimit[m]))
                 rval = lan.ArrayInit(initlist)
 
@@ -279,7 +278,7 @@ class Boilerplate(object):
         lval = lan.Id(ErrName)
         arglist = lan.ArgList([lan.Id('command_queue'), \
                                lan.Id(self.KernelName), \
-                               lan.Constant(self.ParDim), \
+                               lan.Constant(self.ks.ParDim), \
                                lan.Id(self.Worksize['offset']), \
                                lan.Id(self.Worksize['global']), \
                                lan.Id(self.Worksize['local']), \
@@ -339,12 +338,12 @@ class Boilerplate(object):
         fileAST.ext.append(runOCL)
         runOCLBody = runOCL.compound.statements
 
-        argIds = self.NonArrayIds.union(self.ArrayIds)  #
+        argIds = self.NonArrayIds.union(self.ks.ArrayIds)  #
 
         typeIdList = []
         ifThenList = []
         for n in argIds:
-            type = self.Type[n]
+            type = self.ks.Type[n]
             argn = lan.Id('arg_' + n)
             typeIdList.append(lan.TypeId(type, argn))
             try:
@@ -355,7 +354,7 @@ class Boilerplate(object):
             rval = argn
             ifThenList.append(lan.Assignment(lval, rval))
             try:
-                for m in self.ArrayIdToDimName[n]:
+                for m in self.ks.ArrayIdToDimName[n]:
                     type = ['size_t']
                     argm = lan.Id('arg_' + m)
                     lval = lan.Id(m)

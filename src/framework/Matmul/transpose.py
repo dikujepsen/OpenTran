@@ -10,19 +10,21 @@ class Transpose(object):
         self.SubscriptNoId = dict()
         self.IdxToDim = dict()
         self.ParDim = None  # int
-        self.HstId = dict()
         self.ArrayIds = set()
         self.num_array_dims = dict()
-        self.GlobalVars = dict()
-        self.Type = dict()
-        self.NameSwap = dict()
         self.ArrayIdToDimName = dict()
         self.Mem = dict()
-        self.Transposition = None
+        self.Subscript = dict()
         self.ReadWrite = dict()
         self.WriteOnly = list()
+
+        self.Type = dict()
+        self.NameSwap = dict()
         self.WriteTranspose = list()
-        self.Subscript = dict()
+        self.Transposition = None
+        self.HstId = dict()
+        self.GlobalVars = dict()
+
 
     def set_datastructures(self, ast):
 

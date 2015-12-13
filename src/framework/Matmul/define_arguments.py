@@ -5,12 +5,12 @@ import collect_transformation_info as cti
 
 class DefineArguments(object):
     def __init__(self):
-        self.kernel_args = dict()
         self.type = dict()
-        self.define_compound = None
         self.name_swap = dict()
         self.ParDim = None  # int
 
+        self.kernel_args = dict()
+        self.define_compound = None
 
     def set_datastructures(self, ast):
 

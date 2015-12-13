@@ -11,10 +11,11 @@ class PlaceInLocal(object):
         self.GridIndices = list()
         self.ParDim = None  # int
         self.Loops = dict()
-        self.PlaceInLocalArgs = list()
-        self.PlaceInLocalCond = None
         self.UpperLimit = dict()
         self.LowerLimit = dict()
+
+        self.PlaceInLocalArgs = list()
+        self.PlaceInLocalCond = None
         self.Local = dict()
         self.Local['name'] = 'LSIZE'
         self.Local['size'] = ['64']
