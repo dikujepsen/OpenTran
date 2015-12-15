@@ -7,6 +7,9 @@ class Rewriter(object):
     def __init__(self, astrepr):
         self.astrepr = astrepr
 
+        # Output
+        self.Includes = list()
+
     def rewrite_to_baseform(self, ast, functionname='FunctionName', change_ast=True):
         """ Rewrites a few things in the AST, ast, to increase the
             abstraction level.
@@ -29,7 +32,7 @@ class Rewriter(object):
         arglist = lan.ArgList([] + array_args)
         while isinstance(ast.ext[0], lan.Include):
             include = ast.ext.pop(0)
-            self.astrepr.Includes.append(include)
+            self.Includes.append(include)
 
         while not isinstance(ast.ext[0], lan.ForLoop):
             ast.ext.pop(0)

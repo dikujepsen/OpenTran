@@ -29,21 +29,17 @@ class PlaceInLocal(object):
         fs = cti.FindSubscripts()
         fs.collect(ast)
 
-        self.ParDim = fpl.ParDim
+        self.ParDim = fpl.par_dim
         self.GridIndices = fpl.GridIndices
         self.Loops = fs.Loops
         self.UpperLimit = fs.upper_limit
         self.LowerLimit = fs.lower_limit
         self.SubscriptNoId = fs.SubscriptNoId
 
-        if self.ParDim == 1:
-            self.Local['size'] = ['256']
-            if dev == 'CPU':
-                self.Local['size'] = ['16']
-        else:
-            self.Local['size'] = ['16', '16']
-            if dev == 'CPU':
-                self.Local['size'] = ['4', '4']
+        fl = cti.FindLocal()
+        fl.ParDim = self.ParDim
+        fl.collect(ast)
+        self.Local = fl.Local
 
 
     def place_in_local(self):

@@ -19,6 +19,25 @@ class FindPerfectForLoop(object):
             return self.ParDim
 
 
+class FindLocal(FindPerfectForLoop):
+    def __init__(self):
+        super(FindLocal, self).__init__()
+        self.Local = dict()
+        self.Local['name'] = 'LSIZE'
+        self.Local['size'] = ['64']
+
+    def collect(self, ast, dev='CPU'):
+        super(FindLocal, self).collect(ast)
+        if self.ParDim == 1:
+            self.Local['size'] = ['256']
+            if dev == 'CPU':
+                self.Local['size'] = ['16']
+        else:
+            self.Local['size'] = ['16', '16']
+            if dev == 'CPU':
+                self.Local['size'] = ['4', '4']
+
+
 class FindGridIndices(FindPerfectForLoop):
     def __init__(self):
         super(FindGridIndices, self).__init__()
@@ -85,7 +104,6 @@ class FindLoops(FindPerfectForLoop):
         find_dim = tvisitor.FindDim(self.arrays.numSubscripts)
         find_dim.visit(ast)
         self.ArrayIdToDimName = find_dim.dimNames
-
 
     @property
     def upper_limit(self):

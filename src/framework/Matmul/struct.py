@@ -1,5 +1,5 @@
 import collect_transformation_info as cti
-
+import collect_boilerplate_info as cbi
 
 class ChangedByTransformation(object):
     def __init__(self):
@@ -37,7 +37,7 @@ class KernelStruct(ChangedByTransformation):
         self.Local = dict()
         self.ReverseIdx = dict()
 
-    def set_datastructure(self, tranf_rp, ast):
+    def set_datastructure(self, tranf_rp, rw, ast):
         fpl = cti.FindGridIndices()
         fpl.ParDim = tranf_rp.ParDim
         fpl.collect(ast)
@@ -49,26 +49,33 @@ class KernelStruct(ChangedByTransformation):
         fs = cti.FindSubscripts()
         fs.collect(ast)
 
+        fl = cti.FindLocal()
+        fl.ParDim = tranf_rp.ParDim
+        fl.collect(ast)
+
+        gr = cbi.GenReverseIdx()
+
+        fla = cbi.FindLoopArrays()
+        fla.ParDim = tranf_rp.ParDim
+        fla.collect(ast)
+
         self.ArrayIds = fai.ArrayIds
-        self.Includes = tranf_rp.astrepr.Includes
-        self.SubSwap = tranf_rp.SubSwap
-        self.ParDim = tranf_rp.ParDim
+        self.Includes = rw.Includes
+        self.ParDim = fpl.par_dim
 
         self.Loops = fai.Loops
         self.UpperLimit = fai.upper_limit
 
         self.SubscriptNoId = fs.SubscriptNoId
         self.GridIndices = fpl.GridIndices
-        self.Local = tranf_rp.Local
-        self.ReverseIdx = tranf_rp.ReverseIdx
+        self.Local = fl.Local
+        self.ReverseIdx = gr.ReverseIdx
 
         # Stencil
         self.ArrayIdToDimName = fai.ArrayIdToDimName  #
-        self.LocalSwap = tranf_rp.LocalSwap  #
-        self.LoopArrays = tranf_rp.astrepr.LoopArrays  #
+        self.LoopArrays = fla.loop_arrays  #
         self.Kernel = fpl.Kernel  #
         self.num_array_dims = fai.num_array_dims  #
-        self.Add = tranf_rp.Add  #
 
 
 class BoilerPlateStruct(object):
