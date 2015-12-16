@@ -28,7 +28,7 @@ class FindLocal(FindPerfectForLoop):
 
     def collect(self, ast, dev='CPU'):
         super(FindLocal, self).collect(ast)
-        if self.ParDim == 1:
+        if self.par_dim == 1:
             self.Local['size'] = ['256']
             if dev == 'CPU':
                 self.Local['size'] = ['16']

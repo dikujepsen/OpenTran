@@ -37,26 +37,30 @@ class KernelStruct(ChangedByTransformation):
         self.Local = dict()
         self.ReverseIdx = dict()
 
-    def set_datastructure(self, tranf_rp, rw, ast):
+        # bruges kun til at interchange subscript i transpose
+        self.Subscript = dict()
+
+    def set_datastructure(self, rw, ast):
         fpl = cti.FindGridIndices()
-        fpl.ParDim = tranf_rp.ParDim
+        fpl.ParDim = self.ParDim
         fpl.collect(ast)
+        self.ParDim = fpl.par_dim
 
         fai = cti.FindArrayIds()
-        fai.ParDim = tranf_rp.ParDim
+        fai.ParDim = self.ParDim
         fai.collect(ast)
 
         fs = cti.FindSubscripts()
         fs.collect(ast)
 
         fl = cti.FindLocal()
-        fl.ParDim = tranf_rp.ParDim
+        fl.ParDim = self.ParDim
         fl.collect(ast)
 
         gr = cbi.GenReverseIdx()
 
         fla = cbi.FindLoopArrays()
-        fla.ParDim = tranf_rp.ParDim
+        fla.ParDim = self.ParDim
         fla.collect(ast)
 
         self.ArrayIds = fai.ArrayIds
@@ -66,6 +70,7 @@ class KernelStruct(ChangedByTransformation):
         self.Loops = fai.Loops
         self.UpperLimit = fai.upper_limit
 
+        self.Subscript = fs.Subscript
         self.SubscriptNoId = fs.SubscriptNoId
         self.GridIndices = fpl.GridIndices
         self.Local = fl.Local
@@ -105,3 +110,8 @@ class BoilerPlateStruct(object):
         self.GlobalVars = dict()
         self.WriteTranspose = list()
         self.define_compound = None
+        self.NoReadBack = None
+
+    def SetNoReadBack(self):
+        self.NoReadBack = True
+

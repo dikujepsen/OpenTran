@@ -293,7 +293,7 @@ class Boilerplate(object):
         ErrCheck = lan.FuncDecl(ErrId, arglist, lan.Compound([]))
         execBody.append(ErrCheck)
 
-        if not self.NoReadBack:
+        if not self.bps.NoReadBack:
             for n in self.WriteOnly:
                 lval = lan.Id(ErrName)
                 Hstn = self.bps.HstId[n]

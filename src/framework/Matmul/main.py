@@ -103,7 +103,6 @@ def gen_full_code(name, an, ks, bps, tempast2):
     boilerplate.WriteOnly = rw.WriteOnly
     boilerplate.ReadOnly = rw.ReadOnly
     boilerplate.Worksize = rw.Worksize
-    boilerplate.NoReadBack = rw.NoReadBack
 
     boilerast = boilerplate.generate_code()
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
@@ -135,21 +134,20 @@ def __optimize(rw, ast, name, par_dim=None):
     ks = struct.KernelStruct()
     if par_dim is not None:
         ks.ParDim = par_dim
-    ks.set_datastructure(transf_rp, rw, tempast)
+    ks.set_datastructure(rw, tempast)
     bps = struct.BoilerPlateStruct()
     if DoOptimizations:
-        __main_transpose(transf_rp, ks, bps, tempast3, par_dim=transf_rp.ParDim)
+        __main_transpose(ks, bps, tempast3, par_dim=transf_rp.ParDim)
         # an.Transpose()
 
-        __main_definearg(transf_rp, ks, bps, tempast3, par_dim=transf_rp.ParDim)
+        __main_definearg(ks, bps, tempast3, par_dim=transf_rp.ParDim)
         # an.DefineArguments()
-        __main_placeinreg(an, ks, bps, tempast3, par_dim=transf_rp.ParDim)
-        __main_placeinlocal(an, ks, bps, tempast3, par_dim=transf_rp.ParDim)
+        __main_placeinreg(ks, bps, tempast3, par_dim=transf_rp.ParDim)
+        __main_placeinlocal(ks, bps, tempast3, par_dim=transf_rp.ParDim)
         # an.PlaceInLocalMemory()
     if SetNoReadBack:
-        tf.SetNoReadBack()
+        bps.SetNoReadBack()
 
-    ## rw.DataStructures()
     gen_full_code(name, an, ks, bps, tempast3)
 
 
@@ -178,17 +176,17 @@ def jacobi():
 
     an = analysis.Analysis(transf_rp, tf)
     ks = struct.KernelStruct()
-    ks.set_datastructure(transf_rp, rw, tempast3)
+    ks.set_datastructure(rw, tempast3)
     bps = struct.BoilerPlateStruct()
     if DoOptimizations:
-        __main_transpose(transf_rp, ks, bps, tempast3)
-        __main_definearg(transf_rp, ks, bps, tempast3)
-        __main_placeinreg(an, ks, bps, tempast3)
+        __main_transpose(ks, bps, tempast3)
+        __main_definearg(ks, bps, tempast3)
+        __main_placeinreg(ks, bps, tempast3)
         # tf.localMemory(['X1'], west=1, north=1, east=1, south=1, middle=0)
-        __main_stencil(an, ks, bps, tempast3)
-        __main_placeinlocal(an, ks, bps, tempast3)
+        __main_stencil(ks, bps, tempast3)
+        __main_placeinlocal(ks, bps, tempast3)
     if SetNoReadBack:
-        tf.SetNoReadBack()
+        bps.SetNoReadBack()
 
     gen_full_code(name, an, ks, bps, tempast3)
 
@@ -220,7 +218,7 @@ def gaussian():
     __optimize(rw, ast, name)
 
 
-def __main_transpose(transf_rp, ks, bps, tempast3, par_dim=None):
+def __main_transpose(ks, bps, tempast3, par_dim=None):
     tps = tp.Transpose()
     if par_dim is not None:
         tps.ParDim = par_dim
@@ -229,7 +227,7 @@ def __main_transpose(transf_rp, ks, bps, tempast3, par_dim=None):
 
     for (arr_name, idx_list_list) in tps.Subscript.items():
 
-        idx_list_list2 = transf_rp.Subscript[arr_name]
+        idx_list_list2 = ks.Subscript[arr_name]
 
         for i, idx_list in enumerate(idx_list_list):
             for j, idx in enumerate(idx_list):
@@ -245,7 +243,7 @@ def __main_transpose(transf_rp, ks, bps, tempast3, par_dim=None):
     ks.Type = tps.Type
 
 
-def __main_definearg(transf_rp, ks, bps, tempast3, par_dim=None):
+def __main_definearg(ks, bps, tempast3, par_dim=None):
     dargs = darg.DefineArguments()
     if par_dim is not None:
         dargs.ParDim = par_dim
@@ -257,7 +255,7 @@ def __main_definearg(transf_rp, ks, bps, tempast3, par_dim=None):
     ks.KernelArgs = dargs.kernel_args
 
 
-def __main_placeinreg(an, ks, bps, tempast3, par_dim=None):
+def __main_placeinreg(ks, bps, tempast3, par_dim=None):
     pireg = reg.PlaceInReg()
     if par_dim is not None:
         pireg.ParDim = par_dim
@@ -268,7 +266,7 @@ def __main_placeinreg(an, ks, bps, tempast3, par_dim=None):
     ks.PlaceInRegCond = pireg.PlaceInRegCond
 
 
-def __main_placeinlocal(an, ks, bps, tempast3, par_dim=None):
+def __main_placeinlocal(ks, bps, tempast3, par_dim=None):
     pilocal = local.PlaceInLocal()
     if par_dim is not None:
         pilocal.ParDim = par_dim
@@ -279,7 +277,7 @@ def __main_placeinlocal(an, ks, bps, tempast3, par_dim=None):
     ks.PlaceInLocalCond = pilocal.PlaceInLocalCond
 
 
-def __main_stencil(an, ks, bps, tempast3):
+def __main_stencil(ks, bps, tempast3):
     sten = stencil.Stencil()
     sten.set_datastructures(tempast3)
     sten.stencil(['X1'], west=1, north=1, east=1, south=1, middle=0)
