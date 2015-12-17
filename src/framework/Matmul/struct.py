@@ -121,9 +121,23 @@ class BoilerPlateStruct(BoilerPlateChangedByTransformation):
         self.Worksize = dict()
 
     def set_datastructure(self, ast, par_dim=None):
-        fai = cti.FindArrayIds()
+        fai = cti.FindReadWrite()
         fai.ParDim = par_dim
         fai.collect(ast)
         # print fai.NonArrayIds
         self.NonArrayIds = fai.NonArrayIds
+        self.LowerLimit = fai.lower_limit
+        self.WriteOnly = fai.WriteOnly
+        self.ReadOnly = fai.ReadOnly
 
+        fkn = cbi.FindKernelName()
+        fkn.ParDim = fai.par_dim
+        fkn.collect(ast)
+        self.KernelName = fkn.KernelName
+        self.DevId = fkn.DevId
+        self.DevFuncId = fkn.DevFuncId
+        self.DevFuncTypeId = fkn.DevFuncTypeId
+        self.DevArgList = fkn.DevArgList
+        self.Mem = fkn.Mem
+        self.RemovedIds = fkn.RemovedIds
+        self.Worksize = fkn.Worksize

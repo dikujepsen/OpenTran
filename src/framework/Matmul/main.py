@@ -86,21 +86,6 @@ def gen_full_code(name, an, ks, bps, tempast2):
     boilerplate = boilerplategen.Boilerplate()
     boilerplate.set_struct(ks, bps, kgen.kgen_strt)
 
-    boilerplate.KernelName = rw.KernelName
-    boilerplate.DevId = rw.DevId
-    boilerplate.ConstantMem = rw.ConstantMem
-    boilerplate.DevArgList = rw.DevArgList
-    boilerplate.Mem = rw.Mem
-    boilerplate.DevFuncId = rw.DevFuncId
-    boilerplate.DevFuncTypeId = rw.DevFuncTypeId
-    boilerplate.RemovedIds = rw.RemovedIds
-    boilerplate.LowerLimit = rw.astrepr.LowerLimit
-
-    boilerplate.ConstantMemory = rw.ConstantMemory
-    boilerplate.WriteOnly = rw.WriteOnly
-    boilerplate.ReadOnly = rw.ReadOnly
-    boilerplate.Worksize = rw.Worksize
-
     boilerast = boilerplate.generate_code()
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
@@ -176,7 +161,7 @@ def jacobi():
     ks = struct.KernelStruct()
     ks.set_datastructure(rw, tempast3)
     bps = struct.BoilerPlateStruct()
-    bps.set_datastructure(ast)
+    bps.set_datastructure(tempast)
     if DoOptimizations:
         __main_transpose(ks, bps, tempast3)
         __main_definearg(ks, bps, tempast3)
@@ -290,9 +275,9 @@ def __main_stencil(ks, bps, tempast3):
 
 
 if __name__ == "__main__":
-    # matmul()
-    # knearest()
+    matmul()
+    knearest()
     jacobi()
-    # nbody()
-    # laplace()
-    # gaussian()
+    nbody()
+    laplace()
+    gaussian()

@@ -180,11 +180,6 @@ class FindArrayIds(RemovedLoopLimit):
         ids = visitor.Ids2()
         ids.visit(ast)
 
-        # print ast
-        #
-        # print ids.ids, "123qwe"
-        # print arrays.ids
-        # print type_ids.ids
         other_ids = ids.ids - self.arrays.ids - type_ids.ids
         self.ArrayIds = self.arrays.ids - type_ids.ids
         self.NonArrayIds = other_ids
@@ -229,6 +224,7 @@ class FindReadWrite(GenHostArrayData):
         super(FindReadWrite, self).__init__()
         self.ReadWrite = dict()
         self.WriteOnly = list()
+        self.ReadOnly = list()
 
     def collect(self, ast):
         super(FindReadWrite, self).collect(ast)
@@ -242,3 +238,5 @@ class FindReadWrite(GenHostArrayData):
             if len(pset) == 1:
                 if 'write' in pset:
                     self.WriteOnly.append(n)
+                else:
+                    self.ReadOnly.append(n)
