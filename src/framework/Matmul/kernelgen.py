@@ -5,16 +5,21 @@ import copy
 import place_in_reg as pireg
 import place_in_local as piloc
 
+
+class KernelGenStruct(object):
+    def __int__(self):
+        self.KernelStringStream = list()
+        self.IfThenElse = None
+
+
 class KernelGen(object):
     def __init__(self, ks):
         self.ks = ks
 
         # Output
-        self.KernelStringStream = list()
-        self.IfThenElse = None
+        self.kgen_strt = KernelGenStruct()
 
-
-    def GenerateKernels(self, ast, name, fileprefix):
+    def generate_kernels(self, ast, name, fileprefix):
         # Create base version and possible version with Local and
         # Register optimizations
         funcname = name + 'Base'
@@ -44,27 +49,27 @@ class KernelGen(object):
             ss.InSourceKernel(copy.deepcopy(ast), self.ks.PlaceInLocalCond,
                               filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
 
-        self.KernelStringStream = ss.KernelStringStream
+        self.kgen_strt.KernelStringStream = ss.KernelStringStream
 
-        MyCond = None
+        my_cond = None
         if self.ks.PlaceInLocalCond:
-            MyCond = self.ks.PlaceInLocalCond
+            my_cond = self.ks.PlaceInLocalCond
         if self.ks.PlaceInRegCond:
-            MyCond = self.ks.PlaceInRegCond
+            my_cond = self.ks.PlaceInRegCond
 
-        if MyCond:
-            name = self.KernelStringStream[0]['name']
+        if my_cond:
+            name = self.kgen_strt.KernelStringStream[0]['name']
             func = ast_bb.EmptyFuncDecl(name, type=[])
             returnfunc1 = lan.Assignment(lan.Id('return'), func, op='')
-            name = self.KernelStringStream[1]['name']
+            name = self.kgen_strt.KernelStringStream[1]['name']
             func = ast_bb.EmptyFuncDecl(name, type=[])
             returnfunc2 = lan.Assignment(lan.Id('return'), func, op='')
-            ifthenelse = lan.IfThenElse(MyCond, \
+            ifthenelse = lan.IfThenElse(my_cond, \
                                         lan.Compound([returnfunc2]), lan.Compound([returnfunc1]))
 
-            self.IfThenElse = ifthenelse
+            self.kgen_strt.IfThenElse = ifthenelse
         else:
-            name = self.KernelStringStream[0]['name']
+            name = self.kgen_strt.KernelStringStream[0]['name']
             func = ast_bb.EmptyFuncDecl(name, type=[])
             returnfunc1 = lan.Assignment(lan.Id('return'), func, op='')
-            self.IfThenElse = returnfunc1
+            self.kgen_strt.IfThenElse = returnfunc1

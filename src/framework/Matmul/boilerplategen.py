@@ -7,8 +7,9 @@ class Boilerplate(object):
     def __init__(self):
         self.ks = None
         self.bps = None
+        self.kgen_strt = None
 
-        self.NonArrayIds = set()
+
         self.KernelName = None
         self.DevId = dict()
         self.ConstantMem = set()
@@ -19,23 +20,21 @@ class Boilerplate(object):
         self.RemovedIds = list()
         self.LowerLimit = list()
 
-        self.KernelStringStream = list()
-        self.IfThenElse = None
         self.ConstantMemory = None
         self.WriteOnly = list()
         self.ReadOnly = list()
         self.Worksize = dict()
-        self.NoReadBack = None
 
-    def set_struct(self, kernelstruct, boilerplatestruct):
+    def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt):
         self.ks = kernelstruct
         self.bps = boilerplatestruct
+        self.kgen_strt = kgen_strt
 
     def generate_code(self):
 
         dictNToDimNames = self.ks.ArrayIdToDimName
 
-        NonArrayIds = copy.deepcopy(self.NonArrayIds)
+        NonArrayIds = copy.deepcopy(self.bps.NonArrayIds)
 
         fileAST = lan.FileAST([])
 
@@ -113,13 +112,13 @@ class Boilerplate(object):
         fileAST.ext.append(lan.GroupCompound(misc))
 
         # Generate the GetKernelCode function
-        for optim in self.KernelStringStream:
+        for optim in self.kgen_strt.KernelStringStream:
             fileAST.ext.append(optim['ast'])
 
         getKernelCode = ast_bb.EmptyFuncDecl('GetKernelCode', type=['std::string'])
         getKernelStats = []
         getKernelCode.compound.statements = getKernelStats
-        getKernelStats.append(self.IfThenElse)
+        getKernelStats.append(self.kgen_strt.IfThenElse)
         fileAST.ext.append(getKernelCode)
 
         allocateBuffer = ast_bb.EmptyFuncDecl('AllocateBuffers')
@@ -332,7 +331,7 @@ class Boilerplate(object):
         fileAST.ext.append(runOCL)
         runOCLBody = runOCL.compound.statements
 
-        argIds = self.NonArrayIds.union(self.ks.ArrayIds)  #
+        argIds = self.bps.NonArrayIds.union(self.ks.ArrayIds)  #
 
         typeIdList = []
         ifThenList = []
@@ -365,7 +364,7 @@ class Boilerplate(object):
         ifThenList.append(lan.FuncDecl(lan.Id('StartUpGPU'), arglist, lan.Compound([])))
         ifThenList.append(lan.FuncDecl(lan.Id('AllocateBuffers'), arglist, lan.Compound([])))
         useFile = 'true'
-        if self.KernelStringStream:
+        if self.kgen_strt.KernelStringStream:
             useFile = 'false'
 
         ifThenList.append(lan.Id('cout << "$Defines " << KernelDefines << endl;'))

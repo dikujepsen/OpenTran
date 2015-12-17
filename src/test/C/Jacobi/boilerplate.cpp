@@ -109,7 +109,7 @@ void ExecJacobiFor()
 {
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
-  size_t JacobiFor_global_worksize[] = {wB - 1, wB - 1};
+  size_t JacobiFor_global_worksize[] = {wA - 1, wB - 1};
   size_t JacobiFor_local_worksize[] = {4, 4};
   size_t JacobiFor_global_offset[] = {1, 1};
   oclErrNum = clEnqueueNDRangeKernel(

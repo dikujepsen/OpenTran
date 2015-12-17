@@ -68,7 +68,7 @@ def LexAndParse(name, createTemp):
 def CGen(name, funcname, an, tempast2, ast, kernelstringname = ''):
         cprint = CGenerator()
         rw = an.rw
-        an.GenerateKernels(tempast2, name, fileprefix)
+        an.generate_kernels(tempast2, name, fileprefix)
         ## rw.InSourceKernel(tempast2, filename = fileprefix + name + '/'+funcname + '.cl', kernelstringname = kernelstringname)
         boilerast = rw.generateBoilerplateCode(ast)
         cprint.createTemp(boilerast, filename = fileprefix + name + '/'+'boilerplate.cpp')

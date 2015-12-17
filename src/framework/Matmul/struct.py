@@ -1,7 +1,8 @@
 import collect_transformation_info as cti
 import collect_boilerplate_info as cbi
 
-class ChangedByTransformation(object):
+
+class KernelChangedByTransformation(object):
     def __init__(self):
         # Kun sat af transformation
         self.PlaceInRegArgs = list()
@@ -20,7 +21,7 @@ class ChangedByTransformation(object):
         self.Add = dict()
 
 
-class KernelStruct(ChangedByTransformation):
+class KernelStruct(KernelChangedByTransformation):
     def __init__(self):
         super(KernelStruct, self).__init__()
         # Heller ikke aendret af nogen transformation, ved ikke hvorfor de ikke staar nederst
@@ -83,27 +84,10 @@ class KernelStruct(ChangedByTransformation):
         self.num_array_dims = fai.num_array_dims  #
 
 
-class BoilerPlateStruct(object):
+class BoilerPlateChangedByTransformation(object):
     def __init__(self):
-        # # From Transpose
-        # self.Type = dict()
-        #
-        #
-        #
-        # # From Define
-        # self.kernel_args = dict()
-        #
-        # # From PlaceInReg
-        #
-        # # From PlaceInLocal
-        # self.Local = dict()
-        #
-        # # From Stencil
-        # self.ArrayIdToDimName = dict()
-        # self.Kernel = None
-        # self.LoopArrays = dict()
-
         # Eneste der skal med til boilerplate
+        # Ting som er aendret af en transformation
         self.Transposition = None
         self.NameSwap = dict()
         self.HstId = dict()
@@ -112,6 +96,34 @@ class BoilerPlateStruct(object):
         self.define_compound = None
         self.NoReadBack = None
 
-    def SetNoReadBack(self):
+    def set_no_read_back(self):
         self.NoReadBack = True
+
+
+class BoilerPlateStruct(BoilerPlateChangedByTransformation):
+    def __init__(self):
+        super(BoilerPlateStruct, self).__init__()
+
+        self.NonArrayIds = set()
+        self.KernelName = None
+        self.DevId = dict()
+        self.ConstantMem = set()
+        self.DevArgList = list()
+        self.Mem = dict()
+        self.DevFuncId = None
+        self.DevFuncTypeId = None
+        self.RemovedIds = list()
+        self.LowerLimit = list()
+
+        self.ConstantMemory = None
+        self.WriteOnly = list()
+        self.ReadOnly = list()
+        self.Worksize = dict()
+
+    def set_datastructure(self, ast, par_dim=None):
+        fai = cti.FindArrayIds()
+        fai.ParDim = par_dim
+        fai.collect(ast)
+        # print fai.NonArrayIds
+        self.NonArrayIds = fai.NonArrayIds
 

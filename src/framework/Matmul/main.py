@@ -66,6 +66,7 @@ def __get_ast_from_init(name):
     astrepr.init_original(ast)
     rw = rewriter.Rewriter(astrepr)
     rw.rewrite_to_baseform(ast, name + 'For')
+
     return rw, ast
 
 
@@ -80,15 +81,11 @@ def gen_full_code(name, an, ks, bps, tempast2):
     rw = an.rw
 
     kgen = kernelgen.KernelGen(ks)
-    kgen.GenerateKernels(tempast2, name, fileprefix)
+    kgen.generate_kernels(tempast2, name, fileprefix)
 
     boilerplate = boilerplategen.Boilerplate()
-    boilerplate.set_struct(ks, bps)
+    boilerplate.set_struct(ks, bps, kgen.kgen_strt)
 
-    boilerplate.KernelStringStream = kgen.KernelStringStream
-    boilerplate.IfThenElse = kgen.IfThenElse
-
-    boilerplate.NonArrayIds = rw.astrepr.NonArrayIds
     boilerplate.KernelName = rw.KernelName
     boilerplate.DevId = rw.DevId
     boilerplate.ConstantMem = rw.ConstantMem
@@ -136,6 +133,7 @@ def __optimize(rw, ast, name, par_dim=None):
         ks.ParDim = par_dim
     ks.set_datastructure(rw, tempast)
     bps = struct.BoilerPlateStruct()
+    bps.set_datastructure(tempast, par_dim)
     if DoOptimizations:
         __main_transpose(ks, bps, tempast3, par_dim=transf_rp.ParDim)
         # an.Transpose()
@@ -146,7 +144,7 @@ def __optimize(rw, ast, name, par_dim=None):
         __main_placeinlocal(ks, bps, tempast3, par_dim=transf_rp.ParDim)
         # an.PlaceInLocalMemory()
     if SetNoReadBack:
-        bps.SetNoReadBack()
+        bps.set_no_read_back()
 
     gen_full_code(name, an, ks, bps, tempast3)
 
@@ -178,6 +176,7 @@ def jacobi():
     ks = struct.KernelStruct()
     ks.set_datastructure(rw, tempast3)
     bps = struct.BoilerPlateStruct()
+    bps.set_datastructure(ast)
     if DoOptimizations:
         __main_transpose(ks, bps, tempast3)
         __main_definearg(ks, bps, tempast3)
@@ -186,7 +185,7 @@ def jacobi():
         __main_stencil(ks, bps, tempast3)
         __main_placeinlocal(ks, bps, tempast3)
     if SetNoReadBack:
-        bps.SetNoReadBack()
+        bps.set_no_read_back()
 
     gen_full_code(name, an, ks, bps, tempast3)
 
@@ -291,9 +290,9 @@ def __main_stencil(ks, bps, tempast3):
 
 
 if __name__ == "__main__":
-    matmul()
-    knearest()
+    # matmul()
+    # knearest()
     jacobi()
-    nbody()
-    laplace()
-    gaussian()
+    # nbody()
+    # laplace()
+    # gaussian()

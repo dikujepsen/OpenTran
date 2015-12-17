@@ -65,7 +65,6 @@ void AllocateBuffers()
   // Defines for the kernel
   std::stringstream str;
   str << "-Dhst_ptrB_dim1=" << hst_ptrB_dim1 << " ";
-  str << "-DwA=" << wA << " ";
   str << "-Dhst_ptrX1_dim1=" << hst_ptrX1_dim1 << " ";
   str << "-Dhst_ptrX2_dim1=" << hst_ptrX2_dim1 << " ";
   KernelDefines = str.str();
@@ -110,7 +109,7 @@ void ExecJacobiFor()
 {
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
-  size_t JacobiFor_global_worksize[] = {wB - 1, wB - 1};
+  size_t JacobiFor_global_worksize[] = {wA - 1, wB - 1};
   size_t JacobiFor_local_worksize[] = {4, 4};
   size_t JacobiFor_global_offset[] = {1, 1};
   oclErrNum = clEnqueueNDRangeKernel(
