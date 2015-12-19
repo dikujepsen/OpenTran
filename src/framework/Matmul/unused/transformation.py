@@ -1,8 +1,8 @@
 import copy
-import visitor
+import Matmul.visitor
 import lan
-import transf_visitor as tvisitor
-import ast_buildingblock as ast_bb
+import Matmul.transf_visitor as tvisitor
+import Matmul.ast_buildingblock as ast_bb
 
 
 class MyError(Exception):
@@ -43,7 +43,7 @@ class Transformation():
         rw = self.rw
         # find loops and check that the loops given in the argument
         # exist
-        loopIndices = visitor.LoopIndices()
+        loopIndices = Matmul.visitor.LoopIndices()
         loopIndices.visit(rw.Kernel)
         kernelLoops = loopIndices.Loops
         for l in looplist:
@@ -345,10 +345,10 @@ class Transformation():
         isInsideLoop = False
         try:
             # Find out if arrName is inside a loop
-            forLoops = visitor.ForLoops()
+            forLoops = Matmul.visitor.ForLoops()
             forLoops.visit(rw.Kernel)
             forLoopAst = forLoops.ast
-            arrays = visitor.Arrays([])
+            arrays = Matmul.visitor.Arrays([])
             arrays.visit(forLoopAst)
             for arrName in arrNames:
                 if arrName in arrays.ids:
@@ -359,7 +359,7 @@ class Transformation():
 
         if isInsideLoop:
             # find loop index
-            loopIndices = visitor.LoopIndices()
+            loopIndices = Matmul.visitor.LoopIndices()
             loopIndices.visit(forLoopAst)
             outeridx = loopIndices.index[0]
             forLoopAst.inc = lan.Increment(lan.Id(outeridx), '+=' + rw.Local['size'][0])
@@ -448,7 +448,7 @@ class Transformation():
                     exchangeId.visit(m)
                 if isInsideLoop:
                     for i, n in enumerate(orisub):
-                        addToId = visitor.Ids()
+                        addToId = Matmul.visitor.Ids()
                         addToId.visit(n)
                         # REMEMBER: orisub[i] might not simply be an Id
                         # might need to do something more complicated here

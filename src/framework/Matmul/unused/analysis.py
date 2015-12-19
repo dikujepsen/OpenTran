@@ -1,8 +1,8 @@
 from itertools import chain
-import snippetgen
+import Matmul.snippetgen
 import lan
 import copy
-import ast_buildingblock as ast_bb
+import Matmul.ast_buildingblock as ast_bb
 
 
 class Analysis:
@@ -160,21 +160,21 @@ class Analysis:
             raise Exception("""GenerateKernels: Currently unimplemented to perform
                                 PlaceInReg and PlaceInLocal together from the analysis""")
 
-        ss = snippetgen.SnippetGen(rw)
+        ss = Matmul.snippetgen.SnippetGen(rw)
 
-        ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
-                          kernelstringname=funcname)
+        ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
+                            kernelstringname=funcname)
         for (arg, insideloop) in self.PlaceInRegArgs:
             funcname = name + 'PlaceInReg'
             tf.placeInReg3(arg, list(insideloop))
-            ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
-                              kernelstringname=funcname)
+            ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
+                                kernelstringname=funcname)
 
         for arg in self.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
             tf.localMemory3(arg)
-            ss.InSourceKernel(copy.deepcopy(ast), self.PlaceInLocalCond,
-                              filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
+            ss.in_source_kernel(copy.deepcopy(ast), self.PlaceInLocalCond,
+                                filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
 
         MyCond = None
         if self.PlaceInLocalCond:

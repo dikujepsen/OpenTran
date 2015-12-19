@@ -163,17 +163,17 @@ class Analysis():
         					PlaceInReg and PlaceInLocal together from the analysis""")
 
             
-        rw.InSourceKernel(copy.deepcopy(ast), Id('true'), filename = fileprefix + name + '/'+ funcname + '.cl', kernelstringname = funcname)
+        rw.in_source_kernel(copy.deepcopy(ast), Id('true'), filename =fileprefix + name + '/' + funcname + '.cl', kernelstringname = funcname)
         for (arg, insideloop) in self.PlaceInRegArgs:
             funcname = name + 'PlaceInReg'
             tf.placeInReg3(arg, list(insideloop))
-            rw.InSourceKernel(copy.deepcopy(ast), Id('true'), filename = fileprefix + name + '/'+ funcname + '.cl', kernelstringname = funcname)
+            rw.in_source_kernel(copy.deepcopy(ast), Id('true'), filename =fileprefix + name + '/' + funcname + '.cl', kernelstringname = funcname)
 
             
         for arg in self.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
             tf.localMemory3(arg)
-            rw.InSourceKernel(copy.deepcopy(ast), self.PlaceInLocalCond, filename = fileprefix + name + '/'+ funcname + '.cl', kernelstringname = funcname)
+            rw.in_source_kernel(copy.deepcopy(ast), self.PlaceInLocalCond, filename =fileprefix + name + '/' + funcname + '.cl', kernelstringname = funcname)
 
         MyCond = None
         if self.PlaceInLocalCond:

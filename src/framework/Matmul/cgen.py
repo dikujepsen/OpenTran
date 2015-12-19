@@ -1,7 +1,6 @@
 import os
 import lan
 
-
 debug = False
 
 
@@ -10,21 +9,22 @@ class CGenerator(object):
         return a value from each visit method, using string accumulation in 
         generic_visit.
     """
+
     def __init__(self):
         self.output = ''
         self.quotes = '\"'
         self.newline = '\n'
         self.semi = ';'
         self.start = ''
-        
+
         # Statements start with indentation of self.indent_level spaces, using
         # the _make_indent method
         #
         self.indent_level = 0
         self.inside_ArgList = False
         self.inside_Assignment = False
-        
-    def write_ast_to_file(self, ast, filename ='temp.cpp'):
+
+    def write_ast_to_file(self, ast, filename='temp.cpp'):
         code = self.visit(ast)
         currentdir = os.getcwd()
         fullFilename = currentdir + '/' + filename
@@ -33,17 +33,17 @@ class CGenerator(object):
         except OSError:
             pass
         try:
-            fileobj = open(fullFilename,'w')
+            fileobj = open(fullFilename, 'w')
             fileobj.write(code)
             fileobj.close()
         except IOError:
             print "Unable to write file"
-       
+
     def simple_node(self, n):
         """ Returns True for nodes that are "simple"
         """
         return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef))
-    
+
     def parenthesize_if(self, n, condition):
         """ Visits 'n' and returns its string representation, parenthesized
             if the condition function applied to the node returns True.
@@ -54,26 +54,25 @@ class CGenerator(object):
         else:
             return s
 
-
     def _make_indent(self):
         return ' ' * self.indent_level
-    
+
     def visit(self, node):
         method = 'visit_' + node.__class__.__name__
         return getattr(self, method, self.generic_visit)(node)
-    
+
     def generic_visit(self, node):
         if node is None:
             return ''
         else:
             return ''.join(self.visit(c[1]) if len(c) == 2 \
-                           else self.visit(c) for c in node.children())
-    
+                               else self.visit(c) for c in node.children())
+
     def visit_FileAST(self, n):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
+            newline = n.__class__.__name__ + newline
             start = n.__class__.__name__ + start
         s = ''
 
@@ -84,23 +83,21 @@ class CGenerator(object):
                 s += start + self.visit(ext) + newline
         return s
 
-    
     def visit_GlobalCompound(self, n):
-        s =  ''
+        s = ''
         for stat in n.statements:
-           s += self.visit(stat)
+            s += self.visit(stat)
         s += n.__class__.__name__ + self.newline
         return s
-
 
     def visit_GroupCompound(self, n):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
+            newline = n.__class__.__name__ + newline
             start = n.__class__.__name__ + start
-        s =  ''
-        for i,stat in enumerate(n.statements):
+        s = ''
+        for i, stat in enumerate(n.statements):
             start1 = ''
             if i != 0:
                 start1 = start
@@ -109,7 +106,7 @@ class CGenerator(object):
         return s
 
     def visit_Comment(self, n):
-        return n.value 
+        return n.value
 
     def visit_Increment(self, n):
         s = self.visit(n.name)
@@ -161,29 +158,29 @@ class CGenerator(object):
         start = self.start
         newline = self.newline
         if debug:
-            newline = n.__class__.__name__ +  newline
-            start = n.__class__.__name__ +  start
-            
+            newline = n.__class__.__name__ + newline
+            start = n.__class__.__name__ + start
+
         s = start + self._make_indent() + '{' + newline
         self.indent_level += 2
         for stat in n.statements:
-            s += start + self._make_indent() + self.visit(stat) + newline 
+            s += start + self._make_indent() + self.visit(stat) + newline
         self.indent_level -= 2
-        s += start + self._make_indent() + '}'  
+        s += start + self._make_indent() + '}'
         return s
 
     def visit_ArgList(self, n):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
-            start = n.__class__.__name__ +  start
+            newline = n.__class__.__name__ + newline
+            start = n.__class__.__name__ + start
 
         s = '('
         count = 1
         if len(n.arglist) == 1:
             return '(' + self.visit(n.arglist[0]) + ')'
-            
+
         for arg in n.arglist:
             if count == 1:
                 s += newline + '\t' + start
@@ -202,18 +199,18 @@ class CGenerator(object):
         return s
 
     def visit_BinOp(self, n):
-        lval = self.parenthesize_if(n.lval,self.simple_node)
-        rval = self.parenthesize_if(n.rval,self.simple_node)
+        lval = self.parenthesize_if(n.lval, self.simple_node)
+        rval = self.parenthesize_if(n.rval, self.simple_node)
         return lval + ' ' + n.op + ' ' + rval
 
     def visit_FuncDecl(self, n):
         newline = self.newline
         if debug:
-            newline = n.__class__.__name__ +  newline
-            
+            newline = n.__class__.__name__ + newline
+
         self.inside_ArgList = True
         typeid = self.visit(n.typeid)
-        
+
         arglist = self.visit(n.arglist)
 
         self.inside_ArgList = False
@@ -231,22 +228,22 @@ class CGenerator(object):
     def visit_ForLoop(self, n):
         newline = self.newline
         if debug:
-            newline = n.__class__.__name__ +  newline
+            newline = n.__class__.__name__ + newline
 
-        init = self.visit(n.init) # already has a semi at the end
+        init = self.visit(n.init)  # already has a semi at the end
         cond = self.visit(n.cond)
         inc = self.visit(n.inc)
         self.indent_level += 2
         compound = self.visit(n.compound)
         self.indent_level -= 2
-        return 'for (' + init + ' ' + cond + self.semi + ' ' + inc + ')'\
-          + newline + compound
+        return 'for (' + init + ' ' + cond + self.semi + ' ' + inc + ')' \
+               + newline + compound
 
     def visit_IfThen(self, n):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
+            newline = n.__class__.__name__ + newline
             start = n.__class__.__name__ + start
 
         cond = self.visit(n.cond)
@@ -259,25 +256,23 @@ class CGenerator(object):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
+            newline = n.__class__.__name__ + newline
             start = n.__class__.__name__ + start
 
         cond = self.visit(n.cond)
         self.indent_level += 2
-        compound1 = self.visit(n.compound1) 
+        compound1 = self.visit(n.compound1)
         compound2 = self.visit(n.compound2)
         self.indent_level -= 2
         return 'if (' + cond + ')' + newline + compound1 \
-          		+ newline + self._make_indent() + 'else' + newline + compound2
+               + newline + self._make_indent() + 'else' + newline + compound2
 
-        
     def visit_Id(self, n):
         return n.name
 
     def visit_Include(self, n):
         return "#include " + n.name
- 
-    
+
     def visit_Constant(self, n):
         try:
             s = float(n.value)
@@ -287,7 +282,7 @@ class CGenerator(object):
             if n.value[0] == '"':
                 ## if self.extraquotes and False:
                 ##     return self.quotes + n.value[1:-1] + self.quotes
-                
+
                 return n.value
             else:
                 return self.quotes + n.value + self.quotes

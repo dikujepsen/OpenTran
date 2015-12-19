@@ -1,22 +1,20 @@
 import copy
+
 import ply.lex as lex
-import sys
+import ply.yacc as yacc
+
+import boilerplategen
+import cgen
+import define_arguments as darg
+import kernelgen
+import lan
+import place_in_local as local
+import place_in_reg as reg
 import representation
 import rewriter
-import transf_repr
-import transformation
-import analysis
-import ply.yacc as yacc
-import cgen
-import lan
-import boilerplategen
-import define_arguments as darg
-import transpose as tp
-import place_in_reg as reg
-import place_in_local as local
 import stencil
-import kernelgen
 import struct
+import transpose as tp
 
 fileprefix = "../../test/C/"
 SetNoReadBack = True
@@ -76,23 +74,22 @@ def __get_ast_from_base(name):
     return rw, ast
 
 
-def gen_full_code(name, an, ks, bps, tempast2):
-    cprint = cgen.CGenerator()
-    rw = an.rw
+def gen_full_code(name, ks, bps, tempast2):
 
     kgen = kernelgen.KernelGen(ks)
     kgen.generate_kernels(tempast2, name, fileprefix)
 
     boilerplate = boilerplategen.Boilerplate()
     boilerplate.set_struct(ks, bps, kgen.kgen_strt)
-
     boilerast = boilerplate.generate_code()
+
+    cprint = cgen.CGenerator()
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
 
 def matmul():
     name = 'MatMul'
-    if False:
+    if True:
         rw, ast = __get_ast_from_init(name)
     else:
         rw, ast = __get_ast_from_base(name)
@@ -105,14 +102,6 @@ def __optimize(rw, ast, name, par_dim=None):
     tempast2 = copy.deepcopy(ast)
     tempast3 = copy.deepcopy(ast)
 
-    transf_rp = transf_repr.TransfRepr(rw.astrepr)
-    if par_dim is not None:
-        transf_rp.ParDim = par_dim
-    transf_rp.init_rew_repr(tempast, dev='CPU')
-
-    tf = transformation.Transformation(transf_rp)
-
-    an = analysis.Analysis(transf_rp, tf)
     ks = struct.KernelStruct()
     if par_dim is not None:
         ks.ParDim = par_dim
@@ -120,18 +109,18 @@ def __optimize(rw, ast, name, par_dim=None):
     bps = struct.BoilerPlateStruct()
     bps.set_datastructure(tempast, par_dim)
     if DoOptimizations:
-        __main_transpose(ks, bps, tempast3, par_dim=transf_rp.ParDim)
+        __main_transpose(ks, bps, tempast3, par_dim=ks.ParDim)
         # an.Transpose()
 
-        __main_definearg(ks, bps, tempast3, par_dim=transf_rp.ParDim)
+        __main_definearg(ks, bps, tempast3, par_dim=ks.ParDim)
         # an.DefineArguments()
-        __main_placeinreg(ks, bps, tempast3, par_dim=transf_rp.ParDim)
-        __main_placeinlocal(ks, bps, tempast3, par_dim=transf_rp.ParDim)
+        __main_placeinreg(ks, bps, tempast3, par_dim=ks.ParDim)
+        __main_placeinlocal(ks, bps, tempast3, par_dim=ks.ParDim)
         # an.PlaceInLocalMemory()
     if SetNoReadBack:
         bps.set_no_read_back()
 
-    gen_full_code(name, an, ks, bps, tempast3)
+    gen_full_code(name, ks, bps, tempast3)
 
 
 def knearest():
@@ -153,11 +142,6 @@ def jacobi():
     tempast2 = copy.deepcopy(ast)
     tempast3 = copy.deepcopy(ast)
 
-    transf_rp = transf_repr.TransfRepr(rw.astrepr)
-    transf_rp.init_rew_repr(tempast, dev='CPU')
-    tf = transformation.Transformation(transf_rp)
-
-    an = analysis.Analysis(transf_rp, tf)
     ks = struct.KernelStruct()
     ks.set_datastructure(rw, tempast3)
     bps = struct.BoilerPlateStruct()
@@ -172,7 +156,7 @@ def jacobi():
     if SetNoReadBack:
         bps.set_no_read_back()
 
-    gen_full_code(name, an, ks, bps, tempast3)
+    gen_full_code(name, ks, bps, tempast3)
 
 
 def nbody():

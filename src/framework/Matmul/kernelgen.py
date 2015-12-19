@@ -32,22 +32,22 @@ class KernelGen(object):
 
         ss.set_datastructure(self.ks, ast)
 
-        ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
-                          kernelstringname=funcname)
+        ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
+                            kernelstringname=funcname)
         pir = pireg.PlaceInReg()
         for (arg, insideloop) in self.ks.PlaceInRegArgs:
             funcname = name + 'PlaceInReg'
             pir.placeInReg3(self.ks, arg, list(insideloop))
-            ss.InSourceKernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
-                              kernelstringname=funcname)
+            ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
+                                kernelstringname=funcname)
 
         pil = piloc.PlaceInLocal()
         for arg in self.ks.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
 
             pil.localMemory3(self.ks, arg)
-            ss.InSourceKernel(copy.deepcopy(ast), self.ks.PlaceInLocalCond,
-                              filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
+            ss.in_source_kernel(copy.deepcopy(ast), self.ks.PlaceInLocalCond,
+                                filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
 
         self.kgen_strt.KernelStringStream = ss.KernelStringStream
 

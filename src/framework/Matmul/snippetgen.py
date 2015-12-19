@@ -2,9 +2,7 @@ import lan
 import copy
 import transf_visitor
 import stringstream
-import visitor
 import transf_visitor as tvisitor
-
 
 
 class SnippetGen(object):
@@ -15,13 +13,13 @@ class SnippetGen(object):
         self.DevFuncTypeId = None
 
     def set_datastructure(self,
-                          KernelStruct,
+                          kernel_struct,
                           ast):
-        self.KernelStruct = KernelStruct
+        self.KernelStruct = kernel_struct
         perfect_for_loop = tvisitor.PerfectForLoop()
         perfect_for_loop.visit(ast)
 
-        self.ParDim = self.KernelStruct.ParDim
+        ParDim = self.KernelStruct.ParDim
 
         init_ids = tvisitor.InitIds()
         init_ids.visit(perfect_for_loop.ast.init)
@@ -32,7 +30,7 @@ class SnippetGen(object):
         id_map[first_idx] = 'get_global_id(0)'
         grid_ids.extend(init_ids.index)
         kernel = perfect_for_loop.ast.compound
-        if self.ParDim == 2:
+        if ParDim == 2:
             init_ids = tvisitor.InitIds()
             init_ids.visit(kernel.statements[0].init)
             second_idx = init_ids.index[0]
@@ -46,8 +44,8 @@ class SnippetGen(object):
         find_function.visit(ast)
         self.DevFuncTypeId = find_function.typeid
 
-    def InSourceKernel(self, ast, cond, filename, kernelstringname):
-        self.rewriteToDeviceCRelease(ast)
+    def in_source_kernel(self, ast, cond, filename, kernelstringname):
+        self.rewrite_to_device_c_release(ast)
 
         ssprint = stringstream.SSGenerator()
         emptyast = lan.FileAST([])
@@ -56,7 +54,7 @@ class SnippetGen(object):
                                         'ast': emptyast,
                                         'cond': cond})
 
-    def rewriteToDeviceCRelease(self, ast):
+    def rewrite_to_device_c_release(self, ast):
         arglist = list()
         # The list of arguments for the kernel
         dictTypeHostPtrs = copy.deepcopy(self.KernelStruct.Type)
