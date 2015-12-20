@@ -1,6 +1,6 @@
-
-
 import visitor
+import collect
+
 
 class Representation(visitor.NodeVisitor):
     """ Class for rewriting of the original AST. Includes:
@@ -54,12 +54,14 @@ class Representation(visitor.NodeVisitor):
         arrays = visitor.Arrays(self.loop_index)
         arrays.visit(ast)
 
+        # print arrays.ids
+
         for n in arrays.numIndices:
             if arrays.numIndices[n] == 2:
                 arrays.numSubscripts[n] = 2
             elif arrays.numIndices[n] > 2:
                 arrays.numSubscripts[n] = 1
-            
+
         self.num_array_dims = arrays.numSubscripts
 
         self.IndexInSubscript = arrays.indexIds
@@ -71,15 +73,19 @@ class Representation(visitor.NodeVisitor):
         for n in type_ids.ids:
             type_ids2.dictIds.pop(n)
         self.Type = type_ids2.dictIds
-        ids = visitor.Ids()
-        ids.visit(ast)
 
-        # print "typeIds.ids ", typeIds.ids
-        # print "arrays.ids ", arrays.ids
-        # print "ids.ids ", ids.ids
-        other_ids = ids.ids - arrays.ids - type_ids.ids
-        self.ArrayIds = arrays.ids - type_ids.ids
-        self.NonArrayIds = other_ids
+        arrays_ids = collect.GlobalArrayIds()
+        arrays_ids.visit(ast)
+        self.ArrayIds = arrays_ids.ids
+        # print arrays_ids.all_a_ids
+
+        nonarray_ids = collect.GlobalNonArrayIds()
+        nonarray_ids.visit(ast)
+        self.NonArrayIds = nonarray_ids.ids
+        # print nonarray_ids.ids
+
+
+
 
     def data_structures(self):
         print "self.index ", self.loop_index
@@ -90,13 +96,3 @@ class Representation(visitor.NodeVisitor):
         print "self.IndexInSubscript ", self.IndexInSubscript
         print "self.NonArrayIds ", self.NonArrayIds
         print "self.Type ", self.Type
-
-
-
-
-
-
-           
-        
-
-

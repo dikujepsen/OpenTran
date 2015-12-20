@@ -105,6 +105,8 @@ class _NumIndices(NodeVisitor):
                 self.yes = True
 
 
+
+
 class Arrays(NodeVisitor):
     """ Finds array Ids """
 
