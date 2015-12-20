@@ -1,6 +1,6 @@
 import visitor
 import collect
-
+import copy
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -42,22 +42,25 @@ class Representation(visitor.NodeVisitor):
         self.Type = dict()
         # Holds includes for the kernel
         self.Includes = list()
-        self.LoopArrays = dict()
 
     def __detect_loop_index(self, ast):
-        loops = visitor.ForLoops()
-        loops.visit(ast)
-        self.for_loop_ast = loops.ast
-        loop_indices = visitor.LoopIndices()
-        loop_indices.visit(self.for_loop_ast)
-        self.loop_index = loop_indices.index
-        self.UpperLimit = loop_indices.end
-        self.LowerLimit = loop_indices.start
+        col_li = collect.LoopIndices()
+        col_li.visit(ast)
+        self.loop_index = col_li.index
+        ll = collect.LoopLimit()
+        ll.visit(ast)
+        self.UpperLimit = ll.upper_limit
+        self.LowerLimit = ll.lower_limit
 
     def normalize_subcript(self, ast):
         self.__detect_loop_index(ast)
-        norm = visitor.Norm(self.loop_index)
-        norm.visit(self.for_loop_ast)
+        # norm = visitor.Norm(self.loop_index)
+        # tempast = copy.deepcopy(ast)
+        # norm.visit(ast)
+
+        naref = collect.NormArrayRef(ast)
+        naref.visit(ast)
+        # naref.visit(tempast)
 
     def init_original(self, ast):
 
@@ -93,9 +96,6 @@ class Representation(visitor.NodeVisitor):
         nonarray_ids.visit(ast)
         self.NonArrayIds = nonarray_ids.ids
         # print nonarray_ids.ids
-
-
-
 
     def data_structures(self):
         print "self.index ", self.loop_index

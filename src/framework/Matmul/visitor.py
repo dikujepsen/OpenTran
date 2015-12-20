@@ -195,11 +195,10 @@ class _NumBinOps(NodeVisitor):
 
 class Norm(NodeVisitor):
     """ Normalizes subscripts to the form i * (width of j) + j
+        or j + i * (width of j). Never (width of j) * i + j
     """
 
     def __init__(self, indices):
-        self.subscript = dict()
-        self.count = 0
         self.indices = indices
 
     def visit_ArrayRef(self, node):
@@ -215,8 +214,11 @@ class Norm(NodeVisitor):
                     two_indices = _NumIndices(2, self.indices)
                     two_indices.visit(binop)
                     if two_indices.yes:
+
                         if binop.lval.lval.name not in self.indices:
                             (binop.lval.lval.name, binop.lval.rval.name) = \
                                 (binop.lval.rval.name, binop.lval.lval.name)
+
                         # convert to 2D
                         node.subscript = [Id(binop.lval.lval.name, node.coord), binop.rval]
+                        # print node

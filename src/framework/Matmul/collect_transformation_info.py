@@ -77,6 +77,7 @@ class FindLoops(FindPerfectForLoop):
         self.forLoops = visitor.ForLoops()
         self.ArrayIdToDimName = dict()
         self.Loops = dict()
+        self.col_loop_limit = collect.LoopLimit()
 
     def collect(self, ast):
         super(FindLoops, self).collect(ast)
@@ -92,8 +93,14 @@ class FindLoops(FindPerfectForLoop):
             self.Loops = loop_indices.Loops
 
         self.forLoops.visit(ast)
-        self.loop_indices.visit(self.forLoops.ast)
-        self.arrays = visitor.Arrays(self.loop_indices.index)
+
+        self.col_loop_limit = collect.LoopLimit()
+        self.col_loop_limit.visit(ast)
+
+        col_li = collect.LoopIndices()
+        col_li.visit(ast)
+
+        self.arrays = visitor.Arrays(col_li.index)
         self.arrays.visit(ast)
         for n in self.arrays.numIndices:
             if self.arrays.numIndices[n] == 2:
@@ -107,11 +114,11 @@ class FindLoops(FindPerfectForLoop):
 
     @property
     def upper_limit(self):
-        return self.loop_indices.end
+        return self.col_loop_limit.upper_limit
 
     @property
     def lower_limit(self):
-        return self.loop_indices.start
+        return self.col_loop_limit.lower_limit
 
     @property
     def num_array_dims(self):

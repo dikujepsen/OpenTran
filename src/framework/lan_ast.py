@@ -51,11 +51,11 @@ class NodeVisitor(object):
         """ Called if no explicit visitor function exists for a 
             node. Implements preorder visiting of the node.
         """
-        oldparent = self.current_parent
-        self.current_parent = node
+        oldparent = NodeVisitor.current_parent
+        NodeVisitor.current_parent = node
         for c_name, c in node.children():
             self.visit(c)
-        self.current_parent = oldparent
+        NodeVisitor.current_parent = oldparent
 
 
 class FileAST(Node):

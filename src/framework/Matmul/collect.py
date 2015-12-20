@@ -1,5 +1,7 @@
 import lan
 import copy
+import visitor
+
 
 class GlobalArrayIds(lan.NodeVisitor):
     def __init__(self):
@@ -98,3 +100,146 @@ class GlobalTypeIds(lan.NodeVisitor):
 
     def visit_ForLoop(self, node):
         pass
+
+
+class LoopIndices(lan.NodeVisitor):
+    """ Finds loop indices, the start and end values of the
+        indices and creates a mapping from a loop index to
+        the ForLoop AST node that is indexes.
+    """
+
+    def __init__(self):
+        self.index = list()
+
+    def visit_ForLoop(self, node):
+        id_init = visitor.Ids()
+        id_init.visit(node.init)
+        id_inc = visitor.Ids()
+        id_inc.visit(node.inc)
+        self.index.extend(id_init.ids.intersection(id_inc.ids))
+        self.visit(node.compound)
+
+
+class LoopLimit(lan.NodeVisitor):
+    """ Finds loop indices, the start and end values of the
+        indices and creates a mapping from a loop index to
+        the ForLoop AST node that is indexes.
+    """
+
+    def __init__(self):
+        self.upper_limit = dict()
+        self.lower_limit = dict()
+
+    def visit_ForLoop(self, node):
+        IdVis = visitor.Ids()
+        IdVis.visit(node.init)
+        ids = list(IdVis.ids)
+
+        self.visit(node.compound)
+        try:
+            self.upper_limit[ids[0]] = node.cond.rval.name
+            self.lower_limit[ids[0]] = node.init.rval.value
+        except AttributeError:
+            self.upper_limit[ids[0]] = 'Unknown'
+            self.lower_limit[ids[0]] = 'Unknown'
+
+def _is_binop_plus(binop):
+    return binop.op == '+'
+
+def _is_binop_times(binop):
+    return binop.op == '*'
+
+
+class _NormBinOp(lan.NodeVisitor):
+    def __init__(self, loop_index):
+        self.loop_index = loop_index
+        self.new_subscript = list()
+
+    def visit_BinOp(self, node):
+        p_binop = lan.NodeVisitor.current_parent
+        if isinstance(node.lval, lan.Id) and isinstance(node.rval, lan.Id)\
+                and _is_binop_times(node):
+
+            if node.lval.name not in self.loop_index:
+                (node.lval.name, node.rval.name) = \
+                    (node.rval.name, node.lval.name)
+
+
+        # print "p ", p_binop
+        if isinstance(p_binop, lan.BinOp) and _is_binop_times(node)\
+                and _is_binop_plus(p_binop):
+
+
+            if not isinstance(p_binop.lval, lan.BinOp):
+                (p_binop.lval, p_binop.rval) = (p_binop.rval, p_binop.lval)
+            # print "n ", p_binop
+            binop_di = _BinOpDistinctIndices(self.loop_index, p_binop)
+
+            if binop_di.has_distinct:
+                # print p_binop
+                # node.subscript = [lan.Id(p_binop.lval.lval.name, node.coord), p_binop.rval]
+                # print "HERE ", node
+                self.new_subscript = [lan.Id(p_binop.lval.lval.name, node.coord), p_binop.rval]
+
+        oldparent = lan.NodeVisitor.current_parent
+        lan.NodeVisitor.current_parent = node
+        self.visit(node.lval)
+        lan.NodeVisitor.current_parent = oldparent
+        lan.NodeVisitor.current_parent = node
+        self.visit(node.rval)
+        lan.NodeVisitor.current_parent = oldparent
+
+
+class _BinOpDistinctIndices(lan.NodeVisitor):
+    """ Finds if there is two distinct loop indices
+    	in an 1D array reference
+    """
+
+    def __init__(self, indices, binop):
+        self.indices = indices
+        self.yes = False
+        self.binop = binop
+        self.right = set()
+        self.left = set()
+        self.tmp = set()
+
+        self.visit(binop.lval)
+        self.right = self.tmp
+        self.tmp = set()
+        self.visit(binop.rval)
+        self.left = self.tmp
+
+
+    @property
+    def has_distinct(self):
+        return (self.right - self.left) and (self.left - self.right)
+
+
+    def visit_Id(self, node):
+        name = node.name
+        if name in self.indices:
+            self.tmp.add(name)
+
+
+
+class NormArrayRef(lan.NodeVisitor):
+    """ Normalizes subscripts to the form i * (width of j) + j
+        or j + i * (width of j). Never (width of j) * i + j
+    """
+
+    def __init__(self, ast):
+        self.loop_index = list()
+        col_li = LoopIndices()
+        col_li.visit(ast)
+        self.loop_index = col_li.index
+
+
+    def visit_ArrayRef(self, node):
+        n_binop = _NormBinOp(self.loop_index)
+        oldparent = lan.NodeVisitor.current_parent
+        lan.NodeVisitor.current_parent = node
+        for subnode in node.subscript:
+            n_binop.visit(subnode)
+        node.subscript = n_binop.new_subscript
+        # print node.subscript
+        lan.NodeVisitor.current_parent = oldparent

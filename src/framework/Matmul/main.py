@@ -260,8 +260,8 @@ def __main_stencil(ks, bps, tempast3):
 
 if __name__ == "__main__":
     matmul()
-    knearest()
-    jacobi()
-    nbody()
-    laplace()
-    gaussian()
+    # knearest()
+    # jacobi()
+    # nbody()
+    # laplace()
+    # gaussian()

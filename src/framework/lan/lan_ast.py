@@ -24,7 +24,7 @@ class Node(object):
         else:
             buf.write(lead + self.__class__.__name__ + ' <top>: ')
 
-        #        if self.__class__ == Number:
+        # if self.__class__ == Number:
         #            print ": " + self.value
         nvlist = [(n, getattr(self, n)) for n in self.attr_names]
         attrstr = ', '.join('%s=%s' % nv for nv in nvlist)
@@ -47,18 +47,19 @@ class NodeVisitor(object):
         """
         method = 'visit_' + node.__class__.__name__
         visitor = getattr(self, method, self.generic_visit)
-        # print self.current_parent
-        return visitor(node)
+
+        retval = visitor(node)
+        return retval
 
     def generic_visit(self, node):
         """ Called if no explicit visitor function exists for a 
             node. Implements preorder visiting of the node.
         """
-        oldparent = self.current_parent
-        self.current_parent = node
+        oldparent = NodeVisitor.current_parent
+        NodeVisitor.current_parent = node
         for c_name, c in node.children():
             self.visit(c)
-        self.current_parent = oldparent
+        NodeVisitor.current_parent = oldparent
 
 
 class FileAST(Node):
