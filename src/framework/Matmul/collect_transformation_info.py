@@ -1,7 +1,7 @@
 import transf_visitor as tvisitor
 import visitor
 import copy
-
+import collect
 
 class FindPerfectForLoop(object):
     def __init__(self):
@@ -174,22 +174,19 @@ class FindArrayIds(RemovedLoopLimit):
 
     def collect(self, ast):
         super(FindArrayIds, self).collect(ast)
-        type_ids = visitor.TypeIds()
-        type_ids.visit(self.for_loop_ast)
 
-        ids = visitor.Ids2()
-        ids.visit(ast)
+        arrays_ids = collect.GlobalArrayIds()
+        arrays_ids.visit(ast)
+        self.ArrayIds = arrays_ids.ids
 
-        other_ids = ids.ids - self.arrays.ids - type_ids.ids
-        self.ArrayIds = self.arrays.ids - type_ids.ids
-        self.NonArrayIds = other_ids
+        nonarray_ids = collect.GlobalNonArrayIds()
+        nonarray_ids.visit(ast)
+        self.NonArrayIds = nonarray_ids.ids
 
-        type_ids2 = visitor.TypeIds()
-        type_ids2.visit(ast)
-        for n in type_ids.ids:
-            type_ids2.dictIds.pop(n)
-
-        self.type = type_ids2.dictIds
+        mytype_ids = collect.GlobalTypeIds()
+        mytype_ids.visit(ast)
+        # print print_dict_sorted(mytype_ids.dictIds)
+        self.type = mytype_ids.dictIds
 
         arg_ids = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
 

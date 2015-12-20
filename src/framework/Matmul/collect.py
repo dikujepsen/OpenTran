@@ -1,5 +1,5 @@
 import lan
-
+import copy
 
 class GlobalArrayIds(lan.NodeVisitor):
     def __init__(self):
@@ -73,3 +73,28 @@ class _NonArrayIdsInLoop(lan.NodeVisitor):
     @property
     def ids(self):
         return self.all_na_ids - self.local_na_ids - self.local_a_tids
+
+
+class GlobalTypeIds(lan.NodeVisitor):
+    """ Finds type Ids """
+
+    def __init__(self):
+        self.ids = set()
+        self.dictIds = dict()
+
+    def visit_TypeId(self, node):
+        name = node.name.name
+        self.ids.add(name)
+        self.dictIds[name] = node.type
+
+    def visit_ArrayTypeId(self, node):
+        name = node.name.name
+        self.ids.add(name)
+        self.dictIds[name] = copy.deepcopy(node.type)
+        if len(node.type) != 2:
+            # "ArrayTypeId: Need to check, type of array is ", node.type
+            ## self.dictIds[name].append('*')
+            pass
+
+    def visit_ForLoop(self, node):
+        pass

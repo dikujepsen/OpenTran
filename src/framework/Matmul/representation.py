@@ -2,6 +2,17 @@ import visitor
 import collect
 
 
+def print_dict_sorted(mydict):
+    keys = sorted(mydict)
+
+    entries = ""
+    for key in keys:
+        value = mydict[key]
+        entries += "'" + key + "': " + value.__repr__() + ","
+
+    return "{" + entries[:-1] + "}"
+
+
 class Representation(visitor.NodeVisitor):
     """ Class for rewriting of the original AST. Includes:
     1. the initial small rewritings,
@@ -65,14 +76,13 @@ class Representation(visitor.NodeVisitor):
         self.num_array_dims = arrays.numSubscripts
 
         self.IndexInSubscript = arrays.indexIds
-        type_ids = visitor.TypeIds()
-        type_ids.visit(self.for_loop_ast)
 
-        type_ids2 = visitor.TypeIds()
-        type_ids2.visit(ast)
-        for n in type_ids.ids:
-            type_ids2.dictIds.pop(n)
-        self.Type = type_ids2.dictIds
+        # print print_dict_sorted(self.Type)
+
+        mytype_ids = collect.GlobalTypeIds()
+        mytype_ids.visit(ast)
+        # print print_dict_sorted(mytype_ids.dictIds)
+        self.Type = mytype_ids.dictIds
 
         arrays_ids = collect.GlobalArrayIds()
         arrays_ids.visit(ast)
