@@ -143,8 +143,10 @@ class LoopLimit(lan.NodeVisitor):
             self.upper_limit[ids[0]] = 'Unknown'
             self.lower_limit[ids[0]] = 'Unknown'
 
+
 def _is_binop_plus(binop):
     return binop.op == '+'
+
 
 def _is_binop_times(binop):
     return binop.op == '*'
@@ -157,18 +159,16 @@ class _NormBinOp(lan.NodeVisitor):
 
     def visit_BinOp(self, node):
         p_binop = lan.NodeVisitor.current_parent
-        if isinstance(node.lval, lan.Id) and isinstance(node.rval, lan.Id)\
+        if isinstance(node.lval, lan.Id) and isinstance(node.rval, lan.Id) \
                 and _is_binop_times(node):
 
             if node.lval.name not in self.loop_index:
                 (node.lval.name, node.rval.name) = \
                     (node.rval.name, node.lval.name)
 
-
         # print "p ", p_binop
-        if isinstance(p_binop, lan.BinOp) and _is_binop_times(node)\
+        if isinstance(p_binop, lan.BinOp) and _is_binop_times(node) \
                 and _is_binop_plus(p_binop):
-
 
             if not isinstance(p_binop.lval, lan.BinOp):
                 (p_binop.lval, p_binop.rval) = (p_binop.rval, p_binop.lval)
@@ -209,17 +209,24 @@ class _BinOpDistinctIndices(lan.NodeVisitor):
         self.visit(binop.rval)
         self.left = self.tmp
 
-
     @property
     def has_distinct(self):
         return (self.right - self.left) and (self.left - self.right)
-
 
     def visit_Id(self, node):
         name = node.name
         if name in self.indices:
             self.tmp.add(name)
 
+
+class _ArrayRefDistintIndices(_BinOpDistinctIndices):
+    def __init__(self, indices):
+        self.indices = indices
+        self.tmp = set()
+
+    @property
+    def num_dims(self):
+        return len(self.tmp)
 
 
 class NormArrayRef(lan.NodeVisitor):
@@ -233,7 +240,6 @@ class NormArrayRef(lan.NodeVisitor):
         col_li.visit(ast)
         self.loop_index = col_li.index
 
-
     def visit_ArrayRef(self, node):
         n_binop = _NormBinOp(self.loop_index)
         oldparent = lan.NodeVisitor.current_parent
@@ -243,3 +249,28 @@ class NormArrayRef(lan.NodeVisitor):
         node.subscript = n_binop.new_subscript
         # print node.subscript
         lan.NodeVisitor.current_parent = oldparent
+
+
+class NumArrayDim(lan.NodeVisitor):
+    """ Finds array Ids """
+
+    def __init__(self, ast):
+        self.loop_index = list()
+        col_li = LoopIndices()
+        col_li.visit(ast)
+        self.loop_index = col_li.index
+
+        self.numSubscripts = dict()
+
+    def visit_ArrayRef(self, node):
+        name = node.name.name
+
+        binop_di = _ArrayRefDistintIndices(self.loop_index)
+
+        for n in node.subscript:
+            binop_di.visit(n)
+
+        self.numSubscripts[name] = binop_di.num_dims
+
+        for n in node.subscript:
+            self.visit(n)

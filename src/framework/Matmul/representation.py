@@ -54,13 +54,9 @@ class Representation(visitor.NodeVisitor):
 
     def normalize_subcript(self, ast):
         self.__detect_loop_index(ast)
-        # norm = visitor.Norm(self.loop_index)
-        # tempast = copy.deepcopy(ast)
-        # norm.visit(ast)
 
         naref = collect.NormArrayRef(ast)
         naref.visit(ast)
-        # naref.visit(tempast)
 
     def init_original(self, ast):
 
@@ -68,15 +64,9 @@ class Representation(visitor.NodeVisitor):
         arrays = visitor.Arrays(self.loop_index)
         arrays.visit(ast)
 
-        # print arrays.ids
-
-        for n in arrays.numIndices:
-            if arrays.numIndices[n] == 2:
-                arrays.numSubscripts[n] = 2
-            elif arrays.numIndices[n] > 2:
-                arrays.numSubscripts[n] = 1
-
-        self.num_array_dims = arrays.numSubscripts
+        num_array_dim = collect.NumArrayDim(ast)
+        num_array_dim.visit(ast)
+        self.num_array_dims = num_array_dim.numSubscripts
 
         self.IndexInSubscript = arrays.indexIds
 
