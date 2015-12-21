@@ -100,7 +100,10 @@ class FindLoops(FindPerfectForLoop):
         col_li = collect.LoopIndices()
         col_li.visit(ast)
 
-        self.arrays = visitor.Arrays(col_li.index)
+        self.loop_indices.visit(self.forLoops.ast)
+        self.arrays = visitor.Arrays(self.loop_indices.index)
+
+        # self.arrays = visitor.Arrays(col_li.index)
         self.arrays.visit(ast)
         for n in self.arrays.numIndices:
             if self.arrays.numIndices[n] == 2:
@@ -108,9 +111,11 @@ class FindLoops(FindPerfectForLoop):
             elif self.arrays.numIndices[n] > 2:
                 self.arrays.numSubscripts[n] = 1
 
+
         find_dim = tvisitor.FindDim(self.arrays.numSubscripts)
         find_dim.visit(ast)
         self.ArrayIdToDimName = find_dim.dimNames
+        # print self.ArrayIdToDimName
 
     @property
     def upper_limit(self):
@@ -196,7 +201,7 @@ class FindArrayIds(RemovedLoopLimit):
         self.type = mytype_ids.dictIds
 
         arg_ids = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
-
+        # print self.ArrayIdToDimName
         # print arg_ids, "qwe123"
         # print self.ArrayIdToDimName, "qwe123"
         # print arg_ids

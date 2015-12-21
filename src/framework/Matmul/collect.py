@@ -110,6 +110,8 @@ class LoopIndices(lan.NodeVisitor):
 
     def __init__(self):
         self.index = list()
+        self.depth_limit = 2
+        self.depth = 0
 
     def visit_ForLoop(self, node):
         id_init = visitor.Ids()
@@ -117,7 +119,9 @@ class LoopIndices(lan.NodeVisitor):
         id_inc = visitor.Ids()
         id_inc.visit(node.inc)
         self.index.extend(id_init.ids.intersection(id_inc.ids))
-        self.visit(node.compound)
+        self.depth += 1
+        if self.depth < self.depth_limit:
+            self.visit(node.compound)
 
 
 class LoopLimit(lan.NodeVisitor):
@@ -158,27 +162,33 @@ class _NormBinOp(lan.NodeVisitor):
         self.new_subscript = list()
 
     def visit_BinOp(self, node):
+
         p_binop = lan.NodeVisitor.current_parent
+
         if isinstance(node.lval, lan.Id) and isinstance(node.rval, lan.Id) \
                 and _is_binop_times(node):
 
-            if node.lval.name not in self.loop_index:
+            if node.lval.name not in self.loop_index and \
+                    node.rval.name in self.loop_index:
                 (node.lval.name, node.rval.name) = \
                     (node.rval.name, node.lval.name)
 
         # print "p ", p_binop
+
         if isinstance(p_binop, lan.BinOp) and _is_binop_times(node) \
                 and _is_binop_plus(p_binop):
 
-            if not isinstance(p_binop.lval, lan.BinOp):
+            if isinstance(p_binop.lval, lan.Id) \
+                    and isinstance(p_binop.rval.lval, lan.Id):
                 (p_binop.lval, p_binop.rval) = (p_binop.rval, p_binop.lval)
             # print "n ", p_binop
-            binop_di = _BinOpDistinctIndices(self.loop_index, p_binop)
+            # binop_di = _BinOpDistinctIndices(self.loop_index, p_binop)
+            binop_di = _ArrayRefDistintIndices(self.loop_index)
+            binop_di.visit(p_binop)
 
-            if binop_di.has_distinct:
-                # print p_binop
-                # node.subscript = [lan.Id(p_binop.lval.lval.name, node.coord), p_binop.rval]
-                # print "HERE ", node
+            # if binop_di.has_distinct and isinstance(node.lval, lan.Id):
+            if binop_di.num_dims > 0 and isinstance(node.lval, lan.Id):
+
                 self.new_subscript = [lan.Id(p_binop.lval.lval.name, node.coord), p_binop.rval]
 
         oldparent = lan.NodeVisitor.current_parent
@@ -210,6 +220,10 @@ class _BinOpDistinctIndices(lan.NodeVisitor):
         self.left = self.tmp
 
     @property
+    def num_dims(self):
+        return len(self.tmp)
+
+    @property
     def has_distinct(self):
         return (self.right - self.left) and (self.left - self.right)
 
@@ -224,9 +238,7 @@ class _ArrayRefDistintIndices(_BinOpDistinctIndices):
         self.indices = indices
         self.tmp = set()
 
-    @property
-    def num_dims(self):
-        return len(self.tmp)
+
 
 
 class NormArrayRef(lan.NodeVisitor):
@@ -244,9 +256,12 @@ class NormArrayRef(lan.NodeVisitor):
         n_binop = _NormBinOp(self.loop_index)
         oldparent = lan.NodeVisitor.current_parent
         lan.NodeVisitor.current_parent = node
-        for subnode in node.subscript:
-            n_binop.visit(subnode)
-        node.subscript = n_binop.new_subscript
+        if len(node.subscript) == 1:
+
+            for subnode in node.subscript:
+                n_binop.visit(subnode)
+            if len(n_binop.new_subscript) > 0:
+                node.subscript = n_binop.new_subscript
         # print node.subscript
         lan.NodeVisitor.current_parent = oldparent
 
@@ -267,10 +282,13 @@ class NumArrayDim(lan.NodeVisitor):
 
         binop_di = _ArrayRefDistintIndices(self.loop_index)
 
-        for n in node.subscript:
-            binop_di.visit(n)
+        if len(node.subscript) == 1:
+            for n in node.subscript:
+                binop_di.visit(n)
 
-        self.numSubscripts[name] = binop_di.num_dims
+            self.numSubscripts[name] = max(binop_di.num_dims, 1)
+        else:
+            self.numSubscripts[name] = len(node.subscript)
 
         for n in node.subscript:
             self.visit(n)

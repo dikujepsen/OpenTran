@@ -22,6 +22,7 @@ class Rewriter(object):
         array_args = list()
         for arrayid in self.astrepr.ArrayIds:
             array_args.append(lan.TypeId(self.astrepr.Type[arrayid], lan.Id(arrayid, ast.coord), ast.coord))
+
             for iarg in xrange(self.astrepr.num_array_dims[arrayid]):
                 array_args.append(lan.TypeId(['size_t'], lan.Id('hst_ptr'+arrayid+'_dim'+str(iarg+1), ast.coord),
                                              ast.coord))

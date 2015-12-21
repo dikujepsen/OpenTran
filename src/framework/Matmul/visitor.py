@@ -123,6 +123,7 @@ class Arrays(NodeVisitor):
     def visit_ArrayRef(self, node):
         name = node.name.name
         self.ids.add(name)
+        # print node
         numIndcs = _NumIndices(99, self.loopindices)
         if name in self.Subscript:
             self.Subscript[name].append(node.subscript)

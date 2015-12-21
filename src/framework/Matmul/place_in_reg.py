@@ -94,6 +94,7 @@ class PlaceInReg(object):
                 lhs = lan.Constant(1)
             self.PlaceInRegCond = lan.BinOp(lan.BinOp(lhs, '*', lan.Constant(numref)), '<', lan.Constant(40))
 
+
     def placeInReg2(self, ks, arrDict):
         stats = ks.Kernel.statements
         initstats = []

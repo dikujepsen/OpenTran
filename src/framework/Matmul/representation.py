@@ -2,6 +2,7 @@ import visitor
 import collect
 import copy
 
+
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
 
@@ -52,25 +53,28 @@ class Representation(visitor.NodeVisitor):
         self.UpperLimit = ll.upper_limit
         self.LowerLimit = ll.lower_limit
 
+
     def normalize_subcript(self, ast):
         self.__detect_loop_index(ast)
 
         naref = collect.NormArrayRef(ast)
+
         naref.visit(ast)
 
-    def init_original(self, ast):
 
+    def init_original(self, ast):
         self.normalize_subcript(ast)
+
         arrays = visitor.Arrays(self.loop_index)
         arrays.visit(ast)
 
-        num_array_dim = collect.NumArrayDim(ast)
-        num_array_dim.visit(ast)
-        self.num_array_dims = num_array_dim.numSubscripts
 
         self.IndexInSubscript = arrays.indexIds
 
-        # print print_dict_sorted(self.Type)
+        num_array_dim = collect.NumArrayDim(ast)
+        num_array_dim.visit(ast)
+
+        self.num_array_dims = num_array_dim.numSubscripts
 
         mytype_ids = collect.GlobalTypeIds()
         mytype_ids.visit(ast)

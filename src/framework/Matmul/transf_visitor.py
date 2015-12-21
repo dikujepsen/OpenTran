@@ -293,11 +293,13 @@ class FindDim(NodeVisitor):
         for arrayname in self.arrayIds:
             findSpecificArrayId = FindSpecificArrayId(arrayname)
             count = 0
+
             for typeid in node.arglist:            
                 findSpecificArrayId.reset(arrayname)
                 findSpecificArrayId.visit(typeid)
                 if findSpecificArrayId.Found:
                     self.dimNames[arrayname] = list()
+
                     for n in xrange(self.arrayIds[arrayname]):
                         self.dimNames[arrayname].append(
                         node.arglist[count + 1 + n].name.name)

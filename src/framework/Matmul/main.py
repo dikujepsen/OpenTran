@@ -60,8 +60,10 @@ def _create_baseform(name):
 
 def __get_ast_from_init(name):
     ast = __get_ast_from_file(name, name + 'For.cpp')
+
     astrepr = representation.Representation()
     astrepr.init_original(ast)
+
     rw = rewriter.Rewriter(astrepr)
     rw.rewrite_to_baseform(ast, name + 'For')
 
@@ -77,6 +79,7 @@ def __get_ast_from_base(name):
 def gen_full_code(name, ks, bps, tempast2):
 
     kgen = kernelgen.KernelGen(ks)
+
     kgen.generate_kernels(tempast2, name, fileprefix)
 
     boilerplate = boilerplategen.Boilerplate()
@@ -165,6 +168,7 @@ def nbody():
         rw, ast = __get_ast_from_init(name)
     else:
         rw, ast = __get_ast_from_base(name)
+
     __optimize(rw, ast, name)
 
 
@@ -260,8 +264,8 @@ def __main_stencil(ks, bps, tempast3):
 
 if __name__ == "__main__":
     matmul()
-    # knearest()
-    # jacobi()
-    # nbody()
-    # laplace()
-    # gaussian()
+    knearest()
+    jacobi()
+    nbody()
+    laplace()
+    gaussian()
