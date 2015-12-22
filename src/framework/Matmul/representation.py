@@ -53,7 +53,6 @@ class Representation(visitor.NodeVisitor):
         self.UpperLimit = ll.upper_limit
         self.LowerLimit = ll.lower_limit
 
-
     def normalize_subcript(self, ast):
         self.__detect_loop_index(ast)
 
@@ -61,15 +60,15 @@ class Representation(visitor.NodeVisitor):
 
         naref.visit(ast)
 
-
     def init_original(self, ast):
         self.normalize_subcript(ast)
 
         arrays = visitor.Arrays(self.loop_index)
         arrays.visit(ast)
 
-
-        self.IndexInSubscript = arrays.indexIds
+        iiar = collect.IndicesInArrayRef(self.loop_index)
+        iiar.visit(ast)
+        self.IndexInSubscript = iiar.indexIds
 
         num_array_dim = collect.NumArrayDim(ast)
         num_array_dim.visit(ast)

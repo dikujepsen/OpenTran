@@ -169,7 +169,7 @@ class _NormBinOp(lan.NodeVisitor):
                 and _is_binop_times(node):
 
             if node.lval.name not in self.loop_index and \
-                    node.rval.name in self.loop_index:
+                            node.rval.name in self.loop_index:
                 (node.lval.name, node.rval.name) = \
                     (node.rval.name, node.lval.name)
 
@@ -183,12 +183,11 @@ class _NormBinOp(lan.NodeVisitor):
                 (p_binop.lval, p_binop.rval) = (p_binop.rval, p_binop.lval)
             # print "n ", p_binop
             # binop_di = _BinOpDistinctIndices(self.loop_index, p_binop)
-            binop_di = _ArrayRefDistintIndices(self.loop_index)
+            binop_di = ArrayRefIndices(self.loop_index)
             binop_di.visit(p_binop)
 
             # if binop_di.has_distinct and isinstance(node.lval, lan.Id):
             if binop_di.num_dims > 0 and isinstance(node.lval, lan.Id):
-
                 self.new_subscript = [lan.Id(p_binop.lval.lval.name, node.coord), p_binop.rval]
 
         oldparent = lan.NodeVisitor.current_parent
@@ -224,6 +223,10 @@ class _BinOpDistinctIndices(lan.NodeVisitor):
         return len(self.tmp)
 
     @property
+    def loop_indices(self):
+        return self.tmp
+
+    @property
     def has_distinct(self):
         return (self.right - self.left) and (self.left - self.right)
 
@@ -233,12 +236,33 @@ class _BinOpDistinctIndices(lan.NodeVisitor):
             self.tmp.add(name)
 
 
-class _ArrayRefDistintIndices(_BinOpDistinctIndices):
+class ArrayRefIndices(_BinOpDistinctIndices):
     def __init__(self, indices):
         self.indices = indices
         self.tmp = set()
 
 
+class IndicesInArrayRef(lan.NodeVisitor):
+    def __init__(self, indices):
+        self.indices = indices
+        self.tmp = set()
+        self.indexIds = dict()
+
+    def visit_ArrayRef(self, node):
+        name = node.name.name
+        ari = ArrayRefIndices(self.indices)
+        for n in node.subscript:
+            ari.visit(n)
+            self.tmp = self.tmp.union(ari.loop_indices)
+
+        if name in self.indexIds:
+            self.indexIds[name].update(self.indexIds[name].union(self.tmp))
+        else:
+            self.indexIds[name] = self.tmp
+        self.tmp = set()
+
+        for n in node.subscript:
+            self.visit(n)
 
 
 class NormArrayRef(lan.NodeVisitor):
@@ -280,7 +304,7 @@ class NumArrayDim(lan.NodeVisitor):
     def visit_ArrayRef(self, node):
         name = node.name.name
 
-        binop_di = _ArrayRefDistintIndices(self.loop_index)
+        binop_di = ArrayRefIndices(self.loop_index)
 
         if len(node.subscript) == 1:
             for n in node.subscript:
