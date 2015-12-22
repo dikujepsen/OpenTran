@@ -296,6 +296,7 @@ class NumArrayDim(lan.NodeVisitor):
     def __init__(self, ast):
         self.loop_index = list()
         col_li = LoopIndices()
+        col_li.depth_limit = 99
         col_li.visit(ast)
         self.loop_index = col_li.index
 
@@ -309,10 +310,11 @@ class NumArrayDim(lan.NodeVisitor):
         if len(node.subscript) == 1:
             for n in node.subscript:
                 binop_di.visit(n)
-
             self.numSubscripts[name] = max(binop_di.num_dims, 1)
         else:
             self.numSubscripts[name] = len(node.subscript)
+        if self.numSubscripts[name] > 2:
+            self.numSubscripts[name] = 1
 
         for n in node.subscript:
             self.visit(n)

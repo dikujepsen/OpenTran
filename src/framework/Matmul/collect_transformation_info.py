@@ -3,6 +3,7 @@ import visitor
 import copy
 import collect
 
+
 class FindPerfectForLoop(object):
     def __init__(self):
         self.perfect_for_loop = tvisitor.PerfectForLoop()
@@ -78,6 +79,7 @@ class FindLoops(FindPerfectForLoop):
         self.ArrayIdToDimName = dict()
         self.Loops = dict()
         self.col_loop_limit = collect.LoopLimit()
+        self.num_array_dims = dict()
 
     def collect(self, ast):
         super(FindLoops, self).collect(ast)
@@ -102,17 +104,18 @@ class FindLoops(FindPerfectForLoop):
 
         self.loop_indices.visit(self.forLoops.ast)
         self.arrays = visitor.Arrays(self.loop_indices.index)
-
-        # self.arrays = visitor.Arrays(col_li.index)
         self.arrays.visit(ast)
-        for n in self.arrays.numIndices:
-            if self.arrays.numIndices[n] == 2:
-                self.arrays.numSubscripts[n] = 2
-            elif self.arrays.numIndices[n] > 2:
-                self.arrays.numSubscripts[n] = 1
 
+        print self.arrays.Subscript
 
-        find_dim = tvisitor.FindDim(self.arrays.numSubscripts)
+        num_array_dim = collect.NumArrayDim(ast)
+        num_array_dim.visit(ast)
+
+        # print num_array_dim.numSubscripts
+        self.num_array_dims = num_array_dim.numSubscripts
+
+        find_dim = tvisitor.FindDim(num_array_dim.numSubscripts)
+        # find_dim = tvisitor.FindDim(self.num_array_dims)
         find_dim.visit(ast)
         self.ArrayIdToDimName = find_dim.dimNames
         # print self.ArrayIdToDimName
@@ -124,10 +127,6 @@ class FindLoops(FindPerfectForLoop):
     @property
     def lower_limit(self):
         return self.col_loop_limit.lower_limit
-
-    @property
-    def num_array_dims(self):
-        return self.arrays.numSubscripts
 
     @property
     def for_loop_ast(self):
