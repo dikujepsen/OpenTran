@@ -2,6 +2,7 @@ import transf_visitor as tvisitor
 import visitor
 import copy
 import collect
+import lan
 
 
 def print_dict_sorted(mydict):
@@ -154,13 +155,10 @@ class FindSubscripts(FindLoops):
         for n in self.SubscriptNoId.values():
             for m in n:
                 for i, k in enumerate(m):
-                    try:
+                    if isinstance(k, lan.Id):
                         m[i] = k.name
-                    except AttributeError:
-                        try:
-                            m[i] = k.value
-                        except AttributeError:
-                            m[i] = 'unknown'
+                    else:
+                        m[i] = 'unknown'
 
 
 class RemovedLoopLimit(FindLoops):
