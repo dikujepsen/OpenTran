@@ -290,6 +290,35 @@ class NormArrayRef(lan.NodeVisitor):
         lan.NodeVisitor.current_parent = oldparent
 
 
+class ArrayNameToRef(lan.NodeVisitor):
+    """ Finds array names to array refs """
+    def __init__(self):
+        self.ids = set()
+        self.LoopArrays = dict()
+
+    def visit_ArrayRef(self, node):
+        name = node.name.name
+        if name in self.LoopArrays:
+            self.LoopArrays[name].append(node)
+        else:
+            self.LoopArrays[name] = [node]
+
+
+class ArraySubscripts(lan.NodeVisitor):
+    """ Finds array names to subscripts of array refs """
+
+    def __init__(self):
+        self.ids = set()
+        self.Subscript = dict()
+
+    def visit_ArrayRef(self, node):
+        name = node.name.name
+        if name in self.Subscript:
+            self.Subscript[name].append(node.subscript)
+        else:
+            self.Subscript[name] = [node.subscript]
+
+
 class NumArrayDim(lan.NodeVisitor):
     """ Finds array Ids """
 

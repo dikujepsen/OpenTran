@@ -1,5 +1,6 @@
 import collect_transformation_info as cti
 import transf_visitor as tvisitor
+import collect
 
 class GenReverseIdx(object):
     def __init__(self):
@@ -8,16 +9,15 @@ class GenReverseIdx(object):
         self.ReverseIdx[1] = 0
 
 
-class FindLoopArrays(cti.FindLoops):
+class FindLoopArrays(object):
     def __init__(self):
-        super(FindLoopArrays, self).__init__()
+        self.loop_arrays = dict()
 
     def collect(self, ast):
-        super(FindLoopArrays, self).collect(ast)
 
-    @property
-    def loop_arrays(self):
-        return self.arrays.LoopArrays
+        arr_to_ref = collect.ArrayNameToRef()
+        arr_to_ref.visit(ast)
+        self.loop_arrays = arr_to_ref.LoopArrays
 
 
 class FindKernelName(cti.FindArrayIds):

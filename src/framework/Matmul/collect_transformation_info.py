@@ -4,6 +4,17 @@ import copy
 import collect
 
 
+def print_dict_sorted(mydict):
+    keys = sorted(mydict)
+
+    entries = ""
+    for key in keys:
+        value = mydict[key]
+        entries += "'" + key + "': " + value.__repr__() + ","
+
+    return "{" + entries[:-1] + "}"
+
+
 class FindPerfectForLoop(object):
     def __init__(self):
         self.perfect_for_loop = tvisitor.PerfectForLoop()
@@ -74,7 +85,6 @@ class FindLoops(FindPerfectForLoop):
     def __init__(self):
         super(FindLoops, self).__init__()
         self.loop_indices = visitor.LoopIndices()
-        self.arrays = None
         self.forLoops = visitor.ForLoops()
         self.ArrayIdToDimName = dict()
         self.Loops = dict()
@@ -101,12 +111,6 @@ class FindLoops(FindPerfectForLoop):
 
         col_li = collect.LoopIndices()
         col_li.visit(ast)
-
-        self.loop_indices.visit(self.forLoops.ast)
-        self.arrays = visitor.Arrays(self.loop_indices.index)
-        self.arrays.visit(ast)
-
-        print self.arrays.Subscript
 
         num_array_dim = collect.NumArrayDim(ast)
         num_array_dim.visit(ast)
@@ -142,7 +146,9 @@ class FindSubscripts(FindLoops):
     def collect(self, ast):
         super(FindSubscripts, self).collect(ast)
 
-        self.Subscript = self.arrays.Subscript
+        arr_subs = collect.ArraySubscripts()
+        arr_subs.visit(ast)
+        self.Subscript = arr_subs.Subscript
 
         self.SubscriptNoId = copy.deepcopy(self.Subscript)
         for n in self.SubscriptNoId.values():
