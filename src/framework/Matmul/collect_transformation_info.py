@@ -110,19 +110,16 @@ class FindLoops(FindPerfectForLoop):
         self.col_loop_limit = collect.LoopLimit()
         self.col_loop_limit.visit(ast)
 
-        col_li = collect.LoopIndices()
-        col_li.visit(ast)
-
         num_array_dim = collect.NumArrayDim(ast)
         num_array_dim.visit(ast)
 
-        # print num_array_dim.numSubscripts
         self.num_array_dims = num_array_dim.numSubscripts
 
-        find_dim = tvisitor.FindDim(num_array_dim.numSubscripts)
-        # find_dim = tvisitor.FindDim(self.num_array_dims)
-        find_dim.visit(ast)
-        self.ArrayIdToDimName = find_dim.dimNames
+        gen_array_dim_names = collect.GenArrayDimNames()
+        gen_array_dim_names.collect(ast)
+        self.ArrayIdToDimName = gen_array_dim_names.ArrayIdToDimName
+        # print print_dict_sorted(gen_array_dim_names.ArrayIdToDimName)
+
         # print self.ArrayIdToDimName
 
     @property
@@ -193,6 +190,7 @@ class FindArrayIds(RemovedLoopLimit):
         arrays_ids = collect.GlobalArrayIds()
         arrays_ids.visit(ast)
         self.ArrayIds = arrays_ids.ids
+        # print self.ArrayIds
 
         nonarray_ids = collect.GlobalNonArrayIds()
         nonarray_ids.visit(ast)

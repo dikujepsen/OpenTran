@@ -328,22 +328,45 @@ class NumArrayDim(lan.NodeVisitor):
         col_li.depth_limit = 99
         col_li.visit(ast)
         self.loop_index = col_li.index
+        arrays_ids = GlobalArrayIds()
+        arrays_ids.visit(ast)
+        self.ArrayIds = arrays_ids.ids
 
         self.numSubscripts = dict()
 
     def visit_ArrayRef(self, node):
         name = node.name.name
+        if name in self.ArrayIds:
+            binop_di = ArrayRefIndices(self.loop_index)
 
-        binop_di = ArrayRefIndices(self.loop_index)
-
-        if len(node.subscript) == 1:
-            for n in node.subscript:
-                binop_di.visit(n)
-            self.numSubscripts[name] = max(binop_di.num_dims, 1)
-        else:
-            self.numSubscripts[name] = len(node.subscript)
-        if self.numSubscripts[name] > 2:
-            self.numSubscripts[name] = 1
+            if len(node.subscript) == 1:
+                for n in node.subscript:
+                    binop_di.visit(n)
+                self.numSubscripts[name] = max(binop_di.num_dims, 1)
+            else:
+                self.numSubscripts[name] = len(node.subscript)
+            if self.numSubscripts[name] > 2:
+                self.numSubscripts[name] = 1
 
         for n in node.subscript:
             self.visit(n)
+
+
+class GenArrayDimNames(object):
+    def __init__(self):
+        self.num_array_dims = dict()
+        self.ArrayIdToDimName = dict()
+
+    def collect(self, ast):
+        num_array_dim = NumArrayDim(ast)
+        num_array_dim.visit(ast)
+        self.num_array_dims = num_array_dim.numSubscripts
+
+        for array_name, num_dims in num_array_dim.numSubscripts.items():
+            tmp = list()
+            for i in xrange(num_dims):
+                tmp.append('hst_ptr' + array_name + '_dim' + str(i+1))
+
+            self.ArrayIdToDimName[array_name] = tmp
+
+
