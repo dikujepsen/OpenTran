@@ -108,9 +108,9 @@ class LoopIndices(lan.NodeVisitor):
         the ForLoop AST node that is indexes.
     """
 
-    def __init__(self):
+    def __init__(self, depth_limit=2):
         self.index = list()
-        self.depth_limit = 2
+        self.depth_limit = depth_limit
         self.depth = 0
 
     def visit_ForLoop(self, node):
@@ -292,6 +292,7 @@ class NormArrayRef(lan.NodeVisitor):
 
 class ArrayNameToRef(lan.NodeVisitor):
     """ Finds array names to array refs """
+
     def __init__(self):
         self.ids = set()
         self.LoopArrays = dict()
@@ -365,7 +366,7 @@ class GenArrayDimNames(object):
         for array_name, num_dims in num_array_dim.numSubscripts.items():
             tmp = list()
             for i in xrange(num_dims):
-                tmp.append('hst_ptr' + array_name + '_dim' + str(i+1))
+                tmp.append('hst_ptr' + array_name + '_dim' + str(i + 1))
 
             self.ArrayIdToDimName[array_name] = tmp
 

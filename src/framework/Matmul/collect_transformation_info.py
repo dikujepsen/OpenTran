@@ -62,18 +62,15 @@ class FindGridIndices(FindPerfectForLoop):
 
     def collect(self, ast):
         super(FindGridIndices, self).collect(ast)
-        grid_ids = list()
-        init_ids = tvisitor.InitIds()
-        init_ids.visit(self.perfect_for_loop.ast.init)
-        grid_ids.extend(init_ids.index)
+
         kernel = self.perfect_for_loop.ast.compound
         if self.par_dim == 2:
-            init_ids = tvisitor.InitIds()
-            init_ids.visit(kernel.statements[0].init)
             kernel = kernel.statements[0].compound
-            grid_ids.extend(init_ids.index)
 
-        self.GridIndices = grid_ids
+        col_li = collect.LoopIndices(self.par_dim)
+        col_li.visit(ast)
+
+        self.GridIndices = col_li.index
         self.Kernel = kernel
         for i, n in enumerate(reversed(self.GridIndices)):
             self.IdxToDim[i] = n
