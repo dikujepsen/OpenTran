@@ -123,6 +123,10 @@ class LoopIndices(lan.NodeVisitor):
         if self.depth < self.depth_limit:
             self.visit(node.compound)
 
+    @property
+    def grid_indices(self):
+        return self.index
+
 
 class LoopLimit(lan.NodeVisitor):
     """ Finds loop indices, the start and end values of the
@@ -454,3 +458,16 @@ class FindKernel(lan.NodeVisitor):
                     if self.depth > 0:
                         self.depth -= 1
                         self.kernel = self.kernel.statements[0].compound
+
+
+class GenIdxToDim(object):
+    def __init__(self):
+        self.IdxToDim = dict()
+
+    def collect(self, ast, par_dim=2):
+        col_li = LoopIndices(par_dim)
+        col_li.visit(ast)
+
+        grid_indices = col_li.grid_indices
+        for i, n in enumerate(reversed(grid_indices)):
+            self.IdxToDim[i] = n
