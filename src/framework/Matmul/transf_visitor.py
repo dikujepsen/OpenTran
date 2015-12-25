@@ -1,14 +1,15 @@
 from lan.lan_ast import *
 import copy
 
+
 class AddToId(NodeVisitor):
     """ Finds the Id and replaces it with a binop that
     adds another variable to the id.
     """
+
     def __init__(self, id, variable):
         self.id = id
         self.variable = variable
-
 
     def changeIdNode(self, node):
         if isinstance(node, Id):
@@ -41,58 +42,24 @@ class AddToId(NodeVisitor):
                     if node.extra['localMemory']:
                         return
                 except KeyError:
-                    pass 
+                    pass
                 node.subscript[i] = BinOp(sub, '+', Id(self.variable))
 
 
-class FindReadWrite(NodeVisitor):
-    """ Returns a mapping of array to either
-    'read'-only, 'write'-only, or 'readwrite'
-    """
-    def __init__(self, ArrayIds):
-        self.ReadWrite = dict()
-        self.ArrayIds = ArrayIds
-        for n in self.ArrayIds:
-            self.ReadWrite[n] = set()
-        
-    def visit_Assignment(self, node):
-        findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, True)
-        findReadPattern.visit(node.lval)
-        findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, False)
-        findReadPattern.visit(node.rval)
 
 
-
-class FindReadPattern(NodeVisitor):
-    """ Return whether the an array are read or written """
-    def __init__(self, ArrayIds, ReadWrite, left):
-        self.ReadWrite = ReadWrite
-        self.ArrayIds = ArrayIds
-        self.left = left
-
-    def visit_ArrayRef(self, node):
-        name = node.name.name
-        if name in self.ArrayIds:
-            if self.left:
-                self.ReadWrite[name].add('write')
-            else:
-                self.ReadWrite[name].add('read')
-            findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, False)
-            for n in node.subscript:
-                findReadPattern.visit(n)
-    
-                
 def updateDict(sink, src):
     for n in sink:
         l = sink[n]
         for m in src[n]:
             l.add(m)
 
-                
+
 class ExchangeId(NodeVisitor):
     """ Exchanges the Ids that we parallelize with the threadids,
     (or whatever is given in idMap)
     """
+
     def __init__(self, idMap):
         self.idMap = idMap
 
@@ -100,10 +67,12 @@ class ExchangeId(NodeVisitor):
         if node.name in self.idMap:
             node.name = self.idMap[node.name]
 
+
 class ExchangeIdWithBinOp(NodeVisitor):
     """ Exchanges the Ids that we parallelize with the threadids,
     (or whatever is given in idMap)
     """
+
     def __init__(self, idMap):
         self.idMap = idMap
 
@@ -117,15 +86,15 @@ class ExchangeIdWithBinOp(NodeVisitor):
                 pass
         for c_name, c in node.children():
             self.visit(c)
-            
+
     def visit_ArrayRef(self, node):
-        for i,s in enumerate(node.subscript):
+        for i, s in enumerate(node.subscript):
             if isinstance(s, Id):
                 try:
                     node.subscript[i] = self.idMap[s.name]
                 except KeyError:
                     pass
-            
+
     def visit_BinOp(self, node):
         if isinstance(node.lval, Id):
             try:
@@ -134,7 +103,7 @@ class ExchangeIdWithBinOp(NodeVisitor):
                 return
             except KeyError:
                 pass
-            
+
         if isinstance(node.rval, Id):
             try:
                 node.rval = self.idMap[node.rval.name]
@@ -144,7 +113,6 @@ class ExchangeIdWithBinOp(NodeVisitor):
                 pass
         for c_name, c in node.children():
             self.visit(c)
-        
 
 
 class ExchangeIndices(NodeVisitor):
@@ -153,6 +121,7 @@ class ExchangeIndices(NodeVisitor):
     ARGS: idMap: a dictionary of Id changes
     	  arrays: A list/set of array names that we change
     """
+
     def __init__(self, idMap, arrays):
         self.idMap = idMap
         self.arrays = arrays
@@ -163,12 +132,14 @@ class ExchangeIndices(NodeVisitor):
             for n in node.subscript:
                 exchangeId.visit(n)
 
+
 class ExchangeTypes(NodeVisitor):
     """ Exchanges the size_t to unsigned for every TypeId
     """
+
     def __init__(self):
         pass
-    
+
     def visit_TypeId(self, node):
         if node.type:
             if node.type[0] == 'size_t':
@@ -179,6 +150,7 @@ class ExchangeArrayId(NodeVisitor):
     """ Exchanges the id of arrays in ArrayRefs with
     what is given in idMap)
     """
+
     def __init__(self, idMap):
         self.idMap = idMap
 
@@ -193,28 +165,30 @@ class ExchangeArrayId(NodeVisitor):
             node.name.name = self.idMap[node.name.name]
         except KeyError:
             pass
- 
+
 
 class FindFunction(NodeVisitor):
     """ Finds the typeid of the kernel function """
+
     def __init__(self):
         self.typeid = None
-        
+
     def visit_FuncDecl(self, node):
         self.visit_TypeId(node.typeid)
 
     def visit_TypeId(self, node):
         self.typeid = node
 
-        
+
 class FindDeviceArgs(NodeVisitor):
     """ Finds the argument that we transfer from the C code
     to the device. 
     """
+
     def __init__(self, argIds):
         self.argIds = argIds
         self.arglist = list()
-    
+
     def visit_ArgList(self, node):
         for typeid in node.arglist:
             if isinstance(typeid, TypeId):
@@ -222,20 +196,21 @@ class FindDeviceArgs(NodeVisitor):
                     self.argIds.remove(typeid.name.name)
                     if len(typeid.type) == 2:
                         if typeid.type[1] == '*':
-                            typeid.type.insert(0,'__global')
+                            typeid.type.insert(0, '__global')
                     self.arglist.append(typeid)
+
 
 class PerfectForLoop(NodeVisitor):
     """ Performs simple checks to decide if we have 1D or 2D
     parallelism, i.e. if we have a perfect loops nest of size one
     or two. 
     """
+
     def __init__(self):
         self.depth = 0
         self.ast = None
         self.inner = None
         self.outer = None
-        
 
     def visit_FuncDecl(self, node):
         funcstats = node.compound.statements
@@ -257,11 +232,12 @@ class RewriteArrayRef(NodeVisitor):
     """ Rewrites the arrays references of form A[i][j] to
     A[i * JDIMSIZE + j]
     """
+
     def __init__(self, num_array_dims, ArrayIdToDimName, SubSwap):
         self.ArrayIdToDimName = ArrayIdToDimName
         self.num_array_dims = num_array_dims
         self.SubSwap = SubSwap
-    
+
     def visit_ArrayRef(self, node):
         n = node.name.name
         try:
@@ -269,32 +245,34 @@ class RewriteArrayRef(NodeVisitor):
                 try:
                     if self.SubSwap[n]:
                         (node.subscript[0], node.subscript[1]) = \
-                        (node.subscript[1], node.subscript[0])
+                            (node.subscript[1], node.subscript[0])
                 except KeyError:
                     pass
-                leftbinop = BinOp(node.subscript[0],'*', \
-                # Id on first dimension
+                leftbinop = BinOp(node.subscript[0], '*', \
+                                  # Id on first dimension
 
-                Id(self.ArrayIdToDimName[n][0]))
-                topbinop = BinOp(leftbinop,'+', \
-                node.subscript[1])
+                                  Id(self.ArrayIdToDimName[n][0]))
+                topbinop = BinOp(leftbinop, '+', \
+                                 node.subscript[1])
                 node.subscript = [topbinop]
         except KeyError:
             pass
 
+
 class FindDim(NodeVisitor):
     """ Finds the size of the dimNum dimension.
     """
+
     def __init__(self, arrayIds):
         self.arrayIds = arrayIds
         self.dimNames = dict()
-    
+
     def visit_ArgList(self, node):
         for arrayname in self.arrayIds:
             findSpecificArrayId = FindSpecificArrayId(arrayname)
             count = 0
 
-            for typeid in node.arglist:            
+            for typeid in node.arglist:
                 findSpecificArrayId.reset(arrayname)
                 findSpecificArrayId.visit(typeid)
                 if findSpecificArrayId.Found:
@@ -302,18 +280,19 @@ class FindDim(NodeVisitor):
 
                     for n in xrange(self.arrayIds[arrayname]):
                         self.dimNames[arrayname].append(
-                        node.arglist[count + 1 + n].name.name)
-                        
+                            node.arglist[count + 1 + n].name.name)
+
                 count += 1
 
 
 class FindSpecificArrayId(NodeVisitor):
     """ Finds a specific arrayId
     """
+
     def __init__(self, arrayId):
         self.arrayId = arrayId
         self.Found = False
-    
+
     def visit_TypeId(self, node):
         if node.name.name == self.arrayId:
             self.Found = True
@@ -326,48 +305,57 @@ class FindSpecificArrayId(NodeVisitor):
 class FindIncludes(NodeVisitor):
     """ Return a list of include statements
     """
+
     def __init__(self):
         self.includes = list()
-    
+
     def visit_Include(self, node):
         self.includes.append(node)
+
 
 class InitIds(NodeVisitor):
     """ Finds Id's in a for loop initialization.
     More generally: Finds all Ids and adds them to a list.    
     """
+
     def __init__(self):
         self.index = list()
-    
+
     def visit_Id(self, node):
         self.index.append(node.name)
+
 
 class FindUpperLimit(NodeVisitor):
     """ Finds Id's in an for loop initialization.
     More generally: Finds all Ids and adds them to a list.    
     """
+
     def __init__(self):
         self.index = list()
-    
+
     def visit_Id(self, node):
         self.index.append(node.name)
-        
+
+
 class Ids(NodeVisitor):
     """ Finds all unique IDs, excluding function IDs"""
+
     def __init__(self):
         self.ids = set()
 
     def visit_FuncDecl(self, node):
         if node.compound.statements == []:
             self.visit(node.arglist)
-        
+
     def visit_Id(self, node):
         self.ids.add(node.name)
+
 
 class LoopIds(NodeVisitor):
     """ Finds all unique LoopIndices
         -- Used in localMemory2
     """
+
     def __init__(self, LoopIds):
         self.LoopIds = LoopIds
         self.ids = set()
@@ -375,7 +363,6 @@ class LoopIds(NodeVisitor):
     def reset(self):
         self.ids = set()
 
-        
     def visit_Id(self, node):
         name = node.name
         if name in self.LoopIds:
@@ -387,11 +374,13 @@ class LoopIndices(NodeVisitor):
         indices and creates a mapping from a loop index to
         the ForLoop AST node that is indexes.
     """
+
     def __init__(self):
         self.index = list()
         self.end = dict()
         self.start = dict()
         self.Loops = dict()
+
     def visit_ForLoop(self, node):
         self.Loops[node.init.lval.name.name] = node
         IdVis = Ids()
@@ -405,28 +394,31 @@ class LoopIndices(NodeVisitor):
         except AttributeError:
             self.end[ids[0]] = 'Unknown'
             self.start[ids[0]] = 'Unknown'
-            
+
 
 class ForLoops(NodeVisitor):
     """ Returns first loop it encounters 
     """
+
     def __init__(self):
         self.isFirst = True
         self.ast = None
-        
+
     def reset(self):
         self.isFirst = True
-        
+
     def visit_ForLoop(self, node):
         if self.isFirst:
             self.ast = node
             self.isFirst = False
             return node
 
+
 class NumIndices(NodeVisitor):
     """ Finds if there is two distinct loop indices
     	in an 1D array reference
     """
+
     def __init__(self, numIndices, indices):
         self.numIndices = numIndices
         self.num = 0
@@ -438,48 +430,52 @@ class NumIndices(NodeVisitor):
     def reset(self):
         self.firstFound = False
         self.subIdx = set()
-        
+
     def visit_Id(self, node):
         if node.name in self.indices \
-        and node.name not in self.found \
-        and self.num < self.numIndices:
+                and node.name not in self.found \
+                and self.num < self.numIndices:
             self.found.add(node.name)
             self.subIdx.add(node.name)
             self.num += 1
             if self.num >= self.numIndices:
                 self.yes = True
-                
+
+
 class SwapUnrollID(NodeVisitor):
     """ Swap a loop index that is being unrolled with
         ' " << <loop index> << "
     """
+
     def __init__(self, UnrollLoops):
         self.UnrollLoops = UnrollLoops
         self.outsideHeader = True
 
-    def visit_ForLoop(self,node):
+    def visit_ForLoop(self, node):
         self.outsideHeader = False
         self.visit(node.init)
         self.visit(node.cond)
         self.visit(node.inc)
         self.outsideHeader = True
         self.visit(node.compound)
-        
+
     def visit_Id(self, node):
         if self.outsideHeader:
             if node.name in self.UnrollLoops:
                 node.name = '\" << ' + node.name + ' << \"'
 
+
 class RefToLoop(NodeVisitor):
     """ Create a dict from array name to list of
     	arrayref list of loop indices that the arrayrefs are inside.
     """
+
     def __init__(self, GridIndices):
         self.stack = list()
         self.RefToLoop = dict()
         self.GridIndices = GridIndices
 
-    def visit_ForLoop(self,node):
+    def visit_ForLoop(self, node):
         name = node.init.lval.name.name
         if name not in self.GridIndices:
             self.stack.append(name)
@@ -491,20 +487,18 @@ class RefToLoop(NodeVisitor):
         self.visit(node.compound)
         if name not in self.GridIndices:
             self.stack.pop()
-        
-        
+
     def visit_ArrayRef(self, node):
         name = node.name.name
-        try:            
+        try:
             self.RefToLoop[name].append(copy.deepcopy(self.stack))
         except KeyError:
             self.RefToLoop[name] = [copy.deepcopy(self.stack)]
-        
 
-        
-                
+
 class Arrays(NodeVisitor):
     """ Finds array Ids """
+
     def __init__(self, loopindices):
         self.ids = set()
         self.numIndices = dict()
@@ -514,7 +508,7 @@ class Arrays(NodeVisitor):
         self.Subscript = dict()
         self.LoopArrays = dict()
         self.SubIdx = dict()
-            
+
     def visit_ArrayRef(self, node):
         name = node.name.name
         self.ids.add(name)
@@ -525,7 +519,7 @@ class Arrays(NodeVisitor):
         else:
             self.Subscript[name] = [node.subscript]
             self.LoopArrays[name] = [node]
-        
+
         listidx = []
         for s in node.subscript:
             numIndcs.visit(s)
@@ -534,7 +528,7 @@ class Arrays(NodeVisitor):
             else:
                 listidx.append(None)
             numIndcs.reset()
-        
+
         if name in self.SubIdx:
             self.SubIdx[name].append(listidx)
         else:
@@ -546,41 +540,50 @@ class Arrays(NodeVisitor):
             self.indexIds[name] = (numIndcs.found)
         else:
             self.indexIds[name].update((numIndcs.found))
-            
+
         ## self.numSubscripts[name] = max(len(node.subscript),self.numIndices[name])
         self.numSubscripts[name] = len(node.subscript)
         for n in node.subscript:
             self.visit(n)
 
+
 class TypeIds(NodeVisitor):
     """ Finds type Ids """
+
     def __init__(self):
         self.ids = set()
         self.dictIds = dict()
+
     def visit_TypeId(self, node):
         name = node.name.name
         self.ids.add(name)
         self.dictIds[name] = node.type
+
     def visit_ArrayTypeId(self, node):
         name = node.name.name
         self.ids.add(name)
         self.dictIds[name] = copy.deepcopy(node.type)
         if len(node.type) != 2:
-            #"ArrayTypeId: Need to check, type of array is ", node.type
+            # "ArrayTypeId: Need to check, type of array is ", node.type
             ## self.dictIds[name].append('*')
             pass
-            
+
+
 class TypeIds2(NodeVisitor):
     """ Return a set of TypeId nodes. Remove the type from the
         TypeIds that we encounter.
     """
+
     def __init__(self):
         self.ids = set()
-    def visit_ForLoop(self,node):
+
+    def visit_ForLoop(self, node):
         self.visit(node.compound)
+
     def visit_TypeId(self, node):
         self.ids.add(copy.deepcopy(node))
         node.type = []
+
     def visit_ArrayTypeId(self, node):
         self.ids.add(copy.deepcopy(node))
         node.type = []
@@ -589,8 +592,10 @@ class TypeIds2(NodeVisitor):
 class NumBinOps(NodeVisitor):
     """ Finds the number of BinOp in an 1D array subscript
     """
+
     def __init__(self):
         self.ops = list()
+
     def visit_BinOp(self, node):
         self.ops.append(node.op)
         self.visit(node.lval)
@@ -600,10 +605,12 @@ class NumBinOps(NodeVisitor):
 class Norm(NodeVisitor):
     """ Normalizes subscripts to the form i * (width of j) + j
     """
+
     def __init__(self, indices):
         self.subscript = dict()
         self.count = 0
         self.indices = indices
+
     def visit_ArrayRef(self, node):
         if len(node.subscript) == 1:
             numBinOps = NumBinOps()
@@ -622,7 +629,7 @@ class Norm(NodeVisitor):
                     if twoIndices.yes:
                         if binop.lval.lval.name not in self.indices:
                             (binop.lval.lval.name, binop.lval.rval.name) = \
-                            (binop.lval.rval.name, binop.lval.lval.name)
+                                (binop.lval.rval.name, binop.lval.lval.name)
                         # convert to 2D
-                        node.subscript = [Id(binop.lval.lval.name,node.coord),\
+                        node.subscript = [Id(binop.lval.lval.name, node.coord), \
                                           binop.rval]

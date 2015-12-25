@@ -18,11 +18,12 @@ def print_dict_sorted(mydict):
 
 class FindPerfectForLoop(object):
     def __init__(self):
-        self.perfect_for_loop = tvisitor.PerfectForLoop()
+        self.perfect_for_loop = collect.FindPerfectForLoop()
         self.ParDim = None
 
     def collect(self, ast):
         self.perfect_for_loop.visit(ast)
+
 
     @property
     def par_dim(self):
@@ -170,10 +171,10 @@ class RemovedLoopLimit(FindLoops):
         fgi.ParDim = self.ParDim
         fgi.collect(ast)
 
-        self.RemovedIds = set(self.upper_limit[i] for i in fgi.GridIndices)
+        upper_limits = set(self.upper_limit[i] for i in fgi.GridIndices)
         ids_still_in_kernel = tvisitor.Ids()
         ids_still_in_kernel.visit(fgi.Kernel)
-        self.RemovedIds = self.RemovedIds - ids_still_in_kernel.ids
+        self.RemovedIds = upper_limits - ids_still_in_kernel.ids
 
 
 class FindArrayIds(RemovedLoopLimit):
@@ -239,7 +240,7 @@ class FindReadWrite(GenHostArrayData):
     def collect(self, ast):
         super(FindReadWrite, self).collect(ast)
         self.generate()
-        find_read_write = tvisitor.FindReadWrite(self.ArrayIds)
+        find_read_write = collect.FindReadWrite(self.ArrayIds)
         find_read_write.visit(ast)
         self.ReadWrite = find_read_write.ReadWrite
 

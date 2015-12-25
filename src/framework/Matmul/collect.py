@@ -370,3 +370,65 @@ class GenArrayDimNames(object):
             self.ArrayIdToDimName[array_name] = tmp
 
 
+class FindReadWrite(lan.NodeVisitor):
+    """ Returns a mapping of array to either
+    'read'-only, 'write'-only, or 'readwrite'
+    """
+
+    def __init__(self, ArrayIds):
+        self.ReadWrite = dict()
+        self.ArrayIds = ArrayIds
+        for n in self.ArrayIds:
+            self.ReadWrite[n] = set()
+
+    def visit_Assignment(self, node):
+        findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, True)
+        findReadPattern.visit(node.lval)
+        findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, False)
+        findReadPattern.visit(node.rval)
+
+
+class FindReadPattern(lan.NodeVisitor):
+    """ Return whether the an array are read or written """
+
+    def __init__(self, ArrayIds, ReadWrite, left):
+        self.ReadWrite = ReadWrite
+        self.ArrayIds = ArrayIds
+        self.left = left
+
+    def visit_ArrayRef(self, node):
+        name = node.name.name
+        if name in self.ArrayIds:
+            if self.left:
+                self.ReadWrite[name].add('write')
+            else:
+                self.ReadWrite[name].add('read')
+            findReadPattern = FindReadPattern(self.ArrayIds, self.ReadWrite, False)
+            for n in node.subscript:
+                findReadPattern.visit(n)
+
+
+class FindPerfectForLoop(lan.NodeVisitor):
+    """ Performs simple checks to decide if we have 1D or 2D
+    parallelism, i.e. if we have a perfect loops nest of size one
+    or two.
+    """
+
+    def __init__(self):
+        self.depth = 0
+        self.ast = None
+        self.inner = None
+
+    def visit_ForLoop(self, node):
+        self.ast = node
+        self.inner = node
+        self.depth += 1
+        loopstats = node.compound.statements
+        if len(loopstats) == 1:
+            if isinstance(loopstats[0], lan.ForLoop):
+                self.depth += 1
+                self.inner = loopstats[0]
+
+    @property
+    def outer(self):
+        return self.ast
