@@ -24,7 +24,6 @@ class FindPerfectForLoop(object):
     def collect(self, ast):
         self.perfect_for_loop.visit(ast)
 
-
     @property
     def par_dim(self):
         if self.ParDim is None:
@@ -63,15 +62,14 @@ class FindGridIndices(FindPerfectForLoop):
     def collect(self, ast):
         super(FindGridIndices, self).collect(ast)
 
-        kernel = self.perfect_for_loop.ast.compound
-        if self.par_dim == 2:
-            kernel = kernel.statements[0].compound
+        fker = collect.FindKernel(self.par_dim)
+        fker.visit(ast)
+        self.Kernel = fker.kernel
 
         col_li = collect.LoopIndices(self.par_dim)
         col_li.visit(ast)
 
         self.GridIndices = col_li.index
-        self.Kernel = kernel
         for i, n in enumerate(reversed(self.GridIndices)):
             self.IdxToDim[i] = n
 

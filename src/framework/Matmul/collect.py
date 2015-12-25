@@ -433,3 +433,24 @@ class FindPerfectForLoop(lan.NodeVisitor):
     @property
     def outer(self):
         return self.ast
+
+
+class FindKernel(lan.NodeVisitor):
+    """ Performs simple checks to decide if we have 1D or 2D
+    parallelism, i.e. if we have a perfect loops nest of size one
+    or two.
+    """
+
+    def __init__(self, depth=2):
+        self.depth = depth
+        self.kernel = None
+
+    def visit_ForLoop(self, node):
+        if self.depth > 0:
+            self.kernel = node.compound
+            self.depth -= 1
+            if len(self.kernel.statements) == 1:
+                if isinstance(self.kernel.statements[0], lan.ForLoop):
+                    if self.depth > 0:
+                        self.depth -= 1
+                        self.kernel = self.kernel.statements[0].compound
