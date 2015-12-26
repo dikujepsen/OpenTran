@@ -62,8 +62,8 @@ class Representation(lan.NodeVisitor):
     def init_original(self, ast):
         self.normalize_subcript(ast)
 
-        iiar = collect.IndicesInArrayRef(self.loop_index)
-        iiar.visit(ast)
+        iiar = collect.IndicesInArrayRef()
+        iiar.collect(ast)
         self.IndexInSubscript = iiar.indexIds
 
         num_array_dim = collect.NumArrayDim(ast)

@@ -55,7 +55,10 @@ class Stencil(object):
         for_loop_ast = loops.ast
         loop_indices = visitor.LoopIndices()
         loop_indices.visit(for_loop_ast)
-        self.LowerLimit = loop_indices.start
+
+        loop_limit = collect.LoopLimit()
+        loop_limit.visit(ast)
+        self.LowerLimit = loop_limit.lower_limit
 
         arrays = visitor.Arrays(loop_indices.index)
         arrays.visit(ast)
@@ -66,9 +69,17 @@ class Stencil(object):
             elif arrays.numIndices[n] > 2:
                 arrays.numSubscripts[n] = 1
 
-        self.num_array_dims = arrays.numSubscripts
-        self.IndexInSubscript = arrays.indexIds
-        self.LoopArrays = arrays.LoopArrays
+        num_array_dim = collect.NumArrayDim(ast)
+        num_array_dim.visit(ast)
+        self.num_array_dims = num_array_dim.numSubscripts
+
+        indices_in_array_ref = collect.IndicesInArrayRef()
+        indices_in_array_ref.collect(ast, self.ParDim)
+        self.IndexInSubscript = indices_in_array_ref.indexIds
+
+        array_name_to_ref = collect.ArrayNameToRef()
+        array_name_to_ref.visit(ast)
+        self.LoopArrays = array_name_to_ref.LoopArrays
         if self.ParDim == 1:
             self.Local['size'] = ['256']
             if dev == 'CPU':
@@ -89,7 +100,11 @@ class Stencil(object):
 
         find_dim = tvisitor.FindDim(self.num_array_dims)
         find_dim.visit(ast)
-        self.ArrayIdToDimName = find_dim.dimNames
+
+        array_dim_names = collect.GenArrayDimNames()
+        array_dim_names.collect(ast)
+
+        self.ArrayIdToDimName = array_dim_names.ArrayIdToDimName
         self.ReverseIdx = dict()
         self.ReverseIdx[0] = 1
         self.ReverseIdx[1] = 0

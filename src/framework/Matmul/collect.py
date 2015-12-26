@@ -246,10 +246,17 @@ class ArrayRefIndices(_BinOpDistinctIndices):
 
 
 class IndicesInArrayRef(lan.NodeVisitor):
-    def __init__(self, indices):
-        self.indices = indices
+    def __init__(self):
+        self.indices = list()
         self.tmp = set()
         self.indexIds = dict()
+
+    def collect(self, ast, par_dim=2):
+        col_li = LoopIndices(par_dim)
+        col_li.visit(ast)
+        self.indices = col_li.grid_indices
+        self.visit(ast)
+
 
     def visit_ArrayRef(self, node):
         name = node.name.name
