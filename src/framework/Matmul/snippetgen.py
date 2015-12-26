@@ -3,6 +3,7 @@ import copy
 import stringstream
 import exchange
 import collect
+import collect_gen as cg
 
 
 class SnippetGen(object):
@@ -18,7 +19,7 @@ class SnippetGen(object):
         self.KernelStruct = kernel_struct
 
         par_dim = self.KernelStruct.ParDim
-        idx_to_thread_id = collect.GenIdxToThreadId()
+        idx_to_thread_id = cg.GenIdxToThreadId()
         idx_to_thread_id.collect(ast, par_dim)
 
         self.IndexToThreadId = idx_to_thread_id.IndexToThreadId

@@ -1,6 +1,6 @@
 import lan
 import collect_transformation_info as cti
-
+import collect_gen as cg
 
 class Transpose(object):
     def __init__(self):
@@ -22,7 +22,6 @@ class Transpose(object):
         self.HstId = dict()
         self.GlobalVars = dict()
 
-
     def set_datastructures(self, ast):
 
         self.Transposition = lan.GroupCompound([lan.Comment('// Transposition')])
@@ -38,6 +37,9 @@ class Transpose(object):
         fai.ParDim = self.ParDim
         fai.collect(ast)
 
+        host_array_data = cg.GenHostArrayData()
+        host_array_data.collect(ast)
+
         self.ParDim = fpl.ParDim
 
         self.num_array_dims = fai.num_array_dims
@@ -48,8 +50,8 @@ class Transpose(object):
 
         self.ArrayIds = fai.ArrayIds
 
-        self.HstId = fai.HstId
-        self.Mem = fai.Mem
+        self.HstId = host_array_data.HstId
+        self.Mem = host_array_data.Mem
         self.Type = fai.type
 
         self.ArrayIdToDimName = fai.ArrayIdToDimName

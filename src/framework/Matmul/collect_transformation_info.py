@@ -1,4 +1,5 @@
 import collect
+import collect_gen as cg
 
 
 def print_dict_sorted(mydict):
@@ -67,7 +68,7 @@ class FindGridIndices(FindPerfectForLoop):
 
         self.GridIndices = col_li.grid_indices
 
-        gi_to_dim = collect.GenIdxToDim()
+        gi_to_dim = cg.GenIdxToDim()
         gi_to_dim.collect(ast, self.par_dim)
         self.IdxToDim = gi_to_dim.IdxToDim
 
@@ -99,7 +100,7 @@ class FindLoops(FindPerfectForLoop):
 
         self.num_array_dims = num_array_dim.numSubscripts
 
-        gen_array_dim_names = collect.GenArrayDimNames()
+        gen_array_dim_names = cg.GenArrayDimNames()
         gen_array_dim_names.collect(ast)
         self.ArrayIdToDimName = gen_array_dim_names.ArrayIdToDimName
 
@@ -139,7 +140,7 @@ class RemovedLoopLimit(FindLoops):
         fgi.ParDim = self.ParDim
         fgi.collect(ast)
 
-        find_removed_ids = collect.GenRemovedIds()
+        find_removed_ids = cg.GenRemovedIds()
         find_removed_ids.collect(ast, self.par_dim)
         self.RemovedIds = find_removed_ids.removed_ids
 
@@ -169,24 +170,12 @@ class FindArrayIds(RemovedLoopLimit):
         # print print_dict_sorted(mytype_ids.dictIds)
         self.type = mytype_ids.types
 
-        gen_kernel_args = collect.GenKernelArgs()
+        gen_kernel_args = cg.GenKernelArgs()
         gen_kernel_args.collect(ast, par_dim=self.par_dim)
         self.kernel_args = gen_kernel_args.kernel_args
 
 
-class GenHostArrayData(FindArrayIds):
-    def __init__(self):
-        super(GenHostArrayData, self).__init__()
-        self.HstId = dict()
-        self.Mem = dict()
-
-    def generate(self):
-        for n in self.ArrayIds:
-            self.HstId[n] = 'hst_ptr' + n
-            self.Mem[n] = 'hst_ptr' + n + '_mem_size'
-
-
-class FindReadWrite(GenHostArrayData):
+class FindReadWrite(FindArrayIds):
     def __init__(self):
         super(FindReadWrite, self).__init__()
         self.ReadWrite = dict()
@@ -195,7 +184,6 @@ class FindReadWrite(GenHostArrayData):
 
     def collect(self, ast):
         super(FindReadWrite, self).collect(ast)
-        self.generate()
         find_read_write = collect.FindReadWrite(self.ArrayIds)
         find_read_write.visit(ast)
         self.ReadWrite = find_read_write.ReadWrite

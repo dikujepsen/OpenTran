@@ -1,5 +1,6 @@
 import collect_transformation_info as cti
 import collect_boilerplate_info as cbi
+import collect_gen as cg
 
 class KernelChangedByTransformation(object):
     def __init__(self):
@@ -57,7 +58,7 @@ class KernelStruct(KernelChangedByTransformation):
         fl.ParDim = self.ParDim
         fl.collect(ast)
 
-        gr = cbi.GenReverseIdx()
+        gr = cg.GenReverseIdx()
 
         fla = cbi.FindLoopArrays()
         fla.ParDim = self.ParDim

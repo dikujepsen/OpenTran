@@ -2,11 +2,6 @@ import collect_transformation_info as cti
 import collect
 
 
-class GenReverseIdx(object):
-    def __init__(self):
-        self.ReverseIdx = dict()
-        self.ReverseIdx[0] = 1
-        self.ReverseIdx[1] = 0
 
 
 class FindLoopArrays(object):

@@ -4,6 +4,7 @@ import lan
 import collect
 import collect_transformation_info as cti
 import exchange
+import collect_gen as cg
 
 class Stencil(object):
     def __init__(self):
@@ -40,7 +41,7 @@ class Stencil(object):
         find_kernel.visit(ast)
         self.Kernel = find_kernel.kernel
 
-        gen_local_array_idx = collect.GenLocalArrayIdx()
+        gen_local_array_idx = cg.GenLocalArrayIdx()
         gen_local_array_idx.collect(ast, self.ParDim)
         self.IndexToLocalVar = gen_local_array_idx.IndexToLocalVar
 
@@ -73,15 +74,15 @@ class Stencil(object):
         mytype_ids.visit(ast)
         self.type = mytype_ids.types
 
-        array_dim_names = collect.GenArrayDimNames()
+        array_dim_names = cg.GenArrayDimNames()
         array_dim_names.collect(ast)
 
         self.ArrayIdToDimName = array_dim_names.ArrayIdToDimName
-        self.ReverseIdx = dict()
-        self.ReverseIdx[0] = 1
-        self.ReverseIdx[1] = 0
 
-    def stencil(self, arrNames, west=0, north=0, east=0, south=0, middle=1):
+        reverse_idx = cg.GenReverseIdx()
+        self.ReverseIdx = reverse_idx.ReverseIdx
+
+    def stencil(self, arr_names, west=0, north=0, east=0, south=0, middle=1):
 
         direction = [west, north, east, south, middle]
         dirname = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
@@ -91,44 +92,44 @@ class Stencil(object):
             loadings = [(0, 0)]
 
         ## finding the correct local memory size
-        arrName = arrNames[0]
-        localDims = [int(self.Local['size'][0]) \
-                     for i in xrange(self.num_array_dims[arrName])]
-        if self.ParDim == 1 and len(localDims) == 2:
-            localDims[0] = 1;
-        arrIdx = self.IndexInSubscript[arrName]
-        localOffset = [int(self.LowerLimit[i]) \
-                       for i in arrIdx]
+        arr_name = arr_names[0]
+        local_dims = [int(self.Local['size'][0]) \
+                     for i in xrange(self.num_array_dims[arr_name])]
+        if self.ParDim == 1 and len(local_dims) == 2:
+            local_dims[0] = 1;
+        arr_idx = self.IndexInSubscript[arr_name]
+        local_offset = [int(self.LowerLimit[i]) \
+                       for i in arr_idx]
 
         for (x, y) in loadings:
-            localDims[0] += abs(x)
-            if self.num_array_dims[arrName] == 2:
-                localDims[1] += abs(y)
+            local_dims[0] += abs(x)
+            if self.num_array_dims[arr_name] == 2:
+                local_dims[1] += abs(y)
 
         stats = []
-        for arrName in arrNames:
-            localName = arrName + '_local'
+        for arr_name in arr_names:
+            local_name = arr_name + '_local'
             arrayinit = '['
-            for i, d in enumerate(localDims):
+            for i, d in enumerate(local_dims):
                 arrayinit += str(d)
-                if i == 0 and len(localDims) == 2:
+                if i == 0 and len(local_dims) == 2:
                     arrayinit += '*'
             arrayinit += ']'
 
-            localId = lan.Id(localName + arrayinit)
-            localTypeId = lan.TypeId(['__local'] + [self.type[arrName][0]], localId)
-            self.num_array_dims[localName] = self.num_array_dims[arrName]
-            self.LocalSwap[arrName] = localName
-            self.ArrayIdToDimName[localName] = [self.Local['size'][0], self.Local['size'][0]]
-            stats.append(localTypeId)
+            local_id = lan.Id(local_name + arrayinit)
+            local_type_id = lan.TypeId(['__local'] + [self.type[arr_name][0]], local_id)
+            self.num_array_dims[local_name] = self.num_array_dims[arr_name]
+            self.LocalSwap[arr_name] = local_name
+            self.ArrayIdToDimName[local_name] = [self.Local['size'][0], self.Local['size'][0]]
+            stats.append(local_type_id)
 
-        InitComp = lan.GroupCompound(stats)
+        init_comp = lan.GroupCompound(stats)
         stats2 = []
-        LoadComp = lan.GroupCompound(stats2)
+        load_comp = lan.GroupCompound(stats2)
 
         ## Insert local id with offset
-        for i, offset in enumerate(localOffset):
-            idd = self.ReverseIdx[i] if len(localOffset) == 2 else i
+        for i, offset in enumerate(local_offset):
+            idd = self.ReverseIdx[i] if len(local_offset) == 2 else i
             if offset != 0:
 
                 rval = lan.BinOp(lan.Id('get_local_id(' + str(idd) + ')'), '+', \
@@ -138,24 +139,24 @@ class Stencil(object):
             lval = lan.TypeId(['unsigned'], lan.Id('l' + self.GridIndices[i]))
             stats.append(lan.Assignment(lval, rval))
 
-        exchangeIndices = exchange.ExchangeIndices(self.IndexToLocalVar, self.LocalSwap.values())
+        exchange_indices = exchange.ExchangeIndices(self.IndexToLocalVar, self.LocalSwap.values())
 
         ## Creating the loading of values into the local array.
-        for arrName in arrNames:
+        for arr_name in arr_names:
             for k, l in enumerate(loadings):
-                arrayId = lan.Id(arrName)
+                array_id = lan.Id(arr_name)
                 # get first ArrayRef
-                aref = self.LoopArrays[arrName][k]
+                aref = self.LoopArrays[arr_name][k]
                 subscript = aref.subscript
                 lsub = copy.deepcopy(subscript)
-                lval = lan.ArrayRef(lan.Id(self.LocalSwap[arrName]), lsub)
+                lval = lan.ArrayRef(lan.Id(self.LocalSwap[arr_name]), lsub)
                 rsub = copy.deepcopy(subscript)
-                rval = lan.ArrayRef(arrayId, rsub, extra={'localMemory': True})
+                rval = lan.ArrayRef(array_id, rsub, extra={'localMemory': True})
                 load = lan.Assignment(lval, rval)
-                exchangeId = exchange.ExchangeId(self.IndexToLocalVar)
+                exchange_id = exchange.ExchangeId(self.IndexToLocalVar)
                 orisub = subscript
                 for m in orisub:
-                    exchangeId.visit(m)
+                    exchange_id.visit(m)
 
                 stats2.append(load)
 
@@ -165,8 +166,8 @@ class Stencil(object):
         func.arglist = arglist
         stats2.append(func)
 
-        exchangeIndices.visit(InitComp)
-        exchangeIndices.visit(LoadComp)
+        exchange_indices.visit(init_comp)
+        exchange_indices.visit(load_comp)
 
-        self.Kernel.statements.insert(0, LoadComp)
-        self.Kernel.statements.insert(0, InitComp)
+        self.Kernel.statements.insert(0, load_comp)
+        self.Kernel.statements.insert(0, init_comp)
