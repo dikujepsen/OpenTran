@@ -1,5 +1,4 @@
 import lan
-import collect
 import copy
 import collect_loop as cl
 

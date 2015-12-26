@@ -1,4 +1,4 @@
-import collect
+import collect_device as cd
 import collect_gen as cg
 import collect_array as ca
 import collect_id as ci
@@ -62,7 +62,7 @@ class FindGridIndices(FindPerfectForLoop):
     def collect(self, ast):
         super(FindGridIndices, self).collect(ast)
 
-        fker = collect.FindKernel(self.par_dim)
+        fker = cd.FindKernel(self.par_dim)
         fker.visit(ast)
         self.Kernel = fker.kernel
 

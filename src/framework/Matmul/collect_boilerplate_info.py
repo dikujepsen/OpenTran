@@ -1,5 +1,5 @@
 import collect_transformation_info as cti
-import collect
+import collect_device as cd
 import collect_array as ca
 
 
@@ -27,12 +27,12 @@ class FindKernelName(cti.FindArrayIds):
     def collect(self, ast):
         super(FindKernelName, self).collect(ast)
         other_ids = self.ArrayIds.union(self.NonArrayIds)
-        find_device_args = collect.FindDeviceArgs(other_ids)
+        find_device_args = cd.FindDeviceArgs(other_ids)
 
         find_device_args.visit(ast)
 
         self.DevArgList = find_device_args.arglist
-        find_function = collect.FindFunction()
+        find_function = cd.FindFunction()
 
         find_function.visit(ast)
 

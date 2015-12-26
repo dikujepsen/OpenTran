@@ -1,7 +1,7 @@
 import copy
 import ast_buildingblock as ast_bb
 import lan
-import collect
+import collect_device as cd
 import collect_transformation_info as cti
 import exchange
 import collect_gen as cg
@@ -41,7 +41,7 @@ class Stencil(object):
         if self.ParDim is None:
             self.ParDim = perfect_for_loop.par_dim
 
-        find_kernel = collect.FindKernel(self.ParDim)
+        find_kernel = cd.FindKernel(self.ParDim)
         find_kernel.visit(ast)
         self.Kernel = find_kernel.kernel
 

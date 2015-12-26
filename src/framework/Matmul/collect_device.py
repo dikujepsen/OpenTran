@@ -27,8 +27,8 @@ class FindDeviceArgs(lan.NodeVisitor):
     to the device.
     """
 
-    def __init__(self, argIds):
-        self.argIds = argIds
+    def __init__(self, arg_ids):
+        self.argIds = arg_ids
         self.arglist = list()
 
     def visit_ArgList(self, node):

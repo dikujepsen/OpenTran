@@ -1,8 +1,8 @@
-
-import collect
 import collect_array as ca
 import collect_id as ci
 import collect_loop as cl
+import collect_device as cd
+
 
 class GenReverseIdx(object):
     def __init__(self):
@@ -112,7 +112,7 @@ class GenRemovedIds(object):
 
         upper_limits = set(upper_limit[i] for i in grid_indices)
 
-        find_kernel = collect.FindKernel(par_dim)
+        find_kernel = cd.FindKernel(par_dim)
         find_kernel.visit(ast)
         ids_still_in_kernel = ci.Ids()
         ids_still_in_kernel.visit(find_kernel.kernel)

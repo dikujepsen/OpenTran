@@ -2,7 +2,7 @@ import lan
 import copy
 import stringstream
 import exchange
-import collect
+import collect_device as cd
 import collect_gen as cg
 
 
@@ -24,7 +24,7 @@ class SnippetGen(object):
 
         self.IndexToThreadId = idx_to_thread_id.IndexToThreadId
 
-        find_function = collect.FindFunction()
+        find_function = cd.FindFunction()
         find_function.visit(ast)
         self.DevFuncTypeId = find_function.typeid
 
