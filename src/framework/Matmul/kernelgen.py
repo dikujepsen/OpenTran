@@ -45,7 +45,7 @@ class KernelGen(object):
         for arg in self.ks.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
 
-            pil.localMemory3(self.ks, arg)
+            pil.local_memory3(self.ks, arg)
             ss.in_source_kernel(copy.deepcopy(ast), self.ks.PlaceInLocalCond,
                                 filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
 

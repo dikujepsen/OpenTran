@@ -1,9 +1,9 @@
 import lan
 import copy
-import transf_visitor
 import stringstream
 import transf_visitor as tvisitor
-
+import exchange
+import collect
 
 class SnippetGen(object):
     def __init__(self):
@@ -69,7 +69,7 @@ class SnippetGen(object):
                 type.insert(0, '__global')
             arglist.append(lan.TypeId(type, lan.Id(n)))
 
-        exchangeArrayId = transf_visitor.ExchangeArrayId(self.KernelStruct.LocalSwap)
+        exchangeArrayId = exchange.ExchangeArrayId(self.KernelStruct.LocalSwap)
 
         for n in self.KernelStruct.LoopArrays.values():
             for m in n:
@@ -77,16 +77,16 @@ class SnippetGen(object):
 
         MyKernel = copy.deepcopy(self.KernelStruct.Kernel)
         # print self.astrepr.ArrayIdToDimName
-        rewriteArrayRef = transf_visitor.RewriteArrayRef(self.KernelStruct.num_array_dims,
-                                                         self.KernelStruct.ArrayIdToDimName,
-                                                         self.KernelStruct.SubSwap)
+        rewriteArrayRef = exchange.RewriteArrayRef(self.KernelStruct.num_array_dims,
+                                                   self.KernelStruct.ArrayIdToDimName,
+                                                   self.KernelStruct.SubSwap)
         rewriteArrayRef.visit(MyKernel)
 
         # print MyKernel
-        exchangeIndices = transf_visitor.ExchangeId(self.IndexToThreadId)
+        exchangeIndices = exchange.ExchangeId(self.IndexToThreadId)
         exchangeIndices.visit(MyKernel)
 
-        exchangeTypes = transf_visitor.ExchangeTypes()
+        exchangeTypes = exchange.ExchangeTypes()
         exchangeTypes.visit(MyKernel)
 
         typeid = copy.deepcopy(self.DevFuncTypeId)

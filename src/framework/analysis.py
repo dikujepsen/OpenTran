@@ -172,7 +172,7 @@ class Analysis():
             
         for arg in self.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
-            tf.localMemory3(arg)
+            tf.local_memory3(arg)
             rw.in_source_kernel(copy.deepcopy(ast), self.PlaceInLocalCond, filename =fileprefix + name + '/' + funcname + '.cl', kernelstringname = funcname)
 
         MyCond = None

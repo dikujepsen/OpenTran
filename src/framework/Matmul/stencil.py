@@ -1,10 +1,9 @@
 import copy
 import ast_buildingblock as ast_bb
 import lan
-import transf_visitor as tvisitor
 import collect
 import collect_transformation_info as cti
-
+import exchange
 
 class Stencil(object):
     def __init__(self):
@@ -67,7 +66,7 @@ class Stencil(object):
         self.LoopArrays = array_name_to_ref.LoopArrays
 
         find_local = cti.FindLocal()
-        find_local.collect(ast)
+        find_local.collect(ast, dev)
         self.Local = find_local.Local
 
         mytype_ids = collect.GlobalTypeIds()
@@ -139,7 +138,7 @@ class Stencil(object):
             lval = lan.TypeId(['unsigned'], lan.Id('l' + self.GridIndices[i]))
             stats.append(lan.Assignment(lval, rval))
 
-        exchangeIndices = tvisitor.ExchangeIndices(self.IndexToLocalVar, self.LocalSwap.values())
+        exchangeIndices = exchange.ExchangeIndices(self.IndexToLocalVar, self.LocalSwap.values())
 
         ## Creating the loading of values into the local array.
         for arrName in arrNames:
@@ -153,7 +152,7 @@ class Stencil(object):
                 rsub = copy.deepcopy(subscript)
                 rval = lan.ArrayRef(arrayId, rsub, extra={'localMemory': True})
                 load = lan.Assignment(lval, rval)
-                exchangeId = tvisitor.ExchangeId(self.IndexToLocalVar)
+                exchangeId = exchange.ExchangeId(self.IndexToLocalVar)
                 orisub = subscript
                 for m in orisub:
                     exchangeId.visit(m)

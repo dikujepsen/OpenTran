@@ -1,8 +1,8 @@
 import lan
 import copy
-import transf_visitor as tvisitor
 import ast_buildingblock as ast_bb
 import collect_transformation_info as cti
+import exchange
 
 class PlaceInLocal(object):
     def __init__(self):
@@ -67,17 +67,17 @@ class PlaceInLocal(object):
                                        lan.Constant(self.Local['size'][0])), '==', lan.Constant(0))
             self.PlaceInLocalCond = cond
 
-    def localMemory3(self, ks, arrDict, loopDict=None, blockDict=None):
+    def local_memory3(self, ks, arrDict, loop_dict=None, blockDict=None):
         initstats = []
-        initComp = lan.GroupCompound(initstats)
-        ks.Kernel.statements.insert(0, initComp)
+        init_comp = lan.GroupCompound(initstats)
+        ks.Kernel.statements.insert(0, init_comp)
 
-        if loopDict is None:
-            loopDict = dict()
+        if loop_dict is None:
+            loop_dict = dict()
             # So we create it
             for n in arrDict:
                 for i in arrDict[n]:
-                    loopDict[(n, i)] = []
+                    loop_dict[(n, i)] = []
 
             for n in arrDict:
                 for i in arrDict[n]:
@@ -89,22 +89,22 @@ class PlaceInLocal(object):
                         except:
                             if m not in ks.GridIndices:
                                 acc.append(m)
-                    loopDict[(n, i)] = acc
+                    loop_dict[(n, i)] = acc
 
         # Check that all ArrayRefs are blocked using only one loop
         # otherwise we do not know what to do
         for n in arrDict:
             for i in arrDict[n]:
-                if len(loopDict[(n, i)]) > 1:
+                if len(loop_dict[(n, i)]) > 1:
                     print "Array %r is being blocked by %r. Returning..." \
-                          % (n, loopDict[(n, i)])
+                          % (n, loop_dict[(n, i)])
                     return
 
         # Find which loops must be extended
         loopext = set()
         for n in arrDict:
             for i in arrDict[n]:
-                loopext.add(loopDict[(n, i)][0])
+                loopext.add(loop_dict[(n, i)][0])
 
         # do the extending
         for n in loopext:
@@ -151,30 +151,30 @@ class PlaceInLocal(object):
             for i in arrDict[n]:
                 glob_subs = copy.deepcopy(ks.LoopArrays[n][i])
                 # Change loop idx to local idx
-                loopname = loopDict[(n, i)][0]
+                loopname = loop_dict[(n, i)][0]
                 loc_subs = copy.deepcopy(glob_subs).subscript
                 for k, m in enumerate(loc_subs):
                     if isinstance(m, lan.Id) and \
                                     m.name not in ks.GridIndices:
                         tid = str(ks.ReverseIdx[k])
                         tidstr = 'get_local_id(' + tid + ')'
-                        exchangeId = tvisitor.ExchangeId({loopname: tidstr})
+                        exchangeId = exchange.ExchangeId({loopname: tidstr})
                         exchangeId.visit(m)
-                        exchangeId2 = tvisitor.ExchangeId({loopname: '(' + loopname + ' + ' + tidstr + ')'})
+                        exchangeId2 = exchange.ExchangeId({loopname: '(' + loopname + ' + ' + tidstr + ')'})
                         exchangeId2.visit(glob_subs.subscript[k])
                 loc_ref = lan.ArrayRef(lan.Id(loc_name), loc_subs)
 
                 loadings.append(lan.Assignment(loc_ref, glob_subs))
                 if ks.ParDim == 2:
-                    exchangeId = tvisitor.ExchangeId(
+                    exchangeId = exchange.ExchangeId(
                         {ks.GridIndices[1]: 'get_local_id(0)', ks.GridIndices[0]: 'get_local_id(1)'})
                 else:
-                    exchangeId = tvisitor.ExchangeId({ks.GridIndices[0]: 'get_local_id(0)'})
+                    exchangeId = exchange.ExchangeId({ks.GridIndices[0]: 'get_local_id(0)'})
                 exchangeId.visit(loc_ref)
 
                 inner_loc = ks.LoopArrays[n][i]
                 inner_loc.name.name = loc_name
-                exchangeId2 = tvisitor.ExchangeId({loopname: loopname * 2})
+                exchangeId2 = exchange.ExchangeId({loopname: loopname * 2})
                 exchangeId2.visit(inner_loc)
                 exchangeId.visit(inner_loc)
 
