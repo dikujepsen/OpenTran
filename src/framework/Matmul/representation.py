@@ -65,10 +65,6 @@ class Representation(lan.NodeVisitor):
     def init_original(self, ast):
         self.normalize_subcript(ast)
 
-        iiar = ca.IndicesInArrayRef()
-        iiar.collect(ast)
-        self.IndexInSubscript = iiar.indexIds
-
         num_array_dim = ca.NumArrayDim(ast)
         num_array_dim.visit(ast)
 
@@ -96,5 +92,4 @@ class Representation(lan.NodeVisitor):
         print "self.NumDims ", self.num_array_dims
         print "self.ArrayIds ", self.ArrayIds
         print "self.IndexInSubscript ", self.IndexInSubscript
-        print "self.NonArrayIds ", self.NonArrayIds
         print "self.Type ", self.Type
