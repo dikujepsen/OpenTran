@@ -1,6 +1,7 @@
 
 import collect
 import collect_array as ca
+import collect_id as ci
 
 class GenReverseIdx(object):
     def __init__(self):
@@ -65,11 +66,11 @@ class GenKernelArgs(object):
         array_ids = arrays_ids.ids
         # print self.ArrayIds
 
-        nonarray_ids = collect.GlobalNonArrayIds()
+        nonarray_ids = ci.GlobalNonArrayIds()
         nonarray_ids.visit(ast)
         non_array_ids = nonarray_ids.ids
 
-        mytype_ids = collect.GlobalTypeIds()
+        mytype_ids = ci.GlobalTypeIds()
         mytype_ids.visit(ast)
         types = mytype_ids.types
 
@@ -112,7 +113,7 @@ class GenRemovedIds(object):
 
         find_kernel = collect.FindKernel(par_dim)
         find_kernel.visit(ast)
-        ids_still_in_kernel = collect.Ids()
+        ids_still_in_kernel = ci.Ids()
         ids_still_in_kernel.visit(find_kernel.kernel)
         self.removed_ids = upper_limits - ids_still_in_kernel.ids
 

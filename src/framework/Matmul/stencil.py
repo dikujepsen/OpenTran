@@ -6,6 +6,7 @@ import collect_transformation_info as cti
 import exchange
 import collect_gen as cg
 import collect_array as ca
+import collect_id as ci
 
 
 class Stencil(object):
@@ -72,7 +73,7 @@ class Stencil(object):
         find_local.collect(ast, dev)
         self.Local = find_local.Local
 
-        mytype_ids = collect.GlobalTypeIds()
+        mytype_ids = ci.GlobalTypeIds()
         mytype_ids.visit(ast)
         self.type = mytype_ids.types
 

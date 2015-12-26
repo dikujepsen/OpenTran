@@ -2,6 +2,7 @@ import lan
 import collect
 import collect_array as ca
 import collect_array_rewrite as car
+import collect_id as ci
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -72,7 +73,7 @@ class Representation(lan.NodeVisitor):
 
         self.num_array_dims = num_array_dim.numSubscripts
 
-        mytype_ids = collect.GlobalTypeIds()
+        mytype_ids = ci.GlobalTypeIds()
         mytype_ids.visit(ast)
         # print print_dict_sorted(mytype_ids.dictIds)
         self.Type = mytype_ids.types
@@ -82,7 +83,7 @@ class Representation(lan.NodeVisitor):
         self.ArrayIds = arrays_ids.ids
         # print arrays_ids.all_a_ids
 
-        nonarray_ids = collect.GlobalNonArrayIds()
+        nonarray_ids = ci.GlobalNonArrayIds()
         nonarray_ids.visit(ast)
         self.NonArrayIds = nonarray_ids.ids
         # print nonarray_ids.ids

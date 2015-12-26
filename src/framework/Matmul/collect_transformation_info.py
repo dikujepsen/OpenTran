@@ -1,7 +1,7 @@
 import collect
 import collect_gen as cg
 import collect_array as ca
-
+import collect_id as ci
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -162,11 +162,11 @@ class FindArrayIds(RemovedLoopLimit):
         self.ArrayIds = arrays_ids.ids
         # print self.ArrayIds
 
-        nonarray_ids = collect.GlobalNonArrayIds()
+        nonarray_ids = ci.GlobalNonArrayIds()
         nonarray_ids.visit(ast)
         self.NonArrayIds = nonarray_ids.ids
 
-        mytype_ids = collect.GlobalTypeIds()
+        mytype_ids = ci.GlobalTypeIds()
         mytype_ids.visit(ast)
         # print print_dict_sorted(mytype_ids.dictIds)
         self.type = mytype_ids.types
