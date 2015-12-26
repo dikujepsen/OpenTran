@@ -1,6 +1,6 @@
-import collect_transformation_info as cti
-import collect
 
+import collect
+import collect_array as ca
 
 class GenReverseIdx(object):
     def __init__(self):
@@ -16,7 +16,7 @@ class GenHostArrayData(object):
         self.Mem = dict()
 
     def collect(self, ast):
-        arrays_ids = collect.GlobalArrayIds()
+        arrays_ids = ca.GlobalArrayIds()
         arrays_ids.visit(ast)
 
         for n in arrays_ids.ids:
@@ -30,7 +30,7 @@ class GenArrayDimNames(object):
         self.ArrayIdToDimName = dict()
 
     def collect(self, ast):
-        num_array_dim = collect.NumArrayDim(ast)
+        num_array_dim = ca.NumArrayDim(ast)
         num_array_dim.visit(ast)
         self.num_array_dims = num_array_dim.numSubscripts
 
@@ -60,7 +60,7 @@ class GenKernelArgs(object):
         self.kernel_args = dict()
 
     def collect(self, ast, par_dim=2):
-        arrays_ids = collect.GlobalArrayIds()
+        arrays_ids = ca.GlobalArrayIds()
         arrays_ids.visit(ast)
         array_ids = arrays_ids.ids
         # print self.ArrayIds

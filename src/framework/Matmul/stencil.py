@@ -5,6 +5,8 @@ import collect
 import collect_transformation_info as cti
 import exchange
 import collect_gen as cg
+import collect_array as ca
+
 
 class Stencil(object):
     def __init__(self):
@@ -54,15 +56,15 @@ class Stencil(object):
         loop_limit.visit(ast)
         self.LowerLimit = loop_limit.lower_limit
 
-        num_array_dim = collect.NumArrayDim(ast)
+        num_array_dim = ca.NumArrayDim(ast)
         num_array_dim.visit(ast)
         self.num_array_dims = num_array_dim.numSubscripts
 
-        indices_in_array_ref = collect.IndicesInArrayRef()
+        indices_in_array_ref = ca.IndicesInArrayRef()
         indices_in_array_ref.collect(ast, self.ParDim)
         self.IndexInSubscript = indices_in_array_ref.indexIds
 
-        array_name_to_ref = collect.ArrayNameToRef()
+        array_name_to_ref = ca.ArrayNameToRef()
         array_name_to_ref.visit(ast)
         self.LoopArrays = array_name_to_ref.LoopArrays
 
@@ -91,15 +93,13 @@ class Stencil(object):
         if not loadings:
             loadings = [(0, 0)]
 
-        ## finding the correct local memory size
+        # finding the correct local memory size
         arr_name = arr_names[0]
-        local_dims = [int(self.Local['size'][0]) \
-                     for i in xrange(self.num_array_dims[arr_name])]
+        local_dims = [int(self.Local['size'][0]) for _ in xrange(self.num_array_dims[arr_name])]
         if self.ParDim == 1 and len(local_dims) == 2:
-            local_dims[0] = 1;
+            local_dims[0] = 1
         arr_idx = self.IndexInSubscript[arr_name]
-        local_offset = [int(self.LowerLimit[i]) \
-                       for i in arr_idx]
+        local_offset = [int(self.LowerLimit[i]) for i in arr_idx]
 
         for (x, y) in loadings:
             local_dims[0] += abs(x)
@@ -127,13 +127,12 @@ class Stencil(object):
         stats2 = []
         load_comp = lan.GroupCompound(stats2)
 
-        ## Insert local id with offset
+        # Insert local id with offset
         for i, offset in enumerate(local_offset):
             idd = self.ReverseIdx[i] if len(local_offset) == 2 else i
             if offset != 0:
 
-                rval = lan.BinOp(lan.Id('get_local_id(' + str(idd) + ')'), '+', \
-                                 lan.Constant(offset))
+                rval = lan.BinOp(lan.Id('get_local_id(' + str(idd) + ')'), '+', lan.Constant(offset))
             else:
                 rval = lan.Id('get_local_id(' + str(idd) + ')')
             lval = lan.TypeId(['unsigned'], lan.Id('l' + self.GridIndices[i]))
@@ -141,7 +140,7 @@ class Stencil(object):
 
         exchange_indices = exchange.ExchangeIndices(self.IndexToLocalVar, self.LocalSwap.values())
 
-        ## Creating the loading of values into the local array.
+        # Creating the loading of values into the local array.
         for arr_name in arr_names:
             for k, l in enumerate(loadings):
                 array_id = lan.Id(arr_name)

@@ -1,5 +1,6 @@
 import lan
 import collect
+import collect_array as ca
 
 
 def print_dict_sorted(mydict):
@@ -62,11 +63,11 @@ class Representation(lan.NodeVisitor):
     def init_original(self, ast):
         self.normalize_subcript(ast)
 
-        iiar = collect.IndicesInArrayRef()
+        iiar = ca.IndicesInArrayRef()
         iiar.collect(ast)
         self.IndexInSubscript = iiar.indexIds
 
-        num_array_dim = collect.NumArrayDim(ast)
+        num_array_dim = ca.NumArrayDim(ast)
         num_array_dim.visit(ast)
 
         self.num_array_dims = num_array_dim.numSubscripts
@@ -76,7 +77,7 @@ class Representation(lan.NodeVisitor):
         # print print_dict_sorted(mytype_ids.dictIds)
         self.Type = mytype_ids.types
 
-        arrays_ids = collect.GlobalArrayIds()
+        arrays_ids = ca.GlobalArrayIds()
         arrays_ids.visit(ast)
         self.ArrayIds = arrays_ids.ids
         # print arrays_ids.all_a_ids

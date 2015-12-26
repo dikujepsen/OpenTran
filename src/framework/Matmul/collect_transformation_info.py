@@ -1,5 +1,6 @@
 import collect
 import collect_gen as cg
+import collect_array as ca
 
 
 def print_dict_sorted(mydict):
@@ -72,7 +73,7 @@ class FindGridIndices(FindPerfectForLoop):
         gi_to_dim.collect(ast, self.par_dim)
         self.IdxToDim = gi_to_dim.IdxToDim
 
-        find_ref_to_loop_index = collect.FindRefToLoopIndex(self.par_dim)
+        find_ref_to_loop_index = ca.FindRefToLoopIndex(self.par_dim)
         find_ref_to_loop_index.collect(ast)
         self.RefToLoop = find_ref_to_loop_index.RefToLoop
 
@@ -95,7 +96,7 @@ class FindLoops(FindPerfectForLoop):
         self.col_loop_limit = collect.LoopLimit()
         self.col_loop_limit.visit(ast)
 
-        num_array_dim = collect.NumArrayDim(ast)
+        num_array_dim = ca.NumArrayDim(ast)
         num_array_dim.visit(ast)
 
         self.num_array_dims = num_array_dim.numSubscripts
@@ -122,7 +123,7 @@ class FindSubscripts(FindLoops):
     def collect(self, ast):
         super(FindSubscripts, self).collect(ast)
 
-        arr_subs = collect.ArraySubscripts()
+        arr_subs = ca.ArraySubscripts()
         arr_subs.collect(ast)
         self.Subscript = arr_subs.Subscript
         self.SubscriptNoId = arr_subs.subscript_no_id
@@ -156,7 +157,7 @@ class FindArrayIds(RemovedLoopLimit):
     def collect(self, ast):
         super(FindArrayIds, self).collect(ast)
 
-        arrays_ids = collect.GlobalArrayIds()
+        arrays_ids = ca.GlobalArrayIds()
         arrays_ids.visit(ast)
         self.ArrayIds = arrays_ids.ids
         # print self.ArrayIds
@@ -184,7 +185,7 @@ class FindReadWrite(FindArrayIds):
 
     def collect(self, ast):
         super(FindReadWrite, self).collect(ast)
-        find_read_write = collect.FindReadWrite(self.ArrayIds)
+        find_read_write = ca.FindReadWrite(self.ArrayIds)
         find_read_write.visit(ast)
         self.ReadWrite = find_read_write.ReadWrite
 

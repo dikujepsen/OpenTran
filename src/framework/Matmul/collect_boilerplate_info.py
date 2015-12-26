@@ -1,7 +1,6 @@
 import collect_transformation_info as cti
 import collect
-
-
+import collect_array as ca
 
 
 class FindLoopArrays(object):
@@ -9,7 +8,7 @@ class FindLoopArrays(object):
         self.loop_arrays = dict()
 
     def collect(self, ast):
-        arr_to_ref = collect.ArrayNameToRef()
+        arr_to_ref = ca.ArrayNameToRef()
         arr_to_ref.visit(ast)
         self.loop_arrays = arr_to_ref.LoopArrays
 
