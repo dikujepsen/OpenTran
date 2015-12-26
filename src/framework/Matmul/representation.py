@@ -1,8 +1,9 @@
 import lan
-import collect
 import collect_array as ca
 import collect_array_rewrite as car
 import collect_id as ci
+import collect_loop as cl
+
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -46,10 +47,10 @@ class Representation(lan.NodeVisitor):
         self.Includes = list()
 
     def __detect_loop_index(self, ast):
-        col_li = collect.LoopIndices()
+        col_li = cl.LoopIndices()
         col_li.visit(ast)
         self.loop_index = col_li.index
-        ll = collect.LoopLimit()
+        ll = cl.LoopLimit()
         ll.visit(ast)
         self.UpperLimit = ll.upper_limit
         self.LowerLimit = ll.lower_limit

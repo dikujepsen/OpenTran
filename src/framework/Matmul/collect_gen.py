@@ -2,6 +2,7 @@
 import collect
 import collect_array as ca
 import collect_id as ci
+import collect_loop as cl
 
 class GenReverseIdx(object):
     def __init__(self):
@@ -48,7 +49,7 @@ class GenIdxToDim(object):
         self.IdxToDim = dict()
 
     def collect(self, ast, par_dim=2):
-        col_li = collect.LoopIndices(par_dim)
+        col_li = cl.LoopIndices(par_dim)
         col_li.visit(ast)
 
         grid_indices = col_li.grid_indices
@@ -100,12 +101,12 @@ class GenRemovedIds(object):
         self.removed_ids = set()
 
     def collect(self, ast, par_dim=2):
-        col_li = collect.LoopIndices(par_dim)
+        col_li = cl.LoopIndices(par_dim)
         col_li.visit(ast)
 
         grid_indices = col_li.grid_indices
 
-        col_loop_limit = collect.LoopLimit()
+        col_loop_limit = cl.LoopLimit()
         col_loop_limit.visit(ast)
         upper_limit = col_loop_limit.upper_limit
 
@@ -123,7 +124,7 @@ class GenLocalArrayIdx(object):
         self.IndexToLocalVar = dict()
 
     def collect(self, ast, par_dim=2):
-        col_li = collect.LoopIndices(par_dim)
+        col_li = cl.LoopIndices(par_dim)
         col_li.visit(ast)
         grid_indices = col_li.grid_indices
 
@@ -136,7 +137,7 @@ class GenIdxToThreadId(object):
         self.IndexToThreadId = dict()
 
     def collect(self, ast, par_dim=2):
-        col_li = collect.LoopIndices(par_dim)
+        col_li = cl.LoopIndices(par_dim)
         col_li.visit(ast)
 
         grid_indices = col_li.grid_indices

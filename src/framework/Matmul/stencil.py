@@ -7,6 +7,7 @@ import exchange
 import collect_gen as cg
 import collect_array as ca
 import collect_id as ci
+import collect_loop as cl
 
 
 class Stencil(object):
@@ -48,12 +49,12 @@ class Stencil(object):
         gen_local_array_idx.collect(ast, self.ParDim)
         self.IndexToLocalVar = gen_local_array_idx.IndexToLocalVar
 
-        col_li = collect.LoopIndices(self.ParDim)
+        col_li = cl.LoopIndices(self.ParDim)
         col_li.visit(ast)
         grid_indices = col_li.grid_indices
         self.GridIndices = grid_indices
 
-        loop_limit = collect.LoopLimit()
+        loop_limit = cl.LoopLimit()
         loop_limit.visit(ast)
         self.LowerLimit = loop_limit.lower_limit
 

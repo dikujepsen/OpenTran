@@ -1,6 +1,5 @@
 import lan
-import collect
-
+import collect_loop as cl
 
 def _is_binop_plus(binop):
     return binop.op == '+'
@@ -99,7 +98,7 @@ class NormArrayRef(lan.NodeVisitor):
 
     def __init__(self, ast):
         self.loop_index = list()
-        col_li = collect.LoopIndices()
+        col_li = cl.LoopIndices()
         col_li.visit(ast)
         self.loop_index = col_li.index
 

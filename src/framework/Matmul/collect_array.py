@@ -1,6 +1,7 @@
 import lan
 import collect
 import copy
+import collect_loop as cl
 
 
 class GlobalArrayIds(lan.NodeVisitor):
@@ -32,7 +33,7 @@ class IndicesInArrayRef(lan.NodeVisitor):
         self.indexIds = dict()
 
     def collect(self, ast, par_dim=2):
-        col_li = collect.LoopIndices(par_dim)
+        col_li = cl.LoopIndices(par_dim)
         col_li.visit(ast)
         self.indices = col_li.grid_indices
         self.visit(ast)
@@ -102,7 +103,7 @@ class NumArrayDim(lan.NodeVisitor):
 
     def __init__(self, ast):
         self.loop_index = list()
-        col_li = collect.LoopIndices()
+        col_li = cl.LoopIndices()
         col_li.depth_limit = 99
         col_li.visit(ast)
         self.loop_index = col_li.index
@@ -199,7 +200,7 @@ class FindRefToLoopIndex(lan.NodeVisitor):
         self.par_dim = par_dim
 
     def collect(self, ast):
-        col_li = collect.LoopIndices(self.par_dim)
+        col_li = cl.LoopIndices(self.par_dim)
         col_li.visit(ast)
         self.GridIndices = col_li.grid_indices
         self.visit(ast)

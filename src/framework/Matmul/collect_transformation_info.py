@@ -2,6 +2,8 @@ import collect
 import collect_gen as cg
 import collect_array as ca
 import collect_id as ci
+import collect_loop as cl
+
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -16,7 +18,7 @@ def print_dict_sorted(mydict):
 
 class FindPerfectForLoop(object):
     def __init__(self):
-        self.perfect_for_loop = collect.FindPerfectForLoop()
+        self.perfect_for_loop = cl.FindPerfectForLoop()
         self.ParDim = None
 
     def collect(self, ast):
@@ -64,7 +66,7 @@ class FindGridIndices(FindPerfectForLoop):
         fker.visit(ast)
         self.Kernel = fker.kernel
 
-        col_li = collect.LoopIndices(self.par_dim)
+        col_li = cl.LoopIndices(self.par_dim)
         col_li.visit(ast)
 
         self.GridIndices = col_li.grid_indices
@@ -83,17 +85,17 @@ class FindLoops(FindPerfectForLoop):
         super(FindLoops, self).__init__()
         self.ArrayIdToDimName = dict()
         self.Loops = dict()
-        self.col_loop_limit = collect.LoopLimit()
+        self.col_loop_limit = cl.LoopLimit()
         self.num_array_dims = dict()
 
     def collect(self, ast):
         super(FindLoops, self).collect(ast)
 
-        find_inner_loops = collect.FindInnerLoops(self.par_dim)
+        find_inner_loops = cl.FindInnerLoops(self.par_dim)
         find_inner_loops.collect(ast)
         self.Loops = find_inner_loops.Loops
 
-        self.col_loop_limit = collect.LoopLimit()
+        self.col_loop_limit = cl.LoopLimit()
         self.col_loop_limit.visit(ast)
 
         num_array_dim = ca.NumArrayDim(ast)
