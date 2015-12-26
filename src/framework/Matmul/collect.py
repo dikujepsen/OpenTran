@@ -81,17 +81,17 @@ class GlobalTypeIds(lan.NodeVisitor):
 
     def __init__(self):
         self.ids = set()
-        self.dictIds = dict()
+        self.types = dict()
 
     def visit_TypeId(self, node):
         name = node.name.name
         self.ids.add(name)
-        self.dictIds[name] = node.type
+        self.types[name] = node.type
 
     def visit_ArrayTypeId(self, node):
         name = node.name.name
         self.ids.add(name)
-        self.dictIds[name] = copy.deepcopy(node.type)
+        self.types[name] = copy.deepcopy(node.type)
         if len(node.type) != 2:
             # "ArrayTypeId: Need to check, type of array is ", node.type
             ## self.dictIds[name].append('*')
@@ -567,8 +567,7 @@ class GenKernelArgs(object):
 
         mytype_ids = GlobalTypeIds()
         mytype_ids.visit(ast)
-        # print print_dict_sorted(mytype_ids.dictIds)
-        types = mytype_ids.dictIds
+        types = mytype_ids.types
 
         gen_removed_ids = GenRemovedIds()
         gen_removed_ids.collect(ast, par_dim)

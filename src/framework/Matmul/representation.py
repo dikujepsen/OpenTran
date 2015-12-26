@@ -74,7 +74,7 @@ class Representation(lan.NodeVisitor):
         mytype_ids = collect.GlobalTypeIds()
         mytype_ids.visit(ast)
         # print print_dict_sorted(mytype_ids.dictIds)
-        self.Type = mytype_ids.dictIds
+        self.Type = mytype_ids.types
 
         arrays_ids = collect.GlobalArrayIds()
         arrays_ids.visit(ast)

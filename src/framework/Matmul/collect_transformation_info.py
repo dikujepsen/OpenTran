@@ -167,7 +167,7 @@ class FindArrayIds(RemovedLoopLimit):
         mytype_ids = collect.GlobalTypeIds()
         mytype_ids.visit(ast)
         # print print_dict_sorted(mytype_ids.dictIds)
-        self.type = mytype_ids.dictIds
+        self.type = mytype_ids.types
 
         gen_kernel_args = collect.GenKernelArgs()
         gen_kernel_args.collect(ast, par_dim=self.par_dim)
