@@ -126,18 +126,9 @@ class FindSubscripts(FindLoops):
         super(FindSubscripts, self).collect(ast)
 
         arr_subs = collect.ArraySubscripts()
-        arr_subs.visit(ast)
+        arr_subs.collect(ast)
         self.Subscript = arr_subs.Subscript
-
-        self.SubscriptNoId = copy.deepcopy(self.Subscript)
-        for n in self.SubscriptNoId.values():
-            for m in n:
-                for i, k in enumerate(m):
-                    if isinstance(k, lan.Id):
-                        m[i] = k.name
-                    else:
-                        m[i] = 'unknown'
-
+        self.SubscriptNoId = arr_subs.subscript_no_id
 
 class RemovedLoopLimit(FindLoops):
     def __init__(self):
@@ -152,6 +143,7 @@ class RemovedLoopLimit(FindLoops):
         fgi.collect(ast)
 
         upper_limits = set(self.upper_limit[i] for i in fgi.GridIndices)
+        # print self.upper_limit
         ids_still_in_kernel = tvisitor.Ids()
         ids_still_in_kernel.visit(fgi.Kernel)
         self.RemovedIds = upper_limits - ids_still_in_kernel.ids

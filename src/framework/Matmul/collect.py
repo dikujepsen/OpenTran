@@ -315,6 +315,20 @@ class ArraySubscripts(lan.NodeVisitor):
     def __init__(self):
         self.ids = set()
         self.Subscript = dict()
+        self.subscript_no_id = dict()
+
+    def collect(self, ast):
+        self.visit(ast)
+
+        self.subscript_no_id = copy.deepcopy(self.Subscript)
+        for n in self.subscript_no_id.values():
+            for m in n:
+                for i, k in enumerate(m):
+                    if isinstance(k, lan.Id):
+                        m[i] = k.name
+                    else:
+                        m[i] = 'unknown'
+
 
     def visit_ArrayRef(self, node):
         name = node.name.name
@@ -530,3 +544,38 @@ class FindInnerLoops(lan.NodeVisitor):
             self.Loops[name] = node
 
         self.visit(node.compound)
+
+
+# class GenKernelArgs(object):
+#     def __init__(self):
+#         self.kernel_args = dict()
+#
+#     def collect(self, ast):
+#         arrays_ids = GlobalArrayIds()
+#         arrays_ids.visit(ast)
+#         self.ArrayIds = arrays_ids.ids
+#         # print self.ArrayIds
+#
+#         nonarray_ids = GlobalNonArrayIds()
+#         nonarray_ids.visit(ast)
+#         self.NonArrayIds = nonarray_ids.ids
+#
+#         mytype_ids = GlobalTypeIds()
+#         mytype_ids.visit(ast)
+#         # print print_dict_sorted(mytype_ids.dictIds)
+#         self.type = mytype_ids.dictIds
+#
+#         arg_ids = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
+#         # print self.ArrayIdToDimName
+#         # print arg_ids, "qwe123"
+#         # print self.ArrayIdToDimName, "qwe123"
+#         # print arg_ids
+#         for n in arg_ids:
+#             tmplist = [n]
+#             try:
+#                 if self.num_array_dims[n] == 2:
+#                     tmplist.append(self.ArrayIdToDimName[n][0])
+#             except KeyError:
+#                 pass
+#             for m in tmplist:
+#                 self.kernel_args[m] = self.type[m]
