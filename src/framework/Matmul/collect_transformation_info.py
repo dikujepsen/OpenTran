@@ -83,8 +83,6 @@ class FindGridIndices(FindPerfectForLoop):
 class FindLoops(FindPerfectForLoop):
     def __init__(self):
         super(FindLoops, self).__init__()
-        self.loop_indices = visitor.LoopIndices()
-        self.forLoops = visitor.ForLoops()
         self.ArrayIdToDimName = dict()
         self.Loops = dict()
         self.col_loop_limit = collect.LoopLimit()
@@ -102,8 +100,6 @@ class FindLoops(FindPerfectForLoop):
         if first_loop.ast is not None:
             loop_indices.visit(innerbody.compound)
             self.Loops = loop_indices.Loops
-
-        self.forLoops.visit(ast)
 
         self.col_loop_limit = collect.LoopLimit()
         self.col_loop_limit.visit(ast)
@@ -127,10 +123,6 @@ class FindLoops(FindPerfectForLoop):
     @property
     def lower_limit(self):
         return self.col_loop_limit.lower_limit
-
-    @property
-    def for_loop_ast(self):
-        return self.forLoops.ast
 
 
 class FindSubscripts(FindLoops):
