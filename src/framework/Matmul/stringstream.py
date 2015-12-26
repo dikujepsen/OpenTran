@@ -1,8 +1,6 @@
 import os
 
 import lan
-import transf_repr
-import transf_visitor as tvisitor
 import cgen
 import ast_buildingblock as ast_bb
 

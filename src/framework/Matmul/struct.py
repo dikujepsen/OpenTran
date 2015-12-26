@@ -1,6 +1,5 @@
 import collect_transformation_info as cti
 import collect_boilerplate_info as cbi
-import collect
 
 class KernelChangedByTransformation(object):
     def __init__(self):
