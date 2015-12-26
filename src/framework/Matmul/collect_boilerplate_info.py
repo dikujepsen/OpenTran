@@ -34,11 +34,14 @@ class FindKernelName(cti.FindArrayIds):
     def collect(self, ast):
         super(FindKernelName, self).collect(ast)
         other_ids = self.ArrayIds.union(self.NonArrayIds)
-        find_device_args = tvisitor.FindDeviceArgs(other_ids)
+        find_device_args = collect.FindDeviceArgs(other_ids)
+
         find_device_args.visit(ast)
+
         self.DevArgList = find_device_args.arglist
-        find_function = tvisitor.FindFunction()
+        find_function = collect.FindFunction()
         find_function.visit(ast)
+
         self.DevFuncTypeId = find_function.typeid
         self.DevFuncId = self.DevFuncTypeId.name.name
         kernel_name = self.DevFuncTypeId.name.name

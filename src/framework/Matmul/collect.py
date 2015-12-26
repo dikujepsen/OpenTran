@@ -328,7 +328,6 @@ class ArraySubscripts(lan.NodeVisitor):
                     else:
                         m[i] = 'unknown'
 
-
     def visit_ArrayRef(self, node):
         name = node.name.name
         if name in self.Subscript:
@@ -622,3 +621,34 @@ class GenRemovedIds(object):
         ids_still_in_kernel.visit(find_kernel.kernel)
         self.removed_ids = upper_limits - ids_still_in_kernel.ids
 
+
+class FindDeviceArgs(lan.NodeVisitor):
+    """ Finds the argument that we transfer from the C code
+    to the device.
+    """
+
+    def __init__(self, argIds):
+        self.argIds = argIds
+        self.arglist = list()
+
+    def visit_ArgList(self, node):
+        for typeid in node.arglist:
+            if isinstance(typeid, lan.TypeId):
+                if typeid.name.name in self.argIds:
+                    self.argIds.remove(typeid.name.name)
+                    if len(typeid.type) == 2:
+                        if typeid.type[1] == '*':
+                            typeid.type.insert(0, '__global')
+                    self.arglist.append(typeid)
+
+class FindFunction(lan.NodeVisitor):
+    """ Finds the typeid of the kernel function """
+
+    def __init__(self):
+        self.typeid = None
+
+    def visit_FuncDecl(self, node):
+        self.visit_TypeId(node.typeid)
+
+    def visit_TypeId(self, node):
+        self.typeid = node
