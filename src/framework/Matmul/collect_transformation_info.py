@@ -142,11 +142,9 @@ class RemovedLoopLimit(FindLoops):
         fgi.ParDim = self.ParDim
         fgi.collect(ast)
 
-        upper_limits = set(self.upper_limit[i] for i in fgi.GridIndices)
-        # print self.upper_limit
-        ids_still_in_kernel = tvisitor.Ids()
-        ids_still_in_kernel.visit(fgi.Kernel)
-        self.RemovedIds = upper_limits - ids_still_in_kernel.ids
+        find_removed_ids = collect.GenRemovedIds()
+        find_removed_ids.collect(ast, self.par_dim)
+        self.RemovedIds = find_removed_ids.removed_ids
 
 
 class FindArrayIds(RemovedLoopLimit):

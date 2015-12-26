@@ -579,3 +579,42 @@ class FindInnerLoops(lan.NodeVisitor):
 #                 pass
 #             for m in tmplist:
 #                 self.kernel_args[m] = self.type[m]
+
+
+class Ids(lan.NodeVisitor):
+    """ Finds all unique IDs, excluding function IDs"""
+
+    def __init__(self):
+        self.ids = set()
+
+    def visit_FuncDecl(self, node):
+        if node.compound.statements:
+            self.visit(node.arglist)
+
+    def visit_Id(self, node):
+        self.ids.add(node.name)
+
+
+class GenRemovedIds(object):
+    def __init__(self):
+        self.removed_ids = set()
+
+    def collect(self, ast, par_dim=2):
+        col_li = LoopIndices(par_dim)
+        col_li.visit(ast)
+
+        grid_indices = col_li.grid_indices
+
+        col_loop_limit = LoopLimit()
+        col_loop_limit.visit(ast)
+        upper_limit = col_loop_limit.upper_limit
+
+        upper_limits = set(upper_limit[i] for i in grid_indices)
+
+        find_kernel = FindKernel(par_dim)
+        find_kernel.visit(ast)
+
+        ids_still_in_kernel = Ids()
+        ids_still_in_kernel.visit(find_kernel.kernel)
+        self.removed_ids = upper_limits - ids_still_in_kernel.ids
+
