@@ -546,39 +546,44 @@ class FindInnerLoops(lan.NodeVisitor):
         self.visit(node.compound)
 
 
-# class GenKernelArgs(object):
-#     def __init__(self):
-#         self.kernel_args = dict()
-#
-#     def collect(self, ast):
-#         arrays_ids = GlobalArrayIds()
-#         arrays_ids.visit(ast)
-#         self.ArrayIds = arrays_ids.ids
-#         # print self.ArrayIds
-#
-#         nonarray_ids = GlobalNonArrayIds()
-#         nonarray_ids.visit(ast)
-#         self.NonArrayIds = nonarray_ids.ids
-#
-#         mytype_ids = GlobalTypeIds()
-#         mytype_ids.visit(ast)
-#         # print print_dict_sorted(mytype_ids.dictIds)
-#         self.type = mytype_ids.dictIds
-#
-#         arg_ids = self.NonArrayIds.union(self.ArrayIds) - self.RemovedIds
-#         # print self.ArrayIdToDimName
-#         # print arg_ids, "qwe123"
-#         # print self.ArrayIdToDimName, "qwe123"
-#         # print arg_ids
-#         for n in arg_ids:
-#             tmplist = [n]
-#             try:
-#                 if self.num_array_dims[n] == 2:
-#                     tmplist.append(self.ArrayIdToDimName[n][0])
-#             except KeyError:
-#                 pass
-#             for m in tmplist:
-#                 self.kernel_args[m] = self.type[m]
+class GenKernelArgs(object):
+    def __init__(self):
+        self.kernel_args = dict()
+
+    def collect(self, ast, par_dim=2):
+        arrays_ids = GlobalArrayIds()
+        arrays_ids.visit(ast)
+        array_ids = arrays_ids.ids
+        # print self.ArrayIds
+
+        nonarray_ids = GlobalNonArrayIds()
+        nonarray_ids.visit(ast)
+        non_array_ids = nonarray_ids.ids
+
+        mytype_ids = GlobalTypeIds()
+        mytype_ids.visit(ast)
+        # print print_dict_sorted(mytype_ids.dictIds)
+        types = mytype_ids.dictIds
+
+        gen_removed_ids = GenRemovedIds()
+        gen_removed_ids.collect(ast, par_dim)
+        removed_ids = gen_removed_ids.removed_ids
+        arg_ids = non_array_ids.union(array_ids) - removed_ids
+
+        gen_array_dimnames = GenArrayDimNames()
+        gen_array_dimnames.collect(ast)
+        num_array_dims = gen_array_dimnames.num_array_dims
+        arrayid_to_dimname = gen_array_dimnames.ArrayIdToDimName
+
+        for n in arg_ids:
+            tmplist = [n]
+            try:
+                if num_array_dims[n] == 2:
+                    tmplist.append(arrayid_to_dimname[n][0])
+            except KeyError:
+                pass
+            for m in tmplist:
+                self.kernel_args[m] = types[m]
 
 
 class Ids(lan.NodeVisitor):
