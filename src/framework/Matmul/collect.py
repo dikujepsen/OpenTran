@@ -481,7 +481,7 @@ class FindRefToLoopIndex(lan.NodeVisitor):
     def __init__(self, par_dim=2):
         self.stack = list()
         self.RefToLoop = dict()
-        self.GridIndices = dict()
+        self.GridIndices = list()
         self.par_dim = par_dim
 
     def collect(self, ast):
@@ -489,7 +489,6 @@ class FindRefToLoopIndex(lan.NodeVisitor):
         col_li.visit(ast)
         self.GridIndices = col_li.grid_indices
         self.visit(ast)
-
 
     def visit_ForLoop(self, node):
         name = node.init.lval.name.name
@@ -506,3 +505,28 @@ class FindRefToLoopIndex(lan.NodeVisitor):
             self.RefToLoop[name].append(copy.deepcopy(self.stack))
         except KeyError:
             self.RefToLoop[name] = [copy.deepcopy(self.stack)]
+
+
+class FindInnerLoops(lan.NodeVisitor):
+    """ Finds loop indices, the start and end values of the
+        indices and creates a mapping from a loop index to
+        the ForLoop AST node that is indexes.
+    """
+
+    def __init__(self, par_dim=2):
+        self.Loops = dict()
+        self.par_dim = par_dim
+        self.GridIndices = list()
+
+    def collect(self, ast):
+        col_li = LoopIndices(self.par_dim)
+        col_li.visit(ast)
+        self.GridIndices = col_li.grid_indices
+        self.visit(ast)
+
+    def visit_ForLoop(self, node):
+        name = node.init.lval.name.name
+        if name not in self.GridIndices:
+            self.Loops[name] = node
+
+        self.visit(node.compound)

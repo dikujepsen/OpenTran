@@ -90,16 +90,10 @@ class FindLoops(FindPerfectForLoop):
 
     def collect(self, ast):
         super(FindLoops, self).collect(ast)
-        innerbody = self.perfect_for_loop.inner
-        if self.perfect_for_loop.depth == 2 and self.ParDim == 1:
-            innerbody = self.perfect_for_loop.outer
-        first_loop = tvisitor.ForLoops()
 
-        first_loop.visit(innerbody.compound)
-        loop_indices = tvisitor.LoopIndices()
-        if first_loop.ast is not None:
-            loop_indices.visit(innerbody.compound)
-            self.Loops = loop_indices.Loops
+        find_inner_loops = collect.FindInnerLoops(self.par_dim)
+        find_inner_loops.collect(ast)
+        self.Loops = find_inner_loops.Loops
 
         self.col_loop_limit = collect.LoopLimit()
         self.col_loop_limit.visit(ast)
@@ -112,9 +106,6 @@ class FindLoops(FindPerfectForLoop):
         gen_array_dim_names = collect.GenArrayDimNames()
         gen_array_dim_names.collect(ast)
         self.ArrayIdToDimName = gen_array_dim_names.ArrayIdToDimName
-        # print print_dict_sorted(gen_array_dim_names.ArrayIdToDimName)
-
-        # print self.ArrayIdToDimName
 
     @property
     def upper_limit(self):
