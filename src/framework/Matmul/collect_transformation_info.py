@@ -73,12 +73,11 @@ class FindGridIndices(FindPerfectForLoop):
 
         gi_to_dim = collect.GenIdxToDim()
         gi_to_dim.collect(ast, self.par_dim)
-
         self.IdxToDim = gi_to_dim.IdxToDim
 
-        ref_to_loop = tvisitor.RefToLoop(self.GridIndices)
-        ref_to_loop.visit(ast)
-        self.RefToLoop = ref_to_loop.RefToLoop
+        find_ref_to_loop_index = collect.FindRefToLoopIndex(self.par_dim)
+        find_ref_to_loop_index.collect(ast)
+        self.RefToLoop = find_ref_to_loop_index.RefToLoop
 
 
 class FindLoops(FindPerfectForLoop):

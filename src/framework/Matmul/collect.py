@@ -471,3 +471,38 @@ class GenIdxToDim(object):
         grid_indices = col_li.grid_indices
         for i, n in enumerate(reversed(grid_indices)):
             self.IdxToDim[i] = n
+
+
+class FindRefToLoopIndex(lan.NodeVisitor):
+    """ Create a dict from array name to list of
+    	arrayref list of loop indices that the arrayrefs are inside.
+    """
+
+    def __init__(self, par_dim=2):
+        self.stack = list()
+        self.RefToLoop = dict()
+        self.GridIndices = dict()
+        self.par_dim = par_dim
+
+    def collect(self, ast):
+        col_li = LoopIndices(self.par_dim)
+        col_li.visit(ast)
+        self.GridIndices = col_li.grid_indices
+        self.visit(ast)
+
+
+    def visit_ForLoop(self, node):
+        name = node.init.lval.name.name
+        if name not in self.GridIndices:
+            self.stack.append(name)
+        self.visit(node.init)
+        self.visit(node.compound)
+        if name not in self.GridIndices:
+            self.stack.pop()
+
+    def visit_ArrayRef(self, node):
+        name = node.name.name
+        try:
+            self.RefToLoop[name].append(copy.deepcopy(self.stack))
+        except KeyError:
+            self.RefToLoop[name] = [copy.deepcopy(self.stack)]
