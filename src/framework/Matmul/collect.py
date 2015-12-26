@@ -1,6 +1,5 @@
 import lan
 import copy
-import visitor
 
 
 class GlobalArrayIds(lan.NodeVisitor):
@@ -114,9 +113,9 @@ class LoopIndices(lan.NodeVisitor):
         self.depth = 0
 
     def visit_ForLoop(self, node):
-        id_init = visitor.Ids()
+        id_init = Ids()
         id_init.visit(node.init)
-        id_inc = visitor.Ids()
+        id_inc = Ids()
         id_inc.visit(node.inc)
         self.index.extend(id_init.ids.intersection(id_inc.ids))
         self.depth += 1
@@ -139,7 +138,7 @@ class LoopLimit(lan.NodeVisitor):
         self.lower_limit = dict()
 
     def visit_ForLoop(self, node):
-        IdVis = visitor.Ids()
+        IdVis = Ids()
         IdVis.visit(node.init)
         ids = list(IdVis.ids)
 

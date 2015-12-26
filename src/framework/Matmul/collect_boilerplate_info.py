@@ -2,6 +2,7 @@ import collect_transformation_info as cti
 import transf_visitor as tvisitor
 import collect
 
+
 class GenReverseIdx(object):
     def __init__(self):
         self.ReverseIdx = dict()
@@ -14,7 +15,6 @@ class FindLoopArrays(object):
         self.loop_arrays = dict()
 
     def collect(self, ast):
-
         arr_to_ref = collect.ArrayNameToRef()
         arr_to_ref.visit(ast)
         self.loop_arrays = arr_to_ref.LoopArrays
