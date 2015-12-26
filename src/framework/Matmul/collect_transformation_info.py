@@ -1,8 +1,4 @@
-import transf_visitor as tvisitor
-import visitor
-import copy
 import collect
-import lan
 
 
 def print_dict_sorted(mydict):
@@ -129,6 +125,7 @@ class FindSubscripts(FindLoops):
         arr_subs.collect(ast)
         self.Subscript = arr_subs.Subscript
         self.SubscriptNoId = arr_subs.subscript_no_id
+
 
 class RemovedLoopLimit(FindLoops):
     def __init__(self):
