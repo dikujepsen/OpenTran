@@ -257,7 +257,6 @@ class IndicesInArrayRef(lan.NodeVisitor):
         self.indices = col_li.grid_indices
         self.visit(ast)
 
-
     def visit_ArrayRef(self, node):
         name = node.name.name
         ari = ArrayRefIndices(self.indices)
@@ -646,6 +645,7 @@ class FindDeviceArgs(lan.NodeVisitor):
                             typeid.type.insert(0, '__global')
                     self.arglist.append(typeid)
 
+
 class FindFunction(lan.NodeVisitor):
     """ Finds the typeid of the kernel function """
 
@@ -670,3 +670,16 @@ class GenLocalArrayIdx(object):
 
         for var in grid_indices:
             self.IndexToLocalVar[var] = 'l' + var
+
+
+class GenIdxToThreadId(object):
+    def __init__(self):
+        self.IndexToThreadId = dict()
+
+    def collect(self, ast, par_dim=2):
+        col_li = LoopIndices(par_dim)
+        col_li.visit(ast)
+
+        grid_indices = col_li.grid_indices
+        for i, n in enumerate(reversed(grid_indices)):
+            self.IndexToThreadId[n] = 'get_global_id(' + str(i) + ')'
