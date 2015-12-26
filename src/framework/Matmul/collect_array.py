@@ -39,7 +39,7 @@ class IndicesInArrayRef(lan.NodeVisitor):
 
     def visit_ArrayRef(self, node):
         name = node.name.name
-        ari = collect.ArrayRefIndices(self.indices)
+        ari = _ArrayRefIndices(self.indices)
         for n in node.subscript:
             ari.visit(n)
             self.tmp = self.tmp.union(ari.loop_indices)
@@ -115,7 +115,7 @@ class NumArrayDim(lan.NodeVisitor):
     def visit_ArrayRef(self, node):
         name = node.name.name
         if name in self.ArrayIds:
-            binop_di = collect.ArrayRefIndices(self.loop_index)
+            binop_di = _ArrayRefIndices(self.loop_index)
 
             if len(node.subscript) == 1:
                 for n in node.subscript:
@@ -166,6 +166,25 @@ class _FindReadPattern(lan.NodeVisitor):
             find_read_pattern = _FindReadPattern(self.ArrayIds, self.ReadWrite, False)
             for n in node.subscript:
                 find_read_pattern.visit(n)
+
+
+class _ArrayRefIndices(lan.NodeVisitor):
+    def __init__(self, indices):
+        self.indices = indices
+        self.tmp = set()
+
+    @property
+    def loop_indices(self):
+        return self.tmp
+
+    @property
+    def num_dims(self):
+        return len(self.tmp)
+
+    def visit_Id(self, node):
+        name = node.name
+        if name in self.indices:
+            self.tmp.add(name)
 
 
 class FindRefToLoopIndex(lan.NodeVisitor):

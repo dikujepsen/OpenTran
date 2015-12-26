@@ -1,7 +1,7 @@
 import lan
 import collect
 import collect_array as ca
-
+import collect_array_rewrite as car
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -56,7 +56,7 @@ class Representation(lan.NodeVisitor):
     def normalize_subcript(self, ast):
         self.__detect_loop_index(ast)
 
-        naref = collect.NormArrayRef(ast)
+        naref = car.NormArrayRef(ast)
 
         naref.visit(ast)
 
