@@ -50,17 +50,14 @@ class Stencil(object):
         grid_indices = col_li.grid_indices
         self.GridIndices = grid_indices
 
-
-
         loops = visitor.ForLoops()
         loops.visit(ast)
         for_loop_ast = loops.ast
         loop_indices = visitor.LoopIndices()
         loop_indices.visit(for_loop_ast)
-        self.loop_index = loop_indices.index
         self.LowerLimit = loop_indices.start
 
-        arrays = visitor.Arrays(self.loop_index)
+        arrays = visitor.Arrays(loop_indices.index)
         arrays.visit(ast)
 
         for n in arrays.numIndices:
