@@ -1,6 +1,4 @@
 import lan
-import transf_visitor as tvisitor
-import visitor
 import collect_transformation_info as cti
 
 

@@ -1,8 +1,9 @@
 import copy
+
+import Matmul.ast_buildingblock as ast_bb
+import Matmul.transf_visitor as tvisitor
 import Matmul.visitor
 import lan
-import Matmul.transf_visitor as tvisitor
-import Matmul.ast_buildingblock as ast_bb
 
 
 class MyError(Exception):

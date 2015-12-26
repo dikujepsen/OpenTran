@@ -1,8 +1,9 @@
-import lan
-import visitor
-import transf_visitor as tvisitor
 import copy
 import ast_buildingblock as ast_bb
+import lan
+import transf_visitor as tvisitor
+from Matmul import visitor
+import collect
 
 
 class Stencil(object):
@@ -29,7 +30,6 @@ class Stencil(object):
         self.Kernel = None
         self.LoopArrays = dict()
 
-
     def set_datastructures(self, ast, dev='CPU'):
         perfect_for_loop = tvisitor.PerfectForLoop()
         perfect_for_loop.visit(ast)
@@ -37,25 +37,20 @@ class Stencil(object):
         if self.ParDim is None:
             self.ParDim = perfect_for_loop.depth
 
-        grid_ids = list()
-        init_ids = tvisitor.InitIds()
-        init_ids.visit(perfect_for_loop.ast.init)
-        local_var_map = dict()
-        first_idx = init_ids.index[0]
-        local_var_map[first_idx] = 'l' + first_idx
-        kernel = perfect_for_loop.ast.compound
-        grid_ids.extend(init_ids.index)
-        if self.ParDim == 2:
-            init_ids = tvisitor.InitIds()
-            init_ids.visit(kernel.statements[0].init)
-            grid_ids.extend(init_ids.index)
-            second_idx = init_ids.index[0]
-            local_var_map[second_idx] = 'l' + second_idx
-            kernel = kernel.statements[0].compound
+        find_kernel = collect.FindKernel(self.ParDim)
+        find_kernel.visit(ast)
+        self.Kernel = find_kernel.kernel
 
-        self.Kernel = kernel
-        self.IndexToLocalVar = local_var_map
-        self.GridIndices = grid_ids
+        gen_local_array_idx = collect.GenLocalArrayIdx()
+        gen_local_array_idx.collect(ast, self.ParDim)
+        self.IndexToLocalVar = gen_local_array_idx.IndexToLocalVar
+
+        col_li = collect.LoopIndices(self.ParDim)
+        col_li.visit(ast)
+        grid_indices = col_li.grid_indices
+        self.GridIndices = grid_indices
+
+
 
         loops = visitor.ForLoops()
         loops.visit(ast)

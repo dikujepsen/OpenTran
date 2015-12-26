@@ -616,7 +616,6 @@ class GenRemovedIds(object):
 
         find_kernel = FindKernel(par_dim)
         find_kernel.visit(ast)
-
         ids_still_in_kernel = Ids()
         ids_still_in_kernel.visit(find_kernel.kernel)
         self.removed_ids = upper_limits - ids_still_in_kernel.ids
@@ -652,3 +651,16 @@ class FindFunction(lan.NodeVisitor):
 
     def visit_TypeId(self, node):
         self.typeid = node
+
+
+class GenLocalArrayIdx(object):
+    def __init__(self):
+        self.IndexToLocalVar = dict()
+
+    def collect(self, ast, par_dim=2):
+        col_li = LoopIndices(par_dim)
+        col_li.visit(ast)
+        grid_indices = col_li.grid_indices
+
+        for var in grid_indices:
+            self.IndexToLocalVar[var] = 'l' + var

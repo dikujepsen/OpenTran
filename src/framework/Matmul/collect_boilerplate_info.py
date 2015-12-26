@@ -1,5 +1,4 @@
 import collect_transformation_info as cti
-import transf_visitor as tvisitor
 import collect
 
 

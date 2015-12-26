@@ -1,5 +1,5 @@
 from Matmul.transf_visitor import *
-import visitor
+
 
 class TransfRepr(NodeVisitor):
     """ Class for rewriting of the original AST. Includes:

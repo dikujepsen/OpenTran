@@ -1,6 +1,5 @@
 import lan
 import copy
-import visitor
 import transf_visitor as tvisitor
 import ast_buildingblock as ast_bb
 import collect_transformation_info as cti

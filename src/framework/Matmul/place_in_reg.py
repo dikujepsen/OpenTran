@@ -1,5 +1,3 @@
-import visitor
-import transf_visitor as tvisitor
 import copy
 import lan
 from itertools import chain

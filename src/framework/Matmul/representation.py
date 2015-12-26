@@ -1,6 +1,5 @@
-import visitor
+import lan
 import collect
-import copy
 
 
 def print_dict_sorted(mydict):
@@ -14,7 +13,7 @@ def print_dict_sorted(mydict):
     return "{" + entries[:-1] + "}"
 
 
-class Representation(visitor.NodeVisitor):
+class Representation(lan.NodeVisitor):
     """ Class for rewriting of the original AST. Includes:
     1. the initial small rewritings,
     2. transformation into our representation,
