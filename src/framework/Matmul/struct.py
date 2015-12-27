@@ -83,10 +83,8 @@ class BoilerPlateChangedByTransformation(object):
         self.NoReadBack = True
 
 
-class BoilerPlateStruct(BoilerPlateChangedByTransformation):
+class BoilerPlateStruct(object):
     def __init__(self):
-        super(BoilerPlateStruct, self).__init__()
-
         self.NonArrayIds = set()
         self.KernelName = None
         self.DevId = dict()

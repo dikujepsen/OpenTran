@@ -41,8 +41,6 @@ class Boilerplate(object):
 
         self.bps_static = struct.BoilerPlateStruct()
         self.bps_static.set_datastructure(ast, self.ks.ParDim)
-        # print self.bps.DevId
-        # print self.bps_static.DevId
 
 
     def generate_code(self):

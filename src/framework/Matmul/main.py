@@ -106,8 +106,7 @@ def __optimize(rw, ast, name, par_dim=None):
     if par_dim is not None:
         ks.ParDim = par_dim
     ks.set_datastructure(rw, tempast)
-    bps = struct.BoilerPlateStruct()
-    bps.set_datastructure(tempast, par_dim)
+    bps = struct.BoilerPlateChangedByTransformation()
     if DoOptimizations:
         __main_transpose(ks, bps, tempast3, par_dim=ks.ParDim)
         # an.Transpose()
@@ -144,8 +143,8 @@ def jacobi():
 
     ks = struct.KernelStruct()
     ks.set_datastructure(rw, tempast3)
-    bps = struct.BoilerPlateStruct()
-    bps.set_datastructure(tempast)
+    bps = struct.BoilerPlateChangedByTransformation()
+
     if DoOptimizations:
         __main_transpose(ks, bps, tempast3)
         __main_definearg(ks, bps, tempast3)
