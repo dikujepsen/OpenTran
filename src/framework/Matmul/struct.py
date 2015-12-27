@@ -27,9 +27,7 @@ class KernelStruct(KernelChangedByTransformation):
     def __init__(self):
         super(KernelStruct, self).__init__()
         # Heller ikke aendret af nogen transformation, ved ikke hvorfor de ikke staar nederst
-        self.ArrayIds = set()
         self.Includes = list()
-        self.SubSwap = dict()
         self.ParDim = None
 
         # bruges kun til at interchange subscript i transpose
@@ -56,12 +54,10 @@ class KernelStruct(KernelChangedByTransformation):
         fla.ParDim = self.ParDim
         fla.collect(ast)
 
-        self.ArrayIds = fai.ArrayIds
         self.Includes = rw.Includes
         self.ParDim = fpl.par_dim
 
         self.Loops = fai.Loops
-
         self.Subscript = fs.Subscript
 
         # Stencil

@@ -11,7 +11,6 @@ class PlaceInReg(object):
         self.ParDim = None  # int
         self.WriteOnly = list()
         self.ReadWrite = dict()
-        self.ArrayIds = set()
         self.SubscriptNoId = dict()
         self.UpperLimit = dict()
         self.LowerLimit = dict()
@@ -38,7 +37,6 @@ class PlaceInReg(object):
         self.Loops = fs.Loops
         self.GridIndices = fpl.GridIndices
         self.RefToLoop = fpl.RefToLoop
-        self.ArrayIds = fai.ArrayIds
         self.ReadWrite = fai.ReadWrite
         self.WriteOnly = fai.WriteOnly
         self.SubscriptNoId = fs.SubscriptNoId

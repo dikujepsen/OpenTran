@@ -13,6 +13,7 @@ class Boilerplate(object):
         self.Local = list()
         self.GridIndices = list()
         self.UpperLimit = dict()
+        self.ArrayIds = set()
 
     def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt, ast):
         self.ks = kernelstruct
@@ -34,7 +35,7 @@ class Boilerplate(object):
         fai.collect(ast)
 
         self.UpperLimit = fai.upper_limit
-
+        self.ArrayIds = fai.ArrayIds
 
 
     def generate_code(self):
@@ -54,13 +55,12 @@ class Boilerplate(object):
 
         listDevBuffers = []
 
-        for n in self.ks.ArrayIds:
+        for n in self.ArrayIds:
             try:
                 name = self.bps.DevId[n]
                 listDevBuffers.append(lan.TypeId(['cl_mem'], lan.Id(name)))
             except KeyError:
                 pass
-
 
         dictNToDevPtr = self.bps.DevId
         listDevBuffers = lan.GroupCompound(listDevBuffers)
@@ -94,7 +94,7 @@ class Boilerplate(object):
             sizeName = self.bps.Mem[n]
             listMemSize.append(lan.TypeId(['size_t'], lan.Id(sizeName)))
 
-        for n in self.ks.ArrayIds:
+        for n in self.ArrayIds:
             for dimName in self.ks.ArrayIdToDimName[n]:
                 listDimSize.append( \
                     lan.TypeId(['size_t'], lan.Id(dimName)))
@@ -129,7 +129,7 @@ class Boilerplate(object):
         fileAST.ext.append(allocateBuffer)
 
         listSetMemSize = []
-        for entry in self.ks.ArrayIds:
+        for entry in self.ArrayIds:
             n = self.ks.ArrayIdToDimName[entry]
             lval = lan.Id(self.bps.Mem[entry])
             rval = lan.BinOp(lan.Id(n[0]), '*', lan.Id('sizeof(' + \
@@ -326,7 +326,7 @@ class Boilerplate(object):
         fileAST.ext.append(runOCL)
         runOCLBody = runOCL.compound.statements
 
-        argIds = self.bps.NonArrayIds.union(self.ks.ArrayIds)  #
+        argIds = self.bps.NonArrayIds.union(self.ArrayIds)  #
 
         typeIdList = []
         ifThenList = []
