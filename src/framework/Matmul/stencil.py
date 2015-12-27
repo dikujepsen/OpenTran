@@ -117,13 +117,16 @@ class Stencil(object):
                 if i == 0 and len(local_dims) == 2:
                     arrayinit += '*'
             arrayinit += ']'
+            array_init = lan.Constant(local_dims[0])
+            if len(local_dims) == 2:
+                array_init = [lan.BinOp(lan.Constant(local_dims[0]), '*', lan.Constant(local_dims[1]))]
 
-            local_id = lan.Id(local_name + arrayinit)
-            local_type_id = lan.TypeId(['__local'] + [self.type[arr_name][0]], local_id)
+            local_array_type_id = lan.ArrayTypeId(['__local'] + [self.type[arr_name][0]], lan.Id(local_name),
+                                                  array_init)
             self.num_array_dims[local_name] = self.num_array_dims[arr_name]
             self.LocalSwap[arr_name] = local_name
             self.ArrayIdToDimName[local_name] = [self.Local['size'][0], self.Local['size'][0]]
-            stats.append(local_type_id)
+            stats.append(local_array_type_id)
 
         init_comp = lan.GroupCompound(stats)
         stats2 = []

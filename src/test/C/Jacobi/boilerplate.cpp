@@ -32,7 +32,7 @@ std::string JacobiBase()
   str << "__kernel void JacobiFor(" << endl;
   str << "	__global float * B, __global float * X2, __global float * X1" << endl;
   str << "	) {" << endl;
-  str << "  __local float X1_local[6*6];" << endl;
+  str << "  __local float X1_local[6 * 6];" << endl;
   str << "  unsigned li = get_local_id(1) + 1;" << endl;
   str << "  unsigned lj = get_local_id(0) + 1;" << endl;
   str << "  X1_local[((li - 1) * 4) + lj] = X1[((get_global_id(1) - 1) * hst_ptrX1_dim1) + get_global_id(0)];" << endl;

@@ -4,6 +4,8 @@ import stringstream
 import exchange
 import collect_device as cd
 import collect_gen as cg
+import collect_transformation_info as cti
+import collect_array as ca
 
 
 class SnippetGen(object):
@@ -12,6 +14,7 @@ class SnippetGen(object):
         self.KernelStringStream = list()
         self.IndexToThreadId = dict()
         self.DevFuncTypeId = None
+        self.ArrayIds = set()
 
     def set_datastructure(self,
                           kernel_struct,
@@ -28,6 +31,10 @@ class SnippetGen(object):
         find_function.visit(ast)
         self.DevFuncTypeId = find_function.typeid
 
+        arrays_ids = ca.GlobalArrayIds()
+        arrays_ids.visit(ast)
+        self.ArrayIds = arrays_ids.ids
+
     def in_source_kernel(self, ast, cond, filename, kernelstringname):
         self.rewrite_to_device_c_release(ast)
 
@@ -42,7 +49,7 @@ class SnippetGen(object):
         arglist = list()
         # The list of arguments for the kernel
         dict_type_host_ptrs = copy.deepcopy(self.KernelStruct.Type)
-        for n in self.KernelStruct.ArrayIds:
+        for n in self.ArrayIds:
             dict_type_host_ptrs[self.KernelStruct.ArrayIdToDimName[n][0]] = ['size_t']
 
         for n in self.KernelStruct.KernelArgs:
