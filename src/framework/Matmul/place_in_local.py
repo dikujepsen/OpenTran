@@ -49,7 +49,7 @@ class PlaceInLocal(object):
 
     def place_in_local(self):
         """ Find all array references that can be optimized
-        	through the use of shared memory.
+            through the use of shared memory.
             Then rewrite the code in this fashion.
         """
 
@@ -68,12 +68,12 @@ class PlaceInLocal(object):
             self.PlaceInLocalArgs.append(args)
 
         for m in loopindex:
-            cond = lan.BinOp(lan.BinOp(lan.BinOp(lan.Id(self.UpperLimit[m]), '-', \
-                                                 lan.Id(self.LowerLimit[m])), '%', \
+            cond = lan.BinOp(lan.BinOp(lan.BinOp(lan.Id(self.UpperLimit[m]), '-',
+                                                 lan.Id(self.LowerLimit[m])), '%',
                                        lan.Constant(self.Local['size'][0])), '==', lan.Constant(0))
             self.PlaceInLocalCond = cond
 
-    def local_memory3(self, ks, arrDict, loop_dict=None, blockDict=None):
+    def local_memory3(self, ks, arr_dict, loop_dict=None):
         initstats = []
         init_comp = lan.GroupCompound(initstats)
         ks.Kernel.statements.insert(0, init_comp)
@@ -81,12 +81,12 @@ class PlaceInLocal(object):
         if loop_dict is None:
             loop_dict = dict()
             # So we create it
-            for n in arrDict:
-                for i in arrDict[n]:
+            for n in arr_dict:
+                for i in arr_dict[n]:
                     loop_dict[(n, i)] = []
 
-            for n in arrDict:
-                for i in arrDict[n]:
+            for n in arr_dict:
+                for i in arr_dict[n]:
                     subscript = ks.SubscriptNoId[n][i]
                     acc = []
                     for m in subscript:
@@ -99,8 +99,8 @@ class PlaceInLocal(object):
 
         # Check that all ArrayRefs are blocked using only one loop
         # otherwise we do not know what to do
-        for n in arrDict:
-            for i in arrDict[n]:
+        for n in arr_dict:
+            for i in arr_dict[n]:
                 if len(loop_dict[(n, i)]) > 1:
                     print "Array %r is being blocked by %r. Returning..." \
                           % (n, loop_dict[(n, i)])
@@ -108,8 +108,8 @@ class PlaceInLocal(object):
 
         # Find which loops must be extended
         loopext = set()
-        for n in arrDict:
-            for i in arrDict[n]:
+        for n in arr_dict:
+            for i in arr_dict[n]:
                 loopext.add(loop_dict[(n, i)][0])
 
         # do the extending
@@ -137,7 +137,7 @@ class PlaceInLocal(object):
             innerloop.init = ast_bb.ConstantAssignment(inneridx)
             ks.Loops[inneridx] = innerloop
 
-        for n in arrDict:
+        for n in arr_dict:
             # Add array allocations
 
             localName = n + '_local'
@@ -152,9 +152,9 @@ class PlaceInLocal(object):
             initstats.append(localTypeId)
 
         loadings = []
-        for n in arrDict:
+        for n in arr_dict:
             loc_name = n + '_local'
-            for i in arrDict[n]:
+            for i in arr_dict[n]:
                 glob_subs = copy.deepcopy(ks.LoopArrays[n][i])
                 # Change loop idx to local idx
                 loopname = loop_dict[(n, i)][0]
@@ -164,25 +164,25 @@ class PlaceInLocal(object):
                                     m.name not in ks.GridIndices:
                         tid = str(self.ReverseIdx[k])
                         tidstr = 'get_local_id(' + tid + ')'
-                        exchangeId = exchange.ExchangeId({loopname: tidstr})
-                        exchangeId.visit(m)
-                        exchangeId2 = exchange.ExchangeId({loopname: '(' + loopname + ' + ' + tidstr + ')'})
-                        exchangeId2.visit(glob_subs.subscript[k])
+                        exchange_id = exchange.ExchangeId({loopname: tidstr})
+                        exchange_id.visit(m)
+                        exchange_id2 = exchange.ExchangeId({loopname: '(' + loopname + ' + ' + tidstr + ')'})
+                        exchange_id2.visit(glob_subs.subscript[k])
                 loc_ref = lan.ArrayRef(lan.Id(loc_name), loc_subs)
 
                 loadings.append(lan.Assignment(loc_ref, glob_subs))
                 if ks.ParDim == 2:
-                    exchangeId = exchange.ExchangeId(
+                    exchange_id = exchange.ExchangeId(
                         {ks.GridIndices[1]: 'get_local_id(0)', ks.GridIndices[0]: 'get_local_id(1)'})
                 else:
-                    exchangeId = exchange.ExchangeId({ks.GridIndices[0]: 'get_local_id(0)'})
-                exchangeId.visit(loc_ref)
+                    exchange_id = exchange.ExchangeId({ks.GridIndices[0]: 'get_local_id(0)'})
+                exchange_id.visit(loc_ref)
 
                 inner_loc = ks.LoopArrays[n][i]
                 inner_loc.name.name = loc_name
-                exchangeId2 = exchange.ExchangeId({loopname: loopname * 2})
-                exchangeId2.visit(inner_loc)
-                exchangeId.visit(inner_loc)
+                exchange_id2 = exchange.ExchangeId({loopname: loopname * 2})
+                exchange_id2.visit(inner_loc)
+                exchange_id.visit(inner_loc)
 
             ks.ArrayIdToDimName[loc_name] = ks.Local['size']
             ks.num_array_dims[loc_name] = ks.num_array_dims[n]
