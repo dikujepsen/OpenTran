@@ -154,11 +154,9 @@ class FindArrayIds(RemovedLoopLimit):
         self.ArrayIds = set()
         self.NonArrayIds = set()
         self.type = set()
-        self.kernel_args = dict()
 
     def collect(self, ast):
         super(FindArrayIds, self).collect(ast)
-
         arrays_ids = ca.GlobalArrayIds()
         arrays_ids.visit(ast)
         self.ArrayIds = arrays_ids.ids
@@ -173,12 +171,20 @@ class FindArrayIds(RemovedLoopLimit):
         # print print_dict_sorted(mytype_ids.dictIds)
         self.type = mytype_ids.types
 
+
+class FindArrayIdsKernel(FindArrayIds):
+    def __init__(self):
+        super(FindArrayIdsKernel, self).__init__()
+        self.kernel_args = dict()
+
+    def collect(self, ast):
+        super(FindArrayIdsKernel, self).collect(ast)
         gen_kernel_args = cg.GenKernelArgs()
         gen_kernel_args.collect(ast, par_dim=self.par_dim)
         self.kernel_args = gen_kernel_args.kernel_args
 
 
-class FindReadWrite(FindArrayIds):
+class FindReadWrite(FindArrayIdsKernel):
     def __init__(self):
         super(FindReadWrite, self).__init__()
         self.ReadWrite = dict()

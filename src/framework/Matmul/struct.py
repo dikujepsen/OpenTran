@@ -47,7 +47,7 @@ class KernelStruct(KernelChangedByTransformation):
         fpl.collect(ast)
         self.ParDim = fpl.par_dim
 
-        fai = cti.FindArrayIds()
+        fai = cti.FindArrayIdsKernel()
         fai.ParDim = self.ParDim
         fai.collect(ast)
 

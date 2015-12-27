@@ -15,6 +15,7 @@ class SnippetGen(object):
         self.IndexToThreadId = dict()
         self.DevFuncTypeId = None
         self.ArrayIds = set()
+        self.types = dict()
 
     def set_datastructure(self,
                           kernel_struct,
@@ -31,9 +32,11 @@ class SnippetGen(object):
         find_function.visit(ast)
         self.DevFuncTypeId = find_function.typeid
 
-        arrays_ids = ca.GlobalArrayIds()
-        arrays_ids.visit(ast)
-        self.ArrayIds = arrays_ids.ids
+        fai = cti.FindArrayIds()
+        fai.ParDim = par_dim
+        fai.collect(ast)
+        self.ArrayIds = fai.ArrayIds
+        self.types = fai.type
 
     def in_source_kernel(self, ast, cond, filename, kernelstringname):
         self.rewrite_to_device_c_release(ast)
@@ -46,12 +49,12 @@ class SnippetGen(object):
                                         'cond': cond})
 
     def rewrite_to_device_c_release(self, ast):
-        arglist = list()
         # The list of arguments for the kernel
-        dict_type_host_ptrs = copy.deepcopy(self.KernelStruct.Type)
+        dict_type_host_ptrs = copy.deepcopy(self.types)
         for n in self.ArrayIds:
             dict_type_host_ptrs[self.KernelStruct.ArrayIdToDimName[n][0]] = ['size_t']
 
+        arglist = list()
         for n in self.KernelStruct.KernelArgs:
             kernel_type = copy.deepcopy(self.KernelStruct.KernelArgs[n])
             if kernel_type[0] == 'size_t':

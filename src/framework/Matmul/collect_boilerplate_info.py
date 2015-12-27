@@ -13,7 +13,7 @@ class FindLoopArrays(object):
         self.loop_arrays = arr_to_ref.LoopArrays
 
 
-class FindKernelName(cti.FindArrayIds):
+class FindKernelName(cti.FindArrayIdsKernel):
     def __init__(self):
         super(FindKernelName, self).__init__()
         self.KernelName = None

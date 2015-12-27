@@ -19,7 +19,7 @@ class DefineArguments(object):
         fpl.ParDim = self.ParDim
         fpl.collect(ast)
 
-        fai = cti.FindArrayIds()
+        fai = cti.FindArrayIdsKernel()
         fai.ParDim = self.ParDim
         fai.collect(ast)
 
