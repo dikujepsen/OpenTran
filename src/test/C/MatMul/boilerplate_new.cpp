@@ -106,16 +106,16 @@ void AllocateBuffers()
 	hst_ptrA, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrA");
-  dev_ptrC = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrC_mem_size, 
-	NULL, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrC");
   dev_ptrB = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrB_mem_size, 
 	hst_ptrB, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrB");
+  dev_ptrC = clCreateBuffer(
+	context, CL_MEM_WRITE_ONLY, hst_ptrC_mem_size, 
+	NULL, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrC");
 }
 
 void SetArgumentsMatMulFor()

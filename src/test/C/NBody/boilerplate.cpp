@@ -120,6 +120,11 @@ void AllocateBuffers()
   
   cl_int oclErrNum = CL_SUCCESS;
   
+  dev_ptrForces = clCreateBuffer(
+	context, CL_MEM_WRITE_ONLY, hst_ptrForces_mem_size, 
+	NULL, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrForces");
   dev_ptrMas = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrMas_mem_size, 
 	hst_ptrMas, &oclErrNum);
@@ -130,11 +135,6 @@ void AllocateBuffers()
 	hst_ptrPos, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrPos");
-  dev_ptrForces = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrForces_mem_size, 
-	NULL, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrForces");
 }
 
 void SetArgumentsNBodyFor()

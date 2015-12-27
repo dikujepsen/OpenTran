@@ -109,21 +109,21 @@ void AllocateBuffers()
   
   cl_int oclErrNum = CL_SUCCESS;
   
-  dev_ptrtrain_patterns = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrtrain_patterns_mem_size, 
-	hst_ptrtrain_patterns, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrtrain_patterns");
-  dev_ptrtest_patterns = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrtest_patterns_mem_size, 
-	hst_ptrtest_patterns_trans, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrtest_patterns");
   dev_ptrdist_matrix = clCreateBuffer(
 	context, CL_MEM_WRITE_ONLY, hst_ptrdist_matrix_mem_size, 
 	NULL, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrdist_matrix");
+  dev_ptrtest_patterns = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrtest_patterns_mem_size, 
+	hst_ptrtest_patterns_trans, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrtest_patterns");
+  dev_ptrtrain_patterns = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrtrain_patterns_mem_size, 
+	hst_ptrtrain_patterns, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrtrain_patterns");
 }
 
 void SetArgumentsKNearestFor()

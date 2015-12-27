@@ -2,7 +2,8 @@ import lan
 import copy
 import ast_buildingblock as ast_bb
 import collect_transformation_info as cti
-
+import struct
+import collect_boilerplate_info as cbi
 
 class Boilerplate(object):
     def __init__(self):
@@ -10,6 +11,7 @@ class Boilerplate(object):
         self.bps = None
         self.kgen_strt = None
 
+        self.bps_static = None
         self.Local = dict()
         self.GridIndices = list()
         self.UpperLimit = dict()
@@ -37,18 +39,24 @@ class Boilerplate(object):
         self.UpperLimit = fai.upper_limit
         self.ArrayIds = fai.ArrayIds
 
+        self.bps_static = struct.BoilerPlateStruct()
+        self.bps_static.set_datastructure(ast, self.ks.ParDim)
+        # print self.bps.DevId
+        # print self.bps_static.DevId
+
+
     def generate_code(self):
 
         dict_n_to_dim_names = self.ks.ArrayIdToDimName
 
-        non_array_ids = copy.deepcopy(self.bps.NonArrayIds)
+        non_array_ids = copy.deepcopy(self.bps_static.NonArrayIds)
 
         file_ast = lan.FileAST([])
 
         file_ast.ext.append(lan.Id('#include \"../../../utils/StartUtil.cpp\"'))
         file_ast.ext.append(lan.Id('using namespace std;'))
 
-        kernel_id = lan.Id(self.bps.KernelName)
+        kernel_id = lan.Id(self.bps_static.KernelName)
         kernel_type_id = lan.TypeId(['cl_kernel'], kernel_id, 0)
         file_ast.ext.append(kernel_type_id)
 
@@ -56,7 +64,7 @@ class Boilerplate(object):
 
         for n in self.ArrayIds:
             try:
-                name = self.bps.DevId[n]
+                name = self.bps_static.DevId[n]
                 list_dev_buffers.append(lan.TypeId(['cl_mem'], lan.Id(name)))
             except KeyError:
                 pass
@@ -149,7 +157,7 @@ class Boilerplate(object):
         cl_suc = lan.Assignment(lval, rval)
         allocate_buffer.compound.statements.extend([lan.GroupCompound([cl_suc])])
 
-        for n in dict_n_to_dev_ptr:
+        for n in sorted(dict_n_to_dev_ptr):
             lval = lan.Id(dict_n_to_dev_ptr[n])
             arrayn = dict_n_to_hst_ptr[n]
             try:

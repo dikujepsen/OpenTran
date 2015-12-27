@@ -257,46 +257,46 @@ void AllocateBuffers()
 	hst_ptrD1Ks__ijb_dimsI, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrD1Ks__ijb_dimsI");
-  dev_ptrq_a_i_x = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrq_a_i_x_mem_size, 
-	hst_ptrq_a_i_x_trans, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrq_a_i_x");
-  dev_ptrD3Ks__ijbgd_x = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrD3Ks__ijbgd_x_mem_size, 
-	NULL, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrD3Ks__ijbgd_x");
-  dev_ptrD2Ks__ijbg_dimsI = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrD2Ks__ijbg_dimsI_mem_size, 
-	hst_ptrD2Ks__ijbg_dimsI, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrD2Ks__ijbg_dimsI");
-  dev_ptrD3Ks__ijbgd_dimsI = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrD3Ks__ijbgd_dimsI_mem_size, 
-	hst_ptrD3Ks__ijbgd_dimsI, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrD3Ks__ijbgd_dimsI");
-  dev_ptrp_a_i_x = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrp_a_i_x_mem_size, 
-	hst_ptrp_a_i_x, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrp_a_i_x");
   dev_ptrD1Ks__ijb_x = clCreateBuffer(
 	context, CL_MEM_WRITE_ONLY, hst_ptrD1Ks__ijb_x_mem_size, 
 	NULL, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrD1Ks__ijb_x");
-  dev_ptrK__ij_x = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrK__ij_x_mem_size, 
-	NULL, &oclErrNum);
+  dev_ptrD2Ks__ijbg_dimsI = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrD2Ks__ijbg_dimsI_mem_size, 
+	hst_ptrD2Ks__ijbg_dimsI, &oclErrNum);
   oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrK__ij_x");
+	oclErrNum, "clCreateBuffer dev_ptrD2Ks__ijbg_dimsI");
   dev_ptrD2Ks__ijbg_x = clCreateBuffer(
 	context, CL_MEM_WRITE_ONLY, hst_ptrD2Ks__ijbg_x_mem_size, 
 	NULL, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrD2Ks__ijbg_x");
+  dev_ptrD3Ks__ijbgd_dimsI = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrD3Ks__ijbgd_dimsI_mem_size, 
+	hst_ptrD3Ks__ijbgd_dimsI, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrD3Ks__ijbgd_dimsI");
+  dev_ptrD3Ks__ijbgd_x = clCreateBuffer(
+	context, CL_MEM_WRITE_ONLY, hst_ptrD3Ks__ijbgd_x_mem_size, 
+	NULL, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrD3Ks__ijbgd_x");
+  dev_ptrK__ij_x = clCreateBuffer(
+	context, CL_MEM_WRITE_ONLY, hst_ptrK__ij_x_mem_size, 
+	NULL, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrK__ij_x");
+  dev_ptrp_a_i_x = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrp_a_i_x_mem_size, 
+	hst_ptrp_a_i_x, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrp_a_i_x");
+  dev_ptrq_a_i_x = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrq_a_i_x_mem_size, 
+	hst_ptrq_a_i_x_trans, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrq_a_i_x");
 }
 
 void SetArgumentsGaussianDerivatesFor()

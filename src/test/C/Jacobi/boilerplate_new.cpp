@@ -71,21 +71,21 @@ void AllocateBuffers()
   
   cl_int oclErrNum = CL_SUCCESS;
   
-  dev_ptrX2 = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrX2_mem_size, 
-	NULL, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrX2");
-  dev_ptrX1 = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrX1_mem_size, 
-	hst_ptrX1, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrX1");
   dev_ptrB = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrB_mem_size, 
 	hst_ptrB, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrB");
+  dev_ptrX1 = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrX1_mem_size, 
+	hst_ptrX1, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrX1");
+  dev_ptrX2 = clCreateBuffer(
+	context, CL_MEM_WRITE_ONLY, hst_ptrX2_mem_size, 
+	NULL, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrX2");
 }
 
 void SetArgumentsJacobiFor()

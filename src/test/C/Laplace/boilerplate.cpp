@@ -193,46 +193,46 @@ void AllocateBuffers()
   
   cl_int oclErrNum = CL_SUCCESS;
   
-  dev_ptrindex = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrindex_mem_size, 
-	hst_ptrindex_trans, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrindex");
-  dev_ptrlevel_int = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlevel_int_mem_size, 
-	hst_ptrlevel_int_trans, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrlevel_int");
-  dev_ptrlevel = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlevel_mem_size, 
-	hst_ptrlevel_trans, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrlevel");
-  dev_ptrlcl_q = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlcl_q_mem_size, 
-	hst_ptrlcl_q, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrlcl_q");
-  dev_ptrresult = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrresult_mem_size, 
-	NULL, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrresult");
-  dev_ptrlcl_q_inv = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlcl_q_inv_mem_size, 
-	hst_ptrlcl_q_inv, &oclErrNum);
-  oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrlcl_q_inv");
   dev_ptralpha = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptralpha_mem_size, 
 	hst_ptralpha, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptralpha");
+  dev_ptrindex = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrindex_mem_size, 
+	hst_ptrindex_trans, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrindex");
   dev_ptrlambda = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlambda_mem_size, 
 	hst_ptrlambda, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrlambda");
+  dev_ptrlcl_q = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlcl_q_mem_size, 
+	hst_ptrlcl_q, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrlcl_q");
+  dev_ptrlcl_q_inv = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlcl_q_inv_mem_size, 
+	hst_ptrlcl_q_inv, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrlcl_q_inv");
+  dev_ptrlevel = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlevel_mem_size, 
+	hst_ptrlevel_trans, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrlevel");
+  dev_ptrlevel_int = clCreateBuffer(
+	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlevel_int_mem_size, 
+	hst_ptrlevel_int_trans, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrlevel_int");
+  dev_ptrresult = clCreateBuffer(
+	context, CL_MEM_WRITE_ONLY, hst_ptrresult_mem_size, 
+	NULL, &oclErrNum);
+  oclCheckErr(
+	oclErrNum, "clCreateBuffer dev_ptrresult");
 }
 
 void SetArgumentsLaplaceFor()

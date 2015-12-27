@@ -1,5 +1,5 @@
 import lan
-
+import copy
 
 class FindKernel(lan.NodeVisitor):
     """ Performs simple checks to decide if we have 1D or 2D
@@ -32,7 +32,8 @@ class FindDeviceArgs(lan.NodeVisitor):
         self.arglist = list()
 
     def visit_ArgList(self, node):
-        for typeid in node.arglist:
+        for typeid_orig in node.arglist:
+            typeid = copy.deepcopy(typeid_orig)
             if isinstance(typeid, lan.TypeId):
                 if typeid.name.name in self.argIds:
                     self.argIds.remove(typeid.name.name)
