@@ -97,8 +97,8 @@ class ExchangeArrayId(lan.NodeVisitor):
     what is given in idMap)
     """
 
-    def __init__(self, idMap):
-        self.idMap = idMap
+    def __init__(self, id_map):
+        self.id_map = id_map
 
     def visit_ArrayRef(self, node):
         try:
@@ -108,7 +108,7 @@ class ExchangeArrayId(lan.NodeVisitor):
             pass
 
         try:
-            node.name.name = self.idMap[node.name.name]
+            node.name.name = self.id_map[node.name.name]
         except KeyError:
             pass
 
@@ -127,12 +127,7 @@ class RewriteArrayRef(lan.NodeVisitor):
         n = node.name.name
         try:
             if self.num_array_dims[n] == 2 and len(node.subscript) == 2:
-                try:
-                    if self.SubSwap[n]:
-                        (node.subscript[0], node.subscript[1]) = \
-                            (node.subscript[1], node.subscript[0])
-                except KeyError:
-                    pass
+
                 leftbinop = lan.BinOp(node.subscript[0], '*', lan.Id(self.ArrayIdToDimName[n][0]))
                 # Id on first dimension
 
