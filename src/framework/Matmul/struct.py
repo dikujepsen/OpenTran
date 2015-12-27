@@ -34,7 +34,6 @@ class KernelStruct(KernelChangedByTransformation):
         # Ikke aendret af nogen transformation
         self.Loops = dict()
         self.UpperLimit = dict()
-        self.SubscriptNoId = dict()
 
         # bruges kun til at interchange subscript i transpose
         self.Subscript = dict()
@@ -68,7 +67,6 @@ class KernelStruct(KernelChangedByTransformation):
         self.UpperLimit = fai.upper_limit
 
         self.Subscript = fs.Subscript
-        self.SubscriptNoId = fs.SubscriptNoId
 
         # Stencil
         self.ArrayIdToDimName = fai.ArrayIdToDimName  #

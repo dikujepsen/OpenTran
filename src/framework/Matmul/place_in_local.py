@@ -87,7 +87,7 @@ class PlaceInLocal(object):
 
             for n in arr_dict:
                 for i in arr_dict[n]:
-                    subscript = ks.SubscriptNoId[n][i]
+                    subscript = self.SubscriptNoId[n][i]
                     acc = []
                     for m in subscript:
                         try:
