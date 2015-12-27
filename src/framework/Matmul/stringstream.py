@@ -78,7 +78,7 @@ class SSGenerator(object):
     def simple_node(self, n):
         """ Returns True for nodes that are "simple"
         """
-        return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef))
+        return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef, lan.FuncDecl))
     
     def parenthesize_if(self, n, condition):
         """ Visits 'n' and returns its string representation, parenthesized
@@ -102,8 +102,11 @@ class SSGenerator(object):
         if node is None:
             return ''
         else:
-            return ''.join(self.visit(c[1]) if len(c) == 2 \
-                           else self.visit(c) for c in node.children())
+            try:
+                return ''.join(self.visit(c[1]) if len(c) == 2
+                               else self.visit(c) for c in node.children())
+            except AttributeError:
+                print node
 
     
     def visit_FileAST(self, n):
@@ -252,33 +255,41 @@ class SSGenerator(object):
         return s
 
     def visit_BinOp(self, n):
-        lval = self.parenthesize_if(n.lval,self.simple_node)
-        rval = self.parenthesize_if(n.rval,self.simple_node)
+        lval = self.parenthesize_if(n.lval, self.simple_node)
+        rval = self.parenthesize_if(n.rval, self.simple_node)
         return lval + ' ' + n.op + ' ' + rval
 
     def visit_FuncDecl(self, n):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
-            start = n.__class__.__name__ +  start
+            newline = n.__class__.__name__ + newline
+            start = n.__class__.__name__ + start
             
         self.inside_ArgList = True
         typeid = self.visit(n.typeid)
-        
+
+
+
         arglist = self.visit(n.arglist)
 
         self.inside_ArgList = False
         if self.inside_Assignment:
             compound = ''
-            end = ''
+
         elif n.compound.statements:
             typeid = start + typeid
             arglist += ' {' + newline
             compound = self.visit(n.compound) + start + '}' + newline
         else:
             compound = self.semi
-        retval = typeid + arglist + compound  
+
+        # print n
+        # print "type ", typeid
+        # print "arglist ", arglist
+        # print "compound ", compound
+        retval = typeid + arglist + compound
+        # print "RETVAL ", retval
         return retval
 
     def visit_ForLoop(self, n):

@@ -11,11 +11,14 @@ class Node(object):
         """ Pretty print the Node and all its attributes and
             children (recursively) to a buffer.
             
-            buf:   
+            :param buf:
                 Open IO buffer into which the Node is printed.
             
-            offset: 
+            :param offset:
                 Initial offset (amount of leading spaces)
+
+            :param _my_node_name:
+                name of node
         """
 
         lead = ' ' * offset

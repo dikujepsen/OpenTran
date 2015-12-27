@@ -78,6 +78,7 @@ class GenKernelArgs(object):
         gen_removed_ids = GenRemovedIds()
         gen_removed_ids.collect(ast, par_dim)
         removed_ids = gen_removed_ids.removed_ids
+
         arg_ids = non_array_ids.union(array_ids) - removed_ids
 
         gen_array_dimnames = GenArrayDimNames()
@@ -85,6 +86,7 @@ class GenKernelArgs(object):
         num_array_dims = gen_array_dimnames.num_array_dims
         arrayid_to_dimname = gen_array_dimnames.ArrayIdToDimName
 
+        # print arg_ids
         for n in arg_ids:
             tmplist = [n]
             try:

@@ -32,7 +32,7 @@ class SnippetGen(object):
         find_function.visit(ast)
         self.DevFuncTypeId = find_function.typeid
 
-        fai = cti.FindArrayIds()
+        fai = cti.FindArrayIdsKernel()
         fai.ParDim = par_dim
         fai.collect(ast)
         self.ArrayIds = fai.ArrayIds

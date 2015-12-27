@@ -1,6 +1,8 @@
 import lan
 import copy
 
+opencl_builtins = ['CLK_LOCAL_MEM_FENCE']
+
 
 class Ids(lan.NodeVisitor):
     """ Finds all unique IDs, excluding function IDs"""
@@ -57,7 +59,8 @@ class _NonArrayIdsInLoop(lan.NodeVisitor):
 
     def visit_Id(self, node):
         name = node.name
-        self.all_na_ids.add(name)
+        if name not in opencl_builtins:
+            self.all_na_ids.add(name)
 
     @property
     def ids(self):

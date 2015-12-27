@@ -135,11 +135,15 @@ class Stencil(object):
         # Insert local id with offset
         for i, offset in enumerate(local_offset):
             idd = self.ReverseIdx[i] if len(local_offset) == 2 else i
+
+            get_local_func_decl = ast_bb.FuncCall('get_local_id', [lan.Constant(idd)])
+
             if offset != 0:
 
-                rval = lan.BinOp(lan.Id('get_local_id(' + str(idd) + ')'), '+', lan.Constant(offset))
+                rval = lan.BinOp(get_local_func_decl, '+', lan.Constant(offset))
             else:
-                rval = lan.Id('get_local_id(' + str(idd) + ')')
+                rval = lan.Id(get_local_func_decl)
+
             lval = lan.TypeId(['unsigned'], lan.Id('l' + self.GridIndices[i]))
             stats.append(lan.Assignment(lval, rval))
 
@@ -166,6 +170,7 @@ class Stencil(object):
 
         # Must also create the barrier
         arglist = lan.ArgList([lan.Id('CLK_LOCAL_MEM_FENCE')])
+
         func = ast_bb.EmptyFuncDecl('barrier', type=[])
         func.arglist = arglist
         stats2.append(func)

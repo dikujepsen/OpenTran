@@ -42,7 +42,7 @@ std::string NBodyBase()
   str << "      float r_x = b_x - a_x;" << endl;
   str << "      float r_y = b_y - a_y;" << endl;
   str << "      float d = (r_x * r_x) + (r_y * r_y);" << endl;
-  str << "      float deno = (sqrt((d * d) * d)) + (get_global_id(0) == j);" << endl;
+  str << "      float deno = sqrt((d * d) * d) + (get_global_id(0) == j);" << endl;
   str << "      deno = ((a_m * b_m) / deno) * (get_global_id(0) != j);" << endl;
   str << "      f_x += deno * r_x;" << endl;
   str << "      f_y += deno * r_y;" << endl;
@@ -76,7 +76,7 @@ std::string NBodyPlaceInReg()
   str << "      float r_x = b_x - a_x;" << endl;
   str << "      float r_y = b_y - a_y;" << endl;
   str << "      float d = (r_x * r_x) + (r_y * r_y);" << endl;
-  str << "      float deno = (sqrt((d * d) * d)) + (get_global_id(0) == j);" << endl;
+  str << "      float deno = sqrt((d * d) * d) + (get_global_id(0) == j);" << endl;
   str << "      deno = ((a_m * b_m) / deno) * (get_global_id(0) != j);" << endl;
   str << "      f_x += deno * r_x;" << endl;
   str << "      f_y += deno * r_y;" << endl;
