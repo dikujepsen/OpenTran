@@ -259,9 +259,9 @@ def __main_stencil(ks, bps, tempast3):
 
 
 if __name__ == "__main__":
-    # matmul()
-    # knearest()
+    matmul()
+    knearest()
     jacobi()
-    # nbody()
-    # laplace()
-    # gaussian()
+    nbody()
+    laplace()
+    gaussian()
