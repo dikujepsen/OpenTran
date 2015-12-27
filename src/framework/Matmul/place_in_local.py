@@ -3,6 +3,8 @@ import copy
 import ast_buildingblock as ast_bb
 import collect_transformation_info as cti
 import exchange
+import collect_gen as cg
+
 
 class PlaceInLocal(object):
     def __init__(self):
@@ -18,6 +20,7 @@ class PlaceInLocal(object):
         self.Local = dict()
         self.Local['name'] = 'LSIZE'
         self.Local['size'] = ['64']
+        self.ReverseIdx = dict()
 
     def set_datastructures(self, ast, dev='CPU'):
 
@@ -39,6 +42,9 @@ class PlaceInLocal(object):
         fl.ParDim = self.ParDim
         fl.collect(ast)
         self.Local = fl.Local
+
+        gen_reverse_idx = cg.GenReverseIdx()
+        self.ReverseIdx = gen_reverse_idx.ReverseIdx
 
 
     def place_in_local(self):
@@ -156,7 +162,7 @@ class PlaceInLocal(object):
                 for k, m in enumerate(loc_subs):
                     if isinstance(m, lan.Id) and \
                                     m.name not in ks.GridIndices:
-                        tid = str(ks.ReverseIdx[k])
+                        tid = str(self.ReverseIdx[k])
                         tidstr = 'get_local_id(' + tid + ')'
                         exchangeId = exchange.ExchangeId({loopname: tidstr})
                         exchangeId.visit(m)

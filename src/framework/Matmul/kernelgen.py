@@ -35,6 +35,7 @@ class KernelGen(object):
         ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                             kernelstringname=funcname)
         pir = pireg.PlaceInReg()
+        pir.set_datastructures(ast)
         for (arg, insideloop) in self.ks.PlaceInRegArgs:
             funcname = name + 'PlaceInReg'
             pir.placeInReg3(self.ks, arg, list(insideloop))
@@ -42,6 +43,7 @@ class KernelGen(object):
                                 kernelstringname=funcname)
 
         pil = piloc.PlaceInLocal()
+        pil.set_datastructures(ast)
         for arg in self.ks.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
 

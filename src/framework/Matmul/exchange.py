@@ -118,10 +118,9 @@ class RewriteArrayRef(lan.NodeVisitor):
     A[i * JDIMSIZE + j]
     """
 
-    def __init__(self, num_array_dims, arrayid_to_dim_name, sub_swap):
+    def __init__(self, num_array_dims, arrayid_to_dim_name):
         self.ArrayIdToDimName = arrayid_to_dim_name
         self.num_array_dims = num_array_dims
-        self.SubSwap = sub_swap
 
     def visit_ArrayRef(self, node):
         n = node.name.name

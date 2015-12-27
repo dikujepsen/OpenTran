@@ -37,11 +37,9 @@ class KernelStruct(KernelChangedByTransformation):
         self.SubscriptNoId = dict()
         self.GridIndices = list()
         self.Local = dict()
-        self.ReverseIdx = dict()
 
         # bruges kun til at interchange subscript i transpose
         self.Subscript = dict()
-
 
     def set_datastructure(self, rw, ast):
         fpl = cti.FindGridIndices()
@@ -60,8 +58,6 @@ class KernelStruct(KernelChangedByTransformation):
         fl.ParDim = self.ParDim
         fl.collect(ast)
 
-        gr = cg.GenReverseIdx()
-
         fla = cbi.FindLoopArrays()
         fla.ParDim = self.ParDim
         fla.collect(ast)
@@ -77,7 +73,6 @@ class KernelStruct(KernelChangedByTransformation):
         self.SubscriptNoId = fs.SubscriptNoId
         self.GridIndices = fpl.GridIndices
         self.Local = fl.Local
-        self.ReverseIdx = gr.ReverseIdx
 
         # Stencil
         self.ArrayIdToDimName = fai.ArrayIdToDimName  #
