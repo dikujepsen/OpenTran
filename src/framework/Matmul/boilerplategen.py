@@ -10,7 +10,7 @@ class Boilerplate(object):
         self.bps = None
         self.kgen_strt = None
 
-        self.Local = list()
+        self.Local = dict()
         self.GridIndices = list()
         self.UpperLimit = dict()
         self.ArrayIds = set()
@@ -37,70 +37,68 @@ class Boilerplate(object):
         self.UpperLimit = fai.upper_limit
         self.ArrayIds = fai.ArrayIds
 
-
     def generate_code(self):
 
-        dictNToDimNames = self.ks.ArrayIdToDimName
+        dict_n_to_dim_names = self.ks.ArrayIdToDimName
 
-        NonArrayIds = copy.deepcopy(self.bps.NonArrayIds)
+        non_array_ids = copy.deepcopy(self.bps.NonArrayIds)
 
-        fileAST = lan.FileAST([])
+        file_ast = lan.FileAST([])
 
-        fileAST.ext.append(lan.Id('#include \"../../../utils/StartUtil.cpp\"'))
-        fileAST.ext.append(lan.Id('using namespace std;'))
+        file_ast.ext.append(lan.Id('#include \"../../../utils/StartUtil.cpp\"'))
+        file_ast.ext.append(lan.Id('using namespace std;'))
 
-        kernelId = lan.Id(self.bps.KernelName)
-        kernelTypeid = lan.TypeId(['cl_kernel'], kernelId, 0)
-        fileAST.ext.append(kernelTypeid)
+        kernel_id = lan.Id(self.bps.KernelName)
+        kernel_type_id = lan.TypeId(['cl_kernel'], kernel_id, 0)
+        file_ast.ext.append(kernel_type_id)
 
-        listDevBuffers = []
+        list_dev_buffers = []
 
         for n in self.ArrayIds:
             try:
                 name = self.bps.DevId[n]
-                listDevBuffers.append(lan.TypeId(['cl_mem'], lan.Id(name)))
+                list_dev_buffers.append(lan.TypeId(['cl_mem'], lan.Id(name)))
             except KeyError:
                 pass
 
-        dictNToDevPtr = self.bps.DevId
-        listDevBuffers = lan.GroupCompound(listDevBuffers)
+        dict_n_to_dev_ptr = self.bps.DevId
+        list_dev_buffers = lan.GroupCompound(list_dev_buffers)
 
-        fileAST.ext.append(listDevBuffers)
+        file_ast.ext.append(list_dev_buffers)
 
-        listHostPtrs = []
+        list_host_ptrs = []
         for n in self.bps.DevArgList:
             name = n.name.name
-            type = self.ks.Type[name]
+            arg_type = self.ks.Type[name]
             try:
                 name = self.bps.HstId[name]
             except KeyError:
                 pass
-            listHostPtrs.append(lan.TypeId(type, lan.Id(name), 0))
+            list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))
 
         for n in self.bps.GlobalVars:
-            type = self.ks.Type[n]
+            arg_type = self.ks.Type[n]
             name = self.bps.HstId[n]
-            listHostPtrs.append(lan.TypeId(type, lan.Id(name), 0))
+            list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))
 
-        dictNToHstPtr = self.bps.HstId
-        dictTypeHostPtrs = copy.deepcopy(self.ks.Type)
-        listHostPtrs = lan.GroupCompound(listHostPtrs)
-        fileAST.ext.append(listHostPtrs)
+        dict_n_to_hst_ptr = self.bps.HstId
+        dict_type_host_ptrs = copy.deepcopy(self.ks.Type)
+        list_host_ptrs = lan.GroupCompound(list_host_ptrs)
+        file_ast.ext.append(list_host_ptrs)
 
-        listMemSize = []
-        listDimSize = []
-        dictNToSize = self.bps.Mem
+        list_mem_size = []
+        list_dim_size = []
+        dict_n_to_size = self.bps.Mem
         for n in self.bps.Mem:
-            sizeName = self.bps.Mem[n]
-            listMemSize.append(lan.TypeId(['size_t'], lan.Id(sizeName)))
+            size_name = self.bps.Mem[n]
+            list_mem_size.append(lan.TypeId(['size_t'], lan.Id(size_name)))
 
         for n in self.ArrayIds:
             for dimName in self.ks.ArrayIdToDimName[n]:
-                listDimSize.append( \
-                    lan.TypeId(['size_t'], lan.Id(dimName)))
+                list_dim_size.append(lan.TypeId(['size_t'], lan.Id(dimName)))
 
-        fileAST.ext.append(lan.GroupCompound(listMemSize))
-        fileAST.ext.append(lan.GroupCompound(listDimSize))
+        file_ast.ext.append(lan.GroupCompound(list_mem_size))
+        file_ast.ext.append(lan.GroupCompound(list_dim_size))
         misc = []
         lval = lan.TypeId(['size_t'], lan.Id('isFirstTime'))
         rval = lan.Constant(1)
@@ -113,136 +111,129 @@ class Boilerplate(object):
         lval = lan.TypeId(['Stopwatch'], lan.Id('timer'))
         misc.append(lval)
 
-        fileAST.ext.append(lan.GroupCompound(misc))
+        file_ast.ext.append(lan.GroupCompound(misc))
 
         # Generate the GetKernelCode function
         for optim in self.kgen_strt.KernelStringStream:
-            fileAST.ext.append(optim['ast'])
+            file_ast.ext.append(optim['ast'])
 
-        getKernelCode = ast_bb.EmptyFuncDecl('GetKernelCode', type=['std::string'])
-        getKernelStats = []
-        getKernelCode.compound.statements = getKernelStats
-        getKernelStats.append(self.kgen_strt.IfThenElse)
-        fileAST.ext.append(getKernelCode)
+        get_kernel_code = ast_bb.EmptyFuncDecl('GetKernelCode', type=['std::string'])
+        get_kernel_stats = []
+        get_kernel_code.compound.statements = get_kernel_stats
+        get_kernel_stats.append(self.kgen_strt.IfThenElse)
+        file_ast.ext.append(get_kernel_code)
 
-        allocateBuffer = ast_bb.EmptyFuncDecl('AllocateBuffers')
-        fileAST.ext.append(allocateBuffer)
+        allocate_buffer = ast_bb.EmptyFuncDecl('AllocateBuffers')
+        file_ast.ext.append(allocate_buffer)
 
-        listSetMemSize = []
+        list_set_mem_size = []
         for entry in self.ArrayIds:
             n = self.ks.ArrayIdToDimName[entry]
             lval = lan.Id(self.bps.Mem[entry])
-            rval = lan.BinOp(lan.Id(n[0]), '*', lan.Id('sizeof(' + \
-                                                       self.ks.Type[entry][0] + ')'))
+            rval = lan.BinOp(lan.Id(n[0]), '*', lan.Id('sizeof(' + self.ks.Type[entry][0] + ')'))
             if len(n) == 2:
                 rval = lan.BinOp(lan.Id(n[1]), '*', rval)
-            listSetMemSize.append(lan.Assignment(lval, rval))
+            list_set_mem_size.append(lan.Assignment(lval, rval))
 
-        allocateBuffer.compound.statements.append( \
-            lan.GroupCompound(listSetMemSize))
+        allocate_buffer.compound.statements.append(lan.GroupCompound(list_set_mem_size))
 
-        allocateBuffer.compound.statements.append( \
-            self.bps.Transposition)
+        allocate_buffer.compound.statements.append(self.bps.Transposition)
 
-        allocateBuffer.compound.statements.append( \
-            lan.GroupCompound([lan.Comment('// Constant Memory')]))
+        allocate_buffer.compound.statements.append(lan.GroupCompound([lan.Comment('// Constant Memory')]))
 
-        allocateBuffer.compound.statements.append( \
-            self.bps.define_compound)
+        allocate_buffer.compound.statements.append(self.bps.define_compound)
 
-        ErrName = 'oclErrNum'
-        lval = lan.TypeId(['cl_int'], lan.Id(ErrName))
+        err_name = 'oclErrNum'
+        lval = lan.TypeId(['cl_int'], lan.Id(err_name))
         rval = lan.Id('CL_SUCCESS')
-        clSuc = lan.Assignment(lval, rval)
-        allocateBuffer.compound.statements.extend( \
-            [lan.GroupCompound([clSuc])])
+        cl_suc = lan.Assignment(lval, rval)
+        allocate_buffer.compound.statements.extend([lan.GroupCompound([cl_suc])])
 
-        for n in dictNToDevPtr:
-            lval = lan.Id(dictNToDevPtr[n])
-            op = '='
-            arrayn = dictNToHstPtr[n]
+        for n in dict_n_to_dev_ptr:
+            lval = lan.Id(dict_n_to_dev_ptr[n])
+            arrayn = dict_n_to_hst_ptr[n]
             try:
                 arrayn = self.bps.NameSwap[arrayn]
             except KeyError:
                 pass
             if n in self.bps.WriteOnly:
                 flag = lan.Id('CL_MEM_WRITE_ONLY')
-                arraynId = lan.Id('NULL')
+                arrayn_id = lan.Id('NULL')
             elif n in self.bps.ReadOnly:
                 flag = lan.Id('CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY')
-                arraynId = lan.Id(arrayn)
+                arrayn_id = lan.Id(arrayn)
             else:
                 flag = lan.Id('CL_MEM_USE_HOST_PTR')
-                arraynId = lan.Id(arrayn)
+                arrayn_id = lan.Id(arrayn)
 
-            arglist = lan.ArgList([lan.Id('context'), \
-                                   flag, \
-                                   lan.Id(dictNToSize[n]), \
-                                   arraynId, \
-                                   lan.Id('&' + ErrName)])
+            arglist = lan.ArgList([lan.Id('context'),
+                                   flag,
+                                   lan.Id(dict_n_to_size[n]),
+                                   arrayn_id,
+                                   lan.Id('&' + err_name)])
             rval = lan.FuncDecl(lan.Id('clCreateBuffer'), arglist, lan.Compound([]))
-            allocateBuffer.compound.statements.append( \
-                lan.Assignment(lval, rval))
-            arglist = lan.ArgList([lan.Id(ErrName), lan.Constant("clCreateBuffer " + lval.name)])
-            ErrCheck = lan.FuncDecl(lan.Id('oclCheckErr'), arglist, lan.Compound([]))
-            allocateBuffer.compound.statements.append(ErrCheck)
+            allocate_buffer.compound.statements.append(lan.Assignment(lval, rval))
 
-        setArgumentsKernel = ast_bb.EmptyFuncDecl('SetArguments' + self.bps.DevFuncId)
-        fileAST.ext.append(setArgumentsKernel)
-        ArgBody = setArgumentsKernel.compound.statements
-        ArgBody.append(clSuc)
-        cntName = lan.Id('counter')
-        lval = lan.TypeId(['int'], cntName)
+            arglist = lan.ArgList([lan.Id(err_name), lan.Constant("clCreateBuffer " + lval.name)])
+            err_check = lan.FuncDecl(lan.Id('oclCheckErr'), arglist, lan.Compound([]))
+            allocate_buffer.compound.statements.append(err_check)
+
+        set_arguments_kernel = ast_bb.EmptyFuncDecl('SetArguments' + self.bps.DevFuncId)
+        file_ast.ext.append(set_arguments_kernel)
+        arg_body = set_arguments_kernel.compound.statements
+        arg_body.append(cl_suc)
+        cnt_name = lan.Id('counter')
+        lval = lan.TypeId(['int'], cnt_name)
         rval = lan.Constant(0)
-        ArgBody.append(lan.Assignment(lval, rval))
+        arg_body.append(lan.Assignment(lval, rval))
 
-        for n in dictNToDimNames:
-            ## add dim arguments to set of ids
-            NonArrayIds.add(dictNToDimNames[n][0])
+        for n in dict_n_to_dim_names:
+            # add dim arguments to set of ids
+            non_array_ids.add(dict_n_to_dim_names[n][0])
             # Add types of dimensions for size arguments
-            dictTypeHostPtrs[dictNToDimNames[n][0]] = ['size_t']
+            dict_type_host_ptrs[dict_n_to_dim_names[n][0]] = ['size_t']
 
         for n in self.bps.RemovedIds:
-            dictTypeHostPtrs.pop(n, None)
+            dict_type_host_ptrs.pop(n, None)
 
-        ## clSetKernelArg for Arrays
+        # clSetKernelArg for Arrays
         for n in self.ks.KernelArgs:
-            lval = lan.Id(ErrName)
+            lval = lan.Id(err_name)
             op = '|='
-            type = self.ks.Type[n]
-            if len(type) == 2:
-                arglist = lan.ArgList([kernelId, \
-                                       lan.Increment(cntName, '++'), \
-                                       lan.Id('sizeof(cl_mem)'), \
-                                       lan.Id('(void *) &' + dictNToDevPtr[n])])
+            arg_type = self.ks.Type[n]
+            if len(arg_type) == 2:
+                arglist = lan.ArgList([kernel_id,
+                                       lan.Increment(cnt_name, '++'),
+                                       lan.Id('sizeof(cl_mem)'),
+                                       lan.Id('(void *) &' + dict_n_to_dev_ptr[n])])
                 rval = lan.FuncDecl(lan.Id('clSetKernelArg'), arglist, lan.Compound([]))
             else:
                 try:
                     n = self.bps.NameSwap[n]
                 except KeyError:
                     pass
-                cl_type = type[0]
+                cl_type = arg_type[0]
                 if cl_type == 'size_t':
                     cl_type = 'unsigned'
-                arglist = lan.ArgList([kernelId, \
-                                       lan.Increment(cntName, '++'), \
-                                       lan.Id('sizeof(' + cl_type + ')'), \
+                arglist = lan.ArgList([kernel_id,
+                                       lan.Increment(cnt_name, '++'),
+                                       lan.Id('sizeof(' + cl_type + ')'),
                                        lan.Id('(void *) &' + n)])
                 rval = lan.FuncDecl(lan.Id('clSetKernelArg'), arglist, lan.Compound([]))
-            ArgBody.append(lan.Assignment(lval, rval, op))
+            arg_body.append(lan.Assignment(lval, rval, op))
 
-        arglist = lan.ArgList([lan.Id(ErrName), lan.Constant('clSetKernelArg')])
-        ErrId = lan.Id('oclCheckErr')
-        ErrCheck = lan.FuncDecl(ErrId, arglist, lan.Compound([]))
-        ArgBody.append(ErrCheck)
+        arglist = lan.ArgList([lan.Id(err_name), lan.Constant('clSetKernelArg')])
+        err_id = lan.Id('oclCheckErr')
+        err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
+        arg_body.append(err_check)
 
-        execKernel = ast_bb.EmptyFuncDecl('Exec' + self.bps.DevFuncTypeId.name.name)
-        fileAST.ext.append(execKernel)
-        execBody = execKernel.compound.statements
-        execBody.append(clSuc)
-        eventName = lan.Id('GPUExecution')
-        event = lan.TypeId(['cl_event'], eventName)
-        execBody.append(event)
+        exec_kernel = ast_bb.EmptyFuncDecl('Exec' + self.bps.DevFuncTypeId.name.name)
+        file_ast.ext.append(exec_kernel)
+        exec_body = exec_kernel.compound.statements
+        exec_body.append(cl_suc)
+        event_name = lan.Id('GPUExecution')
+        event = lan.TypeId(['cl_event'], event_name)
+        exec_body.append(event)
 
         for n in self.bps.Worksize:
             lval = lan.TypeId(['size_t'], lan.Id(self.bps.Worksize[n] + '[]'))
@@ -252,8 +243,7 @@ class Boilerplate(object):
             elif n == 'global':
                 initlist = []
                 for m in reversed(self.GridIndices):
-                    initlist.append(lan.Id(self.UpperLimit[m] \
-                                           + ' - ' + self.bps.LowerLimit[m]))
+                    initlist.append(lan.Id(self.UpperLimit[m] + ' - ' + self.bps.LowerLimit[m]))
                 rval = lan.ArrayInit(initlist)
             else:
                 initlist = []
@@ -261,124 +251,124 @@ class Boilerplate(object):
                     initlist.append(lan.Id(self.bps.LowerLimit[m]))
                 rval = lan.ArrayInit(initlist)
 
-            execBody.append(lan.Assignment(lval, rval))
+            exec_body.append(lan.Assignment(lval, rval))
 
-        lval = lan.Id(ErrName)
-        arglist = lan.ArgList([lan.Id('command_queue'), \
-                               lan.Id(self.bps.KernelName), \
-                               lan.Constant(self.ks.ParDim), \
-                               lan.Id(self.bps.Worksize['offset']), \
-                               lan.Id(self.bps.Worksize['global']), \
-                               lan.Id(self.bps.Worksize['local']), \
-                               lan.Constant(0), lan.Id('NULL'), \
-                               lan.Id('&' + eventName.name)])
+        lval = lan.Id(err_name)
+        arglist = lan.ArgList([lan.Id('command_queue'),
+                               lan.Id(self.bps.KernelName),
+                               lan.Constant(self.ks.ParDim),
+                               lan.Id(self.bps.Worksize['offset']),
+                               lan.Id(self.bps.Worksize['global']),
+                               lan.Id(self.bps.Worksize['local']),
+                               lan.Constant(0), lan.Id('NULL'),
+                               lan.Id('&' + event_name.name)])
         rval = lan.FuncDecl(lan.Id('clEnqueueNDRangeKernel'), arglist, lan.Compound([]))
-        execBody.append(lan.Assignment(lval, rval))
+        exec_body.append(lan.Assignment(lval, rval))
 
-        arglist = lan.ArgList([lan.Id(ErrName), lan.Constant('clEnqueueNDRangeKernel')])
-        ErrCheck = lan.FuncDecl(ErrId, arglist, lan.Compound([]))
-        execBody.append(ErrCheck)
+        arglist = lan.ArgList([lan.Id(err_name), lan.Constant('clEnqueueNDRangeKernel')])
+        err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
+        exec_body.append(err_check)
 
         arglist = lan.ArgList([lan.Id('command_queue')])
         finish = lan.FuncDecl(lan.Id('clFinish'), arglist, lan.Compound([]))
-        execBody.append(lan.Assignment(lan.Id(ErrName), finish))
+        exec_body.append(lan.Assignment(lan.Id(err_name), finish))
 
-        arglist = lan.ArgList([lan.Id(ErrName), lan.Constant('clFinish')])
-        ErrCheck = lan.FuncDecl(ErrId, arglist, lan.Compound([]))
-        execBody.append(ErrCheck)
+        arglist = lan.ArgList([lan.Id(err_name), lan.Constant('clFinish')])
+        err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
+        exec_body.append(err_check)
 
         if not self.bps.NoReadBack:
             for n in self.bps.WriteOnly:
-                lval = lan.Id(ErrName)
-                Hstn = self.bps.HstId[n]
+                lval = lan.Id(err_name)
+                hst_nname = self.bps.HstId[n]
                 try:
-                    Hstn = self.bps.NameSwap[Hstn]
+                    hst_nname = self.bps.NameSwap[hst_nname]
                 except KeyError:
                     pass
-                arglist = lan.ArgList([lan.Id('command_queue'), \
-                                       lan.Id(self.bps.DevId[n]), \
-                                       lan.Id('CL_TRUE'), \
-                                       lan.Constant(0), \
-                                       lan.Id(self.bps.Mem[n]), \
-                                       lan.Id(Hstn), \
+                arglist = lan.ArgList([lan.Id('command_queue'),
+                                       lan.Id(self.bps.DevId[n]),
+                                       lan.Id('CL_TRUE'),
+                                       lan.Constant(0),
+                                       lan.Id(self.bps.Mem[n]),
+                                       lan.Id(hst_nname),
                                        lan.Constant(1),
-                                       lan.Id('&' + eventName.name), lan.Id('NULL')])
+                                       lan.Id('&' + event_name.name), lan.Id('NULL')])
                 rval = lan.FuncDecl(lan.Id('clEnqueueReadBuffer'), arglist, lan.Compound([]))
-                execBody.append(lan.Assignment(lval, rval))
+                exec_body.append(lan.Assignment(lval, rval))
 
-                arglist = lan.ArgList([lan.Id(ErrName), lan.Constant('clEnqueueReadBuffer')])
-                ErrCheck = lan.FuncDecl(ErrId, arglist, lan.Compound([]))
-                execBody.append(ErrCheck)
+                arglist = lan.ArgList([lan.Id(err_name), lan.Constant('clEnqueueReadBuffer')])
+                err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
+                exec_body.append(err_check)
 
             # add clFinish statement
             arglist = lan.ArgList([lan.Id('command_queue')])
             finish = lan.FuncDecl(lan.Id('clFinish'), arglist, lan.Compound([]))
-            execBody.append(lan.Assignment(lan.Id(ErrName), finish))
+            exec_body.append(lan.Assignment(lan.Id(err_name), finish))
 
-            arglist = lan.ArgList([lan.Id(ErrName), lan.Constant('clFinish')])
-            ErrCheck = lan.FuncDecl(ErrId, arglist, lan.Compound([]))
-            execBody.append(ErrCheck)
+            arglist = lan.ArgList([lan.Id(err_name), lan.Constant('clFinish')])
+            err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
+            exec_body.append(err_check)
 
             for n in self.bps.WriteTranspose:
-                execBody.append(n)
+                exec_body.append(n)
 
-        runOCL = ast_bb.EmptyFuncDecl('RunOCL' + self.bps.KernelName)
-        fileAST.ext.append(runOCL)
-        runOCLBody = runOCL.compound.statements
+        run_ocl = ast_bb.EmptyFuncDecl('RunOCL' + self.bps.KernelName)
+        file_ast.ext.append(run_ocl)
+        run_ocl_body = run_ocl.compound.statements
 
-        argIds = self.bps.NonArrayIds.union(self.ArrayIds)  #
+        arg_ids = self.bps.NonArrayIds.union(self.ArrayIds)  #
 
-        typeIdList = []
-        ifThenList = []
-        for n in argIds:
-            type = self.ks.Type[n]
+        type_id_list = []
+        if_then_list = []
+        for n in arg_ids:
+            arg_type = self.ks.Type[n]
             argn = lan.Id('arg_' + n)
-            typeIdList.append(lan.TypeId(type, argn))
+            type_id_list.append(lan.TypeId(arg_type, argn))
             try:
                 newn = self.bps.HstId[n]
             except KeyError:
                 newn = n
             lval = lan.Id(newn)
             rval = argn
-            ifThenList.append(lan.Assignment(lval, rval))
+            if_then_list.append(lan.Assignment(lval, rval))
             try:
                 for m in self.ks.ArrayIdToDimName[n]:
-                    type = ['size_t']
+                    arg_type = ['size_t']
                     argm = lan.Id('arg_' + m)
                     lval = lan.Id(m)
                     rval = argm
-                    ifThenList.append(lan.Assignment(lval, rval))
-                    typeIdList.append(lan.TypeId(type, argm))
+                    if_then_list.append(lan.Assignment(lval, rval))
+                    type_id_list.append(lan.TypeId(arg_type, argm))
             except KeyError:
                 pass
 
-        arglist = lan.ArgList(typeIdList)
-        runOCL.arglist = arglist
+        arglist = lan.ArgList(type_id_list)
+        run_ocl.arglist = arglist
 
         arglist = lan.ArgList([])
-        ifThenList.append(lan.FuncDecl(lan.Id('StartUpGPU'), arglist, lan.Compound([])))
-        ifThenList.append(lan.FuncDecl(lan.Id('AllocateBuffers'), arglist, lan.Compound([])))
-        useFile = 'true'
+        if_then_list.append(lan.FuncDecl(lan.Id('StartUpGPU'), arglist, lan.Compound([])))
+        if_then_list.append(lan.FuncDecl(lan.Id('AllocateBuffers'), arglist, lan.Compound([])))
+        use_file = 'true'
         if self.kgen_strt.KernelStringStream:
-            useFile = 'false'
+            use_file = 'false'
 
-        ifThenList.append(lan.Id('cout << "$Defines " << KernelDefines << endl;'))
+        if_then_list.append(lan.Id('cout << "$Defines " << KernelDefines << endl;'))
         arglist = lan.ArgList([lan.Constant(self.bps.DevFuncId),
                                lan.Constant(self.bps.DevFuncId + '.cl'),
                                lan.Id('GetKernelCode()'),
-                               lan.Id(useFile),
+                               lan.Id(use_file),
                                lan.Id('&' + self.bps.KernelName),
                                lan.Id('KernelDefines')])
-        ifThenList.append(lan.FuncDecl(lan.Id('compileKernel'), arglist, lan.Compound([])))
-        ifThenList.append(
+        if_then_list.append(lan.FuncDecl(lan.Id('compileKernel'), arglist, lan.Compound([])))
+        if_then_list.append(
             lan.FuncDecl(lan.Id('SetArguments' + self.bps.DevFuncId), lan.ArgList([]), lan.Compound([])))
 
-        runOCLBody.append(lan.IfThen(lan.Id('isFirstTime'), lan.Compound(ifThenList)))
+        run_ocl_body.append(lan.IfThen(lan.Id('isFirstTime'), lan.Compound(if_then_list)))
         arglist = lan.ArgList([])
 
         # Insert timing
-        runOCLBody.append(lan.Id('timer.start();'))
-        runOCLBody.append(lan.FuncDecl(lan.Id('Exec' + self.bps.DevFuncId), arglist, lan.Compound([])))
-        runOCLBody.append(lan.Id('cout << "$Time " << timer.stop() << endl;'))
+        run_ocl_body.append(lan.Id('timer.start();'))
+        run_ocl_body.append(lan.FuncDecl(lan.Id('Exec' + self.bps.DevFuncId), arglist, lan.Compound([])))
+        run_ocl_body.append(lan.Id('cout << "$Time " << timer.stop() << endl;'))
 
-        return fileAST
+        return file_ast

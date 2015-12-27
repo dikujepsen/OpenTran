@@ -2,6 +2,7 @@ import lan
 import collect_transformation_info as cti
 import collect_gen as cg
 
+
 class Transpose(object):
     def __init__(self):
         self.SubscriptNoId = dict()
@@ -97,37 +98,36 @@ class Transpose(object):
                 self.num_array_dims[arr_name], "cannot be transposed"
             return
 
-        hstName = self.HstId[arr_name]
-        hstTransName = hstName + '_trans'
-        self.GlobalVars[hstTransName] = ''
-        self.HstId[hstTransName] = hstTransName
-        self.Type[hstTransName] = self.Type[arr_name]
+        hst_name = self.HstId[arr_name]
+        hst_trans_name = hst_name + '_trans'
+        self.GlobalVars[hst_trans_name] = ''
+        self.HstId[hst_trans_name] = hst_trans_name
+        self.Type[hst_trans_name] = self.Type[arr_name]
         # Swap the hst ptr
-        self.NameSwap[hstName] = hstTransName
+        self.NameSwap[hst_name] = hst_trans_name
         # Swap the dimension argument
-        dimName = self.ArrayIdToDimName[arr_name]
-        self.NameSwap[dimName[0]] = dimName[1]
+        dim_name = self.ArrayIdToDimName[arr_name]
+        self.NameSwap[dim_name[0]] = dim_name[1]
 
-        lval = lan.Id(hstTransName)
-        natType = self.Type[arr_name][0]
-        rval = lan.Id('new ' + natType + '[' \
-                      + self.Mem[arr_name] + ']')
+        lval = lan.Id(hst_trans_name)
+        nat_type = self.Type[arr_name][0]
+        rval = lan.Id('new ' + nat_type + '[' + self.Mem[arr_name] + ']')
         self.Transposition.statements.append(lan.Assignment(lval, rval))
         if arr_name not in self.WriteOnly:
-            arglist = lan.ArgList([lan.Id(hstName), \
-                                   lan.Id(hstTransName), \
-                                   lan.Id(dimName[0]), \
-                                   lan.Id(dimName[1])])
-            trans = lan.FuncDecl(lan.Id('transpose<' + natType + '>'), arglist, lan.Compound([]))
+            arglist = lan.ArgList([lan.Id(hst_name),
+                                   lan.Id(hst_trans_name),
+                                   lan.Id(dim_name[0]),
+                                   lan.Id(dim_name[1])])
+            trans = lan.FuncDecl(lan.Id('transpose<' + nat_type + '>'), arglist, lan.Compound([]))
             self.Transposition.statements.append(trans)
 
         if arr_name in self.ReadWrite:
             if 'write' in self.ReadWrite[arr_name]:
-                arglist = lan.ArgList([lan.Id(hstTransName), \
-                                       lan.Id(hstName), \
-                                       lan.Id(dimName[1]), \
-                                       lan.Id(dimName[0])])
-                trans = lan.FuncDecl(lan.Id('transpose<' + natType + '>'), arglist, lan.Compound([]))
+                arglist = lan.ArgList([lan.Id(hst_trans_name),
+                                       lan.Id(hst_name),
+                                       lan.Id(dim_name[1]),
+                                       lan.Id(dim_name[0])])
+                trans = lan.FuncDecl(lan.Id('transpose<' + nat_type + '>'), arglist, lan.Compound([]))
                 self.WriteTranspose.append(trans)
 
         for sub in self.Subscript[arr_name]:
