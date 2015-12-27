@@ -12,6 +12,7 @@ class KernelChangedByTransformation(object):
         self.PlaceInLocalCond = None
         self.Type = dict()
         self.KernelArgs = dict()
+        self.Loops = dict()  # place_in_local
 
         # Stencil
         self.Kernel = None
@@ -30,10 +31,6 @@ class KernelStruct(KernelChangedByTransformation):
         self.Includes = list()
         self.SubSwap = dict()
         self.ParDim = None
-
-        # Ikke aendret af nogen transformation
-        self.Loops = dict()
-        self.UpperLimit = dict()
 
         # bruges kun til at interchange subscript i transpose
         self.Subscript = dict()
@@ -64,7 +61,6 @@ class KernelStruct(KernelChangedByTransformation):
         self.ParDim = fpl.par_dim
 
         self.Loops = fai.Loops
-        self.UpperLimit = fai.upper_limit
 
         self.Subscript = fs.Subscript
 

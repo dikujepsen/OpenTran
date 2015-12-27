@@ -145,12 +145,12 @@ class PlaceInReg(object):
         # Add allocation of registers to the initiation stage
         for n in arrDict:
             lval = lan.TypeId([ks.Type[n][0]], \
-                              lan.Id(n + '_reg[' + str(ks.UpperLimit[insideloop]) \
+                              lan.Id(n + '_reg[' + str(self.UpperLimit[insideloop]) \
                                      + ']'))
             initstats.append(lval)
 
         # add the loop to the initiation stage
-        loop = copy.deepcopy(ks.Loops[insideloop])
+        loop = copy.deepcopy(self.Loops[insideloop])
         loopstats = []
         # Exchange loop index
         loop.compound.statements = loopstats

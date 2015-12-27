@@ -123,8 +123,8 @@ class PlaceInLocal(object):
             outerstats = outerloop.compound.statements
             outerstats.insert(0, innerloop)
             loadstats = []
-            loadComp = lan.GroupCompound(loadstats)
-            outerstats.insert(0, loadComp)
+            load_comp = lan.GroupCompound(loadstats)
+            outerstats.insert(0, load_comp)
             # change increment of outer loop
             outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + self.Local['size'][0])
             inneridx = outeridx * 2

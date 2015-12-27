@@ -9,8 +9,10 @@ class Boilerplate(object):
         self.ks = None
         self.bps = None
         self.kgen_strt = None
+
         self.Local = list()
         self.GridIndices = list()
+        self.UpperLimit = dict()
 
     def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt, ast):
         self.ks = kernelstruct
@@ -26,6 +28,13 @@ class Boilerplate(object):
         fpl.ParDim = self.ks.ParDim
         fpl.collect(ast)
         self.GridIndices = fpl.GridIndices
+
+        fai = cti.FindReadWrite()
+        fai.ParDim = self.ks.ParDim
+        fai.collect(ast)
+
+        self.UpperLimit = fai.upper_limit
+
 
 
     def generate_code(self):
@@ -243,7 +252,7 @@ class Boilerplate(object):
             elif n == 'global':
                 initlist = []
                 for m in reversed(self.GridIndices):
-                    initlist.append(lan.Id(self.ks.UpperLimit[m] \
+                    initlist.append(lan.Id(self.UpperLimit[m] \
                                            + ' - ' + self.bps.LowerLimit[m]))
                 rval = lan.ArrayInit(initlist)
             else:
