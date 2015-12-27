@@ -10,7 +10,6 @@ import kernelgen
 import lan
 import place_in_local as local
 import place_in_reg as reg
-import representation
 import rewriter
 import stencil
 import struct
@@ -61,10 +60,8 @@ def _create_baseform(name):
 def __get_ast_from_init(name):
     ast = __get_ast_from_file(name, name + 'For.cpp')
 
-    astrepr = representation.Representation()
-    astrepr.init_original(ast)
-
-    rw = rewriter.Rewriter(astrepr)
+    rw = rewriter.Rewriter()
+    rw.rewrite_array_ref(ast)
     rw.rewrite_to_baseform(ast, name + 'For')
 
     return rw, ast
