@@ -13,9 +13,9 @@ unsigned NTEST;
 unsigned NTRAIN;
 float * hst_ptrtest_patterns_trans;
 
-size_t hst_ptrtrain_patterns_mem_size;
-size_t hst_ptrtest_patterns_mem_size;
 size_t hst_ptrdist_matrix_mem_size;
+size_t hst_ptrtest_patterns_mem_size;
+size_t hst_ptrtrain_patterns_mem_size;
 
 size_t hst_ptrtrain_patterns_dim1;
 size_t hst_ptrtrain_patterns_dim2;

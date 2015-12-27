@@ -10,9 +10,9 @@ float * hst_ptrPos;
 float * hst_ptrForces;
 size_t N;
 
+size_t hst_ptrForces_mem_size;
 size_t hst_ptrMas_mem_size;
 size_t hst_ptrPos_mem_size;
-size_t hst_ptrForces_mem_size;
 
 size_t hst_ptrMas_dim1;
 size_t hst_ptrPos_dim1;

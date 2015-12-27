@@ -11,9 +11,9 @@ float * hst_ptrX1;
 unsigned wB;
 unsigned wA;
 
-size_t hst_ptrX2_mem_size;
-size_t hst_ptrX1_mem_size;
 size_t hst_ptrB_mem_size;
+size_t hst_ptrX1_mem_size;
+size_t hst_ptrX2_mem_size;
 
 size_t hst_ptrX2_dim1;
 size_t hst_ptrX2_dim2;

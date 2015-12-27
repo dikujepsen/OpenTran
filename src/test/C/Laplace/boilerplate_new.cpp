@@ -24,14 +24,14 @@ double * hst_ptrlevel_trans;
 double * hst_ptrlevel_int_trans;
 double * hst_ptrindex_trans;
 
-size_t hst_ptrindex_mem_size;
-size_t hst_ptrlevel_int_mem_size;
-size_t hst_ptrlevel_mem_size;
-size_t hst_ptrlcl_q_mem_size;
-size_t hst_ptrresult_mem_size;
-size_t hst_ptrlcl_q_inv_mem_size;
 size_t hst_ptralpha_mem_size;
+size_t hst_ptrindex_mem_size;
 size_t hst_ptrlambda_mem_size;
+size_t hst_ptrlcl_q_mem_size;
+size_t hst_ptrlcl_q_inv_mem_size;
+size_t hst_ptrlevel_mem_size;
+size_t hst_ptrlevel_int_mem_size;
+size_t hst_ptrresult_mem_size;
 
 size_t hst_ptrindex_dim1;
 size_t hst_ptrindex_dim2;

@@ -28,14 +28,14 @@ unsigned Lq;
 float * hst_ptrq_a_i_x_trans;
 
 size_t hst_ptrD1Ks__ijb_dimsI_mem_size;
-size_t hst_ptrq_a_i_x_mem_size;
-size_t hst_ptrD3Ks__ijbgd_x_mem_size;
-size_t hst_ptrD2Ks__ijbg_dimsI_mem_size;
-size_t hst_ptrD3Ks__ijbgd_dimsI_mem_size;
-size_t hst_ptrp_a_i_x_mem_size;
 size_t hst_ptrD1Ks__ijb_x_mem_size;
-size_t hst_ptrK__ij_x_mem_size;
+size_t hst_ptrD2Ks__ijbg_dimsI_mem_size;
 size_t hst_ptrD2Ks__ijbg_x_mem_size;
+size_t hst_ptrD3Ks__ijbgd_dimsI_mem_size;
+size_t hst_ptrD3Ks__ijbgd_x_mem_size;
+size_t hst_ptrK__ij_x_mem_size;
+size_t hst_ptrp_a_i_x_mem_size;
+size_t hst_ptrq_a_i_x_mem_size;
 
 size_t hst_ptrD1Ks__ijb_dimsI_dim1;
 size_t hst_ptrq_a_i_x_dim1;

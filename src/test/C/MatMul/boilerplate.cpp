@@ -13,8 +13,8 @@ unsigned wB;
 unsigned wA;
 
 size_t hst_ptrA_mem_size;
-size_t hst_ptrC_mem_size;
 size_t hst_ptrB_mem_size;
+size_t hst_ptrC_mem_size;
 
 size_t hst_ptrA_dim1;
 size_t hst_ptrA_dim2;

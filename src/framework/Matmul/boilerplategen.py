@@ -69,13 +69,13 @@ class Boilerplate(object):
             except KeyError:
                 pass
 
-        dict_n_to_dev_ptr = self.bps.DevId
+        dict_n_to_dev_ptr = self.bps_static.DevId
         list_dev_buffers = lan.GroupCompound(list_dev_buffers)
 
         file_ast.ext.append(list_dev_buffers)
 
         list_host_ptrs = []
-        for n in self.bps.DevArgList:
+        for n in self.bps_static.DevArgList:
             name = n.name.name
             arg_type = self.ks.Type[name]
             try:
@@ -96,9 +96,9 @@ class Boilerplate(object):
 
         list_mem_size = []
         list_dim_size = []
-        dict_n_to_size = self.bps.Mem
-        for n in self.bps.Mem:
-            size_name = self.bps.Mem[n]
+        dict_n_to_size = self.bps_static.Mem
+        for n in sorted(self.bps_static.Mem):
+            size_name = self.bps_static.Mem[n]
             list_mem_size.append(lan.TypeId(['size_t'], lan.Id(size_name)))
 
         for n in self.ArrayIds:
