@@ -16,6 +16,10 @@ class SnippetGen(object):
         self.DevFuncTypeId = None
         self.ArrayIds = set()
         self.types = dict()
+        self.kernel_args = dict()  # beroert af tranformation
+        self.ArrayIdToDimName = dict()  # beroert af tranformation
+        self.Kernel = None
+
 
     def set_datastructure(self,
                           kernel_struct,
@@ -37,6 +41,13 @@ class SnippetGen(object):
         fai.collect(ast)
         self.ArrayIds = fai.ArrayIds
         self.types = fai.type
+
+        # Sat af transformationer
+        self.kernel_args = fai.kernel_args
+        self.ArrayIdToDimName = fai.ArrayIdToDimName
+        find_kernel = cd.FindKernel(par_dim)
+        find_kernel.visit(ast)
+        self.Kernel = find_kernel.kernel
 
     def in_source_kernel(self, ast, cond, filename, kernelstringname):
         self.rewrite_to_device_c_release(ast)
@@ -69,7 +80,7 @@ class SnippetGen(object):
             for m in n:
                 exchange_array_id.visit(m)
 
-        my_kernel = copy.deepcopy(self.KernelStruct.Kernel)
+        my_kernel = copy.deepcopy(self.Kernel)
         # print self.astrepr.ArrayIdToDimName
         rewrite_array_ref = exchange.RewriteArrayRef(self.KernelStruct.num_array_dims,
                                                      self.KernelStruct.ArrayIdToDimName,
