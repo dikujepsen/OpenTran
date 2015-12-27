@@ -62,15 +62,11 @@ class PlaceInReg(object):
             sub1 = self.SubscriptNoId[n]
 
             for (ref, sub, i) in zip(ref1, sub1, range(len(ref1))):
-                ## print rw.GridIndices, sub
                 if set(self.GridIndices) & set(sub):
                     outerloops = set(ref) - set(sub)
                     if outerloops:
                         insideloop |= set(sub) - set(self.GridIndices)
                         optim[n].append(i)
-
-                        ## print i, n, outerloops, rw.GridIndices, sub, \
-                        ##   set(sub) - set(rw.GridIndices)
 
         insideloop = {k for k in insideloop if k in self.Loops}
         if len(insideloop) > 1:

@@ -35,7 +35,6 @@ class KernelStruct(KernelChangedByTransformation):
         self.Loops = dict()
         self.UpperLimit = dict()
         self.SubscriptNoId = dict()
-        self.GridIndices = list()
 
         # bruges kun til at interchange subscript i transpose
         self.Subscript = dict()
@@ -70,7 +69,6 @@ class KernelStruct(KernelChangedByTransformation):
 
         self.Subscript = fs.Subscript
         self.SubscriptNoId = fs.SubscriptNoId
-        self.GridIndices = fpl.GridIndices
 
         # Stencil
         self.ArrayIdToDimName = fai.ArrayIdToDimName  #

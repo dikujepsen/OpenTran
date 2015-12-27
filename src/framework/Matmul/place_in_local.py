@@ -93,7 +93,7 @@ class PlaceInLocal(object):
                         try:
                             _ = int(m)
                         except:
-                            if m not in ks.GridIndices:
+                            if m not in self.GridIndices:
                                 acc.append(m)
                     loop_dict[(n, i)] = acc
 
@@ -161,7 +161,7 @@ class PlaceInLocal(object):
                 loc_subs = copy.deepcopy(glob_subs).subscript
                 for k, m in enumerate(loc_subs):
                     if isinstance(m, lan.Id) and \
-                                    m.name not in ks.GridIndices:
+                                    m.name not in self.GridIndices:
                         tid = str(self.ReverseIdx[k])
                         tidstr = 'get_local_id(' + tid + ')'
                         exchange_id = exchange.ExchangeId({loopname: tidstr})
@@ -173,9 +173,9 @@ class PlaceInLocal(object):
                 loadings.append(lan.Assignment(loc_ref, glob_subs))
                 if ks.ParDim == 2:
                     exchange_id = exchange.ExchangeId(
-                        {ks.GridIndices[1]: 'get_local_id(0)', ks.GridIndices[0]: 'get_local_id(1)'})
+                        {self.GridIndices[1]: 'get_local_id(0)', self.GridIndices[0]: 'get_local_id(1)'})
                 else:
-                    exchange_id = exchange.ExchangeId({ks.GridIndices[0]: 'get_local_id(0)'})
+                    exchange_id = exchange.ExchangeId({self.GridIndices[0]: 'get_local_id(0)'})
                 exchange_id.visit(loc_ref)
 
                 inner_loc = ks.LoopArrays[n][i]
