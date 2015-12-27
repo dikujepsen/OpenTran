@@ -251,7 +251,6 @@ def __main_stencil(ks, bps, tempast3):
     sten.set_datastructures(tempast3)
     sten.stencil(['X1'], west=1, north=1, east=1, south=1, middle=0)
 
-    ks.Kernel = sten.Kernel
     ks.LocalSwap = sten.LocalSwap
     ks.num_array_dims = sten.num_array_dims
     ks.ArrayIdToDimName = sten.ArrayIdToDimName
@@ -260,9 +259,9 @@ def __main_stencil(ks, bps, tempast3):
 
 
 if __name__ == "__main__":
-    matmul()
-    knearest()
+    # matmul()
+    # knearest()
     jacobi()
-    nbody()
-    laplace()
-    gaussian()
+    # nbody()
+    # laplace()
+    # gaussian()

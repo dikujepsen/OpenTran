@@ -2,6 +2,7 @@ import collect_transformation_info as cti
 import collect_boilerplate_info as cbi
 import collect_gen as cg
 
+
 class KernelChangedByTransformation(object):
     def __init__(self):
         # Kun sat af transformation
@@ -13,7 +14,6 @@ class KernelChangedByTransformation(object):
         self.KernelArgs = dict()
 
         # Stencil
-        self.Kernel = None
         self.LocalSwap = dict()
         self.num_array_dims = dict()
         self.ArrayIdToDimName = dict()
@@ -80,7 +80,6 @@ class KernelStruct(KernelChangedByTransformation):
         # Stencil
         self.ArrayIdToDimName = fai.ArrayIdToDimName  #
         self.LoopArrays = fla.loop_arrays  #
-        self.Kernel = fpl.Kernel  #
         self.num_array_dims = fai.num_array_dims  #
 
 
