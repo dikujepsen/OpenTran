@@ -137,7 +137,7 @@ class Boilerplate(object):
         list_set_mem_size = []
         for entry in self.ArrayIds:
             n = self.ks.ArrayIdToDimName[entry]
-            lval = lan.Id(self.bps.Mem[entry])
+            lval = lan.Id(self.bps_static.Mem[entry])
             rval = lan.BinOp(lan.Id(n[0]), '*', lan.Id('sizeof(' + self.ks.Type[entry][0] + ')'))
             if len(n) == 2:
                 rval = lan.BinOp(lan.Id(n[1]), '*', rval)
@@ -164,10 +164,10 @@ class Boilerplate(object):
                 arrayn = self.bps.NameSwap[arrayn]
             except KeyError:
                 pass
-            if n in self.bps.WriteOnly:
+            if n in self.bps_static.WriteOnly:
                 flag = lan.Id('CL_MEM_WRITE_ONLY')
                 arrayn_id = lan.Id('NULL')
-            elif n in self.bps.ReadOnly:
+            elif n in self.bps_static.ReadOnly:
                 flag = lan.Id('CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY')
                 arrayn_id = lan.Id(arrayn)
             else:
@@ -186,7 +186,7 @@ class Boilerplate(object):
             err_check = lan.FuncDecl(lan.Id('oclCheckErr'), arglist, lan.Compound([]))
             allocate_buffer.compound.statements.append(err_check)
 
-        set_arguments_kernel = ast_bb.EmptyFuncDecl('SetArguments' + self.bps.DevFuncId)
+        set_arguments_kernel = ast_bb.EmptyFuncDecl('SetArguments' + self.bps_static.DevFuncId)
         file_ast.ext.append(set_arguments_kernel)
         arg_body = set_arguments_kernel.compound.statements
         arg_body.append(cl_suc)
@@ -201,7 +201,7 @@ class Boilerplate(object):
             # Add types of dimensions for size arguments
             dict_type_host_ptrs[dict_n_to_dim_names[n][0]] = ['size_t']
 
-        for n in self.bps.RemovedIds:
+        for n in self.bps_static.RemovedIds:
             dict_type_host_ptrs.pop(n, None)
 
         # clSetKernelArg for Arrays
@@ -235,7 +235,7 @@ class Boilerplate(object):
         err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
         arg_body.append(err_check)
 
-        exec_kernel = ast_bb.EmptyFuncDecl('Exec' + self.bps.DevFuncTypeId.name.name)
+        exec_kernel = ast_bb.EmptyFuncDecl('Exec' + self.bps_static.DevFuncTypeId.name.name)
         file_ast.ext.append(exec_kernel)
         exec_body = exec_kernel.compound.statements
         exec_body.append(cl_suc)
@@ -243,31 +243,31 @@ class Boilerplate(object):
         event = lan.TypeId(['cl_event'], event_name)
         exec_body.append(event)
 
-        for n in self.bps.Worksize:
-            lval = lan.TypeId(['size_t'], lan.Id(self.bps.Worksize[n] + '[]'))
+        for n in self.bps_static.Worksize:
+            lval = lan.TypeId(['size_t'], lan.Id(self.bps_static.Worksize[n] + '[]'))
             if n == 'local':
                 local_worksize = [lan.Id(i) for i in self.Local['size']]
                 rval = lan.ArrayInit(local_worksize)
             elif n == 'global':
                 initlist = []
                 for m in reversed(self.GridIndices):
-                    initlist.append(lan.Id(self.UpperLimit[m] + ' - ' + self.bps.LowerLimit[m]))
+                    initlist.append(lan.Id(self.UpperLimit[m] + ' - ' + self.bps_static.LowerLimit[m]))
                 rval = lan.ArrayInit(initlist)
             else:
                 initlist = []
                 for m in reversed(self.GridIndices):
-                    initlist.append(lan.Id(self.bps.LowerLimit[m]))
+                    initlist.append(lan.Id(self.bps_static.LowerLimit[m]))
                 rval = lan.ArrayInit(initlist)
 
             exec_body.append(lan.Assignment(lval, rval))
 
         lval = lan.Id(err_name)
         arglist = lan.ArgList([lan.Id('command_queue'),
-                               lan.Id(self.bps.KernelName),
+                               lan.Id(self.bps_static.KernelName),
                                lan.Constant(self.ks.ParDim),
-                               lan.Id(self.bps.Worksize['offset']),
-                               lan.Id(self.bps.Worksize['global']),
-                               lan.Id(self.bps.Worksize['local']),
+                               lan.Id(self.bps_static.Worksize['offset']),
+                               lan.Id(self.bps_static.Worksize['global']),
+                               lan.Id(self.bps_static.Worksize['local']),
                                lan.Constant(0), lan.Id('NULL'),
                                lan.Id('&' + event_name.name)])
         rval = lan.FuncDecl(lan.Id('clEnqueueNDRangeKernel'), arglist, lan.Compound([]))
@@ -286,7 +286,7 @@ class Boilerplate(object):
         exec_body.append(err_check)
 
         if not self.bps.NoReadBack:
-            for n in self.bps.WriteOnly:
+            for n in self.bps_static.WriteOnly:
                 lval = lan.Id(err_name)
                 hst_nname = self.bps.HstId[n]
                 try:
@@ -294,10 +294,10 @@ class Boilerplate(object):
                 except KeyError:
                     pass
                 arglist = lan.ArgList([lan.Id('command_queue'),
-                                       lan.Id(self.bps.DevId[n]),
+                                       lan.Id(self.bps_static.DevId[n]),
                                        lan.Id('CL_TRUE'),
                                        lan.Constant(0),
-                                       lan.Id(self.bps.Mem[n]),
+                                       lan.Id(self.bps_static.Mem[n]),
                                        lan.Id(hst_nname),
                                        lan.Constant(1),
                                        lan.Id('&' + event_name.name), lan.Id('NULL')])
@@ -320,11 +320,11 @@ class Boilerplate(object):
             for n in self.bps.WriteTranspose:
                 exec_body.append(n)
 
-        run_ocl = ast_bb.EmptyFuncDecl('RunOCL' + self.bps.KernelName)
+        run_ocl = ast_bb.EmptyFuncDecl('RunOCL' + self.bps_static.KernelName)
         file_ast.ext.append(run_ocl)
         run_ocl_body = run_ocl.compound.statements
 
-        arg_ids = self.bps.NonArrayIds.union(self.ArrayIds)  #
+        arg_ids = self.bps_static.NonArrayIds.union(self.ArrayIds)  #
 
         type_id_list = []
         if_then_list = []
@@ -361,22 +361,22 @@ class Boilerplate(object):
             use_file = 'false'
 
         if_then_list.append(lan.Id('cout << "$Defines " << KernelDefines << endl;'))
-        arglist = lan.ArgList([lan.Constant(self.bps.DevFuncId),
-                               lan.Constant(self.bps.DevFuncId + '.cl'),
+        arglist = lan.ArgList([lan.Constant(self.bps_static.DevFuncId),
+                               lan.Constant(self.bps_static.DevFuncId + '.cl'),
                                lan.Id('GetKernelCode()'),
                                lan.Id(use_file),
-                               lan.Id('&' + self.bps.KernelName),
+                               lan.Id('&' + self.bps_static.KernelName),
                                lan.Id('KernelDefines')])
         if_then_list.append(lan.FuncDecl(lan.Id('compileKernel'), arglist, lan.Compound([])))
         if_then_list.append(
-            lan.FuncDecl(lan.Id('SetArguments' + self.bps.DevFuncId), lan.ArgList([]), lan.Compound([])))
+            lan.FuncDecl(lan.Id('SetArguments' + self.bps_static.DevFuncId), lan.ArgList([]), lan.Compound([])))
 
         run_ocl_body.append(lan.IfThen(lan.Id('isFirstTime'), lan.Compound(if_then_list)))
         arglist = lan.ArgList([])
 
         # Insert timing
         run_ocl_body.append(lan.Id('timer.start();'))
-        run_ocl_body.append(lan.FuncDecl(lan.Id('Exec' + self.bps.DevFuncId), arglist, lan.Compound([])))
+        run_ocl_body.append(lan.FuncDecl(lan.Id('Exec' + self.bps_static.DevFuncId), arglist, lan.Compound([])))
         run_ocl_body.append(lan.Id('cout << "$Time " << timer.stop() << endl;'))
 
         return file_ast
