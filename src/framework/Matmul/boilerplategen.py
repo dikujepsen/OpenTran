@@ -1,6 +1,7 @@
 import lan
 import copy
 import ast_buildingblock as ast_bb
+import collect_transformation_info as cti
 
 
 class Boilerplate(object):
@@ -8,11 +9,18 @@ class Boilerplate(object):
         self.ks = None
         self.bps = None
         self.kgen_strt = None
+        self.Local = list()
 
-    def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt):
+    def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt, ast):
         self.ks = kernelstruct
         self.bps = boilerplatestruct
         self.kgen_strt = kgen_strt
+
+        fl = cti.FindLocal()
+        fl.ParDim = self.ks.ParDim
+        fl.collect(ast)
+        self.Local = fl.Local
+
 
     def generate_code(self):
 
@@ -224,7 +232,7 @@ class Boilerplate(object):
         for n in self.bps.Worksize:
             lval = lan.TypeId(['size_t'], lan.Id(self.bps.Worksize[n] + '[]'))
             if n == 'local':
-                local_worksize = [lan.Id(i) for i in self.ks.Local['size']]
+                local_worksize = [lan.Id(i) for i in self.Local['size']]
                 rval = lan.ArrayInit(local_worksize)
             elif n == 'global':
                 initlist = []

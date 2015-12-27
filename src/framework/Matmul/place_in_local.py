@@ -40,7 +40,7 @@ class PlaceInLocal(object):
 
         fl = cti.FindLocal()
         fl.ParDim = self.ParDim
-        fl.collect(ast)
+        fl.collect(ast, dev)
         self.Local = fl.Local
 
         gen_reverse_idx = cg.GenReverseIdx()
@@ -126,13 +126,13 @@ class PlaceInLocal(object):
             loadComp = lan.GroupCompound(loadstats)
             outerstats.insert(0, loadComp)
             # change increment of outer loop
-            outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + ks.Local['size'][0])
+            outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + self.Local['size'][0])
             inneridx = outeridx * 2
             # For adding to this index in other subscripts
             ks.Add[outeridx] = inneridx
 
             # new inner loop
-            innerloop.cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(ks.Local['size'][0]))
+            innerloop.cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(self.Local['size'][0]))
             innerloop.inc = lan.Increment(lan.Id(inneridx), '++')
             innerloop.init = ast_bb.ConstantAssignment(inneridx)
             ks.Loops[inneridx] = innerloop
@@ -142,9 +142,9 @@ class PlaceInLocal(object):
 
             localName = n + '_local'
             arrayinit = '['
-            arrayinit += ks.Local['size'][0]
+            arrayinit += self.Local['size'][0]
             if ks.num_array_dims[n] == 2 and ks.ParDim == 2:
-                arrayinit += '*' + ks.Local['size'][1]
+                arrayinit += '*' + self.Local['size'][1]
             arrayinit += ']'
 
             localId = lan.Id(localName + arrayinit)
@@ -184,7 +184,7 @@ class PlaceInLocal(object):
                 exchange_id2.visit(inner_loc)
                 exchange_id.visit(inner_loc)
 
-            ks.ArrayIdToDimName[loc_name] = ks.Local['size']
+            ks.ArrayIdToDimName[loc_name] = self.Local['size']
             ks.num_array_dims[loc_name] = ks.num_array_dims[n]
         # Must also create the barrier
         arglist = lan.ArgList([lan.Id('CLK_LOCAL_MEM_FENCE')])

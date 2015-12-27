@@ -80,7 +80,7 @@ def gen_full_code(name, ks, bps, tempast2):
     kgen.generate_kernels(tempast2, name, fileprefix)
 
     boilerplate = boilerplategen.Boilerplate()
-    boilerplate.set_struct(ks, bps, kgen.kgen_strt)
+    boilerplate.set_struct(ks, bps, kgen.kgen_strt, tempast2)
     boilerast = boilerplate.generate_code()
 
     cprint = cgen.CGenerator()
