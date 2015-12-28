@@ -41,11 +41,9 @@ class PlaceInReg(object):
         self.WriteOnly = fai.WriteOnly
         self.SubscriptNoId = fs.SubscriptNoId
 
-
-
     def place_in_reg(self):
         """ Find all array references that can be cached in registers.
-        	Then rewrite the code in this fashion.
+            Then rewrite the code in this fashion.
         """
 
         optim = dict()
@@ -68,14 +66,13 @@ class PlaceInReg(object):
 
         insideloop = {k for k in insideloop if k in self.Loops}
         if len(insideloop) > 1:
-            print """ PlaceInReg: array references was inside
-    				  two loops. No optimization """
+            print """ PlaceInReg: array references was inside two loops. No optimization """
             return
-        ## print insideloop
+        # print insideloop
         args = {k: v for k, v in optim.items() if v}
         insideloop = list(insideloop)
         if args:
-            ## print 'Register ' , args
+            # print 'Register ' , args
             self.PlaceInRegArgs.append((args, insideloop))
 
             numref = len(list(chain.from_iterable(args.values())))
@@ -86,20 +83,19 @@ class PlaceInReg(object):
                 lhs = lan.Constant(1)
             self.PlaceInRegCond = lan.BinOp(lan.BinOp(lhs, '*', lan.Constant(numref)), '<', lan.Constant(40))
 
-
-    def placeInReg2(self, ks, arrDict):
+    @staticmethod
+    def place_in_reg2(ks, arr_dict):
         stats = ks.Kernel.statements
         initstats = []
-        loadings = []
         writes = []
         # Create the loadings
-        for i, n in enumerate(arrDict):
-            for m in arrDict[n]:
+        for i, n in enumerate(arr_dict):
+            for m in arr_dict[n]:
                 idx = m
                 sub = copy.deepcopy(ks.LoopArrays[n][idx])
-                type = ks.Type[n][0]
+                types = ks.Type[n][0]
                 regid = lan.Id(n + str(m) + '_reg')
-                reg = lan.TypeId([type], regid)
+                reg = lan.TypeId([types], regid)
                 writes.append(regid)
                 assign = lan.Assignment(reg, sub)
                 initstats.append(assign)
@@ -108,8 +104,8 @@ class PlaceInReg(object):
 
         # Replace the global Arefs with the register Arefs
         count = 0
-        for i, n in enumerate(arrDict):
-            for m in arrDict[n]:
+        for i, n in enumerate(arr_dict):
+            for m in arr_dict[n]:
                 idx = m
                 aref_new = writes[count]
                 aref_old = ks.LoopArrays[n][idx]
@@ -118,33 +114,38 @@ class PlaceInReg(object):
                 aref_old.subscript = []
                 count += 1
 
-    def placeInReg3(self, ks, arrDict, insideList):
+    def place_in_reg3(self, ks, arr_dict, inside_list):
         """ Check if the arrayref is inside a loop and use a static
             array for the allocation of the registers
+            :param ks:
+                kernelstruct
+            :param arr_dict:
+                dictionary of arrays
+            :param inside_list:
+                what loop we are inside
         """
         stats = ks.Kernel.statements
         initstats = []
         writes = []
 
-        if not arrDict:
+        if not arr_dict:
             return
 
-        if not insideList:
-            self.placeInReg2(ks, arrDict)
+        if not inside_list:
+            self.place_in_reg2(ks, arr_dict)
             return
 
-        insideloop = insideList[0]
+        insideloop = inside_list[0]
 
         if insideloop == '':
             print "placeInReg3 only works when the ArrayRef is inside a loop"
-            print arrDict
+            print arr_dict
             return
 
         # Add allocation of registers to the initiation stage
-        for n in arrDict:
-            lval = lan.TypeId([ks.Type[n][0]], \
-                              lan.Id(n + '_reg[' + str(self.UpperLimit[insideloop]) \
-                                     + ']'))
+        for n in arr_dict:
+            lval = lan.TypeId([ks.Type[n][0]],
+                              lan.Id(n + '_reg[' + str(self.UpperLimit[insideloop]) + ']'))
             initstats.append(lval)
 
         # add the loop to the initiation stage
@@ -156,8 +157,8 @@ class PlaceInReg(object):
         initstats.append(loop)
 
         # Create the loadings
-        for i, n in enumerate(arrDict):
-            for m in arrDict[n]:
+        for i, n in enumerate(arr_dict):
+            for m in arr_dict[n]:
                 idx = m
                 sub = copy.deepcopy(ks.LoopArrays[n][idx])
                 regid = lan.ArrayRef(lan.Id(n + '_reg'), [lan.Id(insideloop)])
@@ -168,8 +169,8 @@ class PlaceInReg(object):
         stats.insert(0, lan.GroupCompound(initstats))
         # Replace the global Arefs with the register Arefs
         count = 0
-        for i, n in enumerate(arrDict):
-            for m in arrDict[n]:
+        for i, n in enumerate(arr_dict):
+            for m in arr_dict[n]:
                 idx = m
                 aref_new = copy.deepcopy(writes[count])
                 aref_old = ks.LoopArrays[n][idx]

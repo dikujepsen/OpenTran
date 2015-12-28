@@ -162,7 +162,7 @@ class Analysis():
         rw.in_source_kernel(copy.deepcopy(ast), Id('true'), filename =fileprefix + name + '/' + funcname + '.cl', kernelstringname = funcname)
         for (arg, insideloop) in self.PlaceInRegArgs:
             funcname = name + 'PlaceInReg'
-            tf.placeInReg3(arg, list(insideloop))
+            tf.place_in_reg3(arg, list(insideloop))
             rw.in_source_kernel(copy.deepcopy(ast), Id('true'), filename =fileprefix + name + '/' + funcname + '.cl', kernelstringname = funcname)
 
             

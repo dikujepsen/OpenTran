@@ -4,9 +4,6 @@ import stringstream
 import exchange
 import collect_device as cd
 import collect_gen as cg
-import collect_transformation_info as cti
-import collect_array as ca
-import collect_boilerplate_info as cbi
 
 
 def print_dict_sorted(mydict):
