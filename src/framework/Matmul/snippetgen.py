@@ -24,40 +24,24 @@ class SnippetGen(object):
     def __init__(self):
         self.KernelStruct = None
         self.KernelStringStream = list()
-        self.IndexToThreadId = dict()
-        self.DevFuncTypeId = None
-        self.ArrayIds = set()
-        self.types = dict()
+        self.par_dim = None
+        self.ast = None
 
     def set_datastructure(self,
                           kernel_struct,
                           ast):
         self.KernelStruct = kernel_struct
-
-        par_dim = self.KernelStruct.ParDim
-        idx_to_thread_id = cg.GenIdxToThreadId()
-        idx_to_thread_id.collect(ast, par_dim)
-
-        self.IndexToThreadId = idx_to_thread_id.IndexToThreadId
-
-        find_function = cd.FindFunction()
-        find_function.visit(ast)
-        self.DevFuncTypeId = find_function.typeid
-
-        fai = cti.FindArrayIdsKernel()
-        fai.ParDim = par_dim
-        fai.collect(ast)
-        self.ArrayIds = fai.ArrayIds
-        self.types = fai.type
+        self.ast = ast
+        self.par_dim = self.KernelStruct.ParDim
 
     def in_source_kernel(self, ast, cond, filename, kernelstringname):
         self.rewrite_to_device_c_release(ast)
 
         ssprint = stringstream.SSGenerator()
-        emptyast = lan.FileAST([])
-        ssprint.createKernelStringStream(ast, emptyast, kernelstringname, filename=filename)
+
+        ssprint.create_kernel_string_stream(ast, kernelstringname, filename=filename)
         self.KernelStringStream.append({'name': kernelstringname,
-                                        'ast': emptyast,
+                                        'ast': ssprint.newast,
                                         'cond': cond})
 
     def rewrite_to_device_c_release(self, ast):
@@ -106,7 +90,10 @@ class SnippetGen(object):
         rewrite_array_ref.visit(my_kernel)
 
         # print MyKernel
-        exchange_indices = exchange.ExchangeId(self.IndexToThreadId)
+        idx_to_thread_id = cg.GenIdxToThreadId()
+        idx_to_thread_id.collect(self.ast, self.par_dim)
+        index_to_thread_id = idx_to_thread_id.IndexToThreadId
+        exchange_indices = exchange.ExchangeId(index_to_thread_id)
         exchange_indices.visit(my_kernel)
 
         exchange_types = exchange.ExchangeTypes()
@@ -115,7 +102,11 @@ class SnippetGen(object):
         return my_kernel
 
     def _create_function_name(self):
-        typeid = copy.deepcopy(self.DevFuncTypeId)
+        find_function = cd.FindFunction()
+        find_function.visit(self.ast)
+        dev_func_type_id = find_function.typeid
+
+        typeid = copy.deepcopy(dev_func_type_id)
         typeid.type.insert(0, '__kernel')
 
         return typeid

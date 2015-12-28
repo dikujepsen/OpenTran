@@ -27,13 +27,13 @@ class CGenerator(object):
     def write_ast_to_file(self, ast, filename='temp.cpp'):
         code = self.visit(ast)
         currentdir = os.getcwd()
-        fullFilename = currentdir + '/' + filename
+        full_file_name = currentdir + '/' + filename
         try:
-            os.remove(fullFilename)
+            os.remove(full_file_name)
         except OSError:
             pass
         try:
-            fileobj = open(fullFilename, 'w')
+            fileobj = open(full_file_name, 'w')
             fileobj.write(code)
             fileobj.close()
         except IOError:

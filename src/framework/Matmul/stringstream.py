@@ -1,5 +1,4 @@
 import os
-
 import lan
 import cgen
 import ast_buildingblock as ast_bb
@@ -12,6 +11,7 @@ class SSGenerator(object):
         return a stringstream from each visit method, using string accumulation in 
         generic_visit.
     """
+
     def __init__(self):
         self.output = ''
         self.quotes = '\\"'
@@ -20,15 +20,18 @@ class SSGenerator(object):
         self.start = 'str << "'
         self.UnrollLoops = []
         self.statements = []
-    
+
         # Statements start with indentation of self.indent_level spaces, using
         # the _make_indent method
         #
         self.indent_level = 0
         self.inside_ArgList = False
         self.inside_Assignment = False
-        
-    def createTemp(self, ast, filename = 'temp.cpp'):
+
+        # return object
+        self.newast = lan.FileAST([])
+
+    def createTemp(self, ast, filename='temp.cpp'):
         code = self.visit(ast)
         currentdir = os.getcwd()
         fullFilename = currentdir + '/' + filename
@@ -37,49 +40,39 @@ class SSGenerator(object):
         except OSError:
             pass
         try:
-            fileobj =  open(fullFilename,'w')
+            fileobj = open(fullFilename, 'w')
             fileobj.write(code)
             fileobj.close()
         except IOError:
             print "createTemp: Unable to write file"
-            
-    def createKernelStringStream(self, ast, newast, kernelstringname, filename = 'temp.cpp'):
 
-        # self.UnrollLoops = UnrollLoops
-        
-        # Swap the IDs that contain the loop indexes before
-        # generating the code
-        # swapUnrollID = tvisitor.SwapUnrollID(self.UnrollLoops)
-        # swapUnrollID.visit(ast)
+    def create_kernel_string_stream(self, ast, kernelstringname, filename='temp.cpp'):
+        self.newast = lan.FileAST([])
+
         oldcode = self.visit(ast)
-        
-        
+
         split = oldcode.split('\n')
         for s in split:
             self.statements.append(lan.Id(s))
 
-        
-            
         # Create the function where we generate the code for the
         # kernel function
-        kernelfunc = ast_bb.EmptyFuncDecl(kernelstringname, type = ['std::string'])
+        kernelfunc = ast_bb.EmptyFuncDecl(kernelstringname, type=['std::string'])
         # insert the stringstream typeid
         self.statements.insert(0, lan.TypeId(['std::stringstream'], lan.Id('str')))
         kernelfunc.compound.statements = self.statements
         # insert conversion to std::string
         self.statements.append(lan.Id('return str.str();'))
-        
-        newast.ext = [kernelfunc]
+
+        self.newast.ext = [kernelfunc]
         cprint = cgen.CGenerator()
-        cprint.write_ast_to_file(newast, filename = filename)
-            
-            
+        cprint.write_ast_to_file(self.newast, filename=filename)
 
     def simple_node(self, n):
         """ Returns True for nodes that are "simple"
         """
         return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef, lan.FuncDecl))
-    
+
     def parenthesize_if(self, n, condition):
         """ Visits 'n' and returns its string representation, parenthesized
             if the condition function applied to the node returns True.
@@ -90,14 +83,13 @@ class SSGenerator(object):
         else:
             return s
 
-
     def _make_indent(self):
         return ' ' * self.indent_level
-    
+
     def visit(self, node):
         method = 'visit_' + node.__class__.__name__
         return getattr(self, method, self.generic_visit)(node)
-    
+
     def generic_visit(self, node):
         if node is None:
             return ''
@@ -108,12 +100,11 @@ class SSGenerator(object):
             except AttributeError:
                 print node
 
-    
     def visit_FileAST(self, n):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
+            newline = n.__class__.__name__ + newline
             start = n.__class__.__name__ + start
         s = ''
         for ext in n.ext:
@@ -123,40 +114,38 @@ class SSGenerator(object):
                 s += self.visit(ext)
         return s
 
-    
     def visit_GlobalCompound(self, n):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
+            newline = n.__class__.__name__ + newline
             start = n.__class__.__name__ + start
         s = ''
         for stat in n.statements:
-           s += self.visit(stat)
+            s += self.visit(stat)
         s = start + s + self.newline
         return s
-
 
     def visit_GroupCompound(self, n):
         newline = self.newline
         start = self.start
-        
+
         if debug:
-            newline = n.__class__.__name__ +  newline
+            newline = n.__class__.__name__ + newline
             start = n.__class__.__name__ + start
         s = ''
-        for i,stat in enumerate(n.statements):
+        for i, stat in enumerate(n.statements):
             start1 = ''
             ## if i != 0:
             newline1 = ''
             if not isinstance(stat, lan.ForLoop):
                 newline1 = newline
-                start1 = start+ self._make_indent()
-            s += start1  + self.visit(stat) + newline1
+                start1 = start + self._make_indent()
+            s += start1 + self.visit(stat) + newline1
         return s
 
     def visit_Comment(self, n):
-        return n.value 
+        return n.value
 
     def visit_Increment(self, n):
         s = self.visit(n.name)
@@ -206,16 +195,16 @@ class SSGenerator(object):
         start = self.start
         newline = self.newline
         if debug:
-            newline = n.__class__.__name__ +  newline
-            start = n.__class__.__name__ +  start
-            
-        s = '' #start + self._make_indent() + '{' + newline
+            newline = n.__class__.__name__ + newline
+            start = n.__class__.__name__ + start
+
+        s = ''  # start + self._make_indent() + '{' + newline
         self.indent_level += 2
         for stat in n.statements:
             if isinstance(stat, lan.ForLoop) or isinstance(stat, lan.GroupCompound):
                 s += self.visit(stat)
             else:
-                s += start + self._make_indent() + self.visit(stat) + newline 
+                s += start + self._make_indent() + self.visit(stat) + newline
         self.indent_level -= 2
         ## s += start + self._make_indent() + '}'  
         return s
@@ -224,23 +213,23 @@ class SSGenerator(object):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
-            start = n.__class__.__name__ +  start
+            newline = n.__class__.__name__ + newline
+            start = n.__class__.__name__ + start
 
         s = '('
         count = 1
         if len(n.arglist) == 1:
             retval = '(' + self.visit(n.arglist[0]) + ')'
             return retval
-            
+
         for arg in n.arglist:
             if count == 1:
-                s += newline + start  + '\t' 
+                s += newline + start + '\t'
             s += self.visit(arg)
             if count != (len(n.arglist)):
                 s += ', '
             if count % 3 == 0:
-                s += newline + start + '\t' 
+                s += newline + start + '\t'
             count += 1
         ## if n.arglist:
         ##     s = s[:-2]
@@ -265,11 +254,9 @@ class SSGenerator(object):
         if debug:
             newline = n.__class__.__name__ + newline
             start = n.__class__.__name__ + start
-            
+
         self.inside_ArgList = True
         typeid = self.visit(n.typeid)
-
-
 
         arglist = self.visit(n.arglist)
 
@@ -296,11 +283,11 @@ class SSGenerator(object):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
-            start = n.__class__.__name__ +  start
+            newline = n.__class__.__name__ + newline
+            start = n.__class__.__name__ + start
 
         name = n.init.lval.name.name
-        init = self.visit(n.init) # already has a semi at the end
+        init = self.visit(n.init)  # already has a semi at the end
         cond = self.visit(n.cond)
         inc = self.visit(n.inc)
 
@@ -310,14 +297,14 @@ class SSGenerator(object):
         if name in self.UnrollLoops:
             start = ''
             newline = '\n'
-        return start + self._make_indent() + 'for (' + init + ' ' + cond + self.semi + ' ' + inc + ') {'\
-          + newline  + compound + start + self._make_indent() + '}' + newline
+        return start + self._make_indent() + 'for (' + init + ' ' + cond + self.semi + ' ' + inc + ') {' \
+               + newline + compound + start + self._make_indent() + '}' + newline
 
     def visit_IfThen(self, n):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
+            newline = n.__class__.__name__ + newline
             start = n.__class__.__name__ + start
 
         cond = self.visit(n.cond)
@@ -326,7 +313,6 @@ class SSGenerator(object):
         self.indent_level -= 2
         return 'if (' + cond + ')' + newline + compound
 
-        
     def visit_Id(self, n):
         return n.name
 
@@ -334,11 +320,10 @@ class SSGenerator(object):
         newline = self.newline
         start = self.start
         if debug:
-            newline = n.__class__.__name__ +  newline
+            newline = n.__class__.__name__ + newline
             start = n.__class__.__name__ + start
-        return start + "#include " + '\\"'+ n.name[1:-1] + '\\"' + newline
- 
-    
+        return start + "#include " + '\\"' + n.name[1:-1] + '\\"' + newline
+
     def visit_Constant(self, n):
         try:
             s = float(n.value)
@@ -348,10 +333,9 @@ class SSGenerator(object):
             if n.value[0] == '"':
                 ## if self.extraquotes and False:
                 ##     return self.quotes + n.value[1:-1] + self.quotes
-                
+
                 return n.value
             else:
                 return self.quotes + n.value + self.quotes
         else:
             return str(n.value)
-        
