@@ -47,8 +47,6 @@ class PlaceInReg(object):
         """
 
         optim = dict()
-        for n in self.RefToLoop:
-            optim[n] = []
         insideloop = set()
         for n in self.RefToLoop:
             if n in self.WriteOnly:
@@ -58,18 +56,21 @@ class PlaceInReg(object):
             sub1 = self.SubscriptNoId[n]
 
             for (ref, sub, i) in zip(ref1, sub1, range(len(ref1))):
-                if set(self.GridIndices) & set(sub):
-                    outerloops = set(ref) - set(sub)
-                    if outerloops:
-                        insideloop |= set(sub) - set(self.GridIndices)
+                if self._can_perform_optimization(ref, sub):
+                    insideloop |= set(sub) - set(self.GridIndices)
+                    try:
                         optim[n].append(i)
+                    except KeyError:
+                        optim[n] = [i]
 
-        insideloop = {k for k in insideloop if k in self.Loops}
+        insideloop = self._remove_unknown_loops(insideloop)
+
         if len(insideloop) > 1:
             print """ PlaceInReg: array references was inside two loops. No optimization """
             return
-        # print insideloop
-        args = {k: v for k, v in optim.items() if v}
+
+        args = optim
+
         insideloop = list(insideloop)
         if args:
             # print 'Register ' , args
@@ -82,6 +83,23 @@ class PlaceInReg(object):
             else:
                 lhs = lan.Constant(1)
             self.PlaceInRegCond = lan.BinOp(lan.BinOp(lhs, '*', lan.Constant(numref)), '<', lan.Constant(40))
+
+    def _remove_unknown_loops(self, insideloop):
+        return {k for k in insideloop if k in self.Loops}
+
+    def _can_perform_optimization(self, loop_idx, sub_idx):
+        """
+        # for each array, for each array ref, collect which loop, loop_idx, it is in
+        # and what indices, sub_idx, are in its subscript.
+        # if there is a grid_idx in sub_idx and there exists a loop_idx not in sub_idx
+
+        :param loop_idx:
+        :param sub_idx:
+        :return:
+        """
+        return set(sub_idx).intersection(set(self.GridIndices)) and \
+            set(loop_idx).difference(set(sub_idx))
+
 
     @staticmethod
     def place_in_reg2(ks, arr_dict):
