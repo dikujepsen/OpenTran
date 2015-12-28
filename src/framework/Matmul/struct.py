@@ -13,6 +13,7 @@ class KernelChangedByTransformation(object):
         self.Type = dict()
         self.KernelArgs = dict()
         self.Loops = dict()  # place_in_local
+        self.Add = dict()  # place_in_local
 
         # Stencil
         self.Kernel = None
@@ -20,7 +21,6 @@ class KernelChangedByTransformation(object):
         self.num_array_dims = dict()
         self.ArrayIdToDimName = dict()
         self.LoopArrays = dict()
-        self.Add = dict()
 
 
 class KernelStruct(KernelChangedByTransformation):

@@ -66,7 +66,7 @@ class KernelGen(object):
             name = self.kgen_strt.KernelStringStream[1]['name']
             func = ast_bb.EmptyFuncDecl(name, type=[])
             returnfunc2 = lan.Assignment(lan.Id('return'), func, op='')
-            ifthenelse = lan.IfThenElse(my_cond, \
+            ifthenelse = lan.IfThenElse(my_cond,
                                         lan.Compound([returnfunc2]), lan.Compound([returnfunc1]))
 
             self.kgen_strt.IfThenElse = ifthenelse

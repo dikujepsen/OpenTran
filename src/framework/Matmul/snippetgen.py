@@ -61,11 +61,25 @@ class SnippetGen(object):
                                         'cond': cond})
 
     def rewrite_to_device_c_release(self, ast):
-        # The list of arguments for the kernel
-        dict_type_host_ptrs = copy.deepcopy(self.types)
-        for n in self.ArrayIds:
-            dict_type_host_ptrs[self.KernelStruct.ArrayIdToDimName[n][0]] = ['size_t']
+        arglist = self._create_arg_list()
 
+        self._swap_local_array_id()
+
+        my_kernel = self._create_kernel()
+
+        typeid = self._create_function_name()
+
+        newast = NewAST()
+        newast.add_list_statement(copy.deepcopy(self.KernelStruct.Includes))
+
+        if self._arg_has_type_double(arglist):
+            newast.enable_double_precision()
+
+        newast.add_statement(lan.FuncDecl(typeid, lan.ArgList(arglist), my_kernel))
+        ast.ext = list()
+        ast.ext.append(newast.ast)
+
+    def _create_arg_list(self):
         arglist = list()
         for n in self.KernelStruct.KernelArgs:
             kernel_type = copy.deepcopy(self.KernelStruct.KernelArgs[n])
@@ -75,12 +89,16 @@ class SnippetGen(object):
                 kernel_type.insert(0, '__global')
             arglist.append(lan.TypeId(kernel_type, lan.Id(n)))
 
+        return arglist
+
+    def _swap_local_array_id(self):
         exchange_array_id = exchange.ExchangeArrayId(self.KernelStruct.LocalSwap)
 
         for n in self.KernelStruct.LoopArrays.values():
             for m in n:
                 exchange_array_id.visit(m)
 
+    def _create_kernel(self):
         my_kernel = copy.deepcopy(self.KernelStruct.Kernel)
         # print self.astrepr.ArrayIdToDimName
         rewrite_array_ref = exchange.RewriteArrayRef(self.KernelStruct.num_array_dims,
@@ -94,17 +112,34 @@ class SnippetGen(object):
         exchange_types = exchange.ExchangeTypes()
         exchange_types.visit(my_kernel)
 
+        return my_kernel
+
+    def _create_function_name(self):
         typeid = copy.deepcopy(self.DevFuncTypeId)
         typeid.type.insert(0, '__kernel')
 
-        ext = copy.deepcopy(self.KernelStruct.Includes)
-        newast = lan.FileAST(ext)
+        return typeid
+
+    def _arg_has_type_double(self, arglist):
+        retval = False
         for n in arglist:
             if (len(n.type) == 3 and n.type[1] == 'double') \
                     or (len(n.type) != 3 and n.type[0] == 'double'):
-                ext.insert(0, lan.Compound([lan.Id("#pragma OPENCL EXTENSION cl_khr_fp64: enable")]))
-                break
+                retval = True
+        return retval
 
-        ext.append(lan.FuncDecl(typeid, lan.ArgList(arglist), my_kernel))
-        ast.ext = list()
-        ast.ext.append(newast)
+
+class NewAST(object):
+    def __init__(self):
+        self.ext = list()
+        self.ast = lan.FileAST(self.ext)
+
+    def add_list_statement(self, statement):
+        for stat in statement:
+            self.ext.append(stat)
+
+    def add_statement(self, statement):
+        self.ext.append(statement)
+
+    def enable_double_precision(self):
+        self.ext.insert(0, lan.Compound([lan.Id("#pragma OPENCL EXTENSION cl_khr_fp64: enable")]))
