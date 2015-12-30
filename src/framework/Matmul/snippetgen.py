@@ -4,7 +4,7 @@ import stringstream
 import exchange
 import collect_device as cd
 import collect_gen as cg
-
+import collect_boilerplate_info as cbi
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -24,12 +24,17 @@ class SnippetGen(object):
         self.par_dim = None
         self.ast = None
 
+        self.LoopArrays = dict()
+
     def set_datastructure(self,
                           kernel_struct,
                           ast):
         self.KernelStruct = kernel_struct
         self.ast = ast
         self.par_dim = self.KernelStruct.ParDim
+        fai = cbi.FindLoopArrays()
+        fai.collect(ast)
+        self.LoopArrays = fai.loop_arrays
 
     def in_source_kernel(self, ast, cond, filename, kernelstringname):
         self.rewrite_to_device_c_release(ast)
@@ -75,7 +80,7 @@ class SnippetGen(object):
     def _swap_local_array_id(self):
         exchange_array_id = exchange.ExchangeArrayId(self.KernelStruct.LocalSwap)
 
-        for n in self.KernelStruct.LoopArrays.values():
+        for n in self.LoopArrays.values():
             for m in n:
                 exchange_array_id.visit(m)
 

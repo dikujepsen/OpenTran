@@ -4,6 +4,7 @@ import ast_buildingblock as ast_bb
 import collect_transformation_info as cti
 import exchange
 import collect_gen as cg
+import collect_boilerplate_info as cbi
 
 
 class PlaceInLocal(object):
@@ -21,6 +22,8 @@ class PlaceInLocal(object):
         self.Local['name'] = 'LSIZE'
         self.Local['size'] = ['64']
         self.ReverseIdx = dict()
+
+        self.LoopArrays = dict()
 
     def set_datastructures(self, ast, dev='CPU'):
 
@@ -46,6 +49,9 @@ class PlaceInLocal(object):
         gen_reverse_idx = cg.GenReverseIdx()
         self.ReverseIdx = gen_reverse_idx.ReverseIdx
 
+        fai = cbi.FindLoopArrays()
+        fai.collect(ast)
+        self.LoopArrays = fai.loop_arrays
 
     def place_in_local(self):
         """ Find all array references that can be optimized

@@ -20,7 +20,6 @@ class KernelChangedByTransformation(object):
         self.LocalSwap = dict()
         self.num_array_dims = dict()
         self.ArrayIdToDimName = dict()
-        self.LoopArrays = dict()
 
 
 class KernelStruct(KernelChangedByTransformation):
@@ -32,6 +31,7 @@ class KernelStruct(KernelChangedByTransformation):
 
         # bruges kun til at interchange subscript i transpose
         self.Subscript = dict()
+        self.LoopArrays = dict()
 
     def set_datastructure(self, rw, ast):
         fpl = cti.FindGridIndices()

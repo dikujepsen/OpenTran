@@ -22,7 +22,6 @@ class Stencil(object):
         self.type = dict()
         self.ArrayIdToDimName = dict()
         self.ReverseIdx = dict()
-        self.LoopArrays = dict()
         self.IndexToLocalVar = dict()
         self.GridIndices = list()
         self.ParDim = None
@@ -32,7 +31,7 @@ class Stencil(object):
         self.LocalSwap = dict()
         self.ArrayIdToDimName = dict()
         self.Kernel = None
-        self.LoopArrays = dict()
+        self.LoopArrays = dict() # Not changed
 
     def set_datastructures(self, ast, dev='CPU'):
         perfect_for_loop = cti.FindPerfectForLoop()

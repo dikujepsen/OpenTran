@@ -253,7 +253,6 @@ def __main_stencil(ks, bps, tempast3):
     ks.LocalSwap = sten.LocalSwap
     ks.num_array_dims = sten.num_array_dims
     ks.ArrayIdToDimName = sten.ArrayIdToDimName
-    ks.LoopArrays = sten.LoopArrays
     ks.Add = sten.Add
 
 

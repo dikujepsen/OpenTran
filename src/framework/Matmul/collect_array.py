@@ -60,13 +60,16 @@ class ArrayNameToRef(lan.NodeVisitor):
     def __init__(self):
         self.ids = set()
         self.LoopArrays = dict()
+        self.LoopArraysParent = dict()
 
     def visit_ArrayRef(self, node):
         name = node.name.name
         if name in self.LoopArrays:
             self.LoopArrays[name].append(node)
+            self.LoopArraysParent[name].append(lan.NodeVisitor.current_parent)
         else:
             self.LoopArrays[name] = [node]
+            self.LoopArraysParent[name] = [lan.NodeVisitor.current_parent]
 
 
 class ArraySubscripts(lan.NodeVisitor):
