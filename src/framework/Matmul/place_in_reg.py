@@ -4,15 +4,13 @@ from itertools import chain
 import collect_transformation_info as cti
 import exchange
 import collect_array as ca
-
+import collect_loop as cl
 
 class PlaceInReg(object):
     def __init__(self):
         self.GridIndices = list()
-        self.ParDim = None  # int
+        self.par_dim = None  # int
         self.ReadWrite = dict()
-        self.UpperLimit = dict()
-        self.LowerLimit = dict()
         self.Loops = dict()
 
         self.PlaceInRegFinding = tuple()
@@ -21,21 +19,21 @@ class PlaceInReg(object):
         self.ks = None
         self.perform_transformation = False
 
+        self.ast = None
+
     def set_datastructures(self, ast):
 
         fpl = cti.FindGridIndices()
-        fpl.ParDim = self.ParDim
+        fpl.ParDim = self.par_dim
         fpl.collect(ast)
 
         fs = cti.FindSubscripts()
         fs.collect(ast)
 
         fai = cti.FindReadWrite()
-        fai.ParDim = self.ParDim
+        fai.ParDim = self.par_dim
         fai.collect(ast)
 
-        self.UpperLimit = fai.upper_limit
-        self.LowerLimit = fai.lower_limit
         self.Loops = fs.Loops
         self.GridIndices = fpl.GridIndices
         self.ReadWrite = fai.ReadWrite
@@ -46,13 +44,15 @@ class PlaceInReg(object):
             :param ast:
             :param par_dim:
         """
-
+        self.ast = ast
+        self.par_dim = par_dim
         optimizable_arrays = dict()
         hoist_loop_set = set()
 
         ref_to_loop = ca.get_ref_to_loop(ast, par_dim=par_dim)
         write_only = ca.get_write_only(ast)
         subscript_no_id = ca.get_subscript_no_id(ast)
+        grid_indices = cl.get_grid_indices(ast, par_dim=par_dim)
 
         for n in ref_to_loop:
             if n in write_only:
@@ -63,11 +63,12 @@ class PlaceInReg(object):
 
             for (ref, sub, i) in zip(ref1, sub1, range(len(ref1))):
                 if self._can_perform_optimization(ref, sub):
-                    hoist_loop_set |= set(sub) - set(self.GridIndices)
+                    hoist_loop_set |= set(sub) - set(grid_indices)
                     try:
                         optimizable_arrays[n].append(i)
                     except KeyError:
                         optimizable_arrays[n] = [i]
+
 
         hoist_loop_set = self._remove_unknown_loops(hoist_loop_set)
 
@@ -84,9 +85,10 @@ class PlaceInReg(object):
 
     def _set_optimization_condition(self, optimizable_arrays, hoistloop):
         num_ref_hoisted = len(list(chain.from_iterable(optimizable_arrays.values())))
+        (lower_limit, upper_limit) = cl.get_loop_limits(self.ast)
         if hoistloop:
             m = hoistloop[0]
-            lhs = lan.BinOp(lan.Id(self.UpperLimit[m]), '-', lan.Id(self.LowerLimit[m]))
+            lhs = lan.BinOp(lan.Id(upper_limit[m]), '-', lan.Id(lower_limit[m]))
         else:
             lhs = lan.Constant(1)
         self.PlaceInRegCond = lan.BinOp(lan.BinOp(lhs, '*', lan.Constant(num_ref_hoisted)), '<', lan.Constant(40))
@@ -95,7 +97,8 @@ class PlaceInReg(object):
         self.PlaceInRegFinding = (optimizable_arrays, hoistloop)
 
     def _remove_unknown_loops(self, insideloop):
-        return {k for k in insideloop if k in self.Loops}
+        loops = cl.get_inner_loops(self.ast, par_dim=self.par_dim)
+        return {k for k in insideloop if k in loops}
 
     def _can_perform_optimization(self, loop_idx, sub_idx):
         """
@@ -226,9 +229,10 @@ class PlaceInReg(object):
 
     def _create_reg_array_alloc(self, optimizable_arrays, hoist_loop):
         initstats = []
+        (_, upper_limit) = cl.get_loop_limits(self.ast)
         # Add allocation of registers to the initiation stage
         for n in optimizable_arrays:
             lval = lan.TypeId([self.ks.Type[n][0]],
-                              lan.Id(n + '_reg[' + str(self.UpperLimit[hoist_loop]) + ']'))
+                              lan.Id(n + '_reg[' + str(upper_limit[hoist_loop]) + ']'))
             initstats.append(lval)
         return initstats

@@ -32,7 +32,7 @@ class KernelGen(object):
         ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                             kernelstringname=funcname)
         pir = pireg.PlaceInReg()
-        pir.ParDim = self.ks.ParDim
+        pir.par_dim = self.ks.ParDim
         pir.set_datastructures(ast)
         # for (arg, insideloop) in self.ks.PlaceInRegArgs:
 

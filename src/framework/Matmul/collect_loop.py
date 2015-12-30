@@ -28,6 +28,12 @@ class LoopIndices(lan.NodeVisitor):
         return self.index
 
 
+def get_grid_indices(ast, par_dim):
+    loop_indices = LoopIndices(par_dim)
+    loop_indices.visit(ast)
+    return loop_indices.grid_indices
+
+
 class LoopLimit(lan.NodeVisitor):
     """ Finds loop indices, the start and end values of the
         indices and creates a mapping from a loop index to
@@ -50,6 +56,12 @@ class LoopLimit(lan.NodeVisitor):
         except AttributeError:
             self.upper_limit[ids[0]] = 'Unknown'
             self.lower_limit[ids[0]] = 'Unknown'
+
+def get_loop_limits(ast):
+    loop_limits = LoopLimit()
+    loop_limits.visit(ast)
+    return loop_limits.lower_limit, loop_limits.upper_limit
+
 
 
 class FindInnerLoops(lan.NodeVisitor):
@@ -75,6 +87,12 @@ class FindInnerLoops(lan.NodeVisitor):
             self.Loops[name] = node
 
         self.visit(node.compound)
+
+
+def get_inner_loops(ast, par_dim):
+    find_inner_loops = FindInnerLoops(par_dim)
+    find_inner_loops.collect(ast)
+    return find_inner_loops.Loops
 
 
 class FindPerfectForLoop(lan.NodeVisitor):
