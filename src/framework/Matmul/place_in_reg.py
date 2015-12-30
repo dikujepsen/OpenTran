@@ -18,10 +18,10 @@ class PlaceInReg(object):
         self.Loops = dict()
 
         self.PlaceInRegFinding = tuple()
-        self.PlaceInRegArgs = list()
         self.PlaceInRegCond = None
 
         self.ks = None
+        self.perform_transformation = False
 
     def set_datastructures(self, ast):
 
@@ -51,7 +51,7 @@ class PlaceInReg(object):
         """
 
         optimizable_arrays = dict()
-        hoistloop = set()
+        hoist_loop_set = set()
         for n in self.RefToLoop:
             if n in self.WriteOnly:
                 continue
@@ -61,24 +61,24 @@ class PlaceInReg(object):
 
             for (ref, sub, i) in zip(ref1, sub1, range(len(ref1))):
                 if self._can_perform_optimization(ref, sub):
-                    hoistloop |= set(sub) - set(self.GridIndices)
+                    hoist_loop_set |= set(sub) - set(self.GridIndices)
                     try:
                         optimizable_arrays[n].append(i)
                     except KeyError:
                         optimizable_arrays[n] = [i]
 
-        hoistloop = self._remove_unknown_loops(hoistloop)
+        hoist_loop_set = self._remove_unknown_loops(hoist_loop_set)
 
-        if len(hoistloop) > 1:
-            print """ PlaceInReg: array references was inside two loops. No optimization """
+        if len(hoist_loop_set) > 1:
+            print """ PlaceInReg: array references was inside two loops. No optimization. """
             return
 
-        hoistloop = list(hoistloop)
+        hoist_loop_list = list(hoist_loop_set)
 
         if optimizable_arrays:
-            self._set_optimization_arg(optimizable_arrays, hoistloop)
+            self._set_optimization_arg(optimizable_arrays, hoist_loop_list)
 
-            self._set_optimization_condition(optimizable_arrays, hoistloop)
+            self._set_optimization_condition(optimizable_arrays, hoist_loop_list)
 
     def _set_optimization_condition(self, optimizable_arrays, hoistloop):
         num_ref_hoisted = len(list(chain.from_iterable(optimizable_arrays.values())))
@@ -90,7 +90,6 @@ class PlaceInReg(object):
         self.PlaceInRegCond = lan.BinOp(lan.BinOp(lhs, '*', lan.Constant(num_ref_hoisted)), '<', lan.Constant(40))
 
     def _set_optimization_arg(self, optimizable_arrays, hoistloop):
-        self.PlaceInRegArgs.append((optimizable_arrays, hoistloop))
         self.PlaceInRegFinding = (optimizable_arrays, hoistloop)
 
     def _remove_unknown_loops(self, insideloop):
@@ -149,7 +148,7 @@ class PlaceInReg(object):
         assign = lan.Assignment(reg, glob_array_ref)
         return assign
 
-    def place_in_reg3(self, ks, optimizable_arrays, hoist_loop_list):
+    def place_in_reg3(self, ks):
         """ Check if the arrayref is inside a loop and use a static
             array for the allocation of the registers
             :param ks:
@@ -161,11 +160,15 @@ class PlaceInReg(object):
         """
         self.ks = ks
         kernel_stats = ks.Kernel.statements
-        # self.place_in_reg()
-        #
-        # if self.PlaceInRegFinding is not None and self.PlaceInRegFinding is not ():
-        #     (optimizable_arrays, hoist_loop_list) = self.PlaceInRegFinding
+        self.place_in_reg()
 
+        # print "NEXT" , (optimizable_arrays, hoist_loop_list)
+
+        if self.PlaceInRegFinding is ():
+            return
+
+        (optimizable_arrays, hoist_loop_list) = self.PlaceInRegFinding
+        self.perform_transformation = True
         # print self.ks.PlaceInRegArgs
         # print []
 

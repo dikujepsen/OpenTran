@@ -24,9 +24,6 @@ class KernelGen(object):
         # Register optimizations
         funcname = name + 'Base'
 
-        if self.ks.PlaceInRegArgs and self.ks.PlaceInLocalArgs:
-            raise Exception("""GenerateKernels: Currently unimplemented to perform
-                                PlaceInReg and PlaceInLocal together from the analysis""")
 
         ss = snippetgen.SnippetGen()
 
@@ -35,12 +32,19 @@ class KernelGen(object):
         ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                             kernelstringname=funcname)
         pir = pireg.PlaceInReg()
+        pir.ParDim = self.ks.ParDim
         pir.set_datastructures(ast)
-        for (arg, insideloop) in self.ks.PlaceInRegArgs:
-            funcname = name + 'PlaceInReg'
-            pir.place_in_reg3(self.ks, arg, list(insideloop))
+        # for (arg, insideloop) in self.ks.PlaceInRegArgs:
+
+        funcname = name + 'PlaceInReg'
+        pir.place_in_reg3(self.ks)
+        if pir.perform_transformation:
             ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                                 kernelstringname=funcname)
+
+        if pir.PlaceInRegFinding and self.ks.PlaceInLocalArgs:
+            raise Exception("""GenerateKernels: Currently unimplemented to perform
+                                PlaceInReg and PlaceInLocal together from the analysis""")
 
         pil = piloc.PlaceInLocal()
         pil.set_datastructures(ast)
@@ -56,8 +60,8 @@ class KernelGen(object):
         my_cond = None
         if self.ks.PlaceInLocalCond:
             my_cond = self.ks.PlaceInLocalCond
-        if self.ks.PlaceInRegCond:
-            my_cond = self.ks.PlaceInRegCond
+        if pir.PlaceInRegCond:
+            my_cond = pir.PlaceInRegCond
 
         if my_cond:
             name = self.kgen_strt.KernelStringStream[0]['name']

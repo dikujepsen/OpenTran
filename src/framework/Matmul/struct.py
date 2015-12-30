@@ -6,8 +6,6 @@ import collect_gen as cg
 class KernelChangedByTransformation(object):
     def __init__(self):
         # Kun sat af transformation
-        self.PlaceInRegArgs = list()
-        self.PlaceInRegCond = None
         self.PlaceInLocalArgs = list()
         self.PlaceInLocalCond = None
         self.Type = dict()

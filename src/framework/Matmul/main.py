@@ -73,17 +73,18 @@ def __get_ast_from_base(name):
     return rw, ast
 
 
-def gen_full_code(name, ks, bps, tempast2):
+def gen_full_code(name, ks, bps, tempast3):
 
     kgen = kernelgen.KernelGen(ks)
+    cprint = cgen.CGenerator()
 
-    kgen.generate_kernels(tempast2, name, fileprefix)
+    kgen.generate_kernels(tempast3, name, fileprefix)
 
     boilerplate = boilerplategen.Boilerplate()
-    boilerplate.set_struct(ks, bps, kgen.kgen_strt, tempast2)
+    boilerplate.set_struct(ks, bps, kgen.kgen_strt, tempast3)
     boilerast = boilerplate.generate_code()
 
-    cprint = cgen.CGenerator()
+
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
 
@@ -224,14 +225,7 @@ def __main_definearg(ks, bps, tempast3, par_dim=None):
 
 
 def __main_placeinreg(ks, bps, tempast3, par_dim=None):
-    pireg = reg.PlaceInReg()
-    if par_dim is not None:
-        pireg.ParDim = par_dim
-    pireg.set_datastructures(tempast3)
-    pireg.place_in_reg()
-
-    ks.PlaceInRegArgs = pireg.PlaceInRegArgs
-    ks.PlaceInRegCond = pireg.PlaceInRegCond
+    pass
 
 
 def __main_placeinlocal(ks, bps, tempast3, par_dim=None):
