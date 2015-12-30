@@ -124,11 +124,8 @@ class FindSubscripts(FindLoops):
 
     def collect(self, ast):
         super(FindSubscripts, self).collect(ast)
-
-        arr_subs = ca.ArraySubscripts()
-        arr_subs.collect(ast)
-        self.Subscript = arr_subs.Subscript
-        self.SubscriptNoId = arr_subs.subscript_no_id
+        self.Subscript = ca.get_subscript(ast)
+        self.SubscriptNoId = ca.get_subscript_no_id(ast)
 
 
 class RemovedLoopLimit(FindLoops):
@@ -157,9 +154,7 @@ class FindArrayIds(RemovedLoopLimit):
 
     def collect(self, ast):
         super(FindArrayIds, self).collect(ast)
-        arrays_ids = ca.GlobalArrayIds()
-        arrays_ids.visit(ast)
-        self.ArrayIds = arrays_ids.ids
+        self.ArrayIds = ca.get_array_ids(ast)
         # print self.ArrayIds
 
         nonarray_ids = ci.GlobalNonArrayIds()
@@ -170,6 +165,9 @@ class FindArrayIds(RemovedLoopLimit):
         mytype_ids.visit(ast)
         # print print_dict_sorted(mytype_ids.dictIds)
         self.type = mytype_ids.types
+
+
+
 
 
 class FindArrayIdsKernel(FindArrayIds):
@@ -193,8 +191,8 @@ class FindReadWrite(FindArrayIdsKernel):
 
     def collect(self, ast):
         super(FindReadWrite, self).collect(ast)
-        find_read_write = ca.FindReadWrite(self.ArrayIds)
-        find_read_write.visit(ast)
+        find_read_write = ca.FindReadWrite()
+        find_read_write.collect(ast)
         self.ReadWrite = find_read_write.ReadWrite
 
         for n in self.ReadWrite:
@@ -204,3 +202,9 @@ class FindReadWrite(FindArrayIdsKernel):
                     self.WriteOnly.append(n)
                 else:
                     self.ReadOnly.append(n)
+
+
+
+
+
+

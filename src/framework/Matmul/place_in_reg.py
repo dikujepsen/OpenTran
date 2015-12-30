@@ -3,16 +3,14 @@ import lan
 from itertools import chain
 import collect_transformation_info as cti
 import exchange
+import collect_array as ca
 
 
 class PlaceInReg(object):
     def __init__(self):
-        self.RefToLoop = dict()
         self.GridIndices = list()
         self.ParDim = None  # int
-        self.WriteOnly = list()
         self.ReadWrite = dict()
-        self.SubscriptNoId = dict()
         self.UpperLimit = dict()
         self.LowerLimit = dict()
         self.Loops = dict()
@@ -40,24 +38,28 @@ class PlaceInReg(object):
         self.LowerLimit = fai.lower_limit
         self.Loops = fs.Loops
         self.GridIndices = fpl.GridIndices
-        self.RefToLoop = fpl.RefToLoop
         self.ReadWrite = fai.ReadWrite
-        self.WriteOnly = fai.WriteOnly
-        self.SubscriptNoId = fs.SubscriptNoId
 
-    def place_in_reg(self):
+    def place_in_reg(self, ast, par_dim):
         """ Find all array references that can be cached in registers.
             Then rewrite the code in this fashion.
+            :param ast:
+            :param par_dim:
         """
 
         optimizable_arrays = dict()
         hoist_loop_set = set()
-        for n in self.RefToLoop:
-            if n in self.WriteOnly:
+
+        ref_to_loop = ca.get_ref_to_loop(ast, par_dim=par_dim)
+        write_only = ca.get_write_only(ast)
+        subscript_no_id = ca.get_subscript_no_id(ast)
+
+        for n in ref_to_loop:
+            if n in write_only:
                 continue
 
-            ref1 = self.RefToLoop[n]
-            sub1 = self.SubscriptNoId[n]
+            ref1 = ref_to_loop[n]
+            sub1 = subscript_no_id[n]
 
             for (ref, sub, i) in zip(ref1, sub1, range(len(ref1))):
                 if self._can_perform_optimization(ref, sub):
@@ -148,19 +150,19 @@ class PlaceInReg(object):
         assign = lan.Assignment(reg, glob_array_ref)
         return assign
 
-    def place_in_reg3(self, ks):
+    def place_in_reg3(self, ast, par_dim, ks):
         """ Check if the arrayref is inside a loop and use a static
             array for the allocation of the registers
             :param ks:
                 kernelstruct
-            :param optimizable_arrays:
-                dictionary of arrays
-            :param hoist_loop_list:
-                what loop we are inside
+            :param ast:
+                tree
+            :param par_dim:
+                number of parallel dimensions
         """
         self.ks = ks
         kernel_stats = ks.Kernel.statements
-        self.place_in_reg()
+        self.place_in_reg(ast, par_dim)
 
         # print "NEXT" , (optimizable_arrays, hoist_loop_list)
 

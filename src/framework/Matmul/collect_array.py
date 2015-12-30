@@ -78,19 +78,9 @@ class ArraySubscripts(lan.NodeVisitor):
     def __init__(self):
         self.ids = set()
         self.Subscript = dict()
-        self.subscript_no_id = dict()
 
     def collect(self, ast):
         self.visit(ast)
-
-        self.subscript_no_id = copy.deepcopy(self.Subscript)
-        for n in self.subscript_no_id.values():
-            for m in n:
-                for i, k in enumerate(m):
-                    if isinstance(k, lan.Id):
-                        m[i] = k.name
-                    else:
-                        m[i] = 'unknown'
 
     def visit_ArrayRef(self, node):
         name = node.name.name
@@ -98,6 +88,25 @@ class ArraySubscripts(lan.NodeVisitor):
             self.Subscript[name].append(node.subscript)
         else:
             self.Subscript[name] = [node.subscript]
+
+
+def get_subscript(ast):
+    arr_subs = ArraySubscripts()
+    arr_subs.collect(ast)
+    return arr_subs.Subscript
+
+
+def get_subscript_no_id(ast):
+    subscript = get_subscript(ast)
+    subscript_no_id = copy.deepcopy(subscript)
+    for n in subscript_no_id.values():
+        for m in n:
+            for i, k in enumerate(m):
+                if isinstance(k, lan.Id):
+                    m[i] = k.name
+                else:
+                    m[i] = 'unknown'
+    return subscript_no_id
 
 
 class NumArrayDim(lan.NodeVisitor):
@@ -133,16 +142,26 @@ class NumArrayDim(lan.NodeVisitor):
             self.visit(n)
 
 
+def get_array_ids(ast):
+    arrays_ids = GlobalArrayIds()
+    arrays_ids.visit(ast)
+    return arrays_ids.ids
+
+
 class FindReadWrite(lan.NodeVisitor):
     """ Returns a mapping of array to either
     'read'-only, 'write'-only, or 'readwrite'
     """
 
-    def __init__(self, array_ids):
+    def __init__(self):
         self.ReadWrite = dict()
-        self.ArrayIds = array_ids
+        self.ArrayIds = set()
+
+    def collect(self, ast):
+        self.ArrayIds = get_array_ids(ast)
         for n in self.ArrayIds:
             self.ReadWrite[n] = set()
+        self.visit(ast)
 
     def visit_Assignment(self, node):
         find_read_pattern = _FindReadPattern(self.ArrayIds, self.ReadWrite, True)
@@ -222,3 +241,26 @@ class FindRefToLoopIndex(lan.NodeVisitor):
             self.RefToLoop[name].append(copy.deepcopy(self.stack))
         except KeyError:
             self.RefToLoop[name] = [copy.deepcopy(self.stack)]
+
+
+def get_ref_to_loop(ast, par_dim):
+    find_ref_to_loop_index = FindRefToLoopIndex(par_dim)
+    find_ref_to_loop_index.collect(ast)
+    return find_ref_to_loop_index.RefToLoop
+
+
+def get_read_write(ast):
+    find_read_write = FindReadWrite()
+    find_read_write.collect(ast)
+    return find_read_write.ReadWrite
+
+
+def get_write_only(ast):
+    read_write = get_read_write(ast)
+    write_only = list()
+    for n in read_write:
+        io_set = read_write[n]
+        if len(io_set) == 1:
+            if 'write' in io_set:
+                write_only.append(n)
+    return write_only
