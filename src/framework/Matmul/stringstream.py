@@ -175,10 +175,11 @@ class SSGenerator(object):
         return s1
 
     def visit_Assignment(self, n):
+        self.inside_Assignment = True
         self.inside_ArgList = True
         lval = self.visit(n.lval)
         self.inside_ArgList = False
-        self.inside_Assignment = True
+
         rval = self.visit(n.rval)
         self.inside_Assignment = False
         return lval + ' ' + n.op + ' ' + rval + self.semi

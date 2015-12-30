@@ -244,9 +244,7 @@ class Assignment(Node):
         return "Assignment(%r %r %r)" % (self.lval, self.op, self.rval)
 
     def children(self):
-        nodelist = []
-        nodelist.append(("lval", self.lval))
-        nodelist.append(("rval", self.rval))
+        nodelist = [("lval", self.lval), ("rval", self.rval)]
         return tuple(nodelist)
 
     attr_names = ("op",)
@@ -259,7 +257,7 @@ class GroupCompound(Node):
         self.coord = coord
 
     def __repr__(self):
-        return "GroupCompound({%r})" % (self.statements)
+        return "GroupCompound({%r})" % self.statements
 
     def children(self):
         nodelist = []
@@ -278,7 +276,7 @@ class Compound(Node):
         self.coord = coord
 
     def __repr__(self):
-        return "Compound({%r})" % (self.statements)
+        return "Compound({%r})" % self.statements
 
     def children(self):
         nodelist = []
@@ -321,8 +319,7 @@ class ArrayRef(Node):
         return "ArrayRef(%r%r)" % (self.name, self.subscript)
 
     def children(self):
-        nodelist = []
-        nodelist.append(("name", self.name))
+        nodelist = [("name", self.name)]
         count = 0
         for i in self.subscript:
             nodelist.append(("subscript %r" % count, i))

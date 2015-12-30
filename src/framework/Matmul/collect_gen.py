@@ -71,6 +71,7 @@ class GenKernelArgs(object):
         nonarray_ids.visit(ast)
         non_array_ids = nonarray_ids.ids
 
+
         mytype_ids = ci.GlobalTypeIds()
         mytype_ids.visit(ast)
         types = mytype_ids.types

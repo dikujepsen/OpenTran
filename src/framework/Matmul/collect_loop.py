@@ -57,11 +57,11 @@ class LoopLimit(lan.NodeVisitor):
             self.upper_limit[ids[0]] = 'Unknown'
             self.lower_limit[ids[0]] = 'Unknown'
 
+
 def get_loop_limits(ast):
     loop_limits = LoopLimit()
     loop_limits.visit(ast)
     return loop_limits.lower_limit, loop_limits.upper_limit
-
 
 
 class FindInnerLoops(lan.NodeVisitor):

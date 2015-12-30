@@ -6,6 +6,7 @@ import collect_device as cd
 import collect_gen as cg
 import collect_boilerplate_info as cbi
 
+
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
 
@@ -86,12 +87,10 @@ class SnippetGen(object):
 
     def _create_kernel(self):
         my_kernel = copy.deepcopy(self.KernelStruct.Kernel)
-        # print self.astrepr.ArrayIdToDimName
         rewrite_array_ref = exchange.RewriteArrayRef(self.KernelStruct.num_array_dims,
                                                      self.KernelStruct.ArrayIdToDimName)
         rewrite_array_ref.visit(my_kernel)
 
-        # print MyKernel
         idx_to_thread_id = cg.GenIdxToThreadId()
         idx_to_thread_id.collect(self.ast, self.par_dim)
         index_to_thread_id = idx_to_thread_id.IndexToThreadId

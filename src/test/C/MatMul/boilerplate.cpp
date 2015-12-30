@@ -50,8 +50,8 @@ std::string MatMulPlaceInLocal()
   str << "__kernel void MatMulFor(" << endl;
   str << "	__global float * A, __global float * C, __global float * B" << endl;
   str << "	) {" << endl;
-  str << "  __local float A_local[4*4];" << endl;
-  str << "  __local float B_local[4*4];" << endl;
+  str << "  __local float A_local[4 * 4];" << endl;
+  str << "  __local float B_local[4 * 4];" << endl;
   str << "  float sum = 0;" << endl;
   str << "  for (unsigned k = 0; k < wA; k+=4) {" << endl;
   str << "      A_local[(get_local_id(1) * 4) + get_local_id(0)] = A[(get_global_id(1) * hst_ptrA_dim1) + (k + get_local_id(0))];" << endl;

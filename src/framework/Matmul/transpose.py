@@ -131,6 +131,7 @@ class Transpose(object):
                 self.WriteTranspose.append(trans)
 
         for sub in self.Subscript[arr_name]:
-            (sub[0], sub[1]) = \
-                (sub[1], sub[0])
+            if isinstance(sub[0], lan.Id) and isinstance(sub[1], lan.Id):
+                (sub[0].name, sub[1].name) = \
+                    (sub[1].name, sub[0].name)
             # print self.Subscript[arr_name], "sub123"

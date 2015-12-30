@@ -5,6 +5,7 @@ import collect_transformation_info as cti
 import struct
 import collect_boilerplate_info as cbi
 
+
 class Boilerplate(object):
     def __init__(self):
         self.ks = None
@@ -41,7 +42,6 @@ class Boilerplate(object):
 
         self.bps_static = struct.BoilerPlateStruct()
         self.bps_static.set_datastructure(ast, self.ks.ParDim)
-
 
     def generate_code(self):
 

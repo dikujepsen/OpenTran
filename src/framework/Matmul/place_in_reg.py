@@ -214,7 +214,6 @@ class PlaceInReg(object):
         (_, upper_limit) = cl.get_loop_limits(self.ast)
         # Add allocation of registers to the initiation stage
         for n in optimizable_arrays:
-            lval = lan.TypeId([self.ks.Type[n][0]],
-                              lan.Id(n + '_reg[' + str(upper_limit[hoist_loop]) + ']'))
-            initstats.append(lval)
+            array_init = lan.ArrayTypeId([self.ks.Type[n][0]], lan.Id(n + '_reg'), [lan.Id(upper_limit[hoist_loop])])
+            initstats.append(array_init)
         return initstats

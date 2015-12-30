@@ -147,15 +147,16 @@ class PlaceInLocal(object):
             # Add array allocations
 
             localName = n + '_local'
-            arrayinit = '['
-            arrayinit += self.Local['size'][0]
+            arrayinit = lan.Constant(self.Local['size'][0])
             if ks.num_array_dims[n] == 2 and ks.ParDim == 2:
-                arrayinit += '*' + self.Local['size'][1]
-            arrayinit += ']'
+                arrayinit = lan.BinOp(arrayinit, '*', lan.Constant(self.Local['size'][1]))
 
-            localId = lan.Id(localName + arrayinit)
-            localTypeId = lan.TypeId(['__local'] + [ks.Type[n][0]], localId)
+            localId = lan.Id(localName)
+
+            localTypeId = lan.ArrayTypeId(['__local', ks.Type[n][0]], localId, [arrayinit])
             initstats.append(localTypeId)
+
+
 
         loadings = []
         for n in arr_dict:
@@ -165,31 +166,62 @@ class PlaceInLocal(object):
                 # Change loop idx to local idx
                 loopname = loop_dict[(n, i)][0]
                 loc_subs = copy.deepcopy(glob_subs).subscript
+                loc_subs_2 = copy.deepcopy(glob_subs).subscript
+                my_new_glob_sub = copy.deepcopy(glob_subs).subscript
+                my_new_glob_sub_2 = copy.deepcopy(ks.LoopArrays[n][i])
+                # print "LOC_SUBS ", loc_subs
                 for k, m in enumerate(loc_subs):
                     if isinstance(m, lan.Id) and \
                                     m.name not in self.GridIndices:
                         tid = str(self.ReverseIdx[k])
-                        tidstr = 'get_local_id(' + tid + ')'
-                        exchange_id = exchange.ExchangeId({loopname: tidstr})
-                        exchange_id.visit(m)
-                        exchange_id2 = exchange.ExchangeId({loopname: '(' + loopname + ' + ' + tidstr + ')'})
-                        exchange_id2.visit(glob_subs.subscript[k])
-                loc_ref = lan.ArrayRef(lan.Id(loc_name), loc_subs)
+                        tidstr = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
+                        # exchange_id = exchange.ExchangeId({loopname: tidstr})
+                        # print "M ", m
+                        # exchange_id.visit(m)
+                        loc_subs_2[k] = tidstr
+                        # print "M2 ", m
+                        # print "LOC_SUB ", loc_subs
+                        # print "LOC_SUB 2", loc_subs_2
 
-                loadings.append(lan.Assignment(loc_ref, glob_subs))
-                if ks.ParDim == 2:
-                    exchange_id = exchange.ExchangeId(
-                        {self.GridIndices[1]: 'get_local_id(0)', self.GridIndices[0]: 'get_local_id(1)'})
-                else:
-                    exchange_id = exchange.ExchangeId({self.GridIndices[0]: 'get_local_id(0)'})
-                exchange_id.visit(loc_ref)
+                        # print glob_subs.subscript[k]
+                        # print '(' + loopname + ' + ' + tidstr + ')'
+
+                        my_new_glob_sub[k] = lan.BinOp(lan.Id(loopname), '+', tidstr)
+                        my_new_glob_sub_2 = lan.ArrayRef(lan.Id(n), my_new_glob_sub)
+
+                        # exchange_id2 = exchange.ExchangeId({loopname: '(' + loopname + ' + ' + tidstr + ')'})
+                        # exchange_id2.visit(glob_subs.subscript[k])
+
+                for k, m in enumerate(loc_subs_2):
+                    if isinstance(m, lan.Id) and \
+                                    m.name in self.GridIndices:
+                        tid = str(self.ReverseIdx[k])
+                        loc_subs_2[k] = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
+
+                loc_ref = lan.ArrayRef(lan.Id(loc_name), loc_subs_2)
+                # print loc_ref
+                # print glob_subs
+                # print "new glob_subs ", my_new_glob_sub_2
+
+                loadings.append(lan.Assignment(loc_ref, my_new_glob_sub_2))
+
+                # print "LOC_REF Before", loc_ref
+                # exchange_id.visit(loc_ref)
+                # print "LOC_REF After", loc_ref
 
                 inner_loc = ks.LoopArrays[n][i]
+
                 inner_loc.name.name = loc_name
                 exchange_id2 = exchange.ExchangeId({loopname: loopname * 2})
                 exchange_id2.visit(inner_loc)
-                exchange_id.visit(inner_loc)
 
+                for k, m in enumerate(inner_loc.subscript):
+                    if isinstance(m, lan.Id) and \
+                                    m.name in self.GridIndices:
+                        tid = str(self.ReverseIdx[k])
+                        inner_loc.subscript[k] = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
+
+                # exchange_id.visit(inner_loc)
             ks.ArrayIdToDimName[loc_name] = self.Local['size']
             ks.num_array_dims[loc_name] = ks.num_array_dims[n]
         # Must also create the barrier

@@ -30,8 +30,8 @@ class KernelGen(object):
 
         ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                             kernelstringname=funcname)
-        pir = pireg.PlaceInReg()
 
+        pir = pireg.PlaceInReg()
         funcname = name + 'PlaceInReg'
         pir.place_in_reg3(ast, self.ks.ParDim, self.ks)
         if pir.perform_transformation:

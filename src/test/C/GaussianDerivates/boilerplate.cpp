@@ -6,9 +6,9 @@ cl_mem dev_ptrq_a_i_x;
 cl_mem dev_ptrD3Ks__ijbgd_x;
 cl_mem dev_ptrD2Ks__ijbg_dimsI;
 cl_mem dev_ptrD3Ks__ijbgd_dimsI;
-cl_mem dev_ptrp_a_i_x;
-cl_mem dev_ptrD1Ks__ijb_x;
 cl_mem dev_ptrK__ij_x;
+cl_mem dev_ptrD1Ks__ijb_x;
+cl_mem dev_ptrp_a_i_x;
 cl_mem dev_ptrD2Ks__ijbg_x;
 
 unsigned * hst_ptrD1Ks__ijb_dimsI;
@@ -43,11 +43,11 @@ size_t hst_ptrq_a_i_x_dim2;
 size_t hst_ptrD3Ks__ijbgd_x_dim1;
 size_t hst_ptrD2Ks__ijbg_dimsI_dim1;
 size_t hst_ptrD3Ks__ijbgd_dimsI_dim1;
-size_t hst_ptrp_a_i_x_dim1;
-size_t hst_ptrp_a_i_x_dim2;
-size_t hst_ptrD1Ks__ijb_x_dim1;
 size_t hst_ptrK__ij_x_dim1;
 size_t hst_ptrK__ij_x_dim2;
+size_t hst_ptrD1Ks__ijb_x_dim1;
+size_t hst_ptrp_a_i_x_dim1;
+size_t hst_ptrp_a_i_x_dim2;
 size_t hst_ptrD2Ks__ijbg_x_dim1;
 
 size_t isFirstTime = 1;
@@ -136,8 +136,8 @@ std::string GaussianDerivatesPlaceInLocal()
   str << "	__global float * q_a_i_x, __global unsigned * D3Ks__ijbgd_dimsI, __global float * p_a_i_x, " << endl;
   str << "	__global float * D1Ks__ijb_x, __global float * K__ij_x, __global float * D2Ks__ijbg_x" << endl;
   str << "	) {" << endl;
-  str << "  __local float p_a_i_x_local[4*4];" << endl;
-  str << "  __local float q_a_i_x_local[4*4];" << endl;
+  str << "  __local float p_a_i_x_local[4 * 4];" << endl;
+  str << "  __local float q_a_i_x_local[4 * 4];" << endl;
   str << "  float xj[3];" << endl;
   str << "  float xi[3];" << endl;
   str << "  for (int k = 0; k < dim; k++) {" << endl;
@@ -227,9 +227,9 @@ void AllocateBuffers()
   hst_ptrD3Ks__ijbgd_x_mem_size = hst_ptrD3Ks__ijbgd_x_dim1 * sizeof(float);
   hst_ptrD2Ks__ijbg_dimsI_mem_size = hst_ptrD2Ks__ijbg_dimsI_dim1 * sizeof(unsigned);
   hst_ptrD3Ks__ijbgd_dimsI_mem_size = hst_ptrD3Ks__ijbgd_dimsI_dim1 * sizeof(unsigned);
-  hst_ptrp_a_i_x_mem_size = hst_ptrp_a_i_x_dim2 * (hst_ptrp_a_i_x_dim1 * sizeof(float));
-  hst_ptrD1Ks__ijb_x_mem_size = hst_ptrD1Ks__ijb_x_dim1 * sizeof(float);
   hst_ptrK__ij_x_mem_size = hst_ptrK__ij_x_dim2 * (hst_ptrK__ij_x_dim1 * sizeof(float));
+  hst_ptrD1Ks__ijb_x_mem_size = hst_ptrD1Ks__ijb_x_dim1 * sizeof(float);
+  hst_ptrp_a_i_x_mem_size = hst_ptrp_a_i_x_dim2 * (hst_ptrp_a_i_x_dim1 * sizeof(float));
   hst_ptrD2Ks__ijbg_x_mem_size = hst_ptrD2Ks__ijbg_x_dim1 * sizeof(float);
   
   // Transposition
@@ -359,9 +359,9 @@ void RunOCLGaussianDerivatesForKernel(
 	unsigned * arg_D2Ks__ijbg_dimsI, size_t arg_hst_ptrD2Ks__ijbg_dimsI_dim1, unsigned * arg_D3Ks__ijbgd_dimsI, 
 	size_t arg_hst_ptrD3Ks__ijbgd_dimsI_dim1, float * arg_q_a_i_x, size_t arg_hst_ptrq_a_i_x_dim1, 
 	size_t arg_hst_ptrq_a_i_x_dim2, float arg_scales2_x, unsigned arg_Lp, 
-	unsigned arg_Lq, float * arg_p_a_i_x, size_t arg_hst_ptrp_a_i_x_dim1, 
-	size_t arg_hst_ptrp_a_i_x_dim2, float * arg_D1Ks__ijb_x, size_t arg_hst_ptrD1Ks__ijb_x_dim1, 
-	float * arg_K__ij_x, size_t arg_hst_ptrK__ij_x_dim1, size_t arg_hst_ptrK__ij_x_dim2, 
+	unsigned arg_Lq, float * arg_K__ij_x, size_t arg_hst_ptrK__ij_x_dim1, 
+	size_t arg_hst_ptrK__ij_x_dim2, float * arg_D1Ks__ijb_x, size_t arg_hst_ptrD1Ks__ijb_x_dim1, 
+	float * arg_p_a_i_x, size_t arg_hst_ptrp_a_i_x_dim1, size_t arg_hst_ptrp_a_i_x_dim2, 
 	float * arg_D2Ks__ijbg_x, size_t arg_hst_ptrD2Ks__ijbg_x_dim1)
 {
   if (isFirstTime)
@@ -382,14 +382,14 @@ void RunOCLGaussianDerivatesForKernel(
       scales2_x = arg_scales2_x;
       Lp = arg_Lp;
       Lq = arg_Lq;
-      hst_ptrp_a_i_x = arg_p_a_i_x;
-      hst_ptrp_a_i_x_dim1 = arg_hst_ptrp_a_i_x_dim1;
-      hst_ptrp_a_i_x_dim2 = arg_hst_ptrp_a_i_x_dim2;
-      hst_ptrD1Ks__ijb_x = arg_D1Ks__ijb_x;
-      hst_ptrD1Ks__ijb_x_dim1 = arg_hst_ptrD1Ks__ijb_x_dim1;
       hst_ptrK__ij_x = arg_K__ij_x;
       hst_ptrK__ij_x_dim1 = arg_hst_ptrK__ij_x_dim1;
       hst_ptrK__ij_x_dim2 = arg_hst_ptrK__ij_x_dim2;
+      hst_ptrD1Ks__ijb_x = arg_D1Ks__ijb_x;
+      hst_ptrD1Ks__ijb_x_dim1 = arg_hst_ptrD1Ks__ijb_x_dim1;
+      hst_ptrp_a_i_x = arg_p_a_i_x;
+      hst_ptrp_a_i_x_dim1 = arg_hst_ptrp_a_i_x_dim1;
+      hst_ptrp_a_i_x_dim2 = arg_hst_ptrp_a_i_x_dim2;
       hst_ptrD2Ks__ijbg_x = arg_D2Ks__ijbg_x;
       hst_ptrD2Ks__ijbg_x_dim1 = arg_hst_ptrD2Ks__ijbg_x_dim1;
       StartUpGPU();

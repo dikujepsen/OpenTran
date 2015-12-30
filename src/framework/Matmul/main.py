@@ -84,7 +84,6 @@ def gen_full_code(name, ks, bps, tempast3):
     boilerplate.set_struct(ks, bps, kgen.kgen_strt, tempast3)
     boilerast = boilerplate.generate_code()
 
-
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
 
@@ -106,7 +105,7 @@ def __optimize(rw, ast, name, par_dim=None):
     ks = struct.KernelStruct()
     if par_dim is not None:
         ks.ParDim = par_dim
-    ks.set_datastructure(rw, tempast)
+    ks.set_datastructure(rw, tempast3)
     bps = struct.BoilerPlateChangedByTransformation()
     if DoOptimizations:
         __main_transpose(ks, bps, tempast3, par_dim=ks.ParDim)
@@ -193,15 +192,19 @@ def __main_transpose(ks, bps, tempast3, par_dim=None):
         tps.ParDim = par_dim
     tps.set_datastructures(tempast3)
     tps.transpose()
+    # print tps.Subscript
+    # ks.Subscript = tps.Subscript
+    # print ks.Subscript
 
-    for (arr_name, idx_list_list) in tps.Subscript.items():
 
-        idx_list_list2 = ks.Subscript[arr_name]
-
-        for i, idx_list in enumerate(idx_list_list):
-            for j, idx in enumerate(idx_list):
-                if isinstance(idx, lan.Id) and isinstance(idx_list_list2[i][j], lan.Id):
-                    idx_list_list2[i][j].name = idx.name
+    # for (arr_name, idx_list_list) in tps.Subscript.items():
+    #
+    #     idx_list_list2 = ks.Subscript[arr_name]
+    #
+    #     for i, idx_list in enumerate(idx_list_list):
+    #         for j, idx in enumerate(idx_list):
+    #             if isinstance(idx, lan.Id) and isinstance(idx_list_list2[i][j], lan.Id):
+    #                 idx_list_list2[i][j].name = idx.name
 
     bps.WriteTranspose = tps.WriteTranspose
     bps.Transposition = tps.Transposition
@@ -217,6 +220,7 @@ def __main_definearg(ks, bps, tempast3, par_dim=None):
     if par_dim is not None:
         dargs.ParDim = par_dim
     dargs.set_datastructures(tempast3)
+
     dargs.define_arguments(bps.NameSwap)
 
     bps.define_compound = dargs.define_compound
