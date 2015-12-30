@@ -8,10 +8,8 @@ import collect_loop as cl
 
 class PlaceInReg(object):
     def __init__(self):
-        self.GridIndices = list()
         self.par_dim = None  # int
         self.ReadWrite = dict()
-        self.Loops = dict()
 
         self.PlaceInRegFinding = tuple()
         self.PlaceInRegCond = None
@@ -34,8 +32,6 @@ class PlaceInReg(object):
         fai.ParDim = self.par_dim
         fai.collect(ast)
 
-        self.Loops = fs.Loops
-        self.GridIndices = fpl.GridIndices
         self.ReadWrite = fai.ReadWrite
 
     def place_in_reg(self, ast, par_dim):
@@ -52,7 +48,7 @@ class PlaceInReg(object):
         ref_to_loop = ca.get_ref_to_loop(ast, par_dim=par_dim)
         write_only = ca.get_write_only(ast)
         subscript_no_id = ca.get_subscript_no_id(ast)
-        grid_indices = cl.get_grid_indices(ast, par_dim=par_dim)
+        grid_indices = cl.get_grid_indices(self.ast, par_dim=self.par_dim)
 
         for n in ref_to_loop:
             if n in write_only:
@@ -110,7 +106,8 @@ class PlaceInReg(object):
         :param sub_idx:
         :return:
         """
-        return set(sub_idx).intersection(set(self.GridIndices)) and \
+        grid_indices = cl.get_grid_indices(self.ast, par_dim=self.par_dim)
+        return set(sub_idx).intersection(set(grid_indices)) and \
             set(loop_idx).difference(set(sub_idx))
 
     def place_in_reg2(self, ks, arr_dict):
@@ -216,7 +213,8 @@ class PlaceInReg(object):
                 aref_old.subscript = aref_new.subscript
 
     def _create_load_loop(self, hoist_loop, initstats):
-        loop = copy.deepcopy(self.Loops[hoist_loop])
+        loops = cl.get_inner_loops(self.ast, par_dim=self.par_dim)
+        loop = copy.deepcopy(loops[hoist_loop])
         loopstats = []
         loop.compound.statements = loopstats
         initstats.append(loop)
