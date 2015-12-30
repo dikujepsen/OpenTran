@@ -4,6 +4,7 @@ from itertools import chain
 import collect_transformation_info as cti
 import exchange
 
+
 class PlaceInReg(object):
     def __init__(self):
         self.RefToLoop = dict()
@@ -16,6 +17,7 @@ class PlaceInReg(object):
         self.LowerLimit = dict()
         self.Loops = dict()
 
+        self.PlaceInRegFinding = tuple()
         self.PlaceInRegArgs = list()
         self.PlaceInRegCond = None
 
@@ -74,8 +76,6 @@ class PlaceInReg(object):
         hoistloop = list(hoistloop)
 
         if optimizable_arrays:
-            # print 'Register ' , args
-
             self._set_optimization_arg(optimizable_arrays, hoistloop)
 
             self._set_optimization_condition(optimizable_arrays, hoistloop)
@@ -91,6 +91,7 @@ class PlaceInReg(object):
 
     def _set_optimization_arg(self, optimizable_arrays, hoistloop):
         self.PlaceInRegArgs.append((optimizable_arrays, hoistloop))
+        self.PlaceInRegFinding = (optimizable_arrays, hoistloop)
 
     def _remove_unknown_loops(self, insideloop):
         return {k for k in insideloop if k in self.Loops}
@@ -112,7 +113,6 @@ class PlaceInReg(object):
         self.ks = ks
         kernel_stats = ks.Kernel.statements
         self._insert_cache_in_reg(kernel_stats, arr_dict)
-        # Replace the global Arefs with the register Arefs
         self._replace_global_ref_with_reg_id(arr_dict)
 
     def _insert_cache_in_reg(self, kernel_stats, arr_dict):
@@ -121,11 +121,14 @@ class PlaceInReg(object):
         for i, n in enumerate(arr_dict):
             for m in arr_dict[n]:
                 regid = self._create_reg_var_id(m, n)
-                assign = self._create_reg_assignment(m, n, regid)
+                types = self.ks.Type[n][0]
+                reg = lan.TypeId([types], regid)
+                assign = self._create_reg_assignment(m, n, reg)
                 initstats.append(assign)
         kernel_stats.insert(0, lan.GroupCompound(initstats))
 
     def _replace_global_ref_with_reg_id(self, arr_dict):
+        # Replace the global Arefs with the register vars
         for i, n in enumerate(arr_dict):
             for m in arr_dict[n]:
                 idx = m
@@ -139,75 +142,88 @@ class PlaceInReg(object):
     def _create_reg_var_id(m, n):
         return lan.Id(n + str(m) + '_reg')
 
-    def _create_reg_assignment(self, m, n, regid):
+    def _create_reg_assignment(self, m, n, reg):
+
         idx = m
-        sub = copy.deepcopy(self.ks.LoopArrays[n][idx])
-        types = self.ks.Type[n][0]
-        reg = lan.TypeId([types], regid)
-        assign = lan.Assignment(reg, sub)
+        glob_array_ref = copy.deepcopy(self.ks.LoopArrays[n][idx])
+        assign = lan.Assignment(reg, glob_array_ref)
         return assign
 
-    def place_in_reg3(self, ks, arr_dict, inside_list):
+    def place_in_reg3(self, ks, optimizable_arrays, hoist_loop_list):
         """ Check if the arrayref is inside a loop and use a static
             array for the allocation of the registers
             :param ks:
                 kernelstruct
-            :param arr_dict:
+            :param optimizable_arrays:
                 dictionary of arrays
-            :param inside_list:
+            :param hoist_loop_list:
                 what loop we are inside
         """
-        stats = ks.Kernel.statements
-        initstats = []
-        writes = []
+        self.ks = ks
+        kernel_stats = ks.Kernel.statements
+        # self.place_in_reg()
+        #
+        # if self.PlaceInRegFinding is not None and self.PlaceInRegFinding is not ():
+        #     (optimizable_arrays, hoist_loop_list) = self.PlaceInRegFinding
 
-        if not arr_dict:
+        # print self.ks.PlaceInRegArgs
+        # print []
+
+        if not optimizable_arrays:
             return
 
-        if not inside_list:
-            self.place_in_reg2(ks, arr_dict)
+        if not hoist_loop_list:
+            self.place_in_reg2(ks, optimizable_arrays)
             return
 
-        insideloop = inside_list[0]
+        hoist_loop = hoist_loop_list[0]
 
-        if insideloop == '':
+        if hoist_loop == '':
             print "placeInReg3 only works when the ArrayRef is inside a loop"
-            print arr_dict
+            print optimizable_arrays
             return
 
-        # Add allocation of registers to the initiation stage
-        for n in arr_dict:
-            lval = lan.TypeId([ks.Type[n][0]],
-                              lan.Id(n + '_reg[' + str(self.UpperLimit[insideloop]) + ']'))
-            initstats.append(lval)
+        initstats = self._create_reg_array_alloc(optimizable_arrays, hoist_loop)
 
-        # add the loop to the initiation stage
-        loop = copy.deepcopy(self.Loops[insideloop])
-        loopstats = []
-        # Exchange loop index
-        loop.compound.statements = loopstats
-
-        initstats.append(loop)
+        # add the load loop to the initiation stage
+        loopstats = self._create_load_loop(hoist_loop, initstats)
 
         # Create the loadings
-        for i, n in enumerate(arr_dict):
-            for m in arr_dict[n]:
-                idx = m
-                sub = copy.deepcopy(ks.LoopArrays[n][idx])
-                regid = lan.ArrayRef(lan.Id(n + '_reg'), [lan.Id(insideloop)])
-                writes.append(regid)
-                assign = lan.Assignment(regid, sub)
+        for i, n in enumerate(optimizable_arrays):
+            for m in optimizable_arrays[n]:
+                regid = self._create_reg_array_var(n, hoist_loop)
+                assign = self._create_reg_assignment(m, n, regid)
                 loopstats.append(assign)
 
-        stats.insert(0, lan.GroupCompound(initstats))
+        kernel_stats.insert(0, lan.GroupCompound(initstats))
         # Replace the global Arefs with the register Arefs
-        count = 0
-        for i, n in enumerate(arr_dict):
-            for m in arr_dict[n]:
+        for i, n in enumerate(optimizable_arrays):
+            for m in optimizable_arrays[n]:
                 idx = m
-                aref_new = copy.deepcopy(writes[count])
+                regid = self._create_reg_array_var(n, hoist_loop)
+                aref_new = copy.deepcopy(regid)
                 aref_old = ks.LoopArrays[n][idx]
                 # Copying the internal data of the two arefs
                 aref_old.name.name = aref_new.name.name
                 aref_old.subscript = aref_new.subscript
-                count += 1
+
+    def _create_load_loop(self, hoist_loop, initstats):
+        loop = copy.deepcopy(self.Loops[hoist_loop])
+        loopstats = []
+        loop.compound.statements = loopstats
+        initstats.append(loop)
+        return loopstats
+
+    @staticmethod
+    def _create_reg_array_var(n, hoist_loop):
+        regid = lan.ArrayRef(lan.Id(n + '_reg'), [lan.Id(hoist_loop)])
+        return regid
+
+    def _create_reg_array_alloc(self, optimizable_arrays, hoist_loop):
+        initstats = []
+        # Add allocation of registers to the initiation stage
+        for n in optimizable_arrays:
+            lval = lan.TypeId([self.ks.Type[n][0]],
+                              lan.Id(n + '_reg[' + str(self.UpperLimit[hoist_loop]) + ']'))
+            initstats.append(lval)
+        return initstats
