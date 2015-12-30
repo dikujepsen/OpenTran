@@ -32,6 +32,7 @@ class KernelStruct(KernelChangedByTransformation):
         # bruges kun til at interchange subscript i transpose
         self.Subscript = dict()
         self.LoopArrays = dict()
+        self.LoopArraysParent = dict()
 
     def set_datastructure(self, rw, ast):
         fpl = cti.FindGridIndices()
@@ -63,6 +64,7 @@ class KernelStruct(KernelChangedByTransformation):
         # Stencil
         self.ArrayIdToDimName = fai.ArrayIdToDimName  #
         self.LoopArrays = fla.loop_arrays  #
+        self.LoopArraysParent = fla.loop_arrays_parent
         self.Kernel = fpl.Kernel
         self.num_array_dims = fai.num_array_dims  #
 

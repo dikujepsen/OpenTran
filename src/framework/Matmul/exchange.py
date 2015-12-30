@@ -134,3 +134,19 @@ class RewriteArrayRef(lan.NodeVisitor):
                 node.subscript = [topbinop]
         except KeyError:
             pass
+
+
+class ExchangeArrayIdWithId(lan.NodeVisitor):
+    """ Exchanges the array_ref with var_id in ast
+    """
+
+    def __init__(self, array_ref, var_id):
+        super(ExchangeArrayIdWithId, self).__init__()
+        self.array_ref = array_ref
+        self.var_id = var_id
+
+    def visit_ArrayRef(self, node):
+        if node == self.array_ref:
+            setattr(lan.NodeVisitor.current_parent, self.current_child, self.var_id)
+
+

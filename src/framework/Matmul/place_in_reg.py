@@ -2,7 +2,7 @@ import copy
 import lan
 from itertools import chain
 import collect_transformation_info as cti
-
+import exchange
 
 class PlaceInReg(object):
     def __init__(self):
@@ -106,11 +106,16 @@ class PlaceInReg(object):
         :return:
         """
         return set(sub_idx).intersection(set(self.GridIndices)) and \
-               set(loop_idx).difference(set(sub_idx))
+            set(loop_idx).difference(set(sub_idx))
 
     def place_in_reg2(self, ks, arr_dict):
         self.ks = ks
         kernel_stats = ks.Kernel.statements
+        self._insert_cache_in_reg(kernel_stats, arr_dict)
+        # Replace the global Arefs with the register Arefs
+        self._replace_global_ref_with_reg_id(arr_dict)
+
+    def _insert_cache_in_reg(self, kernel_stats, arr_dict):
         initstats = []
         # Create the loadings
         for i, n in enumerate(arr_dict):
@@ -118,24 +123,17 @@ class PlaceInReg(object):
                 regid = self._create_reg_var_id(m, n)
                 assign = self._create_reg_assignment(m, n, regid)
                 initstats.append(assign)
-
         kernel_stats.insert(0, lan.GroupCompound(initstats))
 
-        # Replace the global Arefs with the register Arefs
-        count = 0
+    def _replace_global_ref_with_reg_id(self, arr_dict):
         for i, n in enumerate(arr_dict):
-            print self.ks.LoopArrays[n]
             for m in arr_dict[n]:
                 idx = m
-                aref_new = self._create_reg_var_id(m, n)
-
+                reg_id = self._create_reg_var_id(m, n)
+                parent = self.ks.LoopArraysParent[n][idx]
                 aref_old = self.ks.LoopArrays[n][idx]
-
-                # Copying the internal data of the two arefs
-                aref_old.name.name = aref_new.name
-                aref_old.subscript = []
-
-                count += 1
+                exchange_array_id_with_id = exchange.ExchangeArrayIdWithId(aref_old, reg_id)
+                exchange_array_id_with_id.visit(parent)
 
     @staticmethod
     def _create_reg_var_id(m, n):

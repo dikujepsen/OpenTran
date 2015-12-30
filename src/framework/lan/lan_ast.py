@@ -45,6 +45,9 @@ class Node(object):
 class NodeVisitor(object):
     current_parent = None
 
+    def __init__(self):
+        self.current_child = None
+
     def visit(self, node):
         """ Visit a node. 
         """
@@ -61,6 +64,7 @@ class NodeVisitor(object):
         oldparent = NodeVisitor.current_parent
         NodeVisitor.current_parent = node
         for c_name, c in node.children():
+            self.current_child = c_name
             self.visit(c)
         NodeVisitor.current_parent = oldparent
 

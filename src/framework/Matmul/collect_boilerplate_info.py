@@ -6,11 +6,13 @@ import collect_array as ca
 class FindLoopArrays(object):
     def __init__(self):
         self.loop_arrays = dict()
+        self.loop_arrays_parent = dict()
 
     def collect(self, ast):
         arr_to_ref = ca.ArrayNameToRef()
         arr_to_ref.visit(ast)
         self.loop_arrays = arr_to_ref.LoopArrays
+        self.loop_arrays_parent = arr_to_ref.LoopArraysParent
 
 
 class FindKernelName(cti.FindArrayIdsKernel):
