@@ -24,7 +24,6 @@ class KernelGen(object):
         # Register optimizations
         funcname = name + 'Base'
 
-
         ss = snippetgen.SnippetGen()
 
         ss.set_datastructure(self.ks, ast)
@@ -32,9 +31,6 @@ class KernelGen(object):
         ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                             kernelstringname=funcname)
         pir = pireg.PlaceInReg()
-        pir.par_dim = self.ks.ParDim
-        pir.set_datastructures(ast)
-        # for (arg, insideloop) in self.ks.PlaceInRegArgs:
 
         funcname = name + 'PlaceInReg'
         pir.place_in_reg3(ast, self.ks.ParDim, self.ks)

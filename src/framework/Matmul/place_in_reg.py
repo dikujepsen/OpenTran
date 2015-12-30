@@ -6,10 +6,10 @@ import exchange
 import collect_array as ca
 import collect_loop as cl
 
+
 class PlaceInReg(object):
     def __init__(self):
         self.par_dim = None  # int
-        self.ReadWrite = dict()
 
         self.PlaceInRegFinding = tuple()
         self.PlaceInRegCond = None
@@ -18,21 +18,6 @@ class PlaceInReg(object):
         self.perform_transformation = False
 
         self.ast = None
-
-    def set_datastructures(self, ast):
-
-        fpl = cti.FindGridIndices()
-        fpl.ParDim = self.par_dim
-        fpl.collect(ast)
-
-        fs = cti.FindSubscripts()
-        fs.collect(ast)
-
-        fai = cti.FindReadWrite()
-        fai.ParDim = self.par_dim
-        fai.collect(ast)
-
-        self.ReadWrite = fai.ReadWrite
 
     def place_in_reg(self, ast, par_dim):
         """ Find all array references that can be cached in registers.
@@ -64,7 +49,6 @@ class PlaceInReg(object):
                         optimizable_arrays[n].append(i)
                     except KeyError:
                         optimizable_arrays[n] = [i]
-
 
         hoist_loop_set = self._remove_unknown_loops(hoist_loop_set)
 
@@ -108,7 +92,7 @@ class PlaceInReg(object):
         """
         grid_indices = cl.get_grid_indices(self.ast, par_dim=self.par_dim)
         return set(sub_idx).intersection(set(grid_indices)) and \
-            set(loop_idx).difference(set(sub_idx))
+               set(loop_idx).difference(set(sub_idx))
 
     def place_in_reg2(self, ks, arr_dict):
         self.ks = ks
