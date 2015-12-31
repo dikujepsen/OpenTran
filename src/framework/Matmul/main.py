@@ -190,7 +190,6 @@ def __main_transpose(ks, bps, tempast3, par_dim=None):
     tps.set_datastructures(tempast3)
     tps.transpose(tempast3)
 
-    bps.WriteTranspose = tps.WriteTranspose
     bps.Transposition = tps.Transposition
     bps.NameSwap = tps.NameSwap
 

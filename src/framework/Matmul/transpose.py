@@ -122,15 +122,6 @@ class Transpose(object):
             trans = lan.FuncDecl(lan.Id('transpose<' + nat_type + '>'), arglist, lan.Compound([]))
             self.Transposition.statements.append(trans)
 
-        if arr_name in self.ReadWrite:
-            if 'write' in self.ReadWrite[arr_name]:
-                arglist = lan.ArgList([lan.Id(hst_trans_name),
-                                       lan.Id(hst_name),
-                                       lan.Id(dim_name[1]),
-                                       lan.Id(dim_name[0])])
-                trans = lan.FuncDecl(lan.Id('transpose<' + nat_type + '>'), arglist, lan.Compound([]))
-                self.WriteTranspose.append(trans)
-
         for sub in self.Subscript[arr_name]:
             (sub[0], sub[1]) = \
                 (sub[1], sub[0])

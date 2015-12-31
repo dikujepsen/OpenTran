@@ -339,8 +339,6 @@ class Boilerplate(object):
             err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
             exec_body.append(err_check)
 
-            for n in self.bps.WriteTranspose:
-                exec_body.append(n)
 
         run_ocl = ast_bb.EmptyFuncDecl('RunOCL' + self.bps_static.KernelName)
         file_ast.ext.append(run_ocl)
