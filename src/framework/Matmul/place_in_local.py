@@ -98,7 +98,7 @@ class PlaceInLocal(object):
                     for m in subscript:
                         try:
                             _ = int(m)
-                        except:
+                        except ValueError:
                             if m not in self.GridIndices:
                                 acc.append(m)
                     loop_dict[(n, i)] = acc
@@ -118,6 +118,7 @@ class PlaceInLocal(object):
             for i in arr_dict[n]:
                 loopext.add(loop_dict[(n, i)][0])
 
+        outerstats = []
         # do the extending
         for n in loopext:
             outerloop = ks.Loops[n]
@@ -146,17 +147,15 @@ class PlaceInLocal(object):
         for n in arr_dict:
             # Add array allocations
 
-            localName = n + '_local'
+            local_array_name = n + '_local'
             arrayinit = lan.Constant(self.Local['size'][0])
             if ks.num_array_dims[n] == 2 and ks.ParDim == 2:
                 arrayinit = lan.BinOp(arrayinit, '*', lan.Constant(self.Local['size'][1]))
 
-            localId = lan.Id(localName)
+            local_array_id = lan.Id(local_array_name)
 
-            localTypeId = lan.ArrayTypeId(['__local', ks.Type[n][0]], localId, [arrayinit])
-            initstats.append(localTypeId)
-
-
+            local_type_id = lan.ArrayTypeId(['__local', ks.Type[n][0]], local_array_id, [arrayinit])
+            initstats.append(local_type_id)
 
         loadings = []
         for n in arr_dict:
@@ -169,28 +168,16 @@ class PlaceInLocal(object):
                 loc_subs_2 = copy.deepcopy(glob_subs).subscript
                 my_new_glob_sub = copy.deepcopy(glob_subs).subscript
                 my_new_glob_sub_2 = copy.deepcopy(ks.LoopArrays[n][i])
-                # print "LOC_SUBS ", loc_subs
                 for k, m in enumerate(loc_subs):
                     if isinstance(m, lan.Id) and \
                                     m.name not in self.GridIndices:
                         tid = str(self.ReverseIdx[k])
                         tidstr = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
-                        # exchange_id = exchange.ExchangeId({loopname: tidstr})
-                        # print "M ", m
-                        # exchange_id.visit(m)
-                        loc_subs_2[k] = tidstr
-                        # print "M2 ", m
-                        # print "LOC_SUB ", loc_subs
-                        # print "LOC_SUB 2", loc_subs_2
 
-                        # print glob_subs.subscript[k]
-                        # print '(' + loopname + ' + ' + tidstr + ')'
+                        loc_subs_2[k] = tidstr
 
                         my_new_glob_sub[k] = lan.BinOp(lan.Id(loopname), '+', tidstr)
                         my_new_glob_sub_2 = lan.ArrayRef(lan.Id(n), my_new_glob_sub)
-
-                        # exchange_id2 = exchange.ExchangeId({loopname: '(' + loopname + ' + ' + tidstr + ')'})
-                        # exchange_id2.visit(glob_subs.subscript[k])
 
                 for k, m in enumerate(loc_subs_2):
                     if isinstance(m, lan.Id) and \
@@ -199,15 +186,8 @@ class PlaceInLocal(object):
                         loc_subs_2[k] = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
 
                 loc_ref = lan.ArrayRef(lan.Id(loc_name), loc_subs_2)
-                # print loc_ref
-                # print glob_subs
-                # print "new glob_subs ", my_new_glob_sub_2
 
                 loadings.append(lan.Assignment(loc_ref, my_new_glob_sub_2))
-
-                # print "LOC_REF Before", loc_ref
-                # exchange_id.visit(loc_ref)
-                # print "LOC_REF After", loc_ref
 
                 inner_loc = ks.LoopArrays[n][i]
 
@@ -221,7 +201,7 @@ class PlaceInLocal(object):
                         tid = str(self.ReverseIdx[k])
                         inner_loc.subscript[k] = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
 
-                # exchange_id.visit(inner_loc)
+                        # exchange_id.visit(inner_loc)
             ks.ArrayIdToDimName[loc_name] = self.Local['size']
             ks.num_array_dims[loc_name] = ks.num_array_dims[n]
         # Must also create the barrier
