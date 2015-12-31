@@ -66,12 +66,12 @@ class Transpose(object):
             and transpose them
         """
 
-        transpose_arrays = self._find_transposable_arrays()
+        transpose_arrays = self.find_transposable_arrays()
 
         for n in transpose_arrays:
             self.__transpose(n)
 
-    def _find_transposable_arrays(self):
+    def find_transposable_arrays(self):
         transpose_arrays = set()
         for (n, sub) in self.SubscriptNoId.items():
             # Every ArrayRef, Every list of subscripts
@@ -90,10 +90,6 @@ class Transpose(object):
         return len(s) == 2 and s[0] == self.IdxToDim[0]
 
     def __transpose(self, arr_name):
-
-        # if rw.DefinesAreMade:
-        #     print "Transposed must be called before SetDefine, returning..."
-        #     return
 
         if self.num_array_dims[arr_name] != 2:
             print "Array ", arr_name, "of dimension ", \
@@ -133,7 +129,6 @@ class Transpose(object):
                 self.WriteTranspose.append(trans)
 
         for sub in self.Subscript[arr_name]:
-            if isinstance(sub[0], lan.Id) and isinstance(sub[1], lan.Id):
-                (sub[0].name, sub[1].name) = \
-                    (sub[1].name, sub[0].name)
-            # print self.Subscript[arr_name], "sub123"
+            (sub[0], sub[1]) = \
+                (sub[1], sub[0])
+
