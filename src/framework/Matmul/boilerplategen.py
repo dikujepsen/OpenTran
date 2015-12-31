@@ -167,6 +167,8 @@ class Boilerplate(object):
 
         allocate_buffer.compound.statements.append(lan.GroupCompound(list_set_mem_size))
 
+        # print self.bps.Transposition
+
         allocate_buffer.compound.statements.append(self.bps.Transposition)
 
         allocate_buffer.compound.statements.append(lan.GroupCompound([lan.Comment('// Constant Memory')]))

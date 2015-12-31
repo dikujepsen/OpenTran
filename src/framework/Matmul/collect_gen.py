@@ -163,3 +163,9 @@ class GenIdxToThreadId(object):
         grid_indices = col_li.grid_indices
         for i, n in enumerate(reversed(grid_indices)):
             self.IndexToThreadId[n] = 'get_global_id(' + str(i) + ')'
+
+
+def gen_idx_to_dim(ast, par_dim):
+    gi_to_dim = GenIdxToDim()
+    gi_to_dim.collect(ast, par_dim)
+    return gi_to_dim.IdxToDim

@@ -1,12 +1,11 @@
 import lan
 import collect_transformation_info as cti
 import collect_gen as cg
+import collect_array as ca
 
 
 class Transpose(object):
     def __init__(self):
-        self.SubscriptNoId = dict()
-        self.IdxToDim = dict()
         self.ParDim = None  # int
         self.ArrayIds = set()
         self.num_array_dims = dict()
@@ -42,13 +41,10 @@ class Transpose(object):
         host_array_data = cg.GenHostArrayData()
         host_array_data.collect(ast)
 
-        self.ParDim = fpl.ParDim
+        self.ParDim = fpl.par_dim
 
         self.num_array_dims = fai.num_array_dims
         self.Subscript = fs.Subscript
-        self.SubscriptNoId = fs.SubscriptNoId
-
-        self.IdxToDim = fpl.IdxToDim
 
         self.ArrayIds = fai.ArrayIds
 
@@ -78,7 +74,8 @@ class Transpose(object):
 
     def find_transposable_arrays(self):
         transpose_arrays = set()
-        for (n, sub) in self.SubscriptNoId.items():
+        subscript_no_id = ca.get_subscript_no_id(self.ast)
+        for (n, sub) in subscript_no_id.items():
             # Every ArrayRef, Every list of subscripts
             for s in sub:
                 if self._subscript_should_be_swapped(s):
@@ -92,7 +89,8 @@ class Transpose(object):
         :param s:
         :return:
         """
-        return len(s) == 2 and s[0] == self.IdxToDim[0]
+        idx_to_dim = cg.gen_idx_to_dim(self.ast, self.ParDim)
+        return len(s) == 2 and s[0] == idx_to_dim[0]
 
     def __transpose(self, arr_name):
 
@@ -110,19 +108,30 @@ class Transpose(object):
         dim_name = self.ArrayIdToDimName[arr_name]
         self.NameSwap[dim_name[0]] = dim_name[1]
 
+        self.Transposition.statements.extend(self.create_transposition_func(arr_name))
+
+        # print self.Transposition
+
+        for sub in self.Subscript[arr_name]:
+            (sub[0], sub[1]) = \
+                (sub[1], sub[0])
+
+    def create_transposition_func(self, arr_name):
+        my_transposition = []
+        hst_name = self.HstId[arr_name]
+        hst_trans_name = hst_name + '_trans'
+        dim_name = self.ArrayIdToDimName[arr_name]
+
         lval = lan.Id(hst_trans_name)
         nat_type = self.Type[arr_name][0]
         rval = lan.Id('new ' + nat_type + '[' + self.Mem[arr_name] + ']')
-        self.Transposition.statements.append(lan.Assignment(lval, rval))
+        my_transposition.append(lan.Assignment(lval, rval))
         if arr_name not in self.WriteOnly:
             arglist = lan.ArgList([lan.Id(hst_name),
                                    lan.Id(hst_trans_name),
                                    lan.Id(dim_name[0]),
                                    lan.Id(dim_name[1])])
             trans = lan.FuncDecl(lan.Id('transpose<' + nat_type + '>'), arglist, lan.Compound([]))
-            self.Transposition.statements.append(trans)
+            my_transposition.append(trans)
 
-        for sub in self.Subscript[arr_name]:
-            (sub[0], sub[1]) = \
-                (sub[1], sub[0])
-
+        return my_transposition

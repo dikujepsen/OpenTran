@@ -33,7 +33,6 @@ class KernelStruct(KernelChangedByTransformation):
         self.LoopArrays = dict()
         self.LoopArraysParent = dict()
 
-
     def set_datastructure(self, rw, ast):
         fpl = cti.FindGridIndices()
         fpl.ParDim = self.ParDim
@@ -67,7 +66,6 @@ class KernelStruct(KernelChangedByTransformation):
         self.LoopArraysParent = fla.loop_arrays_parent
         self.Kernel = fpl.Kernel
         self.num_array_dims = fai.num_array_dims  #
-
 
 
 class BoilerPlateChangedByTransformation(object):
