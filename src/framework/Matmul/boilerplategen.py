@@ -102,7 +102,7 @@ class Boilerplate(object):
                 pass
             list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))
 
-        for n in self.transposable_host_id:
+        for n in sorted(self.transposable_host_id):
             arg_type = self.ks.Type[n]
             name = my_host_id[n]
             list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))

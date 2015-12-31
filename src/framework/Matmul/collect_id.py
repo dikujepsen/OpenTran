@@ -90,6 +90,8 @@ class GlobalTypeIds(lan.NodeVisitor):
             pass
 
     def visit_ForLoop(self, node):
-
         self.visit(node.compound)
+
+
+
 

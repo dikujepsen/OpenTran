@@ -71,7 +71,9 @@ class Transpose(object):
         transpose_arrays = self.find_transposable_arrays()
 
         for n in transpose_arrays:
-            self.ast.ext.append(lan.Transpose(self.Type[n], lan.Id(n)))
+            hst_name = self.HstId[n]
+            hst_trans_name = hst_name + '_trans'
+            self.ast.ext.append(lan.Transpose(self.Type[n], lan.Id(hst_trans_name)))
             self.__transpose(n)
 
     def find_transposable_arrays(self):

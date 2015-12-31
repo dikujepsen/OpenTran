@@ -28,9 +28,8 @@ class GenHostArrayData(object):
 
         transposable_array_ids = ca.get_transposable_array_ids(ast)
         for n in transposable_array_ids:
-            trans_name = 'hst_ptr' + n + '_trans'
-            self.HstId[trans_name] = trans_name
-            self.TransposableHstId.append(trans_name)
+            self.HstId[n] = n
+            self.TransposableHstId.append(n)
 
 
 def gen_host_ids(ast):
