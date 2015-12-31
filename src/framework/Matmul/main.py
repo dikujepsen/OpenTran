@@ -192,19 +192,6 @@ def __main_transpose(ks, bps, tempast3, par_dim=None):
         tps.ParDim = par_dim
     tps.set_datastructures(tempast3)
     tps.transpose()
-    # print tps.Subscript
-    # ks.Subscript = tps.Subscript
-    # print ks.Subscript
-
-
-    # for (arr_name, idx_list_list) in tps.Subscript.items():
-    #
-    #     idx_list_list2 = ks.Subscript[arr_name]
-    #
-    #     for i, idx_list in enumerate(idx_list_list):
-    #         for j, idx in enumerate(idx_list):
-    #             if isinstance(idx, lan.Id) and isinstance(idx_list_list2[i][j], lan.Id):
-    #                 idx_list_list2[i][j].name = idx.name
 
     bps.WriteTranspose = tps.WriteTranspose
     bps.Transposition = tps.Transposition

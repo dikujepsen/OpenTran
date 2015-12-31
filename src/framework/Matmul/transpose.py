@@ -65,27 +65,29 @@ class Transpose(object):
         """ Find all arrays that *should* be transposed
             and transpose them
         """
-        # self.SubscriptNoId
 
-        # self.IdxToDim idx to dim number
-        notranspose_arrays = set()
+        transpose_arrays = self._find_transposable_arrays()
+
+        for n in transpose_arrays:
+            self.__transpose(n)
+
+    def _find_transposable_arrays(self):
         transpose_arrays = set()
-        maybetranspose_arrays = set()
-        # print self.SubscriptNoId, "qwe123"
-        # print self.IdxToDim, "qwe123"
         for (n, sub) in self.SubscriptNoId.items():
             # Every ArrayRef, Every list of subscripts
             for s in sub:
-                if len(s) == 2:
-                    if s[0] == self.IdxToDim[0]:
-                        transpose_arrays.add(n)
-                    elif s[1] == self.IdxToDim[0]:
-                        notranspose_arrays.add(n)
-                    elif self.ParDim == 2 and s[0] == self.IdxToDim[1]:
-                        maybetranspose_arrays.add(n)
-        # print transpose_arrays, "qwe123"
-        for n in transpose_arrays:
-            self.__transpose(n)
+                if self._subscript_should_be_swapped(s):
+                    transpose_arrays.add(n)
+        return transpose_arrays
+
+    def _subscript_should_be_swapped(self, s):
+        """
+        The array ref has two subscripts and the othermost subscript contains the inner most grid index,
+        i.e. the thread id that changes most often. This situation leads to uncoalesced memory access.
+        :param s:
+        :return:
+        """
+        return len(s) == 2 and s[0] == self.IdxToDim[0]
 
     def __transpose(self, arr_name):
 
