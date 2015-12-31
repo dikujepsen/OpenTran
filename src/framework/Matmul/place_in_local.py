@@ -5,7 +5,7 @@ import collect_transformation_info as cti
 import exchange
 import collect_gen as cg
 import collect_boilerplate_info as cbi
-
+import collect_id as ci
 
 class PlaceInLocal(object):
     def __init__(self):
@@ -24,6 +24,7 @@ class PlaceInLocal(object):
         self.ReverseIdx = dict()
 
         self.LoopArrays = dict()
+        self.Type = dict()
 
     def set_datastructures(self, ast, dev='CPU'):
 
@@ -52,6 +53,7 @@ class PlaceInLocal(object):
         fai = cbi.FindLoopArrays()
         fai.collect(ast)
         self.LoopArrays = fai.loop_arrays
+        self.Type = ci.get_types(ast)
 
     def place_in_local(self):
         """ Find all array references that can be optimized
@@ -154,7 +156,7 @@ class PlaceInLocal(object):
 
             local_array_id = lan.Id(local_array_name)
 
-            local_type_id = lan.ArrayTypeId(['__local', ks.Type[n][0]], local_array_id, [arrayinit])
+            local_type_id = lan.ArrayTypeId(['__local', self.Type[n][0]], local_array_id, [arrayinit])
             initstats.append(local_type_id)
 
         loadings = []

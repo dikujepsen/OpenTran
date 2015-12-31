@@ -74,11 +74,15 @@ class GlobalTypeIds(lan.NodeVisitor):
         self.ids = set()
         self.types = dict()
 
+    def collect(self, ast):
+        self.visit(ast)
+
     def visit_TypeId(self, node):
         name = node.name.name
         self.ids.add(name)
 
         self.types[name] = node.type
+
 
     def visit_ArrayTypeId(self, node):
         name = node.name.name
@@ -92,6 +96,13 @@ class GlobalTypeIds(lan.NodeVisitor):
     def visit_ForLoop(self, node):
         self.visit(node.compound)
 
+    def visit_Transpose(self, node):
+        name = node.name.name
+        self.types[name] = node.type
 
 
+def get_types(ast):
+    mytype_ids = GlobalTypeIds()
+    mytype_ids.visit(ast)
+    return mytype_ids.types
 

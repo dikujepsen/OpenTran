@@ -1,6 +1,7 @@
 import collect_transformation_info as cti
 import collect_boilerplate_info as cbi
 import collect_gen as cg
+import collect_id as ci
 
 
 class KernelChangedByTransformation(object):
@@ -8,7 +9,7 @@ class KernelChangedByTransformation(object):
         # Kun sat af transformation
         self.PlaceInLocalArgs = list()
         self.PlaceInLocalCond = None
-        self.Type = dict()
+
         self.KernelArgs = dict()
         self.Loops = dict()  # place_in_local
         self.Add = dict()  # place_in_local
@@ -31,6 +32,7 @@ class KernelStruct(KernelChangedByTransformation):
         self.Subscript = dict()
         self.LoopArrays = dict()
         self.LoopArraysParent = dict()
+
 
     def set_datastructure(self, rw, ast):
         fpl = cti.FindGridIndices()
@@ -65,6 +67,7 @@ class KernelStruct(KernelChangedByTransformation):
         self.LoopArraysParent = fla.loop_arrays_parent
         self.Kernel = fpl.Kernel
         self.num_array_dims = fai.num_array_dims  #
+
 
 
 class BoilerPlateChangedByTransformation(object):

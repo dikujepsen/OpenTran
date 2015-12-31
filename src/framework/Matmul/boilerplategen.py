@@ -5,6 +5,7 @@ import collect_transformation_info as cti
 import struct
 import collect_boilerplate_info as cbi
 import collect_gen as cg
+import collect_id as ci
 
 
 def print_dict_sorted(mydict):
@@ -33,6 +34,7 @@ class Boilerplate(object):
         # new
         self.HstId = dict()
         self.transposable_host_id = list()
+        self.Type = dict()
 
     def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt, ast):
         self.ks = kernelstruct
@@ -61,6 +63,7 @@ class Boilerplate(object):
 
         self.HstId = cg.gen_host_ids(ast)
         self.transposable_host_id = cg.gen_transposable_host_ids(ast)
+        self.Type = ci.get_types(ast)
 
     def generate_code(self):
 
@@ -95,7 +98,7 @@ class Boilerplate(object):
         list_host_ptrs = []
         for n in self.bps_static.DevArgList:
             name = n.name.name
-            arg_type = self.ks.Type[name]
+            arg_type = self.Type[name]
             try:
                 name = my_host_id[name]
             except KeyError:
@@ -103,12 +106,12 @@ class Boilerplate(object):
             list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))
 
         for n in sorted(self.transposable_host_id):
-            arg_type = self.ks.Type[n]
+            arg_type = self.Type[n]
             name = my_host_id[n]
             list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))
 
         dict_n_to_hst_ptr = my_host_id
-        dict_type_host_ptrs = copy.deepcopy(self.ks.Type)
+        dict_type_host_ptrs = copy.deepcopy(self.Type)
         list_host_ptrs = lan.GroupCompound(list_host_ptrs)
         file_ast.ext.append(list_host_ptrs)
 
@@ -157,7 +160,7 @@ class Boilerplate(object):
         for entry in sorted(self.ArrayIds):
             n = self.ks.ArrayIdToDimName[entry]
             lval = lan.Id(self.bps_static.Mem[entry])
-            rval = lan.BinOp(lan.Id(n[0]), '*', lan.Id('sizeof(' + self.ks.Type[entry][0] + ')'))
+            rval = lan.BinOp(lan.Id(n[0]), '*', lan.Id('sizeof(' + self.Type[entry][0] + ')'))
             if len(n) == 2:
                 rval = lan.BinOp(lan.Id(n[1]), '*', rval)
             list_set_mem_size.append(lan.Assignment(lval, rval))
@@ -227,7 +230,7 @@ class Boilerplate(object):
         for n in self.ks.KernelArgs:
             lval = lan.Id(err_name)
             op = '|='
-            arg_type = self.ks.Type[n]
+            arg_type = self.Type[n]
             if len(arg_type) == 2:
                 arglist = lan.ArgList([kernel_id,
                                        lan.Increment(cnt_name, '++'),
@@ -348,7 +351,7 @@ class Boilerplate(object):
         type_id_list = []
         if_then_list = []
         for n in arg_ids:
-            arg_type = self.ks.Type[n]
+            arg_type = self.Type[n]
             argn = lan.Id('arg_' + n)
             type_id_list.append(lan.TypeId(arg_type, argn))
             try:

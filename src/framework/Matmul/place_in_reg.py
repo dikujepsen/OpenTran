@@ -5,6 +5,7 @@ import collect_transformation_info as cti
 import exchange
 import collect_array as ca
 import collect_loop as cl
+import collect_id as ci
 
 
 class PlaceInReg(object):
@@ -18,6 +19,9 @@ class PlaceInReg(object):
         self.perform_transformation = False
 
         self.ast = None
+
+        # New
+        self.Type = dict()
 
     def place_in_reg(self, ast, par_dim):
         """ Find all array references that can be cached in registers.
@@ -106,7 +110,7 @@ class PlaceInReg(object):
         for i, n in enumerate(arr_dict):
             for m in arr_dict[n]:
                 regid = self._create_reg_var_id(m, n)
-                types = self.ks.Type[n][0]
+                types = self.Type[n][0]
                 reg = lan.TypeId([types], regid)
                 assign = self._create_reg_assignment(m, n, reg)
                 initstats.append(assign)
@@ -145,6 +149,7 @@ class PlaceInReg(object):
                 number of parallel dimensions
         """
         self.ks = ks
+        self.Type = ci.get_types(ast)
         kernel_stats = ks.Kernel.statements
         self.place_in_reg(ast, par_dim)
 
@@ -214,6 +219,6 @@ class PlaceInReg(object):
         (_, upper_limit) = cl.get_loop_limits(self.ast)
         # Add allocation of registers to the initiation stage
         for n in optimizable_arrays:
-            array_init = lan.ArrayTypeId([self.ks.Type[n][0]], lan.Id(n + '_reg'), [lan.Id(upper_limit[hoist_loop])])
+            array_init = lan.ArrayTypeId([self.Type[n][0]], lan.Id(n + '_reg'), [lan.Id(upper_limit[hoist_loop])])
             initstats.append(array_init)
         return initstats

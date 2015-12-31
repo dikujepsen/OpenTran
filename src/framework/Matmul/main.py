@@ -1,8 +1,6 @@
 import copy
-
 import ply.lex as lex
 import ply.yacc as yacc
-
 import boilerplategen
 import cgen
 import define_arguments as darg
@@ -74,7 +72,6 @@ def __get_ast_from_base(name):
 
 
 def gen_full_code(name, ks, bps, tempast3):
-
     kgen = kernelgen.KernelGen(ks)
     cprint = cgen.CGenerator()
 
@@ -193,12 +190,9 @@ def __main_transpose(ks, bps, tempast3, par_dim=None):
     tps.set_datastructures(tempast3)
     tps.transpose(tempast3)
 
-
     bps.WriteTranspose = tps.WriteTranspose
     bps.Transposition = tps.Transposition
     bps.NameSwap = tps.NameSwap
-
-    ks.Type = tps.Type
 
 
 def __main_definearg(ks, bps, tempast3, par_dim=None):

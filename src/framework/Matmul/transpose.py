@@ -104,7 +104,6 @@ class Transpose(object):
         hst_name = self.HstId[arr_name]
         hst_trans_name = hst_name + '_trans'
 
-        self.Type[hst_trans_name] = self.Type[arr_name]
         # Swap the hst ptr
         self.NameSwap[hst_name] = hst_trans_name
         # Swap the dimension argument
