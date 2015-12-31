@@ -8,8 +8,8 @@ cl_mem dev_ptrX2;
 float * hst_ptrX2;
 float * hst_ptrB;
 float * hst_ptrX1;
-unsigned wA;
 unsigned wB;
+unsigned wA;
 
 size_t hst_ptrB_mem_size;
 size_t hst_ptrX1_mem_size;

@@ -9,8 +9,8 @@ float * hst_ptrA;
 float * hst_ptrC;
 float * hst_ptrB;
 unsigned hA;
-unsigned wA;
 unsigned wB;
+unsigned wA;
 
 size_t hst_ptrA_mem_size;
 size_t hst_ptrB_mem_size;

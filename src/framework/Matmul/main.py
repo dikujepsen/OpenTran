@@ -200,7 +200,6 @@ def __main_transpose(ks, bps, tempast3, par_dim=None):
     bps.WriteTranspose = tps.WriteTranspose
     bps.Transposition = tps.Transposition
     bps.NameSwap = tps.NameSwap
-    bps.HstId = tps.HstId
     bps.GlobalVars = tps.GlobalVars
 
     ks.Type = tps.Type

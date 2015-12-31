@@ -8,9 +8,9 @@ cl_mem dev_ptrtrain_patterns;
 float * hst_ptrtrain_patterns;
 float * hst_ptrtest_patterns;
 float * hst_ptrdist_matrix;
-unsigned NTRAIN;
-unsigned NTEST;
 unsigned dim;
+unsigned NTEST;
+unsigned NTRAIN;
 float * hst_ptrtest_patterns_trans;
 
 size_t hst_ptrdist_matrix_mem_size;

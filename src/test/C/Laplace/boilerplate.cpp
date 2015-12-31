@@ -10,19 +10,19 @@ cl_mem dev_ptrlevel;
 cl_mem dev_ptrlevel_int;
 cl_mem dev_ptrresult;
 
-double * hst_ptrlevel_int;
-double * hst_ptrlcl_q;
 double * hst_ptrindex;
+double * hst_ptrlevel_int;
 double * hst_ptrlevel;
-size_t storagesize;
-double * hst_ptrlcl_q_inv;
-double * hst_ptrlambda;
-double * hst_ptralpha;
-size_t dim;
+double * hst_ptrlcl_q;
 double * hst_ptrresult;
-double * hst_ptrindex_trans;
-double * hst_ptrlevel_int_trans;
+double * hst_ptrlcl_q_inv;
+double * hst_ptralpha;
+double * hst_ptrlambda;
+size_t dim;
+size_t storagesize;
 double * hst_ptrlevel_trans;
+double * hst_ptrlevel_int_trans;
+double * hst_ptrindex_trans;
 
 size_t hst_ptralpha_mem_size;
 size_t hst_ptrindex_mem_size;

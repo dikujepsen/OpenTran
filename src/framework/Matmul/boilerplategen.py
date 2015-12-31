@@ -60,8 +60,7 @@ class Boilerplate(object):
 
     def generate_code(self):
 
-        # print print_dict_sorted(self.bps.HstId)
-        # print print_dict_sorted(self.HstId)
+        my_host_id = self.HstId
         dict_n_to_dim_names = self.ks.ArrayIdToDimName
 
         non_array_ids = copy.deepcopy(self.bps_static.NonArrayIds)
@@ -77,6 +76,7 @@ class Boilerplate(object):
 
         list_dev_buffers = []
 
+
         for n in sorted(self.ArrayIds):
             try:
                 name = self.bps_static.DevId[n]
@@ -90,21 +90,21 @@ class Boilerplate(object):
         file_ast.ext.append(list_dev_buffers)
 
         list_host_ptrs = []
-        for n in sorted(self.bps_static.DevArgList):
+        for n in self.bps_static.DevArgList:
             name = n.name.name
             arg_type = self.ks.Type[name]
             try:
-                name = self.bps.HstId[name]
+                name = my_host_id[name]
             except KeyError:
                 pass
             list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))
 
-        for n in sorted(self.bps.GlobalVars):
+        for n in self.bps.GlobalVars:
             arg_type = self.ks.Type[n]
-            name = self.bps.HstId[n]
+            name = my_host_id[n]
             list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))
 
-        dict_n_to_hst_ptr = self.bps.HstId
+        dict_n_to_hst_ptr = my_host_id
         dict_type_host_ptrs = copy.deepcopy(self.ks.Type)
         list_host_ptrs = lan.GroupCompound(list_host_ptrs)
         file_ast.ext.append(list_host_ptrs)
@@ -112,6 +112,7 @@ class Boilerplate(object):
         list_mem_size = []
         list_dim_size = []
         dict_n_to_size = self.bps_static.Mem
+
         for n in sorted(self.bps_static.Mem):
             size_name = self.bps_static.Mem[n]
             list_mem_size.append(lan.TypeId(['size_t'], lan.Id(size_name)))
@@ -171,6 +172,7 @@ class Boilerplate(object):
         rval = lan.Id('CL_SUCCESS')
         cl_suc = lan.Assignment(lval, rval)
         allocate_buffer.compound.statements.extend([lan.GroupCompound([cl_suc])])
+
 
         for n in sorted(dict_n_to_dev_ptr):
             lval = lan.Id(dict_n_to_dev_ptr[n])
@@ -303,7 +305,7 @@ class Boilerplate(object):
         if not self.bps.NoReadBack:
             for n in self.bps_static.WriteOnly:
                 lval = lan.Id(err_name)
-                hst_nname = self.bps.HstId[n]
+                hst_nname = my_host_id[n]
                 try:
                     hst_nname = self.bps.NameSwap[hst_nname]
                 except KeyError:
@@ -348,7 +350,7 @@ class Boilerplate(object):
             argn = lan.Id('arg_' + n)
             type_id_list.append(lan.TypeId(arg_type, argn))
             try:
-                newn = self.bps.HstId[n]
+                newn = my_host_id[n]
             except KeyError:
                 newn = n
             lval = lan.Id(newn)
