@@ -20,9 +20,9 @@ double * hst_ptralpha;
 double * hst_ptrlambda;
 size_t dim;
 size_t storagesize;
-double * hst_ptrlevel_trans;
-double * hst_ptrlevel_int_trans;
 double * hst_ptrindex_trans;
+double * hst_ptrlevel_int_trans;
+double * hst_ptrlevel_trans;
 
 size_t hst_ptralpha_mem_size;
 size_t hst_ptrindex_mem_size;

@@ -191,16 +191,12 @@ def __main_transpose(ks, bps, tempast3, par_dim=None):
     if par_dim is not None:
         tps.ParDim = par_dim
     tps.set_datastructures(tempast3)
-    # print tps.HstId
-    # print tps.find_transposable_arrays()
     tps.transpose(tempast3)
 
-    # print tps.HstId
 
     bps.WriteTranspose = tps.WriteTranspose
     bps.Transposition = tps.Transposition
     bps.NameSwap = tps.NameSwap
-    bps.GlobalVars = tps.GlobalVars
 
     ks.Type = tps.Type
 

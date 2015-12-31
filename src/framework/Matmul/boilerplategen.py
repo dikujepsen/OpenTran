@@ -29,7 +29,10 @@ class Boilerplate(object):
         self.GridIndices = list()
         self.UpperLimit = dict()
         self.ArrayIds = set()
+
+        # new
         self.HstId = dict()
+        self.transposable_host_id = list()
 
     def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt, ast):
         self.ks = kernelstruct
@@ -57,6 +60,7 @@ class Boilerplate(object):
         self.bps_static.set_datastructure(ast, self.ks.ParDim)
 
         self.HstId = cg.gen_host_ids(ast)
+        self.transposable_host_id = cg.gen_transposable_host_ids(ast)
 
     def generate_code(self):
 
@@ -75,7 +79,6 @@ class Boilerplate(object):
         file_ast.ext.append(kernel_type_id)
 
         list_dev_buffers = []
-
 
         for n in sorted(self.ArrayIds):
             try:
@@ -99,7 +102,7 @@ class Boilerplate(object):
                 pass
             list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))
 
-        for n in self.bps.GlobalVars:
+        for n in self.transposable_host_id:
             arg_type = self.ks.Type[n]
             name = my_host_id[n]
             list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))
@@ -172,7 +175,6 @@ class Boilerplate(object):
         rval = lan.Id('CL_SUCCESS')
         cl_suc = lan.Assignment(lval, rval)
         allocate_buffer.compound.statements.extend([lan.GroupCompound([cl_suc])])
-
 
         for n in sorted(dict_n_to_dev_ptr):
             lval = lan.Id(dict_n_to_dev_ptr[n])

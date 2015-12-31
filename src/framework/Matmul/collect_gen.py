@@ -15,6 +15,7 @@ class GenHostArrayData(object):
     def __init__(self):
         super(GenHostArrayData, self).__init__()
         self.HstId = dict()
+        self.TransposableHstId = list()
         self.Mem = dict()
 
     def collect(self, ast):
@@ -29,6 +30,7 @@ class GenHostArrayData(object):
         for n in transposable_array_ids:
             trans_name = 'hst_ptr' + n + '_trans'
             self.HstId[trans_name] = trans_name
+            self.TransposableHstId.append(trans_name)
 
 
 def gen_host_ids(ast):
@@ -36,6 +38,11 @@ def gen_host_ids(ast):
     host_array_data.collect(ast)
     return host_array_data.HstId
 
+
+def gen_transposable_host_ids(ast):
+    host_array_data = GenHostArrayData()
+    host_array_data.collect(ast)
+    return host_array_data.TransposableHstId
 
 
 class GenArrayDimNames(object):
@@ -82,7 +89,6 @@ class GenKernelArgs(object):
         nonarray_ids = ci.GlobalNonArrayIds()
         nonarray_ids.visit(ast)
         non_array_ids = nonarray_ids.ids
-
 
         mytype_ids = ci.GlobalTypeIds()
         mytype_ids.visit(ast)

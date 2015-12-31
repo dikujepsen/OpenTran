@@ -73,7 +73,6 @@ class BoilerPlateChangedByTransformation(object):
         # Ting som er aendret af en transformation
         self.Transposition = None
         self.NameSwap = dict()
-        self.GlobalVars = dict()
         self.WriteTranspose = list()
         self.define_compound = None
         self.NoReadBack = None
