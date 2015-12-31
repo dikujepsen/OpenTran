@@ -17,15 +17,15 @@ class Transpose(object):
 
         self.Type = dict()
         self.NameSwap = dict()
-        self.WriteTranspose = list()
-        self.Transposition = None
         self.HstId = dict()
         self.GlobalVars = dict()
         self.ast = None
 
-    def set_datastructures(self, ast):
+    def set_datastructures(self, ast, par_dim):
+        if par_dim is not None:
+            self.ParDim = par_dim
 
-        self.Transposition = lan.GroupCompound([lan.Comment('// Transposition')])
+        self.ast = ast
 
         fpl = cti.FindGridIndices()
         fpl.ParDim = self.ParDim
@@ -65,15 +65,16 @@ class Transpose(object):
         """
         self.ast = ast
         transpose_arrays = self.find_transposable_arrays()
-
+        # print transpose_arrays
         for n in transpose_arrays:
             hst_name = self.HstId[n]
             hst_trans_name = hst_name + '_trans'
-            self.ast.ext.append(lan.Transpose(self.Type[n], lan.Id(hst_trans_name)))
+            self.ast.ext.append(lan.Transpose(self.Type[n], lan.Id(hst_trans_name), lan.Id(n)))
             self.__transpose(n)
 
     def find_transposable_arrays(self):
         transpose_arrays = set()
+
         subscript_no_id = ca.get_subscript_no_id(self.ast)
         for (n, sub) in subscript_no_id.items():
             # Every ArrayRef, Every list of subscripts
@@ -82,15 +83,15 @@ class Transpose(object):
                     transpose_arrays.add(n)
         return transpose_arrays
 
-    def _subscript_should_be_swapped(self, s):
+    def _subscript_should_be_swapped(self, sub):
         """
         The array ref has two subscripts and the othermost subscript contains the inner most grid index,
         i.e. the thread id that changes most often. This situation leads to uncoalesced memory access.
-        :param s:
+        :param sub:
         :return:
         """
         idx_to_dim = cg.gen_idx_to_dim(self.ast, self.ParDim)
-        return len(s) == 2 and s[0] == idx_to_dim[0]
+        return len(sub) == 2 and sub[0] == idx_to_dim[0]
 
     def __transpose(self, arr_name):
 
@@ -107,10 +108,6 @@ class Transpose(object):
         # Swap the dimension argument
         dim_name = self.ArrayIdToDimName[arr_name]
         self.NameSwap[dim_name[0]] = dim_name[1]
-
-        self.Transposition.statements.extend(self.create_transposition_func(arr_name))
-
-        # print self.Transposition
 
         for sub in self.Subscript[arr_name]:
             (sub[0], sub[1]) = \

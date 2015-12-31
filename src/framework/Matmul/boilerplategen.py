@@ -6,6 +6,8 @@ import struct
 import collect_boilerplate_info as cbi
 import collect_gen as cg
 import collect_id as ci
+import transpose
+import collect_array as ca
 
 
 def print_dict_sorted(mydict):
@@ -35,11 +37,15 @@ class Boilerplate(object):
         self.HstId = dict()
         self.transposable_host_id = list()
         self.Type = dict()
+        self.ast = None
+        self.par_dim = None
 
     def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt, ast):
         self.ks = kernelstruct
         self.bps = boilerplatestruct
         self.kgen_strt = kgen_strt
+        self.ast = ast
+        self.par_dim = self.ks.ParDim
 
         fl = cti.FindLocal()
         fl.ParDim = self.ks.ParDim
@@ -167,9 +173,15 @@ class Boilerplate(object):
 
         allocate_buffer.compound.statements.append(lan.GroupCompound(list_set_mem_size))
 
-        # print self.bps.Transposition
+        transpose_transformation = transpose.Transpose()
 
-        allocate_buffer.compound.statements.append(self.bps.Transposition)
+        transpose_transformation.set_datastructures(self.ast, self.par_dim)
+        transpose_arrays = ca.get_transposable_base_ids(self.ast)
+        my_transposition = lan.GroupCompound([lan.Comment('// Transposition')])
+        for n in transpose_arrays:
+            my_transposition.statements.extend(transpose_transformation.create_transposition_func(n))
+
+        allocate_buffer.compound.statements.append(my_transposition)
 
         allocate_buffer.compound.statements.append(lan.GroupCompound([lan.Comment('// Constant Memory')]))
 
@@ -340,7 +352,6 @@ class Boilerplate(object):
             arglist = lan.ArgList([lan.Id(err_name), lan.Constant('clFinish')])
             err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
             exec_body.append(err_check)
-
 
         run_ocl = ast_bb.EmptyFuncDecl('RunOCL' + self.bps_static.KernelName)
         file_ast.ext.append(run_ocl)

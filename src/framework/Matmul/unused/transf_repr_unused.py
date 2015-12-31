@@ -212,7 +212,7 @@ class TransfRepr(NodeVisitor):
 
         ids_still_in_kernel = Ids()
         ids_still_in_kernel.visit(self.Kernel)
-        self.RemovedIds = self.RemovedIds - ids_still_in_kernel.ids
+        self.RemovedIds = self.RemovedIds - ids_still_in_kernel.trans_ids
 
         other_ids = self.astrepr.ArrayIds.union(self.astrepr.NonArrayIds)
         find_device_args = FindDeviceArgs(other_ids)

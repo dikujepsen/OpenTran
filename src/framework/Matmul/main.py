@@ -185,12 +185,9 @@ def gaussian():
 
 def __main_transpose(ks, bps, tempast3, par_dim=None):
     tps = tp.Transpose()
-    if par_dim is not None:
-        tps.ParDim = par_dim
-    tps.set_datastructures(tempast3)
+    tps.set_datastructures(tempast3, par_dim)
     tps.transpose(tempast3)
 
-    bps.Transposition = tps.Transposition
     bps.NameSwap = tps.NameSwap
 
 

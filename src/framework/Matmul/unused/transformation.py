@@ -69,7 +69,7 @@ class Transformation():
             # First find the typeids
             typeIds = tvisitor.TypeIds2()
             typeIds.visit(innerloop.compound)
-            for m in typeIds.ids:
+            for m in typeIds.trans_ids:
                 outerstats.append(m)
             outerstats.append(innerloop)
             upperbound = str(looplist[n])
@@ -352,7 +352,7 @@ class Transformation():
             arrays = Matmul.visitor.Arrays([])
             arrays.visit(forLoopAst)
             for arrName in arrNames:
-                if arrName in arrays.ids:
+                if arrName in arrays.trans_ids:
                     isInsideLoop = True
         except AttributeError:
             pass
@@ -453,7 +453,7 @@ class Transformation():
                         addToId.visit(n)
                         # REMEMBER: orisub[i] might not simply be an Id
                         # might need to do something more complicated here
-                        if outeridx in addToId.ids:
+                        if outeridx in addToId.trans_ids:
                             orisub[i] = lan.Id(inneridx)
 
                     for i, n in enumerate(rsub):  # GlobalLoad
@@ -461,7 +461,7 @@ class Transformation():
                         locIdx = 'get_local_id(' + str(idd) + ')'
                         addToId = lan.Ids()
                         addToId.visit(n)
-                        if outeridx in addToId.ids:
+                        if outeridx in addToId.trans_ids:
                             rsub[i] = lan.BinOp(rsub[i], '+', \
                                                 lan.Id(locIdx))
                     for i, n in enumerate(lsub):  # Local Write

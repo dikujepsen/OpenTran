@@ -27,24 +27,38 @@ class GlobalArrayIds(lan.NodeVisitor):
 
 class TransposableArrayIds(lan.NodeVisitor):
     def __init__(self):
-        self.all_a_ids = set()
+        self.trans_a_hst_ids = set()
+        self.trans_a_base_ids = set()
+
 
     def collect(self, ast):
         self.visit(ast)
 
     def visit_Transpose(self, node):
         name = node.name.name
-        self.all_a_ids.add(name)
+        base_name = node.base_name.name
+        self.trans_a_hst_ids.add(name)
+        self.trans_a_base_ids.add(base_name)
 
     @property
-    def ids(self):
-        return self.all_a_ids
+    def trans_ids(self):
+        return self.trans_a_hst_ids
+
+    @property
+    def base_ids(self):
+        return self.trans_a_base_ids
 
 
 def get_transposable_array_ids(ast):
     transposable_array_ids = TransposableArrayIds()
     transposable_array_ids.collect(ast)
-    return transposable_array_ids.ids
+    return transposable_array_ids.trans_ids
+
+def get_transposable_base_ids(ast):
+    transposable_array_ids = TransposableArrayIds()
+    transposable_array_ids.collect(ast)
+    return transposable_array_ids.base_ids
+
 
 
 class IndicesInArrayRef(lan.NodeVisitor):
