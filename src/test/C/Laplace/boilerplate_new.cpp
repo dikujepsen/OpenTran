@@ -1,28 +1,28 @@
 #include "../../../utils/StartUtil.cpp"
 using namespace std;
 cl_kernel LaplaceForKernel;
-cl_mem dev_ptrindex;
-cl_mem dev_ptrlevel_int;
-cl_mem dev_ptrlevel;
-cl_mem dev_ptrlcl_q;
-cl_mem dev_ptrresult;
-cl_mem dev_ptrlcl_q_inv;
 cl_mem dev_ptralpha;
+cl_mem dev_ptrindex;
 cl_mem dev_ptrlambda;
+cl_mem dev_ptrlcl_q;
+cl_mem dev_ptrlcl_q_inv;
+cl_mem dev_ptrlevel;
+cl_mem dev_ptrlevel_int;
+cl_mem dev_ptrresult;
 
-double * hst_ptrindex;
 double * hst_ptrlevel_int;
-double * hst_ptrlevel;
 double * hst_ptrlcl_q;
-double * hst_ptrresult;
-double * hst_ptrlcl_q_inv;
-double * hst_ptralpha;
-double * hst_ptrlambda;
-size_t dim;
+double * hst_ptrindex;
+double * hst_ptrlevel;
 size_t storagesize;
-double * hst_ptrlevel_trans;
-double * hst_ptrlevel_int_trans;
+double * hst_ptrlcl_q_inv;
+double * hst_ptrlambda;
+double * hst_ptralpha;
+size_t dim;
+double * hst_ptrresult;
 double * hst_ptrindex_trans;
+double * hst_ptrlevel_int_trans;
+double * hst_ptrlevel_trans;
 
 size_t hst_ptralpha_mem_size;
 size_t hst_ptrindex_mem_size;
@@ -33,17 +33,17 @@ size_t hst_ptrlevel_mem_size;
 size_t hst_ptrlevel_int_mem_size;
 size_t hst_ptrresult_mem_size;
 
+size_t hst_ptralpha_dim1;
 size_t hst_ptrindex_dim1;
 size_t hst_ptrindex_dim2;
-size_t hst_ptrlevel_int_dim1;
-size_t hst_ptrlevel_int_dim2;
+size_t hst_ptrlambda_dim1;
+size_t hst_ptrlcl_q_dim1;
+size_t hst_ptrlcl_q_inv_dim1;
 size_t hst_ptrlevel_dim1;
 size_t hst_ptrlevel_dim2;
-size_t hst_ptrlcl_q_dim1;
+size_t hst_ptrlevel_int_dim1;
+size_t hst_ptrlevel_int_dim2;
 size_t hst_ptrresult_dim1;
-size_t hst_ptrlcl_q_inv_dim1;
-size_t hst_ptralpha_dim1;
-size_t hst_ptrlambda_dim1;
 
 size_t isFirstTime = 1;
 std::string KernelDefines = "";
@@ -157,14 +157,14 @@ std::string GetKernelCode()
 
 void AllocateBuffers()
 {
-  hst_ptrindex_mem_size = hst_ptrindex_dim2 * (hst_ptrindex_dim1 * sizeof(double));
-  hst_ptrlevel_int_mem_size = hst_ptrlevel_int_dim2 * (hst_ptrlevel_int_dim1 * sizeof(double));
-  hst_ptrlevel_mem_size = hst_ptrlevel_dim2 * (hst_ptrlevel_dim1 * sizeof(double));
-  hst_ptrlcl_q_mem_size = hst_ptrlcl_q_dim1 * sizeof(double);
-  hst_ptrresult_mem_size = hst_ptrresult_dim1 * sizeof(double);
-  hst_ptrlcl_q_inv_mem_size = hst_ptrlcl_q_inv_dim1 * sizeof(double);
   hst_ptralpha_mem_size = hst_ptralpha_dim1 * sizeof(double);
+  hst_ptrindex_mem_size = hst_ptrindex_dim2 * (hst_ptrindex_dim1 * sizeof(double));
   hst_ptrlambda_mem_size = hst_ptrlambda_dim1 * sizeof(double);
+  hst_ptrlcl_q_mem_size = hst_ptrlcl_q_dim1 * sizeof(double);
+  hst_ptrlcl_q_inv_mem_size = hst_ptrlcl_q_inv_dim1 * sizeof(double);
+  hst_ptrlevel_mem_size = hst_ptrlevel_dim2 * (hst_ptrlevel_dim1 * sizeof(double));
+  hst_ptrlevel_int_mem_size = hst_ptrlevel_int_dim2 * (hst_ptrlevel_int_dim1 * sizeof(double));
+  hst_ptrresult_mem_size = hst_ptrresult_dim1 * sizeof(double);
   
   // Transposition
   hst_ptrindex_trans = new double[hst_ptrindex_mem_size];

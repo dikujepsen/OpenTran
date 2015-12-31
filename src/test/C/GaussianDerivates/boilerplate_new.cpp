@@ -2,29 +2,29 @@
 using namespace std;
 cl_kernel GaussianDerivatesForKernel;
 cl_mem dev_ptrD1Ks__ijb_dimsI;
-cl_mem dev_ptrq_a_i_x;
-cl_mem dev_ptrD3Ks__ijbgd_x;
-cl_mem dev_ptrD2Ks__ijbg_dimsI;
-cl_mem dev_ptrD3Ks__ijbgd_dimsI;
-cl_mem dev_ptrK__ij_x;
 cl_mem dev_ptrD1Ks__ijb_x;
-cl_mem dev_ptrp_a_i_x;
+cl_mem dev_ptrD2Ks__ijbg_dimsI;
 cl_mem dev_ptrD2Ks__ijbg_x;
+cl_mem dev_ptrD3Ks__ijbgd_dimsI;
+cl_mem dev_ptrD3Ks__ijbgd_x;
+cl_mem dev_ptrK__ij_x;
+cl_mem dev_ptrp_a_i_x;
+cl_mem dev_ptrq_a_i_x;
 
 unsigned * hst_ptrD1Ks__ijb_dimsI;
 float * hst_ptrq_a_i_x;
 float * hst_ptrD3Ks__ijbgd_x;
-unsigned * hst_ptrD2Ks__ijbg_dimsI;
-unsigned * hst_ptrD3Ks__ijbgd_dimsI;
-float * hst_ptrp_a_i_x;
 float * hst_ptrD1Ks__ijb_x;
 float * hst_ptrK__ij_x;
-float * hst_ptrD2Ks__ijbg_x;
-unsigned dim;
-float scaleweight2_x;
-float scales2_x;
 unsigned Lp;
+unsigned dim;
+float scales2_x;
+float * hst_ptrp_a_i_x;
+float scaleweight2_x;
+float * hst_ptrD2Ks__ijbg_x;
+unsigned * hst_ptrD3Ks__ijbgd_dimsI;
 unsigned Lq;
+unsigned * hst_ptrD2Ks__ijbg_dimsI;
 float * hst_ptrq_a_i_x_trans;
 
 size_t hst_ptrD1Ks__ijb_dimsI_mem_size;
@@ -38,17 +38,17 @@ size_t hst_ptrp_a_i_x_mem_size;
 size_t hst_ptrq_a_i_x_mem_size;
 
 size_t hst_ptrD1Ks__ijb_dimsI_dim1;
-size_t hst_ptrq_a_i_x_dim1;
-size_t hst_ptrq_a_i_x_dim2;
-size_t hst_ptrD3Ks__ijbgd_x_dim1;
+size_t hst_ptrD1Ks__ijb_x_dim1;
 size_t hst_ptrD2Ks__ijbg_dimsI_dim1;
+size_t hst_ptrD2Ks__ijbg_x_dim1;
 size_t hst_ptrD3Ks__ijbgd_dimsI_dim1;
+size_t hst_ptrD3Ks__ijbgd_x_dim1;
 size_t hst_ptrK__ij_x_dim1;
 size_t hst_ptrK__ij_x_dim2;
-size_t hst_ptrD1Ks__ijb_x_dim1;
 size_t hst_ptrp_a_i_x_dim1;
 size_t hst_ptrp_a_i_x_dim2;
-size_t hst_ptrD2Ks__ijbg_x_dim1;
+size_t hst_ptrq_a_i_x_dim1;
+size_t hst_ptrq_a_i_x_dim2;
 
 size_t isFirstTime = 1;
 std::string KernelDefines = "";
@@ -223,14 +223,14 @@ std::string GetKernelCode()
 void AllocateBuffers()
 {
   hst_ptrD1Ks__ijb_dimsI_mem_size = hst_ptrD1Ks__ijb_dimsI_dim1 * sizeof(unsigned);
-  hst_ptrq_a_i_x_mem_size = hst_ptrq_a_i_x_dim2 * (hst_ptrq_a_i_x_dim1 * sizeof(float));
-  hst_ptrD3Ks__ijbgd_x_mem_size = hst_ptrD3Ks__ijbgd_x_dim1 * sizeof(float);
-  hst_ptrD2Ks__ijbg_dimsI_mem_size = hst_ptrD2Ks__ijbg_dimsI_dim1 * sizeof(unsigned);
-  hst_ptrD3Ks__ijbgd_dimsI_mem_size = hst_ptrD3Ks__ijbgd_dimsI_dim1 * sizeof(unsigned);
-  hst_ptrK__ij_x_mem_size = hst_ptrK__ij_x_dim2 * (hst_ptrK__ij_x_dim1 * sizeof(float));
   hst_ptrD1Ks__ijb_x_mem_size = hst_ptrD1Ks__ijb_x_dim1 * sizeof(float);
-  hst_ptrp_a_i_x_mem_size = hst_ptrp_a_i_x_dim2 * (hst_ptrp_a_i_x_dim1 * sizeof(float));
+  hst_ptrD2Ks__ijbg_dimsI_mem_size = hst_ptrD2Ks__ijbg_dimsI_dim1 * sizeof(unsigned);
   hst_ptrD2Ks__ijbg_x_mem_size = hst_ptrD2Ks__ijbg_x_dim1 * sizeof(float);
+  hst_ptrD3Ks__ijbgd_dimsI_mem_size = hst_ptrD3Ks__ijbgd_dimsI_dim1 * sizeof(unsigned);
+  hst_ptrD3Ks__ijbgd_x_mem_size = hst_ptrD3Ks__ijbgd_x_dim1 * sizeof(float);
+  hst_ptrK__ij_x_mem_size = hst_ptrK__ij_x_dim2 * (hst_ptrK__ij_x_dim1 * sizeof(float));
+  hst_ptrp_a_i_x_mem_size = hst_ptrp_a_i_x_dim2 * (hst_ptrp_a_i_x_dim1 * sizeof(float));
+  hst_ptrq_a_i_x_mem_size = hst_ptrq_a_i_x_dim2 * (hst_ptrq_a_i_x_dim1 * sizeof(float));
   
   // Transposition
   hst_ptrq_a_i_x_trans = new float[hst_ptrq_a_i_x_mem_size];

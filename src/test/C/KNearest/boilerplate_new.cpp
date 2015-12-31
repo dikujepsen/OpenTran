@@ -1,28 +1,28 @@
 #include "../../../utils/StartUtil.cpp"
 using namespace std;
 cl_kernel KNearestForKernel;
-cl_mem dev_ptrtrain_patterns;
-cl_mem dev_ptrtest_patterns;
 cl_mem dev_ptrdist_matrix;
+cl_mem dev_ptrtest_patterns;
+cl_mem dev_ptrtrain_patterns;
 
 float * hst_ptrtrain_patterns;
 float * hst_ptrtest_patterns;
 float * hst_ptrdist_matrix;
-unsigned dim;
-unsigned NTEST;
 unsigned NTRAIN;
+unsigned NTEST;
+unsigned dim;
 float * hst_ptrtest_patterns_trans;
 
 size_t hst_ptrdist_matrix_mem_size;
 size_t hst_ptrtest_patterns_mem_size;
 size_t hst_ptrtrain_patterns_mem_size;
 
-size_t hst_ptrtrain_patterns_dim1;
-size_t hst_ptrtrain_patterns_dim2;
-size_t hst_ptrtest_patterns_dim1;
-size_t hst_ptrtest_patterns_dim2;
 size_t hst_ptrdist_matrix_dim1;
 size_t hst_ptrdist_matrix_dim2;
+size_t hst_ptrtest_patterns_dim1;
+size_t hst_ptrtest_patterns_dim2;
+size_t hst_ptrtrain_patterns_dim1;
+size_t hst_ptrtrain_patterns_dim2;
 
 size_t isFirstTime = 1;
 std::string KernelDefines = "";
@@ -86,9 +86,9 @@ std::string GetKernelCode()
 
 void AllocateBuffers()
 {
-  hst_ptrtrain_patterns_mem_size = hst_ptrtrain_patterns_dim2 * (hst_ptrtrain_patterns_dim1 * sizeof(float));
-  hst_ptrtest_patterns_mem_size = hst_ptrtest_patterns_dim2 * (hst_ptrtest_patterns_dim1 * sizeof(float));
   hst_ptrdist_matrix_mem_size = hst_ptrdist_matrix_dim2 * (hst_ptrdist_matrix_dim1 * sizeof(float));
+  hst_ptrtest_patterns_mem_size = hst_ptrtest_patterns_dim2 * (hst_ptrtest_patterns_dim1 * sizeof(float));
+  hst_ptrtrain_patterns_mem_size = hst_ptrtrain_patterns_dim2 * (hst_ptrtrain_patterns_dim1 * sizeof(float));
   
   // Transposition
   hst_ptrtest_patterns_trans = new float[hst_ptrtest_patterns_mem_size];

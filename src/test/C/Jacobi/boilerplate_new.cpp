@@ -1,26 +1,26 @@
 #include "../../../utils/StartUtil.cpp"
 using namespace std;
 cl_kernel JacobiForKernel;
-cl_mem dev_ptrX2;
-cl_mem dev_ptrX1;
 cl_mem dev_ptrB;
+cl_mem dev_ptrX1;
+cl_mem dev_ptrX2;
 
 float * hst_ptrX2;
 float * hst_ptrB;
 float * hst_ptrX1;
-unsigned wB;
 unsigned wA;
+unsigned wB;
 
 size_t hst_ptrB_mem_size;
 size_t hst_ptrX1_mem_size;
 size_t hst_ptrX2_mem_size;
 
-size_t hst_ptrX2_dim1;
-size_t hst_ptrX2_dim2;
-size_t hst_ptrX1_dim1;
-size_t hst_ptrX1_dim2;
 size_t hst_ptrB_dim1;
 size_t hst_ptrB_dim2;
+size_t hst_ptrX1_dim1;
+size_t hst_ptrX1_dim2;
+size_t hst_ptrX2_dim1;
+size_t hst_ptrX2_dim2;
 
 size_t isFirstTime = 1;
 std::string KernelDefines = "";
@@ -54,9 +54,9 @@ std::string GetKernelCode()
 
 void AllocateBuffers()
 {
-  hst_ptrX2_mem_size = hst_ptrX2_dim2 * (hst_ptrX2_dim1 * sizeof(float));
-  hst_ptrX1_mem_size = hst_ptrX1_dim2 * (hst_ptrX1_dim1 * sizeof(float));
   hst_ptrB_mem_size = hst_ptrB_dim2 * (hst_ptrB_dim1 * sizeof(float));
+  hst_ptrX1_mem_size = hst_ptrX1_dim2 * (hst_ptrX1_dim1 * sizeof(float));
+  hst_ptrX2_mem_size = hst_ptrX2_dim2 * (hst_ptrX2_dim1 * sizeof(float));
   
   // Transposition
   

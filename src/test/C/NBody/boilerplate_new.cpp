@@ -1,9 +1,9 @@
 #include "../../../utils/StartUtil.cpp"
 using namespace std;
 cl_kernel NBodyForKernel;
+cl_mem dev_ptrForces;
 cl_mem dev_ptrMas;
 cl_mem dev_ptrPos;
-cl_mem dev_ptrForces;
 
 float * hst_ptrMas;
 float * hst_ptrPos;
@@ -14,11 +14,11 @@ size_t hst_ptrForces_mem_size;
 size_t hst_ptrMas_mem_size;
 size_t hst_ptrPos_mem_size;
 
+size_t hst_ptrForces_dim1;
+size_t hst_ptrForces_dim2;
 size_t hst_ptrMas_dim1;
 size_t hst_ptrPos_dim1;
 size_t hst_ptrPos_dim2;
-size_t hst_ptrForces_dim1;
-size_t hst_ptrForces_dim2;
 
 size_t isFirstTime = 1;
 std::string KernelDefines = "";
@@ -103,9 +103,9 @@ std::string GetKernelCode()
 
 void AllocateBuffers()
 {
+  hst_ptrForces_mem_size = hst_ptrForces_dim2 * (hst_ptrForces_dim1 * sizeof(float));
   hst_ptrMas_mem_size = hst_ptrMas_dim1 * sizeof(float);
   hst_ptrPos_mem_size = hst_ptrPos_dim2 * (hst_ptrPos_dim1 * sizeof(float));
-  hst_ptrForces_mem_size = hst_ptrForces_dim2 * (hst_ptrForces_dim1 * sizeof(float));
   
   // Transposition
   

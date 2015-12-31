@@ -2,15 +2,15 @@
 using namespace std;
 cl_kernel MatMulForKernel;
 cl_mem dev_ptrA;
-cl_mem dev_ptrB;
 cl_mem dev_ptrC;
+cl_mem dev_ptrB;
 
 float * hst_ptrA;
 float * hst_ptrC;
 float * hst_ptrB;
 unsigned hA;
-unsigned wA;
 unsigned wB;
+unsigned wA;
 
 size_t hst_ptrA_mem_size;
 size_t hst_ptrB_mem_size;
@@ -18,10 +18,10 @@ size_t hst_ptrC_mem_size;
 
 size_t hst_ptrA_dim1;
 size_t hst_ptrA_dim2;
-size_t hst_ptrB_dim1;
-size_t hst_ptrB_dim2;
 size_t hst_ptrC_dim1;
 size_t hst_ptrC_dim2;
+size_t hst_ptrB_dim1;
+size_t hst_ptrB_dim2;
 
 size_t isFirstTime = 1;
 std::string KernelDefines = "";
@@ -84,8 +84,8 @@ std::string GetKernelCode()
 void AllocateBuffers()
 {
   hst_ptrA_mem_size = hst_ptrA_dim2 * (hst_ptrA_dim1 * sizeof(float));
-  hst_ptrB_mem_size = hst_ptrB_dim2 * (hst_ptrB_dim1 * sizeof(float));
   hst_ptrC_mem_size = hst_ptrC_dim2 * (hst_ptrC_dim1 * sizeof(float));
+  hst_ptrB_mem_size = hst_ptrB_dim2 * (hst_ptrB_dim1 * sizeof(float));
   
   // Transposition
   

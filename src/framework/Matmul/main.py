@@ -193,7 +193,7 @@ def __main_transpose(ks, bps, tempast3, par_dim=None):
     tps.set_datastructures(tempast3)
     # print tps.HstId
     # print tps.find_transposable_arrays()
-    tps.transpose()
+    tps.transpose(tempast3)
 
     # print tps.HstId
 

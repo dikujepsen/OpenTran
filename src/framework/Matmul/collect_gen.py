@@ -25,6 +25,18 @@ class GenHostArrayData(object):
             self.HstId[n] = 'hst_ptr' + n
             self.Mem[n] = 'hst_ptr' + n + '_mem_size'
 
+        transposable_array_ids = ca.get_transposable_array_ids(ast)
+        for n in transposable_array_ids:
+            trans_name = 'hst_ptr' + n + '_trans'
+            self.HstId[trans_name] = trans_name
+
+
+def gen_host_ids(ast):
+    host_array_data = GenHostArrayData()
+    host_array_data.collect(ast)
+    return host_array_data.HstId
+
+
 
 class GenArrayDimNames(object):
     def __init__(self):

@@ -4,6 +4,18 @@ import ast_buildingblock as ast_bb
 import collect_transformation_info as cti
 import struct
 import collect_boilerplate_info as cbi
+import collect_gen as cg
+
+
+def print_dict_sorted(mydict):
+    keys = sorted(mydict)
+
+    entries = ""
+    for key in keys:
+        value = mydict[key]
+        entries += "'" + key + "': " + value.__repr__() + ","
+
+    return "{" + entries[:-1] + "}"
 
 
 class Boilerplate(object):
@@ -17,6 +29,7 @@ class Boilerplate(object):
         self.GridIndices = list()
         self.UpperLimit = dict()
         self.ArrayIds = set()
+        self.HstId = dict()
 
     def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt, ast):
         self.ks = kernelstruct
@@ -43,8 +56,12 @@ class Boilerplate(object):
         self.bps_static = struct.BoilerPlateStruct()
         self.bps_static.set_datastructure(ast, self.ks.ParDim)
 
+        self.HstId = cg.gen_host_ids(ast)
+
     def generate_code(self):
 
+        # print print_dict_sorted(self.bps.HstId)
+        # print print_dict_sorted(self.HstId)
         dict_n_to_dim_names = self.ks.ArrayIdToDimName
 
         non_array_ids = copy.deepcopy(self.bps_static.NonArrayIds)
@@ -60,7 +77,7 @@ class Boilerplate(object):
 
         list_dev_buffers = []
 
-        for n in self.ArrayIds:
+        for n in sorted(self.ArrayIds):
             try:
                 name = self.bps_static.DevId[n]
                 list_dev_buffers.append(lan.TypeId(['cl_mem'], lan.Id(name)))
@@ -73,7 +90,7 @@ class Boilerplate(object):
         file_ast.ext.append(list_dev_buffers)
 
         list_host_ptrs = []
-        for n in self.bps_static.DevArgList:
+        for n in sorted(self.bps_static.DevArgList):
             name = n.name.name
             arg_type = self.ks.Type[name]
             try:
@@ -82,7 +99,7 @@ class Boilerplate(object):
                 pass
             list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))
 
-        for n in self.bps.GlobalVars:
+        for n in sorted(self.bps.GlobalVars):
             arg_type = self.ks.Type[n]
             name = self.bps.HstId[n]
             list_host_ptrs.append(lan.TypeId(arg_type, lan.Id(name), 0))
@@ -99,7 +116,7 @@ class Boilerplate(object):
             size_name = self.bps_static.Mem[n]
             list_mem_size.append(lan.TypeId(['size_t'], lan.Id(size_name)))
 
-        for n in self.ArrayIds:
+        for n in sorted(self.ArrayIds):
             for dimName in self.ks.ArrayIdToDimName[n]:
                 list_dim_size.append(lan.TypeId(['size_t'], lan.Id(dimName)))
 
@@ -133,7 +150,7 @@ class Boilerplate(object):
         file_ast.ext.append(allocate_buffer)
 
         list_set_mem_size = []
-        for entry in self.ArrayIds:
+        for entry in sorted(self.ArrayIds):
             n = self.ks.ArrayIdToDimName[entry]
             lval = lan.Id(self.bps_static.Mem[entry])
             rval = lan.BinOp(lan.Id(n[0]), '*', lan.Id('sizeof(' + self.ks.Type[entry][0] + ')'))
@@ -193,7 +210,7 @@ class Boilerplate(object):
         rval = lan.Constant(0)
         arg_body.append(lan.Assignment(lval, rval))
 
-        for n in dict_n_to_dim_names:
+        for n in sorted(dict_n_to_dim_names):
             # add dim arguments to set of ids
             non_array_ids.add(dict_n_to_dim_names[n][0])
             # Add types of dimensions for size arguments

@@ -22,6 +22,7 @@ class Transpose(object):
         self.Transposition = None
         self.HstId = dict()
         self.GlobalVars = dict()
+        self.ast = None
 
     def set_datastructures(self, ast):
 
@@ -61,14 +62,16 @@ class Transpose(object):
 
         self.WriteOnly = fai.WriteOnly
 
-    def transpose(self):
+    def transpose(self, ast):
         """ Find all arrays that *should* be transposed
             and transpose them
+            :param ast:
         """
-
+        self.ast = ast
         transpose_arrays = self.find_transposable_arrays()
 
         for n in transpose_arrays:
+            self.ast.ext.append(lan.Transpose(self.Type[n], lan.Id(n)))
             self.__transpose(n)
 
     def find_transposable_arrays(self):
