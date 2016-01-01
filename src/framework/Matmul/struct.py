@@ -6,10 +6,6 @@ import collect_id as ci
 
 class KernelChangedByTransformation(object):
     def __init__(self):
-        # Kun sat af transformation
-        self.PlaceInLocalArgs = list()
-        self.PlaceInLocalCond = None
-
         self.Loops = dict()  # place_in_local
         self.Add = dict()  # place_in_local
 

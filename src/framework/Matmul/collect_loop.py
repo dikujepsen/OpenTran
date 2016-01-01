@@ -95,6 +95,10 @@ def get_inner_loops(ast, par_dim):
     return find_inner_loops.Loops
 
 
+def get_inner_loops_indices(ast, par_dim):
+    loops = get_inner_loops(ast, par_dim)
+    return loops.keys()
+
 class FindPerfectForLoop(lan.NodeVisitor):
     """ Performs simple checks to decide if we have 1D or 2D
     parallelism, i.e. if we have a perfect loops nest of size one

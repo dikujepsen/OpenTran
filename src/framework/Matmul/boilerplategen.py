@@ -69,12 +69,11 @@ class Boilerplate(object):
         self.bps_static = struct.BoilerPlateStruct()
         self.bps_static.set_datastructure(ast, self.ks.ParDim)
 
+        # new
         self.HstId = cg.gen_host_ids(ast)
         self.transposable_host_id = cg.gen_transposable_host_ids(ast)
         self.Type = ci.get_types(ast)
         self.NameSwap = ca.get_host_array_name_swap(ast)
-
-        # new
         self.kernel_args = cg.get_kernel_args(ast, self.ks.ParDim)
 
     def generate_code(self):

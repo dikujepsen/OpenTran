@@ -107,7 +107,7 @@ def __optimize(rw, ast, name, par_dim=None):
     if DoOptimizations:
         __main_transpose(tempast3, par_dim=ks.ParDim)
         __main_placeinreg(tempast3, par_dim=ks.ParDim)
-        __main_placeinlocal(ks, bps, tempast3, par_dim=ks.ParDim)
+        __main_placeinlocal(tempast3, par_dim=ks.ParDim)
 
         __main_definearg(tempast3, par_dim=ks.ParDim)
     if SetNoReadBack:
@@ -144,7 +144,7 @@ def jacobi():
         __main_placeinreg(tempast3)
         # tf.localMemory(['X1'], west=1, north=1, east=1, south=1, middle=0)
         __main_stencil(ks, bps, tempast3)
-        __main_placeinlocal(ks, bps, tempast3)
+        __main_placeinlocal(tempast3)
         __main_definearg(tempast3)
     if SetNoReadBack:
         bps.set_no_read_back()
@@ -198,15 +198,8 @@ def __main_placeinreg(tempast3, par_dim=None):
     pass
 
 
-def __main_placeinlocal(ks, bps, tempast3, par_dim=None):
-    pilocal = local.PlaceInLocal()
-    if par_dim is not None:
-        pilocal.ParDim = par_dim
-    pilocal.set_datastructures(tempast3)
-    pilocal.place_in_local()
-
-    ks.PlaceInLocalArgs = pilocal.PlaceInLocalArgs
-    ks.PlaceInLocalCond = pilocal.PlaceInLocalCond
+def __main_placeinlocal(tempast3, par_dim=None):
+    pass
 
 
 def __main_stencil(ks, bps, tempast3):

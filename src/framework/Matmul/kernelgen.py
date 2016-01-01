@@ -47,13 +47,14 @@ class KernelGen(object):
             ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                                 kernelstringname=funcname)
 
-        if pir.PlaceInRegFinding and self.ks.PlaceInLocalArgs:
-            raise Exception("""GenerateKernels: Currently unimplemented to perform
-                                PlaceInReg and PlaceInLocal together from the analysis""")
 
         pil = piloc.PlaceInLocal()
         pil.set_datastructures(ast)
-        for arg in self.ks.PlaceInLocalArgs:
+        pil.place_in_local()
+        if pir.PlaceInRegFinding and pil.PlaceInLocalArgs:
+            raise Exception("""GenerateKernels: Currently unimplemented to perform
+                                PlaceInReg and PlaceInLocal together from the analysis""")
+        for arg in pil.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
 
             pil.local_memory3(self.ks, arg)
@@ -63,8 +64,8 @@ class KernelGen(object):
         self.kgen_strt.KernelStringStream = ss.KernelStringStream
 
         my_cond = None
-        if self.ks.PlaceInLocalCond:
-            my_cond = self.ks.PlaceInLocalCond
+        if pil.PlaceInLocalCond:
+            my_cond = pil.PlaceInLocalCond
         if pir.PlaceInRegCond:
             my_cond = pir.PlaceInRegCond
 

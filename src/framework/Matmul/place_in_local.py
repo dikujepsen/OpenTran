@@ -6,13 +6,14 @@ import exchange
 import collect_gen as cg
 import collect_boilerplate_info as cbi
 import collect_id as ci
+import collect_loop as cl
+
 
 class PlaceInLocal(object):
     def __init__(self):
         self.SubscriptNoId = dict()
         self.GridIndices = list()
         self.ParDim = None  # int
-        self.Loops = dict()
         self.UpperLimit = dict()
         self.LowerLimit = dict()
 
@@ -25,9 +26,10 @@ class PlaceInLocal(object):
 
         self.LoopArrays = dict()
         self.Type = dict()
+        self.ast = None
 
     def set_datastructures(self, ast, dev='CPU'):
-
+        self.ast = ast
         fpl = cti.FindGridIndices()
         fpl.ParDim = self.ParDim
         fpl.collect(ast)
@@ -37,7 +39,6 @@ class PlaceInLocal(object):
 
         self.ParDim = fpl.par_dim
         self.GridIndices = fpl.GridIndices
-        self.Loops = fs.Loops
         self.UpperLimit = fs.upper_limit
         self.LowerLimit = fs.lower_limit
         self.SubscriptNoId = fs.SubscriptNoId
@@ -63,17 +64,21 @@ class PlaceInLocal(object):
 
         args = dict()
         loopindex = set()
-        print "SubscriptNoId", self.SubscriptNoId
+        inner_loop_indices = cl.get_inner_loops_indices(self.ast, self.ParDim)
+
+        # print "SubscriptNoId", self.SubscriptNoId
+        # print "self.GridIndices", self.GridIndices
+        # print "inner_loop_indices", inner_loop_indices
+
         for k, sub_list in self.SubscriptNoId.items():
             for i, sub in enumerate(sub_list):
-                if set(sub).intersection(set(self.GridIndices)) and \
-                                set(sub).intersection(set(self.Loops.keys())):
-                    if self.ParDim == 2:
-                        args[k] = i
-                        loopindex = loopindex.union(set(sub) & set(self.Loops.keys()))
+                if self.__can_be_put_in_local(sub, inner_loop_indices):
+                    args[k] = i
+                    loopindex = loopindex.union(set(sub).intersection(set(inner_loop_indices)))
 
         loopindex = list(loopindex)
-        print args
+        # print loopindex
+        # print args
         if args:
             self.PlaceInLocalArgs.append(args)
 
@@ -85,11 +90,22 @@ class PlaceInLocal(object):
                                        lan.Constant(self.Local['size'][0])), '==', lan.Constant(0))
             self.PlaceInLocalCond = cond
 
+    def __can_be_put_in_local(self, sub, inner_loop_indices):
+        """
+        The subscript must be two dimensional. One index must be a grid index, the other an inner loop index.
+        :param sub:
+        :param inner_loop_indices:
+        :return:
+        """
+        return set(sub).intersection(set(self.GridIndices)) and \
+               set(sub).intersection(set(inner_loop_indices)) \
+               and self.ParDim == 2
+
     def local_memory3(self, ks, arr_dict, loop_dict=None):
         initstats = []
         init_comp = lan.GroupCompound(initstats)
         ks.Kernel.statements.insert(0, init_comp)
-        print "arr_dict", arr_dict
+
         if loop_dict is None:
             loop_dict = dict()
             # So we create it
