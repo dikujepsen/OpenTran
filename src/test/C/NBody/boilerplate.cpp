@@ -113,8 +113,8 @@ void AllocateBuffers()
   
   // Defines for the kernel
   std::stringstream str;
-  str << "-Dhst_ptrForces_dim1=" << hst_ptrForces_dim1 << " ";
   str << "-DN=" << N << " ";
+  str << "-Dhst_ptrForces_dim1=" << hst_ptrForces_dim1 << " ";
   str << "-Dhst_ptrPos_dim1=" << hst_ptrPos_dim1 << " ";
   KernelDefines = str.str();
   

@@ -8,7 +8,7 @@ import collect_gen as cg
 import collect_id as ci
 import transpose
 import collect_array as ca
-
+import define_arguments
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -191,7 +191,8 @@ class Boilerplate(object):
 
         allocate_buffer.compound.statements.append(lan.GroupCompound([lan.Comment('// Constant Memory')]))
 
-        allocate_buffer.compound.statements.append(self.bps.define_compound)
+        define_compound = define_arguments.setdefine(self.ast)
+        allocate_buffer.compound.statements.append(define_compound)
 
         err_name = 'oclErrNum'
         lval = lan.TypeId(['cl_int'], lan.Id(err_name))

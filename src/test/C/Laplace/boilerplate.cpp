@@ -185,10 +185,10 @@ void AllocateBuffers()
   // Defines for the kernel
   std::stringstream str;
   str << "-Ddim=" << dim << " ";
-  str << "-Dstoragesize=" << storagesize << " ";
-  str << "-Dhst_ptrlevel_dim1=" << hst_ptrlevel_dim2 << " ";
   str << "-Dhst_ptrindex_dim1=" << hst_ptrindex_dim2 << " ";
+  str << "-Dhst_ptrlevel_dim1=" << hst_ptrlevel_dim2 << " ";
   str << "-Dhst_ptrlevel_int_dim1=" << hst_ptrlevel_int_dim2 << " ";
+  str << "-Dstoragesize=" << storagesize << " ";
   KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;

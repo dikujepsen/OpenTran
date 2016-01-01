@@ -32,9 +32,6 @@ class KernelStruct(KernelChangedByTransformation):
         self.LoopArrays = dict()
         self.LoopArraysParent = dict()
 
-        # new
-        self.kernel_args = dict()
-
     def set_datastructure(self, rw, ast):
         fpl = cti.FindGridIndices()
         fpl.ParDim = self.ParDim
@@ -69,17 +66,11 @@ class KernelStruct(KernelChangedByTransformation):
         self.Kernel = fpl.Kernel
         self.num_array_dims = fai.num_array_dims  #
 
-        # new
-        self.kernel_args = cg.get_kernel_args(ast, fpl.par_dim)
-
-
-
 
 class BoilerPlateChangedByTransformation(object):
     def __init__(self):
         # Eneste der skal med til boilerplate
         # Ting som er aendret af en transformation
-        self.define_compound = None
         self.NoReadBack = None
 
     def set_no_read_back(self):

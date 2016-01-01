@@ -41,17 +41,6 @@ class SnippetGen(object):
         self.LoopArrays = fai.loop_arrays
         self.kernel_args = cg.get_kernel_args(ast, kernel_struct.ParDim)
 
-
-        # print self.kernel_args
-        # print find_kernel_args.arglist
-
-        # self.kernel_args = kernel_struct.KernelArgs
-
-        # print ast
-
-        # print print_dict_sorted(self.kernel_args)
-        # print print_dict_sorted(kernel_struct.KernelArgs)
-
     def in_source_kernel(self, ast, cond, filename, kernelstringname):
         self.rewrite_to_device_c_release(ast)
 

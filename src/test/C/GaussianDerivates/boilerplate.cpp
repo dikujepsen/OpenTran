@@ -243,11 +243,11 @@ void AllocateBuffers()
   // Defines for the kernel
   std::stringstream str;
   str << "-Ddim=" << dim << " ";
-  str << "-Dscaleweight2_x=" << scaleweight2_x << " ";
-  str << "-Dhst_ptrp_a_i_x_dim1=" << hst_ptrp_a_i_x_dim1 << " ";
   str << "-Dhst_ptrK__ij_x_dim1=" << hst_ptrK__ij_x_dim1 << " ";
-  str << "-Dscales2_x=" << scales2_x << " ";
+  str << "-Dhst_ptrp_a_i_x_dim1=" << hst_ptrp_a_i_x_dim1 << " ";
   str << "-Dhst_ptrq_a_i_x_dim1=" << hst_ptrq_a_i_x_dim2 << " ";
+  str << "-Dscales2_x=" << scales2_x << " ";
+  str << "-Dscaleweight2_x=" << scaleweight2_x << " ";
   KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;

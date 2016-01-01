@@ -106,12 +106,9 @@ def __optimize(rw, ast, name, par_dim=None):
     bps = struct.BoilerPlateChangedByTransformation()
     if DoOptimizations:
         __main_transpose(ks, bps, tempast3, par_dim=ks.ParDim)
-        # an.Transpose()
-
-        # an.DefineArguments()
         __main_placeinreg(ks, bps, tempast3, par_dim=ks.ParDim)
         __main_placeinlocal(ks, bps, tempast3, par_dim=ks.ParDim)
-        # an.PlaceInLocalMemory()
+
         __main_definearg(ks, bps, tempast3, par_dim=ks.ParDim)
     if SetNoReadBack:
         bps.set_no_read_back()
@@ -195,8 +192,6 @@ def __main_definearg(ks, bps, tempast3, par_dim=None):
         dargs.ParDim = par_dim
     dargs.set_datastructures(tempast3)
     dargs.define_arguments()
-
-    bps.define_compound = dargs.define_compound
 
 
 def __main_placeinreg(ks, bps, tempast3, par_dim=None):

@@ -100,11 +100,11 @@ void AllocateBuffers()
   
   // Defines for the kernel
   std::stringstream str;
-  str << "-Ddim=" << dim << " ";
-  str << "-Dhst_ptrtest_patterns_dim1=" << hst_ptrtest_patterns_dim2 << " ";
   str << "-DNTRAIN=" << NTRAIN << " ";
-  str << "-Dhst_ptrtrain_patterns_dim1=" << hst_ptrtrain_patterns_dim1 << " ";
+  str << "-Ddim=" << dim << " ";
   str << "-Dhst_ptrdist_matrix_dim1=" << hst_ptrdist_matrix_dim1 << " ";
+  str << "-Dhst_ptrtest_patterns_dim1=" << hst_ptrtest_patterns_dim2 << " ";
+  str << "-Dhst_ptrtrain_patterns_dim1=" << hst_ptrtrain_patterns_dim1 << " ";
   KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;

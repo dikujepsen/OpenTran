@@ -93,10 +93,10 @@ void AllocateBuffers()
   
   // Defines for the kernel
   std::stringstream str;
-  str << "-Dhst_ptrB_dim1=" << hst_ptrB_dim1 << " ";
-  str << "-DwA=" << wA << " ";
   str << "-Dhst_ptrA_dim1=" << hst_ptrA_dim1 << " ";
+  str << "-Dhst_ptrB_dim1=" << hst_ptrB_dim1 << " ";
   str << "-Dhst_ptrC_dim1=" << hst_ptrC_dim1 << " ";
+  str << "-DwA=" << wA << " ";
   KernelDefines = str.str();
   
   cl_int oclErrNum = CL_SUCCESS;
