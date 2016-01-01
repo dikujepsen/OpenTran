@@ -63,17 +63,21 @@ class PlaceInLocal(object):
 
         args = dict()
         loopindex = set()
-        for k, v in self.SubscriptNoId.items():
-            for i, n in enumerate(v):
-                if set(n) & set(self.GridIndices) and \
-                                set(n) & set(self.Loops.keys()):
+        print "SubscriptNoId", self.SubscriptNoId
+        for k, sub_list in self.SubscriptNoId.items():
+            for i, sub in enumerate(sub_list):
+                if set(sub).intersection(set(self.GridIndices)) and \
+                                set(sub).intersection(set(self.Loops.keys())):
                     if self.ParDim == 2:
-                        args[k] = [i]
-                        loopindex = loopindex.union(set(n) & set(self.Loops.keys()))
+                        args[k] = i
+                        loopindex = loopindex.union(set(sub) & set(self.Loops.keys()))
 
         loopindex = list(loopindex)
+        print args
         if args:
             self.PlaceInLocalArgs.append(args)
+
+        # print self.PlaceInLocalArgs
 
         for m in loopindex:
             cond = lan.BinOp(lan.BinOp(lan.BinOp(lan.Id(self.UpperLimit[m]), '-',
@@ -85,40 +89,41 @@ class PlaceInLocal(object):
         initstats = []
         init_comp = lan.GroupCompound(initstats)
         ks.Kernel.statements.insert(0, init_comp)
-
+        print "arr_dict", arr_dict
         if loop_dict is None:
             loop_dict = dict()
             # So we create it
             for n in arr_dict:
-                for i in arr_dict[n]:
-                    loop_dict[(n, i)] = []
+                i = arr_dict[n]
+                loop_dict[(n, i)] = []
 
             for n in arr_dict:
-                for i in arr_dict[n]:
-                    subscript = self.SubscriptNoId[n][i]
-                    acc = []
-                    for m in subscript:
-                        try:
-                            _ = int(m)
-                        except ValueError:
-                            if m not in self.GridIndices:
-                                acc.append(m)
-                    loop_dict[(n, i)] = acc
+                i = arr_dict[n]
+                subscript = self.SubscriptNoId[n][i]
+                acc = []
+                for m in subscript:
+                    try:
+                        _ = int(m)
+                    except ValueError:
+                        if m not in self.GridIndices:
+                            acc.append(m)
+                loop_dict[(n, i)] = acc
 
         # Check that all ArrayRefs are blocked using only one loop
         # otherwise we do not know what to do
         for n in arr_dict:
-            for i in arr_dict[n]:
-                if len(loop_dict[(n, i)]) > 1:
-                    print "Array %r is being blocked by %r. Returning..." \
-                          % (n, loop_dict[(n, i)])
-                    return
+            i = arr_dict[n]
+
+            if len(loop_dict[(n, i)]) > 1:
+                print "Array %r is being blocked by %r. Returning..." \
+                      % (n, loop_dict[(n, i)])
+                return
 
         # Find which loops must be extended
         loopext = set()
         for n in arr_dict:
-            for i in arr_dict[n]:
-                loopext.add(loop_dict[(n, i)][0])
+            i = arr_dict[n]
+            loopext.add(loop_dict[(n, i)][0])
 
         outerstats = []
         # do the extending
@@ -162,48 +167,48 @@ class PlaceInLocal(object):
         loadings = []
         for n in arr_dict:
             loc_name = n + '_local'
-            for i in arr_dict[n]:
-                glob_subs = copy.deepcopy(ks.LoopArrays[n][i])
-                # Change loop idx to local idx
-                loopname = loop_dict[(n, i)][0]
-                loc_subs = copy.deepcopy(glob_subs).subscript
-                loc_subs_2 = copy.deepcopy(glob_subs).subscript
-                my_new_glob_sub = copy.deepcopy(glob_subs).subscript
-                my_new_glob_sub_2 = copy.deepcopy(ks.LoopArrays[n][i])
-                for k, m in enumerate(loc_subs):
-                    if isinstance(m, lan.Id) and \
-                                    m.name not in self.GridIndices:
-                        tid = str(self.ReverseIdx[k])
-                        tidstr = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
+            i = arr_dict[n]
+            glob_subs = copy.deepcopy(ks.LoopArrays[n][i])
+            # Change loop idx to local idx
+            loopname = loop_dict[(n, i)][0]
+            loc_subs = copy.deepcopy(glob_subs).subscript
+            loc_subs_2 = copy.deepcopy(glob_subs).subscript
+            my_new_glob_sub = copy.deepcopy(glob_subs).subscript
+            my_new_glob_sub_2 = copy.deepcopy(ks.LoopArrays[n][i])
+            for k, m in enumerate(loc_subs):
+                if isinstance(m, lan.Id) and \
+                                m.name not in self.GridIndices:
+                    tid = str(self.ReverseIdx[k])
+                    tidstr = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
 
-                        loc_subs_2[k] = tidstr
+                    loc_subs_2[k] = tidstr
 
-                        my_new_glob_sub[k] = lan.BinOp(lan.Id(loopname), '+', tidstr)
-                        my_new_glob_sub_2 = lan.ArrayRef(lan.Id(n), my_new_glob_sub)
+                    my_new_glob_sub[k] = lan.BinOp(lan.Id(loopname), '+', tidstr)
+                    my_new_glob_sub_2 = lan.ArrayRef(lan.Id(n), my_new_glob_sub)
 
-                for k, m in enumerate(loc_subs_2):
-                    if isinstance(m, lan.Id) and \
-                                    m.name in self.GridIndices:
-                        tid = str(self.ReverseIdx[k])
-                        loc_subs_2[k] = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
+            for k, m in enumerate(loc_subs_2):
+                if isinstance(m, lan.Id) and \
+                                m.name in self.GridIndices:
+                    tid = str(self.ReverseIdx[k])
+                    loc_subs_2[k] = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
 
-                loc_ref = lan.ArrayRef(lan.Id(loc_name), loc_subs_2)
+            loc_ref = lan.ArrayRef(lan.Id(loc_name), loc_subs_2)
 
-                loadings.append(lan.Assignment(loc_ref, my_new_glob_sub_2))
+            loadings.append(lan.Assignment(loc_ref, my_new_glob_sub_2))
 
-                inner_loc = ks.LoopArrays[n][i]
+            inner_loc = ks.LoopArrays[n][i]
 
-                inner_loc.name.name = loc_name
-                exchange_id2 = exchange.ExchangeId({loopname: loopname * 2})
-                exchange_id2.visit(inner_loc)
+            inner_loc.name.name = loc_name
+            exchange_id2 = exchange.ExchangeId({loopname: loopname * 2})
+            exchange_id2.visit(inner_loc)
 
-                for k, m in enumerate(inner_loc.subscript):
-                    if isinstance(m, lan.Id) and \
-                                    m.name in self.GridIndices:
-                        tid = str(self.ReverseIdx[k])
-                        inner_loc.subscript[k] = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
+            for k, m in enumerate(inner_loc.subscript):
+                if isinstance(m, lan.Id) and \
+                                m.name in self.GridIndices:
+                    tid = str(self.ReverseIdx[k])
+                    inner_loc.subscript[k] = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
 
-                        # exchange_id.visit(inner_loc)
+                    # exchange_id.visit(inner_loc)
             ks.ArrayIdToDimName[loc_name] = self.Local['size']
             ks.num_array_dims[loc_name] = ks.num_array_dims[n]
         # Must also create the barrier
