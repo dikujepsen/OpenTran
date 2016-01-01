@@ -8,10 +8,6 @@ class KernelChangedByTransformation(object):
     def __init__(self):
         self.Loops = dict()  # place_in_local
 
-        # Stencil
-        self.Kernel = None
-
-
 class KernelStruct(KernelChangedByTransformation):
     def __init__(self):
         super(KernelStruct, self).__init__()
@@ -54,7 +50,6 @@ class KernelStruct(KernelChangedByTransformation):
         # Stencil
         self.LoopArrays = fla.loop_arrays  #
         self.LoopArraysParent = fla.loop_arrays_parent
-        self.Kernel = fpl.Kernel
 
 
 class BoilerPlateChangedByTransformation(object):

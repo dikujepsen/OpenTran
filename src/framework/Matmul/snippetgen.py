@@ -94,7 +94,7 @@ class SnippetGen(object):
                 exchange_array_id.visit(m)
 
     def _create_kernel(self):
-        my_kernel = copy.deepcopy(self.KernelStruct.Kernel)
+        my_kernel = copy.deepcopy(cd.get_kernel(self.ast, self.par_dim))
         num_array_dims = ca.get_num_array_dims(self.ast)
         array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
         rewrite_array_ref = exchange.RewriteArrayRef(num_array_dims,
