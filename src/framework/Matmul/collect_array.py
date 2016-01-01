@@ -1,6 +1,7 @@
 import lan
 import copy
 import collect_loop as cl
+import collect_gen as cg
 
 
 class GlobalArrayIds(lan.NodeVisitor):
@@ -30,7 +31,6 @@ class TransposableArrayIds(lan.NodeVisitor):
         self.trans_a_hst_ids = set()
         self.trans_a_base_ids = set()
 
-
     def collect(self, ast):
         self.visit(ast)
 
@@ -54,11 +54,27 @@ def get_transposable_array_ids(ast):
     transposable_array_ids.collect(ast)
     return transposable_array_ids.trans_ids
 
+
 def get_transposable_base_ids(ast):
     transposable_array_ids = TransposableArrayIds()
     transposable_array_ids.collect(ast)
     return transposable_array_ids.base_ids
 
+
+def get_array_dim_swap(ast):
+    transposable_array_ids = TransposableArrayIds()
+    transposable_array_ids.collect(ast)
+    gen_array_dim_names = cg.GenArrayDimNames()
+    gen_array_dim_names.collect(ast)
+    array_id_to_dim_name = gen_array_dim_names.ArrayIdToDimName
+    array_dim_swap = dict()
+    base_ids = get_transposable_base_ids(ast)
+
+    for arr_name in base_ids:
+        dim_name = array_id_to_dim_name[arr_name]
+        array_dim_swap[dim_name[0]] = dim_name[1]
+
+    return array_dim_swap
 
 
 class IndicesInArrayRef(lan.NodeVisitor):

@@ -1,6 +1,6 @@
 import lan
 import collect_transformation_info as cti
-
+import collect_array as ca
 
 class DefineArguments(object):
     def __init__(self):
@@ -10,9 +10,10 @@ class DefineArguments(object):
 
         self.kernel_args = dict()
         self.define_compound = None
+        self.ast = None
 
     def set_datastructures(self, ast):
-
+        self.ast = ast
         self.define_compound = lan.GroupCompound([lan.Comment('// Defines for the kernel')])
 
         fpl = cti.FindPerfectForLoop()
@@ -26,7 +27,7 @@ class DefineArguments(object):
         self.type = fai.type
         self.kernel_args = fai.kernel_args
 
-    def define_arguments(self, name_swap):
+    def define_arguments(self):
         """ Find all kernel arguments that can be defined
             at compilation time. Then defines them.
             :param name_swap - Dict of possible name swaps
@@ -37,9 +38,9 @@ class DefineArguments(object):
             if len(self.type[n]) < 2:
                 defines.append(n)
 
-        self.__setdefine(defines, name_swap)
+        self.__setdefine(defines)
 
-    def __setdefine(self, var_list, name_swap):
+    def __setdefine(self, var_list):
         # TODO: Check that the vars in varlist are actually an argument
 
         accname = 'str'
@@ -48,9 +49,10 @@ class DefineArguments(object):
         stats.append(sstream)
 
         # add the defines to the string stream
+        array_dim_swap = ca.get_array_dim_swap(self.ast)
         for var in var_list:
             try:
-                hstvar = name_swap[var]
+                hstvar = array_dim_swap[var]
             except KeyError:
                 hstvar = var
             add = lan.Id(accname + ' << ' + '\"' + '-D' + var + '=\"' + ' << ' + hstvar + ' << \" \";')

@@ -197,7 +197,7 @@ def __main_definearg(ks, bps, tempast3, par_dim=None):
         dargs.ParDim = par_dim
     dargs.set_datastructures(tempast3)
 
-    dargs.define_arguments(bps.NameSwap)
+    dargs.define_arguments()
 
     bps.define_compound = dargs.define_compound
 

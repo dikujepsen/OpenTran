@@ -106,6 +106,7 @@ class Transpose(object):
         # Swap the hst ptr
         self.NameSwap[hst_name] = hst_trans_name
         # Swap the dimension argument
+
         dim_name = self.ArrayIdToDimName[arr_name]
         self.NameSwap[dim_name[0]] = dim_name[1]
 
