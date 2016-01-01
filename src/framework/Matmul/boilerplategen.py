@@ -24,7 +24,6 @@ def print_dict_sorted(mydict):
 class Boilerplate(object):
     def __init__(self):
         self.ks = None
-        self.bps = None
         self.kgen_strt = None
 
         self.bps_static = None
@@ -42,13 +41,17 @@ class Boilerplate(object):
         self.NameSwap = dict()
         self.kernel_args = dict()
         self.ArrayIdToDimName = dict()
+        self.NoReadBack = None
 
-    def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt, ast):
+    def set_no_read_back(self):
+        self.NoReadBack = True
+
+    def set_struct(self, kernelstruct, kgen_strt, ast, no_read_back):
         self.ks = kernelstruct
-        self.bps = boilerplatestruct
         self.kgen_strt = kgen_strt
         self.ast = ast
         self.par_dim = self.ks.ParDim
+        self.NoReadBack = no_read_back
 
         fl = cti.FindLocal()
         fl.ParDim = self.ks.ParDim
@@ -329,7 +332,7 @@ class Boilerplate(object):
         err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
         exec_body.append(err_check)
 
-        if not self.bps.NoReadBack:
+        if not self.NoReadBack:
             for n in self.bps_static.WriteOnly:
                 lval = lan.Id(err_name)
                 hst_nname = my_host_id[n]

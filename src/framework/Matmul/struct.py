@@ -8,6 +8,7 @@ class KernelChangedByTransformation(object):
     def __init__(self):
         self.Loops = dict()  # place_in_local
 
+
 class KernelStruct(KernelChangedByTransformation):
     def __init__(self):
         super(KernelStruct, self).__init__()
@@ -50,16 +51,6 @@ class KernelStruct(KernelChangedByTransformation):
         # Stencil
         self.LoopArrays = fla.loop_arrays  #
         self.LoopArraysParent = fla.loop_arrays_parent
-
-
-class BoilerPlateChangedByTransformation(object):
-    def __init__(self):
-        # Eneste der skal med til boilerplate
-        # Ting som er aendret af en transformation
-        self.NoReadBack = None
-
-    def set_no_read_back(self):
-        self.NoReadBack = True
 
 
 class BoilerPlateStruct(object):
