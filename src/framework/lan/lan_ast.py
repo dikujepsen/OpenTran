@@ -456,9 +456,22 @@ class KernelArgDefine(Node):
         self.name = name
 
     def __repr__(self):
-        return "Transpose(%r %r %r %r)" % self.name
+        return "KernelArgDefine(%r)" % self.name
 
     def children(self):
         nodelist = [("name", self.name)]
+        return tuple(nodelist)
+
+
+class Stencil(Node):
+    def __init__(self, name, local_name):
+        self.name = name
+        self.local_name = local_name
+
+    def __repr__(self):
+        return "Stencil(%r %r)" % (self.name, self.local_name)
+
+    def children(self):
+        nodelist = [("name", self.name), ("local_name", self.local_name)]
         return tuple(nodelist)
 

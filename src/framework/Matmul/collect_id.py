@@ -119,3 +119,18 @@ def get_kernel_arg_defines(ast):
     kernel_arg_define = FindKernelArgDefine()
     kernel_arg_define.visit(ast)
     return kernel_arg_define.kernal_arg_ids
+
+
+class FindLocalSwap(lan.NodeVisitor):
+    def __init__(self):
+        self.local_swap = dict()
+
+    def visit_Stencil(self, node):
+        name = node.name.name
+        local_name = node.local_name.name
+        self.local_swap[name] = local_name
+
+def get_local_swap(ast):
+    local_swap = FindLocalSwap()
+    local_swap.visit(ast)
+    return local_swap.local_swap

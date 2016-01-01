@@ -28,12 +28,16 @@ class Stencil(object):
         self.Add = dict()
 
         self.num_array_dims = dict()
-        self.LocalSwap = dict()
         self.ArrayIdToDimName = dict()
         self.Kernel = None
         self.LoopArrays = dict() # Not changed
 
+
+        # new
+        self.ast = None
+
     def set_datastructures(self, ast, dev='CPU'):
+        self.ast = ast
         perfect_for_loop = cti.FindPerfectForLoop()
         perfect_for_loop.collect(ast)
 
@@ -123,11 +127,9 @@ class Stencil(object):
             local_array_type_id = lan.ArrayTypeId(['__local'] + [self.type[arr_name][0]], lan.Id(local_name),
                                                   array_init)
             self.num_array_dims[local_name] = self.num_array_dims[arr_name]
-            self.LocalSwap[arr_name] = local_name
+            self.ast.ext.append(lan.Stencil(lan.Id(arr_name), lan.Id(local_name)))
             self.ArrayIdToDimName[local_name] = [self.Local['size'][0], self.Local['size'][0]]
             stats.append(local_array_type_id)
-
-        print "LOCAL ", self.LocalSwap
 
         init_comp = lan.GroupCompound(stats)
         stats2 = []
@@ -148,7 +150,8 @@ class Stencil(object):
             lval = lan.TypeId(['unsigned'], lan.Id('l' + self.GridIndices[i]))
             stats.append(lan.Assignment(lval, rval))
 
-        exchange_indices = exchange.ExchangeIndices(self.IndexToLocalVar, self.LocalSwap.values())
+        local_swap = ci.get_local_swap(self.ast)
+        exchange_indices = exchange.ExchangeIndices(self.IndexToLocalVar, local_swap.values())
 
         # Creating the loading of values into the local array.
         for arr_name in arr_names:
@@ -158,7 +161,7 @@ class Stencil(object):
                 aref = self.LoopArrays[arr_name][k]
                 subscript = aref.subscript
                 lsub = copy.deepcopy(subscript)
-                lval = lan.ArrayRef(lan.Id(self.LocalSwap[arr_name]), lsub)
+                lval = lan.ArrayRef(lan.Id(local_swap[arr_name]), lsub)
                 rsub = copy.deepcopy(subscript)
                 rval = lan.ArrayRef(array_id, rsub, extra={'localMemory': True})
                 load = lan.Assignment(lval, rval)

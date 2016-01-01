@@ -5,7 +5,7 @@ import exchange
 import collect_device as cd
 import collect_gen as cg
 import collect_boilerplate_info as cbi
-
+import collect_id as ci
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -85,7 +85,8 @@ class SnippetGen(object):
         return arglist
 
     def _swap_local_array_id(self):
-        exchange_array_id = exchange.ExchangeArrayId(self.KernelStruct.LocalSwap)
+        local_swap = ci.get_local_swap(self.ast)
+        exchange_array_id = exchange.ExchangeArrayId(local_swap)
 
         for n in self.LoopArrays.values():
             for m in n:

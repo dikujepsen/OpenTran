@@ -11,7 +11,6 @@ class KernelChangedByTransformation(object):
 
         # Stencil
         self.Kernel = None
-        self.LocalSwap = dict()
         self.num_array_dims = dict()
         self.ArrayIdToDimName = dict()
 
