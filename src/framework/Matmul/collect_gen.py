@@ -44,6 +44,12 @@ def gen_transposable_host_ids(ast):
     return host_array_data.TransposableHstId
 
 
+def get_kernel_args(ast, par_dim):
+    gen_kernel_args = GenKernelArgs()
+    gen_kernel_args.collect(ast, par_dim=par_dim)
+    return gen_kernel_args.kernel_args
+
+
 class GenArrayDimNames(object):
     def __init__(self):
         self.num_array_dims = dict()
@@ -97,22 +103,23 @@ class GenKernelArgs(object):
         gen_removed_ids.collect(ast, par_dim)
         removed_ids = gen_removed_ids.removed_ids
 
-        arg_ids = non_array_ids.union(array_ids) - removed_ids
+        kernel_arg_defines = ci.get_kernel_arg_defines(ast)
+
+        arg_ids = non_array_ids.union(array_ids) - removed_ids - kernel_arg_defines
 
         gen_array_dimnames = GenArrayDimNames()
         gen_array_dimnames.collect(ast)
         num_array_dims = gen_array_dimnames.num_array_dims
         arrayid_to_dimname = gen_array_dimnames.ArrayIdToDimName
 
-        # print arg_ids
         for n in arg_ids:
-            tmplist = [n]
+            tmplist = {n}
             try:
                 if num_array_dims[n] == 2:
-                    tmplist.append(arrayid_to_dimname[n][0])
+                    tmplist.add(arrayid_to_dimname[n][0])
             except KeyError:
                 pass
-            for m in tmplist:
+            for m in tmplist - kernel_arg_defines:
                 self.kernel_args[m] = types[m]
 
 

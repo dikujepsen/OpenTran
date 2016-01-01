@@ -32,7 +32,7 @@ std::string KNearestBase()
 {
   std::stringstream str;
   str << "__kernel void KNearestFor(" << endl;
-  str << "	__global float * dist_matrix, __global float * train_patterns, __global float * test_patterns" << endl;
+  str << "	__global float * dist_matrix, __global float * test_patterns, __global float * train_patterns" << endl;
   str << "	) {" << endl;
   str << "  for (unsigned j = 0; j < NTRAIN; j++) {" << endl;
   str << "      float d = 0.0;" << endl;
@@ -52,7 +52,7 @@ std::string KNearestPlaceInReg()
 {
   std::stringstream str;
   str << "__kernel void KNearestFor(" << endl;
-  str << "	__global float * dist_matrix, __global float * train_patterns, __global float * test_patterns" << endl;
+  str << "	__global float * dist_matrix, __global float * test_patterns, __global float * train_patterns" << endl;
   str << "	) {" << endl;
   str << "  float test_patterns_reg[dim];" << endl;
   str << "  for (unsigned k = 0; k < dim; k++) {" << endl;
@@ -132,13 +132,13 @@ void SetArgumentsKNearestFor()
   int counter = 0;
   oclErrNum |= clSetKernelArg(
 	KNearestForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrdist_matrix);
-  oclErrNum |= clSetKernelArg(
-	KNearestForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrtrain_patterns);
   oclErrNum |= clSetKernelArg(
 	KNearestForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrtest_patterns);
+  oclErrNum |= clSetKernelArg(
+	KNearestForKernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptrdist_matrix);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }

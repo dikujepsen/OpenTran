@@ -55,9 +55,9 @@ std::string LaplaceBase()
   str << "#pragma OPENCL EXTENSION cl_khr_fp64: enable" << endl;
   str << "#include \"LaplaceIncludes.hpp\"" << endl;
   str << "__kernel void LaplaceFor(" << endl;
-  str << "	__global double * level_int, __global double * lambda, __global double * level, " << endl;
-  str << "	__global double * lcl_q, __global double * index, __global double * result, " << endl;
-  str << "	__global double * lcl_q_inv, __global double * alpha) {" << endl;
+  str << "	__global double * alpha, __global double * index, __global double * lambda, " << endl;
+  str << "	__global double * lcl_q, __global double * lcl_q_inv, __global double * level, " << endl;
+  str << "	__global double * level_int, __global double * result) {" << endl;
   str << "  for (unsigned j = 0; j < storagesize; j++) {" << endl;
   str << "      double gradient_temp[dim];" << endl;
   str << "      double dot_temp[dim];" << endl;
@@ -98,9 +98,9 @@ std::string LaplacePlaceInReg()
   str << "#pragma OPENCL EXTENSION cl_khr_fp64: enable" << endl;
   str << "#include \"LaplaceIncludes.hpp\"" << endl;
   str << "__kernel void LaplaceFor(" << endl;
-  str << "	__global double * level_int, __global double * lambda, __global double * level, " << endl;
-  str << "	__global double * lcl_q, __global double * index, __global double * result, " << endl;
-  str << "	__global double * lcl_q_inv, __global double * alpha) {" << endl;
+  str << "	__global double * alpha, __global double * index, __global double * lambda, " << endl;
+  str << "	__global double * lcl_q, __global double * lcl_q_inv, __global double * level, " << endl;
+  str << "	__global double * level_int, __global double * result) {" << endl;
   str << "  double index_reg[dim];" << endl;
   str << "  double level_int_reg[dim];" << endl;
   str << "  double level_reg[dim];" << endl;
@@ -185,9 +185,9 @@ void AllocateBuffers()
   // Defines for the kernel
   std::stringstream str;
   str << "-Ddim=" << dim << " ";
+  str << "-Dstoragesize=" << storagesize << " ";
   str << "-Dhst_ptrlevel_dim1=" << hst_ptrlevel_dim2 << " ";
   str << "-Dhst_ptrindex_dim1=" << hst_ptrindex_dim2 << " ";
-  str << "-Dstoragesize=" << storagesize << " ";
   str << "-Dhst_ptrlevel_int_dim1=" << hst_ptrlevel_int_dim2 << " ";
   KernelDefines = str.str();
   
@@ -241,19 +241,16 @@ void SetArgumentsLaplaceFor()
   int counter = 0;
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrlevel_int);
+	(void *) &dev_ptrindex);
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrlambda);
+	(void *) &dev_ptrlevel_int);
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrlevel);
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrlcl_q);
-  oclErrNum |= clSetKernelArg(
-	LaplaceForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrindex);
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrresult);
@@ -263,6 +260,9 @@ void SetArgumentsLaplaceFor()
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptralpha);
+  oclErrNum |= clSetKernelArg(
+	LaplaceForKernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptrlambda);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }

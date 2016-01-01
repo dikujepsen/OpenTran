@@ -10,7 +10,6 @@ class KernelChangedByTransformation(object):
         self.PlaceInLocalArgs = list()
         self.PlaceInLocalCond = None
 
-        self.KernelArgs = dict()
         self.Loops = dict()  # place_in_local
         self.Add = dict()  # place_in_local
 
@@ -32,6 +31,9 @@ class KernelStruct(KernelChangedByTransformation):
         self.Subscript = dict()
         self.LoopArrays = dict()
         self.LoopArraysParent = dict()
+
+        # new
+        self.kernel_args = dict()
 
     def set_datastructure(self, rw, ast):
         fpl = cti.FindGridIndices()
@@ -66,6 +68,11 @@ class KernelStruct(KernelChangedByTransformation):
         self.LoopArraysParent = fla.loop_arrays_parent
         self.Kernel = fpl.Kernel
         self.num_array_dims = fai.num_array_dims  #
+
+        # new
+        self.kernel_args = cg.get_kernel_args(ast, fpl.par_dim)
+
+
 
 
 class BoilerPlateChangedByTransformation(object):

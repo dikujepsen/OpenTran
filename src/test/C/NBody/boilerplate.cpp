@@ -28,7 +28,7 @@ std::string NBodyBase()
 {
   std::stringstream str;
   str << "__kernel void NBodyFor(" << endl;
-  str << "	__global float * Mas, __global float * Pos, __global float * Forces" << endl;
+  str << "	__global float * Forces, __global float * Mas, __global float * Pos" << endl;
   str << "	) {" << endl;
   str << "  float f_x = 0;" << endl;
   str << "  float f_y = 0;" << endl;
@@ -59,7 +59,7 @@ std::string NBodyPlaceInReg()
 {
   std::stringstream str;
   str << "__kernel void NBodyFor(" << endl;
-  str << "	__global float * Mas, __global float * Pos, __global float * Forces" << endl;
+  str << "	__global float * Forces, __global float * Mas, __global float * Pos" << endl;
   str << "	) {" << endl;
   str << "  float Mas0_reg = Mas[get_global_id(0)];" << endl;
   str << "  float Pos0_reg = Pos[(0 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;

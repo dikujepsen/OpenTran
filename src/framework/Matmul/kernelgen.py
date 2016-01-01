@@ -5,6 +5,15 @@ import copy
 import place_in_reg as pireg
 import place_in_local as piloc
 
+def print_dict_sorted(mydict):
+    keys = sorted(mydict)
+
+    entries = ""
+    for key in keys:
+        value = mydict[key]
+        entries += "'" + key + "': " + value.__repr__() + ","
+
+    return "{" + entries[:-1] + "}"
 
 class KernelGenStruct(object):
     def __int__(self):

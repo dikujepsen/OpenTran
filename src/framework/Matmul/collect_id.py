@@ -83,7 +83,6 @@ class GlobalTypeIds(lan.NodeVisitor):
 
         self.types[name] = node.type
 
-
     def visit_ArrayTypeId(self, node):
         name = node.name.name
         self.ids.add(name)
@@ -106,3 +105,17 @@ def get_types(ast):
     mytype_ids.visit(ast)
     return mytype_ids.types
 
+
+class FindKernelArgDefine(lan.NodeVisitor):
+    def __init__(self):
+        self.kernal_arg_ids = set()
+
+    def visit_KernelArgDefine(self, node):
+        name = node.name.name
+        self.kernal_arg_ids.add(name)
+
+
+def get_kernel_arg_defines(ast):
+    kernel_arg_define = FindKernelArgDefine()
+    kernel_arg_define.visit(ast)
+    return kernel_arg_define.kernal_arg_ids

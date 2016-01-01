@@ -1,6 +1,8 @@
 import lan
 import collect_transformation_info as cti
 import collect_array as ca
+import collect_gen as cg
+
 
 class DefineArguments(object):
     def __init__(self):
@@ -25,7 +27,8 @@ class DefineArguments(object):
         fai.collect(ast)
 
         self.type = fai.type
-        self.kernel_args = fai.kernel_args
+        self.kernel_args = cg.get_kernel_args(ast, fpl.par_dim)
+
 
     def define_arguments(self):
         """ Find all kernel arguments that can be defined
@@ -37,6 +40,7 @@ class DefineArguments(object):
         for n in self.kernel_args:
             if len(self.type[n]) < 2:
                 defines.append(n)
+                self.ast.ext.append(lan.KernelArgDefine(lan.Id(n)))
 
         self.__setdefine(defines)
 
@@ -61,7 +65,3 @@ class DefineArguments(object):
         # Set the string to the global variable
         lval = lan.Id('KernelDefines')
         stats.append(lan.Assignment(lval, lan.Id(accname + '.str()')))
-
-        # Need to remove the corresponding kernel arguments
-        for var in var_list:
-            self.kernel_args.pop(var)

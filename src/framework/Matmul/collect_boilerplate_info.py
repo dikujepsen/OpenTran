@@ -34,6 +34,7 @@ class FindKernelName(cti.FindArrayIdsKernel):
         find_device_args.visit(ast)
 
         self.DevArgList = find_device_args.arglist
+
         find_function = cd.FindFunction()
 
         find_function.visit(ast)

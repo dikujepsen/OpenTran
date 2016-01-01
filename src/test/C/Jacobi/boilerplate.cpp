@@ -30,7 +30,7 @@ std::string JacobiBase()
 {
   std::stringstream str;
   str << "__kernel void JacobiFor(" << endl;
-  str << "	__global float * B, __global float * X2, __global float * X1" << endl;
+  str << "	__global float * B, __global float * X1, __global float * X2" << endl;
   str << "	) {" << endl;
   str << "  __local float X1_local[6 * 6];" << endl;
   str << "  unsigned li = get_local_id(1) + 1;" << endl;
@@ -94,13 +94,13 @@ void SetArgumentsJacobiFor()
   int counter = 0;
   oclErrNum |= clSetKernelArg(
 	JacobiForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrB);
-  oclErrNum |= clSetKernelArg(
-	JacobiForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrX2);
   oclErrNum |= clSetKernelArg(
 	JacobiForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrX1);
+  oclErrNum |= clSetKernelArg(
+	JacobiForKernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptrB);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }

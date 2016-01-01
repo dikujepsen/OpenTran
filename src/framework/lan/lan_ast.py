@@ -449,3 +449,16 @@ class Transpose(Node):
         return tuple(nodelist)
 
     attr_names = ('type',)
+
+
+class KernelArgDefine(Node):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return "Transpose(%r %r %r %r)" % self.name
+
+    def children(self):
+        nodelist = [("name", self.name)]
+        return tuple(nodelist)
+

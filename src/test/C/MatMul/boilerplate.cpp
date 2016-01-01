@@ -31,7 +31,7 @@ std::string MatMulBase()
 {
   std::stringstream str;
   str << "__kernel void MatMulFor(" << endl;
-  str << "	__global float * A, __global float * C, __global float * B" << endl;
+  str << "	__global float * A, __global float * B, __global float * C" << endl;
   str << "	) {" << endl;
   str << "  float sum = 0;" << endl;
   str << "  for (unsigned k = 0; k < wA; k++) {" << endl;
@@ -48,7 +48,7 @@ std::string MatMulPlaceInLocal()
 {
   std::stringstream str;
   str << "__kernel void MatMulFor(" << endl;
-  str << "	__global float * A, __global float * C, __global float * B" << endl;
+  str << "	__global float * A, __global float * B, __global float * C" << endl;
   str << "	) {" << endl;
   str << "  __local float A_local[4 * 4];" << endl;
   str << "  __local float B_local[4 * 4];" << endl;

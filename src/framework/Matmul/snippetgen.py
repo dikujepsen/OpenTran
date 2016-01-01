@@ -27,6 +27,9 @@ class SnippetGen(object):
 
         self.LoopArrays = dict()
 
+        # new
+        self.kernel_args = dict()
+
     def set_datastructure(self,
                           kernel_struct,
                           ast):
@@ -36,6 +39,18 @@ class SnippetGen(object):
         fai = cbi.FindLoopArrays()
         fai.collect(ast)
         self.LoopArrays = fai.loop_arrays
+        self.kernel_args = cg.get_kernel_args(ast, kernel_struct.ParDim)
+
+
+        # print self.kernel_args
+        # print find_kernel_args.arglist
+
+        # self.kernel_args = kernel_struct.KernelArgs
+
+        # print ast
+
+        # print print_dict_sorted(self.kernel_args)
+        # print print_dict_sorted(kernel_struct.KernelArgs)
 
     def in_source_kernel(self, ast, cond, filename, kernelstringname):
         self.rewrite_to_device_c_release(ast)
@@ -49,6 +64,7 @@ class SnippetGen(object):
 
     def rewrite_to_device_c_release(self, ast):
         arglist = self._create_arg_list()
+        # print arglist
 
         self._swap_local_array_id()
 
@@ -68,8 +84,9 @@ class SnippetGen(object):
 
     def _create_arg_list(self):
         arglist = list()
-        for n in self.KernelStruct.KernelArgs:
-            kernel_type = copy.deepcopy(self.KernelStruct.KernelArgs[n])
+
+        for n in sorted(self.kernel_args):
+            kernel_type = copy.deepcopy(self.kernel_args[n])
             if kernel_type[0] == 'size_t':
                 kernel_type[0] = 'unsigned'
             if len(kernel_type) == 2:

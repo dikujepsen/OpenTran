@@ -40,6 +40,7 @@ class Boilerplate(object):
         self.ast = None
         self.par_dim = None
         self.NameSwap = dict()
+        self.kernel_args = dict()
 
     def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt, ast):
         self.ks = kernelstruct
@@ -72,6 +73,9 @@ class Boilerplate(object):
         self.transposable_host_id = cg.gen_transposable_host_ids(ast)
         self.Type = ci.get_types(ast)
         self.NameSwap = ca.get_host_array_name_swap(ast)
+
+        # new
+        self.kernel_args = cg.get_kernel_args(ast, self.ks.ParDim)
 
     def generate_code(self):
 
@@ -243,7 +247,7 @@ class Boilerplate(object):
             dict_type_host_ptrs.pop(n, None)
 
         # clSetKernelArg for Arrays
-        for n in self.ks.KernelArgs:
+        for n in self.kernel_args:
             lval = lan.Id(err_name)
             op = '|='
             arg_type = self.Type[n]

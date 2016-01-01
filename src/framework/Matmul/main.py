@@ -108,11 +108,11 @@ def __optimize(rw, ast, name, par_dim=None):
         __main_transpose(ks, bps, tempast3, par_dim=ks.ParDim)
         # an.Transpose()
 
-        __main_definearg(ks, bps, tempast3, par_dim=ks.ParDim)
         # an.DefineArguments()
         __main_placeinreg(ks, bps, tempast3, par_dim=ks.ParDim)
         __main_placeinlocal(ks, bps, tempast3, par_dim=ks.ParDim)
         # an.PlaceInLocalMemory()
+        __main_definearg(ks, bps, tempast3, par_dim=ks.ParDim)
     if SetNoReadBack:
         bps.set_no_read_back()
 
@@ -144,11 +144,11 @@ def jacobi():
 
     if DoOptimizations:
         __main_transpose(ks, bps, tempast3)
-        __main_definearg(ks, bps, tempast3)
         __main_placeinreg(ks, bps, tempast3)
         # tf.localMemory(['X1'], west=1, north=1, east=1, south=1, middle=0)
         __main_stencil(ks, bps, tempast3)
         __main_placeinlocal(ks, bps, tempast3)
+        __main_definearg(ks, bps, tempast3)
     if SetNoReadBack:
         bps.set_no_read_back()
 
@@ -194,12 +194,9 @@ def __main_definearg(ks, bps, tempast3, par_dim=None):
     if par_dim is not None:
         dargs.ParDim = par_dim
     dargs.set_datastructures(tempast3)
-
     dargs.define_arguments()
 
     bps.define_compound = dargs.define_compound
-
-    ks.KernelArgs = dargs.kernel_args
 
 
 def __main_placeinreg(ks, bps, tempast3, par_dim=None):
