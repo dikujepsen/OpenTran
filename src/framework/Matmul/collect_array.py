@@ -30,15 +30,22 @@ class TransposableArrayIds(lan.NodeVisitor):
     def __init__(self):
         self.trans_a_hst_ids = set()
         self.trans_a_base_ids = set()
+        self.a_name_swap = dict()
+        self._host_ids = dict()
 
     def collect(self, ast):
+        # self._host_ids = cg.gen_host_ids(ast)
         self.visit(ast)
+
 
     def visit_Transpose(self, node):
         name = node.name.name
         base_name = node.base_name.name
+        hst_name = node.hst_name.name
         self.trans_a_hst_ids.add(name)
         self.trans_a_base_ids.add(base_name)
+
+        self.a_name_swap[hst_name] = name
 
     @property
     def trans_ids(self):
@@ -47,6 +54,10 @@ class TransposableArrayIds(lan.NodeVisitor):
     @property
     def base_ids(self):
         return self.trans_a_base_ids
+
+    @property
+    def array_name_swap(self):
+        return self.a_name_swap
 
 
 def get_transposable_array_ids(ast):
@@ -59,6 +70,12 @@ def get_transposable_base_ids(ast):
     transposable_array_ids = TransposableArrayIds()
     transposable_array_ids.collect(ast)
     return transposable_array_ids.base_ids
+
+
+def get_host_array_name_swap(ast):
+    transposable_array_ids = TransposableArrayIds()
+    transposable_array_ids.collect(ast)
+    return transposable_array_ids.a_name_swap
 
 
 def get_array_dim_swap(ast):

@@ -16,9 +16,7 @@ class Transpose(object):
         self.WriteOnly = list()
 
         self.Type = dict()
-        self.NameSwap = dict()
         self.HstId = dict()
-        self.GlobalVars = dict()
         self.ast = None
 
     def set_datastructures(self, ast, par_dim):
@@ -69,7 +67,7 @@ class Transpose(object):
         for n in transpose_arrays:
             hst_name = self.HstId[n]
             hst_trans_name = hst_name + '_trans'
-            self.ast.ext.append(lan.Transpose(self.Type[n], lan.Id(hst_trans_name), lan.Id(n)))
+            self.ast.ext.append(lan.Transpose(self.Type[n], lan.Id(hst_trans_name), lan.Id(n), lan.Id(hst_name)))
             self.__transpose(n)
 
     def find_transposable_arrays(self):
@@ -99,16 +97,6 @@ class Transpose(object):
             print "Array ", arr_name, "of dimension ", \
                 self.num_array_dims[arr_name], "cannot be transposed"
             return
-
-        hst_name = self.HstId[arr_name]
-        hst_trans_name = hst_name + '_trans'
-
-        # Swap the hst ptr
-        self.NameSwap[hst_name] = hst_trans_name
-        # Swap the dimension argument
-
-        dim_name = self.ArrayIdToDimName[arr_name]
-        self.NameSwap[dim_name[0]] = dim_name[1]
 
         for sub in self.Subscript[arr_name]:
             (sub[0], sub[1]) = \

@@ -39,6 +39,7 @@ class Boilerplate(object):
         self.Type = dict()
         self.ast = None
         self.par_dim = None
+        self.NameSwap = dict()
 
     def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt, ast):
         self.ks = kernelstruct
@@ -70,6 +71,7 @@ class Boilerplate(object):
         self.HstId = cg.gen_host_ids(ast)
         self.transposable_host_id = cg.gen_transposable_host_ids(ast)
         self.Type = ci.get_types(ast)
+        self.NameSwap = ca.get_host_array_name_swap(ast)
 
     def generate_code(self):
 
@@ -197,7 +199,7 @@ class Boilerplate(object):
             lval = lan.Id(dict_n_to_dev_ptr[n])
             arrayn = dict_n_to_hst_ptr[n]
             try:
-                arrayn = self.bps.NameSwap[arrayn]
+                arrayn = self.NameSwap[arrayn]
             except KeyError:
                 pass
             if n in self.bps_static.WriteOnly:
@@ -253,7 +255,7 @@ class Boilerplate(object):
                 rval = lan.FuncDecl(lan.Id('clSetKernelArg'), arglist, lan.Compound([]))
             else:
                 try:
-                    n = self.bps.NameSwap[n]
+                    n = self.NameSwap[n]
                 except KeyError:
                     pass
                 cl_type = arg_type[0]
@@ -326,7 +328,7 @@ class Boilerplate(object):
                 lval = lan.Id(err_name)
                 hst_nname = my_host_id[n]
                 try:
-                    hst_nname = self.bps.NameSwap[hst_nname]
+                    hst_nname = self.NameSwap[hst_nname]
                 except KeyError:
                     pass
                 arglist = lan.ArgList([lan.Id('command_queue'),

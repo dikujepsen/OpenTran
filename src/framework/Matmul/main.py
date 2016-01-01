@@ -188,8 +188,6 @@ def __main_transpose(ks, bps, tempast3, par_dim=None):
     tps.set_datastructures(tempast3, par_dim)
     tps.transpose(tempast3)
 
-    bps.NameSwap = tps.NameSwap
-
 
 def __main_definearg(ks, bps, tempast3, par_dim=None):
     dargs = darg.DefineArguments()

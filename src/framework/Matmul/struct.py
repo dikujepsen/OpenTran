@@ -72,7 +72,6 @@ class BoilerPlateChangedByTransformation(object):
     def __init__(self):
         # Eneste der skal med til boilerplate
         # Ting som er aendret af en transformation
-        self.NameSwap = dict()
         self.define_compound = None
         self.NoReadBack = None
 

@@ -435,16 +435,17 @@ class IfThenElse(Node):
 
 
 class Transpose(Node):
-    def __init__(self, type, name, base_name):
+    def __init__(self, type, name, base_name, hst_name):
         self.type = type
         self.name = name
         self.base_name = base_name
+        self.hst_name = hst_name
 
     def __repr__(self):
-        return "Transpose(%r %r %r)" % (self.type, self.name, self.base_name)
+        return "Transpose(%r %r %r %r)" % (self.type, self.name, self.base_name, self.hst_name)
 
     def children(self):
-        nodelist = [("name", self.name), ("basename", self.base_name)]
+        nodelist = [("name", self.name), ("base_name", self.base_name), ("hst_name", self.hst_name)]
         return tuple(nodelist)
 
     attr_names = ('type',)
