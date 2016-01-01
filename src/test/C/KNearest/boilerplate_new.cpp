@@ -132,13 +132,13 @@ void SetArgumentsKNearestFor()
   int counter = 0;
   oclErrNum |= clSetKernelArg(
 	KNearestForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrtrain_patterns);
+	(void *) &dev_ptrdist_matrix);
   oclErrNum |= clSetKernelArg(
 	KNearestForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrtest_patterns);
   oclErrNum |= clSetKernelArg(
 	KNearestForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrdist_matrix);
+	(void *) &dev_ptrtrain_patterns);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }

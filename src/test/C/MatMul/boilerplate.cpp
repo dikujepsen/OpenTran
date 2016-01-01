@@ -127,10 +127,10 @@ void SetArgumentsMatMulFor()
 	(void *) &dev_ptrA);
   oclErrNum |= clSetKernelArg(
 	MatMulForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrC);
+	(void *) &dev_ptrB);
   oclErrNum |= clSetKernelArg(
 	MatMulForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrB);
+	(void *) &dev_ptrC);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }

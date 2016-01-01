@@ -241,28 +241,28 @@ void SetArgumentsLaplaceFor()
   int counter = 0;
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptralpha);
+  oclErrNum |= clSetKernelArg(
+	LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrindex);
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrlevel_int);
-  oclErrNum |= clSetKernelArg(
-	LaplaceForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrlevel);
+	(void *) &dev_ptrlambda);
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrlcl_q);
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrresult);
-  oclErrNum |= clSetKernelArg(
-	LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrlcl_q_inv);
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptralpha);
+	(void *) &dev_ptrlevel);
   oclErrNum |= clSetKernelArg(
 	LaplaceForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrlambda);
+	(void *) &dev_ptrlevel_int);
+  oclErrNum |= clSetKernelArg(
+	LaplaceForKernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptrresult);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }

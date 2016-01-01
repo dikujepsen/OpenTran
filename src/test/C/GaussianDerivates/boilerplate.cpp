@@ -308,28 +308,28 @@ void SetArgumentsGaussianDerivatesFor()
 	(void *) &dev_ptrD1Ks__ijb_dimsI);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrq_a_i_x);
-  oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrD3Ks__ijbgd_x);
+	(void *) &dev_ptrD1Ks__ijb_x);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrD2Ks__ijbg_dimsI);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptrD2Ks__ijbg_x);
+  oclErrNum |= clSetKernelArg(
+	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrD3Ks__ijbgd_dimsI);
+  oclErrNum |= clSetKernelArg(
+	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptrD3Ks__ijbgd_x);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrK__ij_x);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrD1Ks__ijb_x);
-  oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrp_a_i_x);
   oclErrNum |= clSetKernelArg(
 	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrD2Ks__ijbg_x);
+	(void *) &dev_ptrq_a_i_x);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }

@@ -247,7 +247,7 @@ class Boilerplate(object):
             dict_type_host_ptrs.pop(n, None)
 
         # clSetKernelArg for Arrays
-        for n in self.kernel_args:
+        for n in sorted(self.kernel_args):
             lval = lan.Id(err_name)
             op = '|='
             arg_type = self.Type[n]

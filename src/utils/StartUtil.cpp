@@ -82,25 +82,25 @@ void oclCheckErr(cl_int err, const char * function) {
 
 
 void StartUpGPU() {
-  // std::cout << "StartUpGPU" << std::endl;
+  std::cout << "StartUpGPU" << std::endl;
   cl_int err = CL_SUCCESS;
   err |= clGetPlatformIDs(0, NULL, &num_platforms);
   oclCheckErr(err, "clGetPlatformIDs1");
   
   platform_ids = new cl_platform_id[num_platforms];
   // get available platforms
-  //std::cout << "$numPLAT: " << num_platforms << std::endl;
+  std::cout << "$numPLAT: " << num_platforms << std::endl;
   err |= clGetPlatformIDs(num_platforms, platform_ids, NULL);
   oclCheckErr(err, "clGetPlatformIDs2");
 
   //#ifdef OCLCPU
-#if 1
+#if 0
   cl_device_type devtype = CL_DEVICE_TYPE_CPU;
   unsigned plat_id = 1;
 #else
   cl_device_type devtype = CL_DEVICE_TYPE_GPU;
   unsigned plat_id = 0;
-#endif  
+#endif
   platform_id = platform_ids[plat_id];
   err |= clGetDeviceIDs(platform_id, devtype, 0, NULL, &num_devices);
   oclCheckErr(err, "clGetDeviceIDs1");

@@ -77,7 +77,14 @@ int main(int argc, char** argv)
 	 A_mat, wA, hA,
 	 C_mat, wC, hC,
 	 B_mat, wB, hB,
-	 wB, wA, hA);  
+	 wB, wA, hA);
+
+	// float * arg_A, size_t arg_hst_ptrA_dim1, size_t arg_hst_ptrA_dim2, 
+	// float * arg_C, size_t arg_hst_ptrC_dim1, size_t arg_hst_ptrC_dim2, 
+	// float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
+	//   unsigned arg_wB, unsigned arg_wA, unsigned arg_hA
+
+	  
 #endif
 
 #if PRINT

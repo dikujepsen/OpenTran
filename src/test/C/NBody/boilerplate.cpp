@@ -143,13 +143,13 @@ void SetArgumentsNBodyFor()
   int counter = 0;
   oclErrNum |= clSetKernelArg(
 	NBodyForKernel, counter++, sizeof(cl_mem), 
+	(void *) &dev_ptrForces);
+  oclErrNum |= clSetKernelArg(
+	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrMas);
   oclErrNum |= clSetKernelArg(
 	NBodyForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrPos);
-  oclErrNum |= clSetKernelArg(
-	NBodyForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrForces);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }

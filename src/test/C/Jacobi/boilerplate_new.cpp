@@ -94,13 +94,13 @@ void SetArgumentsJacobiFor()
   int counter = 0;
   oclErrNum |= clSetKernelArg(
 	JacobiForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrX2);
+	(void *) &dev_ptrB);
   oclErrNum |= clSetKernelArg(
 	JacobiForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrX1);
   oclErrNum |= clSetKernelArg(
 	JacobiForKernel, counter++, sizeof(cl_mem), 
-	(void *) &dev_ptrB);
+	(void *) &dev_ptrX2);
   oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }
