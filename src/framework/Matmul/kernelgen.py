@@ -4,6 +4,7 @@ import snippetgen
 import copy
 import place_in_reg as pireg
 import place_in_local as piloc
+import collect_device as cd
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -14,6 +15,7 @@ def print_dict_sorted(mydict):
         entries += "'" + key + "': " + value.__repr__() + ","
 
     return "{" + entries[:-1] + "}"
+
 
 class KernelGenStruct(object):
     def __int__(self):
@@ -46,7 +48,6 @@ class KernelGen(object):
         if pir.perform_transformation:
             ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                                 kernelstringname=funcname)
-
 
         pil = piloc.PlaceInLocal()
         pil.set_datastructures(ast)

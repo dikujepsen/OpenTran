@@ -7,7 +7,8 @@ import collect_gen as cg
 import collect_boilerplate_info as cbi
 import collect_id as ci
 import collect_loop as cl
-
+import collect_array as ca
+import collect_device as cd
 
 class PlaceInLocal(object):
     def __init__(self):
@@ -104,7 +105,8 @@ class PlaceInLocal(object):
     def local_memory3(self, ks, arr_dict, loop_dict=None):
         initstats = []
         init_comp = lan.GroupCompound(initstats)
-        ks.Kernel.statements.insert(0, init_comp)
+        kernel = cd.get_kernel(self.ast, self.ParDim)
+        kernel.statements.insert(0, init_comp)
 
         if loop_dict is None:
             loop_dict = dict()
@@ -166,12 +168,13 @@ class PlaceInLocal(object):
             innerloop.init = ast_bb.ConstantAssignment(inneridx)
             ks.Loops[inneridx] = innerloop
 
+        num_array_dims = ca.get_num_array_dims(self.ast)
         for n in arr_dict:
             # Add array allocations
 
             local_array_name = n + '_local'
             arrayinit = lan.Constant(self.Local['size'][0])
-            if ks.num_array_dims[n] == 2 and ks.ParDim == 2:
+            if num_array_dims[n] == 2 and ks.ParDim == 2:
                 arrayinit = lan.BinOp(arrayinit, '*', lan.Constant(self.Local['size'][1]))
 
             local_array_id = lan.Id(local_array_name)
@@ -224,8 +227,9 @@ class PlaceInLocal(object):
                     inner_loc.subscript[k] = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
 
                     # exchange_id.visit(inner_loc)
-            ks.ArrayIdToDimName[loc_name] = self.Local['size']
-            ks.num_array_dims[loc_name] = ks.num_array_dims[n]
+
+            self.ast.ext.append(lan.Block(lan.Id(loc_name), self.Local['size']))
+
         # Must also create the barrier
         arglist = lan.ArgList([lan.Id('CLK_LOCAL_MEM_FENCE')])
         func = ast_bb.EmptyFuncDecl('barrier', type=[])

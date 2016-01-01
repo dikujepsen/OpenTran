@@ -67,6 +67,17 @@ class GenArrayDimNames(object):
 
             self.ArrayIdToDimName[array_name] = tmp
 
+        stencil_array_id_to_dim_name = ca.LocalMemArrayIdToDimName()
+        stencil_array_id_to_dim_name.visit(ast)
+        for key, value in stencil_array_id_to_dim_name.ArrayIdToDimName.iteritems():
+            self.ArrayIdToDimName[key] = value
+
+
+def get_array_id_to_dim_name(ast):
+    gen_array_dim_names = GenArrayDimNames()
+    gen_array_dim_names.collect(ast)
+    return gen_array_dim_names.ArrayIdToDimName
+
 
 class GenIdxToDim(object):
     def __init__(self):

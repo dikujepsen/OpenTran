@@ -22,6 +22,12 @@ class FindKernel(lan.NodeVisitor):
                         self.kernel = self.kernel.statements[0].compound
 
 
+def get_kernel(ast, par_dim):
+    fker = FindKernel(par_dim)
+    fker.visit(ast)
+    return fker.kernel
+
+
 class FindDeviceArgs(lan.NodeVisitor):
     """ Finds the argument that we transfer from the C code
     to the device.

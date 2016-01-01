@@ -464,14 +464,32 @@ class KernelArgDefine(Node):
 
 
 class Stencil(Node):
-    def __init__(self, name, local_name):
+    def __init__(self, name, local_name, size):
         self.name = name
         self.local_name = local_name
+        self.size = size
 
     def __repr__(self):
-        return "Stencil(%r %r)" % (self.name, self.local_name)
+        return "Stencil(%r %r %r)" % (self.name, self.local_name, self.size)
 
     def children(self):
         nodelist = [("name", self.name), ("local_name", self.local_name)]
         return tuple(nodelist)
+
+    attr_names = ('size',)
+
+
+class Block(Node):
+    def __init__(self, name, size):
+        self.name = name
+        self.size = size
+
+    def __repr__(self):
+        return "Block(%r %r)" % (self.name, self.size)
+
+    def children(self):
+        nodelist = [("name", self.name)]
+        return tuple(nodelist)
+
+    attr_names = ('size',)
 

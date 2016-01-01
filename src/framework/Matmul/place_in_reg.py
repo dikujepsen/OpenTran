@@ -6,6 +6,7 @@ import exchange
 import collect_array as ca
 import collect_loop as cl
 import collect_id as ci
+import collect_device as cd
 
 
 class PlaceInReg(object):
@@ -22,6 +23,7 @@ class PlaceInReg(object):
 
         # New
         self.Type = dict()
+        self.Kernel = None
 
     def place_in_reg(self, ast, par_dim):
         """ Find all array references that can be cached in registers.
@@ -100,7 +102,7 @@ class PlaceInReg(object):
 
     def place_in_reg2(self, ks, arr_dict):
         self.ks = ks
-        kernel_stats = ks.Kernel.statements
+        kernel_stats = self.Kernel.statements
         self._insert_cache_in_reg(kernel_stats, arr_dict)
         self._replace_global_ref_with_reg_id(arr_dict)
 
@@ -150,7 +152,11 @@ class PlaceInReg(object):
         """
         self.ks = ks
         self.Type = ci.get_types(ast)
-        kernel_stats = ks.Kernel.statements
+        self.ast = ast
+
+        self.Kernel = cd.get_kernel(self.ast, par_dim)
+
+        kernel_stats = self.Kernel.statements
         self.place_in_reg(ast, par_dim)
 
         # print "NEXT" , (optimizable_arrays, hoist_loop_list)

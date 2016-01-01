@@ -10,7 +10,6 @@ class KernelChangedByTransformation(object):
 
         # Stencil
         self.Kernel = None
-        self.ArrayIdToDimName = dict()
 
 
 class KernelStruct(KernelChangedByTransformation):
@@ -53,11 +52,9 @@ class KernelStruct(KernelChangedByTransformation):
         self.Subscript = fs.Subscript
 
         # Stencil
-        self.ArrayIdToDimName = fai.ArrayIdToDimName  #
         self.LoopArrays = fla.loop_arrays  #
         self.LoopArraysParent = fla.loop_arrays_parent
         self.Kernel = fpl.Kernel
-        self.num_array_dims = fai.num_array_dims  #
 
 
 class BoilerPlateChangedByTransformation(object):

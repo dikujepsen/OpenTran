@@ -37,7 +37,6 @@ class TransposableArrayIds(lan.NodeVisitor):
         # self._host_ids = cg.gen_host_ids(ast)
         self.visit(ast)
 
-
     def visit_Transpose(self, node):
         name = node.name.name
         base_name = node.base_name.name
@@ -210,11 +209,11 @@ class NumArrayDim(lan.NodeVisitor):
         for n in node.subscript:
             self.visit(n)
 
+
 def get_num_array_dims(ast):
     num_array_dim = NumArrayDim(ast)
     num_array_dim.visit(ast)
     return num_array_dim.numSubscripts
-
 
 
 def get_array_ids(ast):
@@ -339,3 +338,16 @@ def get_write_only(ast):
             if 'write' in io_set:
                 write_only.append(n)
     return write_only
+
+
+class LocalMemArrayIdToDimName(lan.NodeVisitor):
+    def __init__(self):
+        self.ArrayIdToDimName = dict()
+
+    def visit_Stencil(self, node):
+        name = node.local_name.name
+        self.ArrayIdToDimName[name] = node.size
+
+    def visit_Block(self, node):
+        name = node.name.name
+        self.ArrayIdToDimName[name] = node.size

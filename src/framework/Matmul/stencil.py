@@ -120,10 +120,12 @@ class Stencil(object):
             local_array_type_id = lan.ArrayTypeId(['__local'] + [self.type[arr_name][0]], lan.Id(local_name),
                                                   array_init)
 
-            self.ast.ext.append(lan.Stencil(lan.Id(arr_name), lan.Id(local_name)))
+            self.ast.ext.append(lan.Stencil(lan.Id(arr_name), lan.Id(local_name),
+                                            [self.Local['size'][0], self.Local['size'][0]]))
             self.ArrayIdToDimName[local_name] = [self.Local['size'][0], self.Local['size'][0]]
             stats.append(local_array_type_id)
 
+        array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
         init_comp = lan.GroupCompound(stats)
         stats2 = []
         load_comp = lan.GroupCompound(stats2)
@@ -160,7 +162,9 @@ class Stencil(object):
                 load = lan.Assignment(lval, rval)
                 exchange_id = exchange.ExchangeId(self.IndexToLocalVar)
                 orisub = subscript
+
                 for m in orisub:
+
                     exchange_id.visit(m)
 
                 stats2.append(load)
@@ -175,5 +179,7 @@ class Stencil(object):
         exchange_indices.visit(init_comp)
         exchange_indices.visit(load_comp)
 
+        # print "load_comp", load_comp
+        # print "self.Kernel", self.Kernel
         self.Kernel.statements.insert(0, load_comp)
         self.Kernel.statements.insert(0, init_comp)

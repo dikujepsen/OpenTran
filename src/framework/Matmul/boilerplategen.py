@@ -41,6 +41,7 @@ class Boilerplate(object):
         self.par_dim = None
         self.NameSwap = dict()
         self.kernel_args = dict()
+        self.ArrayIdToDimName = dict()
 
     def set_struct(self, kernelstruct, boilerplatestruct, kgen_strt, ast):
         self.ks = kernelstruct
@@ -75,11 +76,12 @@ class Boilerplate(object):
         self.Type = ci.get_types(ast)
         self.NameSwap = ca.get_host_array_name_swap(ast)
         self.kernel_args = cg.get_kernel_args(ast, self.ks.ParDim)
+        self.ArrayIdToDimName = cg.get_array_id_to_dim_name(ast)
 
     def generate_code(self):
 
         my_host_id = self.HstId
-        dict_n_to_dim_names = self.ks.ArrayIdToDimName
+        dict_n_to_dim_names = self.ArrayIdToDimName
 
         non_array_ids = copy.deepcopy(self.bps_static.NonArrayIds)
 
@@ -135,7 +137,7 @@ class Boilerplate(object):
             list_mem_size.append(lan.TypeId(['size_t'], lan.Id(size_name)))
 
         for n in sorted(self.ArrayIds):
-            for dimName in self.ks.ArrayIdToDimName[n]:
+            for dimName in self.ArrayIdToDimName[n]:
                 list_dim_size.append(lan.TypeId(['size_t'], lan.Id(dimName)))
 
         file_ast.ext.append(lan.GroupCompound(list_mem_size))
@@ -169,7 +171,7 @@ class Boilerplate(object):
 
         list_set_mem_size = []
         for entry in sorted(self.ArrayIds):
-            n = self.ks.ArrayIdToDimName[entry]
+            n = self.ArrayIdToDimName[entry]
             lval = lan.Id(self.bps_static.Mem[entry])
             rval = lan.BinOp(lan.Id(n[0]), '*', lan.Id('sizeof(' + self.Type[entry][0] + ')'))
             if len(n) == 2:
@@ -379,7 +381,7 @@ class Boilerplate(object):
             rval = argn
             if_then_list.append(lan.Assignment(lval, rval))
             try:
-                for m in self.ks.ArrayIdToDimName[n]:
+                for m in self.ArrayIdToDimName[n]:
                     arg_type = ['size_t']
                     argm = lan.Id('arg_' + m)
                     lval = lan.Id(m)
