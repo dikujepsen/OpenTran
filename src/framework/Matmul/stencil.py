@@ -127,6 +127,8 @@ class Stencil(object):
             self.ArrayIdToDimName[local_name] = [self.Local['size'][0], self.Local['size'][0]]
             stats.append(local_array_type_id)
 
+        print "LOCAL ", self.LocalSwap
+
         init_comp = lan.GroupCompound(stats)
         stats2 = []
         load_comp = lan.GroupCompound(stats2)
