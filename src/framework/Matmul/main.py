@@ -105,11 +105,11 @@ def __optimize(rw, ast, name, par_dim=None):
     ks.set_datastructure(rw, tempast3)
     bps = struct.BoilerPlateChangedByTransformation()
     if DoOptimizations:
-        __main_transpose(ks, bps, tempast3, par_dim=ks.ParDim)
-        __main_placeinreg(ks, bps, tempast3, par_dim=ks.ParDim)
+        __main_transpose(tempast3, par_dim=ks.ParDim)
+        __main_placeinreg(tempast3, par_dim=ks.ParDim)
         __main_placeinlocal(ks, bps, tempast3, par_dim=ks.ParDim)
 
-        __main_definearg(ks, bps, tempast3, par_dim=ks.ParDim)
+        __main_definearg(tempast3, par_dim=ks.ParDim)
     if SetNoReadBack:
         bps.set_no_read_back()
 
@@ -140,12 +140,12 @@ def jacobi():
     bps = struct.BoilerPlateChangedByTransformation()
 
     if DoOptimizations:
-        __main_transpose(ks, bps, tempast3)
-        __main_placeinreg(ks, bps, tempast3)
+        __main_transpose(tempast3)
+        __main_placeinreg(tempast3)
         # tf.localMemory(['X1'], west=1, north=1, east=1, south=1, middle=0)
         __main_stencil(ks, bps, tempast3)
         __main_placeinlocal(ks, bps, tempast3)
-        __main_definearg(ks, bps, tempast3)
+        __main_definearg(tempast3)
     if SetNoReadBack:
         bps.set_no_read_back()
 
@@ -180,13 +180,13 @@ def gaussian():
     __optimize(rw, ast, name)
 
 
-def __main_transpose(ks, bps, tempast3, par_dim=None):
+def __main_transpose(tempast3, par_dim=None):
     tps = tp.Transpose()
     tps.set_datastructures(tempast3, par_dim)
     tps.transpose(tempast3)
 
 
-def __main_definearg(ks, bps, tempast3, par_dim=None):
+def __main_definearg(tempast3, par_dim=None):
     dargs = darg.DefineArguments()
     if par_dim is not None:
         dargs.ParDim = par_dim
@@ -194,7 +194,7 @@ def __main_definearg(ks, bps, tempast3, par_dim=None):
     dargs.define_arguments()
 
 
-def __main_placeinreg(ks, bps, tempast3, par_dim=None):
+def __main_placeinreg(tempast3, par_dim=None):
     pass
 
 
