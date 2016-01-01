@@ -158,8 +158,7 @@ class PlaceInLocal(object):
             # change increment of outer loop
             outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + self.Local['size'][0])
             inneridx = outeridx * 2
-            # For adding to this index in other subscripts
-            ks.Add[outeridx] = inneridx
+
 
             # new inner loop
             innerloop.cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(self.Local['size'][0]))

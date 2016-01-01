@@ -210,6 +210,12 @@ class NumArrayDim(lan.NodeVisitor):
         for n in node.subscript:
             self.visit(n)
 
+def get_num_array_dims(ast):
+    num_array_dim = NumArrayDim(ast)
+    num_array_dim.visit(ast)
+    return num_array_dim.numSubscripts
+
+
 
 def get_array_ids(ast):
     arrays_ids = GlobalArrayIds()

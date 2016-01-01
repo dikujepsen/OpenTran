@@ -6,6 +6,7 @@ import collect_device as cd
 import collect_gen as cg
 import collect_boilerplate_info as cbi
 import collect_id as ci
+import collect_array as ca
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -94,7 +95,8 @@ class SnippetGen(object):
 
     def _create_kernel(self):
         my_kernel = copy.deepcopy(self.KernelStruct.Kernel)
-        rewrite_array_ref = exchange.RewriteArrayRef(self.KernelStruct.num_array_dims,
+        num_array_dims = ca.get_num_array_dims(self.ast)
+        rewrite_array_ref = exchange.RewriteArrayRef(num_array_dims,
                                                      self.KernelStruct.ArrayIdToDimName)
         rewrite_array_ref.visit(my_kernel)
 

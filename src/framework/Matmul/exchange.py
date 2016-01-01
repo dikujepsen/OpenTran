@@ -125,11 +125,10 @@ class RewriteArrayRef(lan.NodeVisitor):
     def visit_ArrayRef(self, node):
         n = node.name.name
         try:
-            if self.num_array_dims[n] == 2 and len(node.subscript) == 2:
+            if len(node.subscript) == 2:
 
                 leftbinop = lan.BinOp(node.subscript[0], '*', lan.Id(self.ArrayIdToDimName[n][0]))
                 # Id on first dimension
-
                 topbinop = lan.BinOp(leftbinop, '+', node.subscript[1])
                 node.subscript = [topbinop]
         except KeyError:

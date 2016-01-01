@@ -130,6 +130,7 @@ class FindLocalSwap(lan.NodeVisitor):
         local_name = node.local_name.name
         self.local_swap[name] = local_name
 
+
 def get_local_swap(ast):
     local_swap = FindLocalSwap()
     local_swap.visit(ast)

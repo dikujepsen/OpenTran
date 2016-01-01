@@ -30,8 +30,7 @@ class Stencil(object):
         self.num_array_dims = dict()
         self.ArrayIdToDimName = dict()
         self.Kernel = None
-        self.LoopArrays = dict() # Not changed
-
+        self.LoopArrays = dict()  # Not changed
 
         # new
         self.ast = None
@@ -114,19 +113,13 @@ class Stencil(object):
         stats = []
         for arr_name in arr_names:
             local_name = arr_name + '_local'
-            arrayinit = '['
-            for i, d in enumerate(local_dims):
-                arrayinit += str(d)
-                if i == 0 and len(local_dims) == 2:
-                    arrayinit += '*'
-            arrayinit += ']'
             array_init = lan.Constant(local_dims[0])
             if len(local_dims) == 2:
                 array_init = [lan.BinOp(lan.Constant(local_dims[0]), '*', lan.Constant(local_dims[1]))]
 
             local_array_type_id = lan.ArrayTypeId(['__local'] + [self.type[arr_name][0]], lan.Id(local_name),
                                                   array_init)
-            self.num_array_dims[local_name] = self.num_array_dims[arr_name]
+
             self.ast.ext.append(lan.Stencil(lan.Id(arr_name), lan.Id(local_name)))
             self.ArrayIdToDimName[local_name] = [self.Local['size'][0], self.Local['size'][0]]
             stats.append(local_array_type_id)

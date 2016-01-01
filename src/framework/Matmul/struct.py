@@ -7,11 +7,9 @@ import collect_id as ci
 class KernelChangedByTransformation(object):
     def __init__(self):
         self.Loops = dict()  # place_in_local
-        self.Add = dict()  # place_in_local
 
         # Stencil
         self.Kernel = None
-        self.num_array_dims = dict()
         self.ArrayIdToDimName = dict()
 
 
