@@ -130,14 +130,30 @@ class ArrayNameToRef(lan.NodeVisitor):
         self.LoopArrays = dict()
         self.LoopArraysParent = dict()
 
+    def collect(self, ast):
+        self.visit(ast)
+
     def visit_ArrayRef(self, node):
         name = node.name.name
-        if name in self.LoopArrays:
-            self.LoopArrays[name].append(node)
-            self.LoopArraysParent[name].append(lan.NodeVisitor.current_parent)
-        else:
-            self.LoopArrays[name] = [node]
-            self.LoopArraysParent[name] = [lan.NodeVisitor.current_parent]
+        if 'isReg' not in node.extra:
+            if name in self.LoopArrays:
+                self.LoopArrays[name].append(node)
+                self.LoopArraysParent[name].append(lan.NodeVisitor.current_parent)
+            else:
+                self.LoopArrays[name] = [node]
+                self.LoopArraysParent[name] = [lan.NodeVisitor.current_parent]
+
+
+def get_loop_arrays(ast):
+    arr_to_ref = ArrayNameToRef()
+    arr_to_ref.collect(ast)
+    return arr_to_ref.LoopArrays
+
+
+def get_loop_arrays_parent(ast):
+    arr_to_ref = ArrayNameToRef()
+    arr_to_ref.collect(ast)
+    return arr_to_ref.LoopArraysParent
 
 
 class ArraySubscripts(lan.NodeVisitor):

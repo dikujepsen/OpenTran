@@ -16,7 +16,6 @@ class PlaceInReg(object):
         self.PlaceInRegFinding = tuple()
         self.PlaceInRegCond = None
 
-        self.ks = None
         self.perform_transformation = False
 
         self.ast = None
@@ -100,8 +99,7 @@ class PlaceInReg(object):
         return set(sub_idx).intersection(set(grid_indices)) and \
                set(loop_idx).difference(set(sub_idx))
 
-    def place_in_reg2(self, ks, arr_dict):
-        self.ks = ks
+    def place_in_reg2(self, arr_dict):
         kernel_stats = self.Kernel.statements
         self._insert_cache_in_reg(kernel_stats, arr_dict)
         self._replace_global_ref_with_reg_id(arr_dict)
@@ -112,20 +110,25 @@ class PlaceInReg(object):
         for i, n in enumerate(arr_dict):
             for m in arr_dict[n]:
                 regid = self._create_reg_var_id(m, n)
+
                 types = self.Type[n][0]
                 reg = lan.TypeId([types], regid)
                 assign = self._create_reg_assignment(m, n, reg)
+
                 initstats.append(assign)
         kernel_stats.insert(0, lan.GroupCompound(initstats))
 
     def _replace_global_ref_with_reg_id(self, arr_dict):
         # Replace the global Arefs with the register vars
+        loop_arrays = ca.get_loop_arrays(self.ast)
+        loop_arrays_parent = ca.get_loop_arrays_parent(self.ast)
+
         for i, n in enumerate(arr_dict):
             for m in arr_dict[n]:
                 idx = m
                 reg_id = self._create_reg_var_id(m, n)
-                parent = self.ks.LoopArraysParent[n][idx]
-                aref_old = self.ks.LoopArrays[n][idx]
+                parent = loop_arrays_parent[n][idx]
+                aref_old = loop_arrays[n][idx]
                 exchange_array_id_with_id = exchange.ExchangeArrayIdWithId(aref_old, reg_id)
                 exchange_array_id_with_id.visit(parent)
 
@@ -136,21 +139,21 @@ class PlaceInReg(object):
     def _create_reg_assignment(self, m, n, reg):
 
         idx = m
-        glob_array_ref = copy.deepcopy(self.ks.LoopArrays[n][idx])
+        loop_arrays = ca.get_loop_arrays(self.ast)
+        glob_array_ref = copy.deepcopy(loop_arrays[n][idx])
+        reg_dict = {'isReg': []}
+        glob_array_ref.extra = reg_dict
         assign = lan.Assignment(reg, glob_array_ref)
         return assign
 
-    def place_in_reg3(self, ast, par_dim, ks):
+    def place_in_reg3(self, ast, par_dim):
         """ Check if the arrayref is inside a loop and use a static
             array for the allocation of the registers
-            :param ks:
-                kernelstruct
             :param ast:
                 tree
             :param par_dim:
                 number of parallel dimensions
         """
-        self.ks = ks
         self.Type = ci.get_types(ast)
         self.ast = ast
 
@@ -169,7 +172,7 @@ class PlaceInReg(object):
             return
 
         if not hoist_loop_list:
-            self.place_in_reg2(ks, optimizable_arrays)
+            self.place_in_reg2(optimizable_arrays)
             return
 
         hoist_loop = hoist_loop_list[0]
@@ -193,12 +196,13 @@ class PlaceInReg(object):
 
         kernel_stats.insert(0, lan.GroupCompound(initstats))
         # Replace the global Arefs with the register Arefs
+        loop_arrays = ca.get_loop_arrays(self.ast)
         for i, n in enumerate(optimizable_arrays):
             for m in optimizable_arrays[n]:
                 idx = m
                 regid = self._create_reg_array_var(n, hoist_loop)
                 aref_new = copy.deepcopy(regid)
-                aref_old = ks.LoopArrays[n][idx]
+                aref_old = loop_arrays[n][idx]
                 # Copying the internal data of the two arefs
                 aref_old.name.name = aref_new.name.name
                 aref_old.subscript = aref_new.subscript
