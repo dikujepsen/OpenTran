@@ -12,22 +12,15 @@ import collect_device as cd
 class PlaceInReg(object):
     def __init__(self, ast):
         self.ast = ast
-        self.par_dim = cl.get_par_dim(ast)
 
         self.PlaceInRegFinding = tuple()
         self.PlaceInRegCond = None
 
         self.perform_transformation = False
 
-        # New
-        self.Type = dict()
-        self.Kernel = None
-
     def place_in_reg(self):
         """ Find all array references that can be cached in registers.
             Then rewrite the code in this fashion.
-            :param ast:
-            :param par_dim:
         """
         optimizable_arrays = dict()
         hoist_loop_set = set()
@@ -97,19 +90,23 @@ class PlaceInReg(object):
                set(loop_idx).difference(set(sub_idx))
 
     def place_in_reg2(self, arr_dict):
-        kernel_stats = self.Kernel.statements
-        self._insert_cache_in_reg(kernel_stats, arr_dict)
+        self._insert_cache_in_reg(arr_dict)
         self._replace_global_ref_with_reg_id(arr_dict)
 
-    def _insert_cache_in_reg(self, kernel_stats, arr_dict):
+    def _insert_cache_in_reg(self, arr_dict):
         initstats = []
         # Create the loadings
+        types = ci.get_types(self.ast)
+
+        kernel = cd.get_kernel(self.ast)
+        kernel_stats = kernel.statements
+
         for i, n in enumerate(arr_dict):
             for m in arr_dict[n]:
                 regid = self._create_reg_var_id(m, n)
 
-                types = self.Type[n][0]
-                reg = lan.TypeId([types], regid)
+                reg_type = types[n][0]
+                reg = lan.TypeId([reg_type], regid)
                 assign = self._create_reg_assignment(m, n, reg)
 
                 initstats.append(assign)
@@ -146,16 +143,11 @@ class PlaceInReg(object):
     def place_in_reg3(self):
         """ Check if the arrayref is inside a loop and use a static
             array for the allocation of the registers
-            :param ast:
-                tree
-            :param par_dim:
-                number of parallel dimensions
         """
-        self.Type = ci.get_types(self.ast)
 
-        self.Kernel = cd.get_kernel(self.ast)
+        kernel = cd.get_kernel(self.ast)
 
-        kernel_stats = self.Kernel.statements
+        kernel_stats = kernel.statements
         self.place_in_reg()
 
         if self.PlaceInRegFinding is ():
@@ -218,9 +210,10 @@ class PlaceInReg(object):
 
     def _create_reg_array_alloc(self, optimizable_arrays, hoist_loop):
         initstats = []
+        types = ci.get_types(self.ast)
         (_, upper_limit) = cl.get_loop_limits(self.ast)
         # Add allocation of registers to the initiation stage
         for n in optimizable_arrays:
-            array_init = lan.ArrayTypeId([self.Type[n][0]], lan.Id(n + '_reg'), [lan.Id(upper_limit[hoist_loop])])
+            array_init = lan.ArrayTypeId([types[n][0]], lan.Id(n + '_reg'), [lan.Id(upper_limit[hoist_loop])])
             initstats.append(array_init)
         return initstats
