@@ -77,7 +77,7 @@ def gen_full_code(name, ks, tempast3):
     kgen.generate_kernels(tempast3, name, fileprefix)
 
     boilerplate = boilerplategen.Boilerplate()
-    boilerplate.set_struct(ks, kgen.kgen_strt, tempast3, SetNoReadBack)
+    boilerplate.set_struct(ks.ParDim, kgen.kgen_strt, tempast3, SetNoReadBack)
     boilerast = boilerplate.generate_code()
 
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')

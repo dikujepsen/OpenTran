@@ -23,7 +23,6 @@ def print_dict_sorted(mydict):
 
 class Boilerplate(object):
     def __init__(self):
-        self.ks = None
         self.kgen_strt = None
 
         self.bps_static = None
@@ -42,43 +41,43 @@ class Boilerplate(object):
         self.kernel_args = dict()
         self.ArrayIdToDimName = dict()
         self.NoReadBack = None
+        self.par_dim = None
 
     def set_no_read_back(self):
         self.NoReadBack = True
 
-    def set_struct(self, kernelstruct, kgen_strt, ast, no_read_back):
-        self.ks = kernelstruct
+    def set_struct(self, par_dim, kgen_strt, ast, no_read_back):
+        self.par_dim = par_dim
         self.kgen_strt = kgen_strt
         self.ast = ast
-        self.par_dim = self.ks.ParDim
         self.NoReadBack = no_read_back
 
         fl = cti.FindLocal()
-        fl.ParDim = self.ks.ParDim
+        fl.ParDim = self.par_dim
         fl.collect(ast)
         self.Local = fl.Local
 
         fpl = cti.FindGridIndices()
-        fpl.ParDim = self.ks.ParDim
+        fpl.ParDim = self.par_dim
         fpl.collect(ast)
         self.GridIndices = fpl.GridIndices
 
         fai = cti.FindReadWrite()
-        fai.ParDim = self.ks.ParDim
+        fai.ParDim = self.par_dim
         fai.collect(ast)
 
         self.UpperLimit = fai.upper_limit
         self.ArrayIds = fai.ArrayIds
 
         self.bps_static = struct.BoilerPlateStruct()
-        self.bps_static.set_datastructure(ast, self.ks.ParDim)
+        self.bps_static.set_datastructure(ast, self.par_dim)
 
         # new
         self.HstId = cg.gen_host_ids(ast)
         self.transposable_host_id = cg.gen_transposable_host_ids(ast)
         self.Type = ci.get_types(ast)
         self.NameSwap = ca.get_host_array_name_swap(ast)
-        self.kernel_args = cg.get_kernel_args(ast, self.ks.ParDim)
+        self.kernel_args = cg.get_kernel_args(ast, self.par_dim)
         self.ArrayIdToDimName = cg.get_array_id_to_dim_name(ast)
 
     def generate_code(self):
@@ -311,7 +310,7 @@ class Boilerplate(object):
         lval = lan.Id(err_name)
         arglist = lan.ArgList([lan.Id('command_queue'),
                                lan.Id(self.bps_static.KernelName),
-                               lan.Constant(self.ks.ParDim),
+                               lan.Constant(self.par_dim),
                                lan.Id(self.bps_static.Worksize['offset']),
                                lan.Id(self.bps_static.Worksize['global']),
                                lan.Id(self.bps_static.Worksize['local']),
