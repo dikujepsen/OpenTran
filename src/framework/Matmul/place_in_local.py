@@ -1,10 +1,8 @@
 import lan
 import copy
 import ast_buildingblock as ast_bb
-import collect_transformation_info as cti
 import exchange
 import collect_gen as cg
-import collect_boilerplate_info as cbi
 import collect_id as ci
 import collect_loop as cl
 import collect_array as ca

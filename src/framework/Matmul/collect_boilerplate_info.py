@@ -28,8 +28,8 @@ class FindKernelName(cti.FindArrayIdsKernel):
 
     def collect(self, ast):
         super(FindKernelName, self).collect(ast)
-        other_ids = self.ArrayIds.union(self.NonArrayIds)
-        find_device_args = cd.FindDeviceArgs(other_ids)
+
+        find_device_args = cd.FindDeviceArgs()
 
         find_device_args.visit(ast)
 

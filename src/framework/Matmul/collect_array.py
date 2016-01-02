@@ -349,6 +349,17 @@ def get_read_write(ast):
     return find_read_write.ReadWrite
 
 
+def get_read_only(ast):
+    read_write = get_read_write(ast)
+    read_only = list()
+    for n in read_write:
+        io_set = read_write[n]
+        if len(io_set) == 1:
+            if 'read' in io_set:
+                read_only.append(n)
+    return read_only
+
+
 def get_write_only(ast):
     read_write = get_read_write(ast)
     write_only = list()

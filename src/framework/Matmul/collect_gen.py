@@ -164,6 +164,13 @@ class GenRemovedIds(object):
         self.removed_ids = upper_limits - ids_still_in_kernel.ids
 
 
+def get_removed_ids(ast):
+    gen_removed_ids = GenRemovedIds()
+    gen_removed_ids.collect(ast)
+    return gen_removed_ids.removed_ids
+
+
+
 class GenLocalArrayIdx(object):
     def __init__(self):
         self.IndexToLocalVar = dict()

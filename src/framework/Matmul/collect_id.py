@@ -33,6 +33,12 @@ class GlobalNonArrayIds(lan.NodeVisitor):
         return self.gnai.ids
 
 
+def get_non_array_ids(ast):
+    non_array_ids = GlobalNonArrayIds()
+    non_array_ids.visit(ast)
+    return non_array_ids.ids
+
+
 class _NonArrayIdsInLoop(lan.NodeVisitor):
     def __init__(self):
         self.all_na_ids = set()

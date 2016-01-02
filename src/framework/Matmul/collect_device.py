@@ -1,6 +1,8 @@
 import lan
 import copy
 import collect_loop as cl
+import collect_array as ca
+import collect_id as ci
 
 
 class FindKernel(lan.NodeVisitor):
@@ -36,9 +38,15 @@ class FindDeviceArgs(lan.NodeVisitor):
     to the device.
     """
 
-    def __init__(self, arg_ids):
-        self.argIds = arg_ids
+    def __init__(self):
+        self.argIds = set()
         self.arglist = list()
+
+    def collect(self, ast):
+        arrays_ids = ca.get_array_ids(ast)
+        non_array_ids = ci.get_non_array_ids(ast)
+        self.argIds = arrays_ids.union(non_array_ids)
+        self.visit(ast)
 
     def visit_ArgList(self, node):
         for typeid_orig in node.arglist:
@@ -52,6 +60,14 @@ class FindDeviceArgs(lan.NodeVisitor):
                     self.arglist.append(typeid)
 
 
+def get_devices_arg_list(ast):
+    find_device_args = FindDeviceArgs()
+
+    find_device_args.collect(ast)
+
+    return find_device_args.arglist
+
+
 class FindFunction(lan.NodeVisitor):
     """ Finds the typeid of the kernel function """
 
@@ -63,6 +79,44 @@ class FindFunction(lan.NodeVisitor):
 
     def visit_TypeId(self, node):
         self.typeid = node
+
+
+def _get_kernel_base_name(ast):
+    find_function = FindFunction()
+    find_function.visit(ast)
+    dev_func_type_id = find_function.typeid
+    kernel_name = dev_func_type_id.name.name
+    return kernel_name
+
+
+def get_kernel_name(ast):
+    return _get_kernel_base_name(ast) + 'Kernel'
+
+
+def get_work_size(ast):
+    kernel_name = _get_kernel_base_name(ast)
+    work_size = dict()
+    work_size['local'] = kernel_name + '_local_worksize'
+    work_size['global'] = kernel_name + '_global_worksize'
+    work_size['offset'] = kernel_name + '_global_offset'
+    return work_size
+
+
+def get_dev_id(ast):
+    array_ids = ca.get_array_ids(ast)
+    dev_ids = dict()
+    for n in array_ids:
+        dev_ids[n] = 'dev_ptr' + n
+
+    return dev_ids
+
+
+def get_dev_func_id(ast):
+    find_function = FindFunction()
+    find_function.visit(ast)
+    dev_func_type_id = find_function.typeid
+    dev_func_id = dev_func_type_id.name.name
+    return dev_func_id
 
 
 class FindIncludes(lan.NodeVisitor):
