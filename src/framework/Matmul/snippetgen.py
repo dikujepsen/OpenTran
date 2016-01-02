@@ -7,6 +7,7 @@ import collect_gen as cg
 import collect_boilerplate_info as cbi
 import collect_id as ci
 import collect_array as ca
+import collect_loop as cl
 
 
 def print_dict_sorted(mydict):
@@ -32,10 +33,9 @@ class SnippetGen(object):
         self.kernel_args = dict()
 
     def set_datastructure(self,
-                          par_dim,
                           ast):
         self.ast = ast
-        self.par_dim = par_dim
+        self.par_dim = cl.get_par_dim(ast)
         fai = cbi.FindLoopArrays()
         fai.collect(ast)
         self.LoopArrays = fai.loop_arrays

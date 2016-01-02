@@ -75,7 +75,7 @@ class FindGridIndices(FindPerfectForLoop):
         gi_to_dim.collect(ast, self.par_dim)
         self.IdxToDim = gi_to_dim.IdxToDim
 
-        find_ref_to_loop_index = ca.FindRefToLoopIndex(self.par_dim)
+        find_ref_to_loop_index = ca.FindRefToLoopIndex()
         find_ref_to_loop_index.collect(ast)
         self.RefToLoop = find_ref_to_loop_index.RefToLoop
 
@@ -91,7 +91,7 @@ class FindLoops(FindPerfectForLoop):
     def collect(self, ast):
         super(FindLoops, self).collect(ast)
 
-        find_inner_loops = cl.FindInnerLoops(self.par_dim)
+        find_inner_loops = cl.FindInnerLoops()
         find_inner_loops.collect(ast)
         self.Loops = find_inner_loops.Loops
 

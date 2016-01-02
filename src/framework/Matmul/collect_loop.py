@@ -71,12 +71,13 @@ class FindInnerLoops(lan.NodeVisitor):
         the ForLoop AST node that is indexes.
     """
 
-    def __init__(self, par_dim=2):
+    def __init__(self):
         self.Loops = dict()
-        self.par_dim = par_dim
+        self.par_dim = None
         self.GridIndices = list()
 
     def collect(self, ast):
+        self.par_dim = get_par_dim(ast)
         col_li = LoopIndices(self.par_dim)
         col_li.visit(ast)
         self.GridIndices = col_li.grid_indices
@@ -90,14 +91,14 @@ class FindInnerLoops(lan.NodeVisitor):
         self.visit(node.compound)
 
 
-def get_inner_loops(ast, par_dim):
-    find_inner_loops = FindInnerLoops(par_dim)
+def get_inner_loops(ast):
+    find_inner_loops = FindInnerLoops()
     find_inner_loops.collect(ast)
     return find_inner_loops.Loops
 
 
-def get_inner_loops_indices(ast, par_dim):
-    loops = get_inner_loops(ast, par_dim)
+def get_inner_loops_indices(ast):
+    loops = get_inner_loops(ast)
     return loops.keys()
 
 
@@ -148,3 +149,18 @@ def get_par_dim(ast):
     else:
         return find_par_dim.par_dim
 
+
+def get_local(ast, dev='CPU'):
+    local = dict()
+    local['name'] = 'LSIZE'
+    local['size'] = ['64']
+    par_dim = get_par_dim(ast)
+    if par_dim == 1:
+        local['size'] = ['256']
+        if dev == 'CPU':
+            local['size'] = ['16']
+    else:
+        local['size'] = ['16', '16']
+        if dev == 'CPU':
+            local['size'] = ['4', '4']
+    return local

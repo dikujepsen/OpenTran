@@ -305,19 +305,16 @@ class _ArrayRefIndices(lan.NodeVisitor):
 
 class FindRefToLoopIndex(lan.NodeVisitor):
     """ Create a dict from array name to list of
-    	arrayref list of loop indices that the arrayrefs are inside.
+        arrayref list of loop indices that the arrayrefs are inside.
     """
 
-    def __init__(self, par_dim=2):
+    def __init__(self):
         self.stack = list()
         self.RefToLoop = dict()
         self.GridIndices = list()
-        self.par_dim = par_dim
 
     def collect(self, ast):
-        col_li = cl.LoopIndices(self.par_dim)
-        col_li.visit(ast)
-        self.GridIndices = col_li.grid_indices
+        self.GridIndices = cl.get_grid_indices(ast)
         self.visit(ast)
 
     def visit_ForLoop(self, node):
@@ -337,8 +334,8 @@ class FindRefToLoopIndex(lan.NodeVisitor):
             self.RefToLoop[name] = [copy.deepcopy(self.stack)]
 
 
-def get_ref_to_loop(ast, par_dim):
-    find_ref_to_loop_index = FindRefToLoopIndex(par_dim)
+def get_ref_to_loop(ast):
+    find_ref_to_loop_index = FindRefToLoopIndex()
     find_ref_to_loop_index.collect(ast)
     return find_ref_to_loop_index.RefToLoop
 

@@ -12,51 +12,10 @@ import collect_device as cd
 
 
 class PlaceInLocal(object):
-    def __init__(self):
-        self.SubscriptNoId = dict()
-        self.GridIndices = list()
-        self.ParDim = None  # int
-        self.UpperLimit = dict()
-        self.LowerLimit = dict()
-
+    def __init__(self, ast):
+        self.ast = ast
         self.PlaceInLocalArgs = list()
         self.PlaceInLocalCond = None
-        self.Local = dict()
-        self.Local['name'] = 'LSIZE'
-        self.Local['size'] = ['64']
-        self.ReverseIdx = dict()
-
-        self.LoopArrays = dict()
-        self.Type = dict()
-        self.ast = None
-
-    def set_datastructures(self, ast, dev='CPU'):
-        self.ast = ast
-        fpl = cti.FindGridIndices()
-        fpl.ParDim = self.ParDim
-        fpl.collect(ast)
-
-        fs = cti.FindSubscripts()
-        fs.collect(ast)
-
-        self.ParDim = fpl.par_dim
-        self.GridIndices = fpl.GridIndices
-        self.UpperLimit = fs.upper_limit
-        self.LowerLimit = fs.lower_limit
-        self.SubscriptNoId = fs.SubscriptNoId
-
-        fl = cti.FindLocal()
-        fl.ParDim = self.ParDim
-        fl.collect(ast, dev)
-        self.Local = fl.Local
-
-        gen_reverse_idx = cg.GenReverseIdx()
-        self.ReverseIdx = gen_reverse_idx.ReverseIdx
-
-        fai = cbi.FindLoopArrays()
-        fai.collect(ast)
-        self.LoopArrays = fai.loop_arrays
-        self.Type = ci.get_types(ast)
 
     def place_in_local(self):
         """ Find all array references that can be optimized
@@ -66,30 +25,27 @@ class PlaceInLocal(object):
 
         args = dict()
         loopindex = set()
-        inner_loop_indices = cl.get_inner_loops_indices(self.ast, self.ParDim)
+        inner_loop_indices = cl.get_inner_loops_indices(self.ast)
 
-        # print "SubscriptNoId", self.SubscriptNoId
-        # print "self.GridIndices", self.GridIndices
-        # print "inner_loop_indices", inner_loop_indices
+        subscript_no_id = ca.get_subscript_no_id(self.ast)
 
-        for k, sub_list in self.SubscriptNoId.items():
+        for k, sub_list in subscript_no_id.items():
             for i, sub in enumerate(sub_list):
                 if self.__can_be_put_in_local(sub, inner_loop_indices):
                     args[k] = i
                     loopindex = loopindex.union(set(sub).intersection(set(inner_loop_indices)))
 
         loopindex = list(loopindex)
-        # print loopindex
-        # print args
+
         if args:
             self.PlaceInLocalArgs.append(args)
 
-        # print self.PlaceInLocalArgs
-
+        (lower_limit, upper_limit) = cl.get_loop_limits(self.ast)
+        local = cl.get_local(self.ast)
         for m in loopindex:
-            cond = lan.BinOp(lan.BinOp(lan.BinOp(lan.Id(self.UpperLimit[m]), '-',
-                                                 lan.Id(self.LowerLimit[m])), '%',
-                                       lan.Constant(self.Local['size'][0])), '==', lan.Constant(0))
+            cond = lan.BinOp(lan.BinOp(lan.BinOp(lan.Id(upper_limit[m]), '-',
+                                                 lan.Id(lower_limit[m])), '%',
+                                       lan.Constant(local['size'][0])), '==', lan.Constant(0))
             self.PlaceInLocalCond = cond
 
     def __can_be_put_in_local(self, sub, inner_loop_indices):
@@ -99,9 +55,11 @@ class PlaceInLocal(object):
         :param inner_loop_indices:
         :return:
         """
-        return set(sub).intersection(set(self.GridIndices)) and \
+        grid_indices = cl.get_grid_indices(self.ast)
+        par_dim = cl.get_par_dim(self.ast)
+        return set(sub).intersection(set(grid_indices)) and \
                set(sub).intersection(set(inner_loop_indices)) \
-               and self.ParDim == 2
+               and par_dim == 2
 
     def local_memory3(self, arr_dict, loop_dict=None):
         initstats = []
@@ -109,6 +67,8 @@ class PlaceInLocal(object):
         kernel = cd.get_kernel(self.ast)
         kernel.statements.insert(0, init_comp)
 
+        subscript_no_id = ca.get_subscript_no_id(self.ast)
+        grid_indices = cl.get_grid_indices(self.ast)
         if loop_dict is None:
             loop_dict = dict()
             # So we create it
@@ -118,13 +78,13 @@ class PlaceInLocal(object):
 
             for n in arr_dict:
                 i = arr_dict[n]
-                subscript = self.SubscriptNoId[n][i]
+                subscript = subscript_no_id[n][i]
                 acc = []
                 for m in subscript:
                     try:
                         _ = int(m)
                     except ValueError:
-                        if m not in self.GridIndices:
+                        if m not in grid_indices:
                             acc.append(m)
                 loop_dict[(n, i)] = acc
 
@@ -144,8 +104,9 @@ class PlaceInLocal(object):
             i = arr_dict[n]
             loopext.add(loop_dict[(n, i)][0])
 
-        loops = cl.get_inner_loops(self.ast, self.ParDim)
-        # print loops
+        loops = cl.get_inner_loops(self.ast)
+
+        local = cl.get_local(self.ast)
 
         outerstats = []
         # do the extending
@@ -162,30 +123,32 @@ class PlaceInLocal(object):
             load_comp = lan.GroupCompound(loadstats)
             outerstats.insert(0, load_comp)
             # change increment of outer loop
-            outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + self.Local['size'][0])
+            outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + local['size'][0])
             inneridx = outeridx * 2
 
             # new inner loop
-            innerloop.cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(self.Local['size'][0]))
+            innerloop.cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(local['size'][0]))
             innerloop.inc = lan.Increment(lan.Id(inneridx), '++')
             innerloop.init = ast_bb.ConstantAssignment(inneridx)
 
         num_array_dims = ca.get_num_array_dims(self.ast)
+        types = ci.get_types(self.ast)
         for n in arr_dict:
             # Add array allocations
 
             local_array_name = n + '_local'
-            arrayinit = lan.Constant(self.Local['size'][0])
-            if num_array_dims[n] == 2 and self.ParDim == 2:
-                arrayinit = lan.BinOp(arrayinit, '*', lan.Constant(self.Local['size'][1]))
+            arrayinit = lan.Constant(local['size'][0])
+            if num_array_dims[n] == 2:
+                arrayinit = lan.BinOp(arrayinit, '*', lan.Constant(local['size'][1]))
 
             local_array_id = lan.Id(local_array_name)
 
-            local_type_id = lan.ArrayTypeId(['__local', self.Type[n][0]], local_array_id, [arrayinit])
+            local_type_id = lan.ArrayTypeId(['__local', types[n][0]], local_array_id, [arrayinit])
             initstats.append(local_type_id)
 
         loadings = []
         loop_arrays = ca.get_loop_arrays(self.ast)
+        reverse_idx = cg.get_reverse_idx(self.ast)
         for n in arr_dict:
             loc_name = n + '_local'
             i = arr_dict[n]
@@ -198,8 +161,8 @@ class PlaceInLocal(object):
             my_new_glob_sub_2 = copy.deepcopy(loop_arrays[n][i])
             for k, m in enumerate(loc_subs):
                 if isinstance(m, lan.Id) and \
-                                m.name not in self.GridIndices:
-                    tid = str(self.ReverseIdx[k])
+                                m.name not in grid_indices:
+                    tid = str(reverse_idx[k])
                     tidstr = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
 
                     loc_subs_2[k] = tidstr
@@ -209,8 +172,8 @@ class PlaceInLocal(object):
 
             for k, m in enumerate(loc_subs_2):
                 if isinstance(m, lan.Id) and \
-                                m.name in self.GridIndices:
-                    tid = str(self.ReverseIdx[k])
+                                m.name in grid_indices:
+                    tid = str(reverse_idx[k])
                     loc_subs_2[k] = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
 
             loc_ref = lan.ArrayRef(lan.Id(loc_name), loc_subs_2)
@@ -225,13 +188,13 @@ class PlaceInLocal(object):
 
             for k, m in enumerate(inner_loc.subscript):
                 if isinstance(m, lan.Id) and \
-                                m.name in self.GridIndices:
-                    tid = str(self.ReverseIdx[k])
+                                m.name in grid_indices:
+                    tid = str(reverse_idx[k])
                     inner_loc.subscript[k] = ast_bb.FuncCall('get_local_id', [lan.Constant(tid)])
 
                     # exchange_id.visit(inner_loc)
 
-            self.ast.ext.append(lan.Block(lan.Id(loc_name), self.Local['size']))
+            self.ast.ext.append(lan.Block(lan.Id(loc_name), local['size']))
 
         # Must also create the barrier
         arglist = lan.ArgList([lan.Id('CLK_LOCAL_MEM_FENCE')])

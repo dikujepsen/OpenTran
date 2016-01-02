@@ -10,34 +10,31 @@ import collect_device as cd
 
 
 class PlaceInReg(object):
-    def __init__(self):
-        self.par_dim = None  # int
+    def __init__(self, ast):
+        self.ast = ast
+        self.par_dim = cl.get_par_dim(ast)
 
         self.PlaceInRegFinding = tuple()
         self.PlaceInRegCond = None
 
         self.perform_transformation = False
 
-        self.ast = None
-
         # New
         self.Type = dict()
         self.Kernel = None
 
-    def place_in_reg(self, ast, par_dim):
+    def place_in_reg(self):
         """ Find all array references that can be cached in registers.
             Then rewrite the code in this fashion.
             :param ast:
             :param par_dim:
         """
-        self.ast = ast
-        self.par_dim = par_dim
         optimizable_arrays = dict()
         hoist_loop_set = set()
 
-        ref_to_loop = ca.get_ref_to_loop(ast, par_dim=par_dim)
-        write_only = ca.get_write_only(ast)
-        subscript_no_id = ca.get_subscript_no_id(ast)
+        ref_to_loop = ca.get_ref_to_loop(self.ast)
+        write_only = ca.get_write_only(self.ast)
+        subscript_no_id = ca.get_subscript_no_id(self.ast)
         grid_indices = cl.get_grid_indices(self.ast)
 
         for n in ref_to_loop:
@@ -82,7 +79,7 @@ class PlaceInReg(object):
         self.PlaceInRegFinding = (optimizable_arrays, hoistloop)
 
     def _remove_unknown_loops(self, insideloop):
-        loops = cl.get_inner_loops(self.ast, par_dim=self.par_dim)
+        loops = cl.get_inner_loops(self.ast)
         return {k for k in insideloop if k in loops}
 
     def _can_perform_optimization(self, loop_idx, sub_idx):
@@ -146,7 +143,7 @@ class PlaceInReg(object):
         assign = lan.Assignment(reg, glob_array_ref)
         return assign
 
-    def place_in_reg3(self, ast, par_dim):
+    def place_in_reg3(self):
         """ Check if the arrayref is inside a loop and use a static
             array for the allocation of the registers
             :param ast:
@@ -154,13 +151,12 @@ class PlaceInReg(object):
             :param par_dim:
                 number of parallel dimensions
         """
-        self.Type = ci.get_types(ast)
-        self.ast = ast
+        self.Type = ci.get_types(self.ast)
 
         self.Kernel = cd.get_kernel(self.ast)
 
         kernel_stats = self.Kernel.statements
-        self.place_in_reg(ast, par_dim)
+        self.place_in_reg()
 
         if self.PlaceInRegFinding is ():
             return
@@ -208,7 +204,7 @@ class PlaceInReg(object):
                 aref_old.subscript = aref_new.subscript
 
     def _create_load_loop(self, hoist_loop, initstats):
-        loops = cl.get_inner_loops(self.ast, par_dim=self.par_dim)
+        loops = cl.get_inner_loops(self.ast)
         loop = copy.deepcopy(loops[hoist_loop])
         loopstats = []
         loop.compound.statements = loopstats

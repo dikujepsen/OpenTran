@@ -11,6 +11,11 @@ class GenReverseIdx(object):
         self.ReverseIdx[1] = 0
 
 
+def get_reverse_idx(ast):
+    gen_reverse_idx = GenReverseIdx()
+    return gen_reverse_idx.ReverseIdx
+
+
 class GenHostArrayData(object):
     def __init__(self):
         super(GenHostArrayData, self).__init__()
@@ -36,7 +41,6 @@ def get_mem_names(ast):
     host_array_data = GenHostArrayData()
     host_array_data.collect(ast)
     return host_array_data.Mem
-
 
 
 def gen_host_ids(ast):

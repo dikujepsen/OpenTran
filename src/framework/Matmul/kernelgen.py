@@ -26,33 +26,29 @@ class KernelGenStruct(object):
 
 class KernelGen(object):
     def __init__(self):
-        self.ParDim = None
-
         # Output
         self.kgen_strt = KernelGenStruct()
 
     def generate_kernels(self, ast, name, fileprefix):
-        self.ParDim = cl.get_par_dim(ast)
         # Create base version and possible version with Local and
         # Register optimizations
         funcname = name + 'Base'
 
         ss = snippetgen.SnippetGen()
 
-        ss.set_datastructure(self.ParDim, ast)
+        ss.set_datastructure(ast)
 
         ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                             kernelstringname=funcname)
 
-        pir = pireg.PlaceInReg()
+        pir = pireg.PlaceInReg(ast)
         funcname = name + 'PlaceInReg'
-        pir.place_in_reg3(ast, self.ParDim,)
+        pir.place_in_reg3()
         if pir.perform_transformation:
             ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                                 kernelstringname=funcname)
 
-        pil = piloc.PlaceInLocal()
-        pil.set_datastructures(ast)
+        pil = piloc.PlaceInLocal(ast)
         pil.place_in_local()
         if pir.PlaceInRegFinding and pil.PlaceInLocalArgs:
             raise Exception("""GenerateKernels: Currently unimplemented to perform
