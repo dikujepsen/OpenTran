@@ -12,6 +12,7 @@ import rewriter
 import stencil
 import struct
 import transpose as tp
+import collect_loop as cl
 
 fileprefix = "../../test/C/"
 SetNoReadBack = True
@@ -70,14 +71,14 @@ def __get_ast_from_base(name):
     return ast
 
 
-def gen_full_code(name, ks, tempast3):
-    kgen = kernelgen.KernelGen(ks.ParDim)
+def gen_full_code(name, par_dim, tempast3):
+    kgen = kernelgen.KernelGen(par_dim)
     cprint = cgen.CGenerator()
 
     kgen.generate_kernels(tempast3, name, fileprefix)
 
     boilerplate = boilerplategen.Boilerplate()
-    boilerplate.set_struct(ks.ParDim, kgen.kgen_strt, tempast3, SetNoReadBack)
+    boilerplate.set_struct(par_dim, kgen.kgen_strt, tempast3, SetNoReadBack)
     boilerast = boilerplate.generate_code()
 
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
@@ -98,18 +99,17 @@ def __optimize(ast, name, par_dim=None):
     tempast2 = copy.deepcopy(ast)
     tempast3 = copy.deepcopy(ast)
 
-    ks = struct.KernelStruct()
-    if par_dim is not None:
-        ks.ParDim = par_dim
-    ks.set_datastructure(tempast3)
+    tempast3.ext.append(lan.ParDim(par_dim))
+    par_dim = cl.get_par_dim(tempast3)
+
     if DoOptimizations:
-        __main_transpose(tempast3, par_dim=ks.ParDim)
-        __main_placeinreg(tempast3, par_dim=ks.ParDim)
-        __main_placeinlocal(tempast3, par_dim=ks.ParDim)
+        __main_transpose(tempast3, par_dim=par_dim)
+        __main_placeinreg(tempast3, par_dim=par_dim)
+        __main_placeinlocal(tempast3, par_dim=par_dim)
 
-        __main_definearg(tempast3, par_dim=ks.ParDim)
+        __main_definearg(tempast3, par_dim=par_dim)
 
-    gen_full_code(name, ks, tempast3)
+    gen_full_code(name, par_dim, tempast3)
 
 
 def knearest():
@@ -131,18 +131,17 @@ def jacobi():
     tempast2 = copy.deepcopy(ast)
     tempast3 = copy.deepcopy(ast)
 
-    ks = struct.KernelStruct()
-    ks.set_datastructure(tempast3)
+    tempast3.ext.append(lan.ParDim(None))
+    par_dim = cl.get_par_dim(tempast3)
 
     if DoOptimizations:
         __main_transpose(tempast3)
         __main_placeinreg(tempast3)
-        # tf.localMemory(['X1'], west=1, north=1, east=1, south=1, middle=0)
         __main_stencil(tempast3)
         __main_placeinlocal(tempast3)
         __main_definearg(tempast3)
 
-    gen_full_code(name, ks, tempast3)
+    gen_full_code(name, par_dim, tempast3)
 
 
 def nbody():

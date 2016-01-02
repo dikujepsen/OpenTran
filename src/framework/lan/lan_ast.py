@@ -493,3 +493,15 @@ class Block(Node):
 
     attr_names = ('size',)
 
+
+class ParDim(Node):
+    def __init__(self, par_dim):
+        self.par_dim = par_dim
+
+    def __repr__(self):
+        return "ParDim(%r)" % self.par_dim
+
+    def children(self):
+        return tuple([])
+
+    attr_names = ('par_dim',)
