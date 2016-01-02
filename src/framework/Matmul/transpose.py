@@ -1,73 +1,26 @@
 import lan
-import collect_transformation_info as cti
 import collect_gen as cg
 import collect_array as ca
 import collect_loop as cl
+import collect_id as ci
 
 
 class Transpose(object):
-    def __init__(self):
-        self.ParDim = None  # int
-        self.ArrayIds = set()
-        self.num_array_dims = dict()
-        self.ArrayIdToDimName = dict()
-        self.Mem = dict()
-        self.Subscript = dict()
-        self.ReadWrite = dict()
-        self.WriteOnly = list()
-
-        self.Type = dict()
-        self.HstId = dict()
-        self.ast = None
-
-    def set_datastructures(self, ast):
-        self.ParDim = cl.get_par_dim(ast)
-
+    def __init__(self, ast):
         self.ast = ast
 
-        fpl = cti.FindGridIndices()
-        fpl.ParDim = self.ParDim
-        fpl.collect(ast)
-
-        fs = cti.FindSubscripts()
-        fs.collect(ast)
-
-        fai = cti.FindReadWrite()
-        fai.ParDim = self.ParDim
-        fai.collect(ast)
-
-        host_array_data = cg.GenHostArrayData()
-        host_array_data.collect(ast)
-
-        self.ParDim = fpl.par_dim
-
-        self.num_array_dims = fai.num_array_dims
-        self.Subscript = fs.Subscript
-
-        self.ArrayIds = fai.ArrayIds
-
-        self.HstId = host_array_data.HstId
-        self.Mem = host_array_data.Mem
-        self.Type = fai.type
-
-        self.ArrayIdToDimName = fai.ArrayIdToDimName
-
-        self.ReadWrite = fai.ReadWrite
-
-        self.WriteOnly = fai.WriteOnly
-
-    def transpose(self, ast):
+    def transpose(self):
         """ Find all arrays that *should* be transposed
             and transpose them
             :param ast:
         """
-        self.ast = ast
         transpose_arrays = self.find_transposable_arrays()
-        # print transpose_arrays
+        hst_id = cg.gen_host_ids(self.ast)
+        types = ci.get_types(self.ast)
         for n in transpose_arrays:
-            hst_name = self.HstId[n]
+            hst_name = hst_id[n]
             hst_trans_name = hst_name + '_trans'
-            self.ast.ext.append(lan.Transpose(self.Type[n], lan.Id(hst_trans_name), lan.Id(n), lan.Id(hst_name)))
+            self.ast.ext.append(lan.Transpose(types[n], lan.Id(hst_trans_name), lan.Id(n), lan.Id(hst_name)))
             self.__transpose(n)
 
     def find_transposable_arrays(self):
@@ -88,31 +41,39 @@ class Transpose(object):
         :param sub:
         :return:
         """
-        idx_to_dim = cg.gen_idx_to_dim(self.ast, self.ParDim)
+        idx_to_dim = cg.gen_idx_to_dim(self.ast)
         return len(sub) == 2 and sub[0] == idx_to_dim[0]
 
     def __transpose(self, arr_name):
 
-        if self.num_array_dims[arr_name] != 2:
+        num_array_dim = ca.get_num_array_dims(self.ast)
+        if num_array_dim[arr_name] != 2:
             print "Array ", arr_name, "of dimension ", \
-                self.num_array_dims[arr_name], "cannot be transposed"
+                num_array_dim[arr_name], "cannot be transposed"
             return
 
-        for sub in self.Subscript[arr_name]:
+        subscript = ca.get_subscript(self.ast)
+        for sub in subscript[arr_name]:
             (sub[0], sub[1]) = \
                 (sub[1], sub[0])
 
     def create_transposition_func(self, arr_name):
         my_transposition = []
-        hst_name = self.HstId[arr_name]
+        hst_id = cg.gen_host_ids(self.ast)
+        array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
+        types = ci.get_types(self.ast)
+        mem_names = cg.get_mem_names(self.ast)
+        write_only = ca.get_write_only(self.ast)
+
+        hst_name = hst_id[arr_name]
         hst_trans_name = hst_name + '_trans'
-        dim_name = self.ArrayIdToDimName[arr_name]
+        dim_name = array_id_to_dim_name[arr_name]
 
         lval = lan.Id(hst_trans_name)
-        nat_type = self.Type[arr_name][0]
-        rval = lan.Id('new ' + nat_type + '[' + self.Mem[arr_name] + ']')
+        nat_type = types[arr_name][0]
+        rval = lan.Id('new ' + nat_type + '[' + mem_names[arr_name] + ']')
         my_transposition.append(lan.Assignment(lval, rval))
-        if arr_name not in self.WriteOnly:
+        if arr_name not in write_only:
             arglist = lan.ArgList([lan.Id(hst_name),
                                    lan.Id(hst_trans_name),
                                    lan.Id(dim_name[0]),

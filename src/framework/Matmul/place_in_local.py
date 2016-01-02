@@ -106,7 +106,7 @@ class PlaceInLocal(object):
     def local_memory3(self, arr_dict, loop_dict=None):
         initstats = []
         init_comp = lan.GroupCompound(initstats)
-        kernel = cd.get_kernel(self.ast, self.ParDim)
+        kernel = cd.get_kernel(self.ast)
         kernel.statements.insert(0, init_comp)
 
         if loop_dict is None:

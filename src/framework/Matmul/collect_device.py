@@ -1,5 +1,7 @@
 import lan
 import copy
+import collect_loop as cl
+
 
 class FindKernel(lan.NodeVisitor):
     """ Performs simple checks to decide if we have 1D or 2D
@@ -22,7 +24,8 @@ class FindKernel(lan.NodeVisitor):
                         self.kernel = self.kernel.statements[0].compound
 
 
-def get_kernel(ast, par_dim):
+def get_kernel(ast):
+    par_dim = cl.get_par_dim(ast)
     fker = FindKernel(par_dim)
     fker.visit(ast)
     return fker.kernel

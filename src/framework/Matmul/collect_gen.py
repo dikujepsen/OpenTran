@@ -32,6 +32,13 @@ class GenHostArrayData(object):
             self.TransposableHstId.append(n)
 
 
+def get_mem_names(ast):
+    host_array_data = GenHostArrayData()
+    host_array_data.collect(ast)
+    return host_array_data.Mem
+
+
+
 def gen_host_ids(ast):
     host_array_data = GenHostArrayData()
     host_array_data.collect(ast)
@@ -44,9 +51,9 @@ def gen_transposable_host_ids(ast):
     return host_array_data.TransposableHstId
 
 
-def get_kernel_args(ast, par_dim):
+def get_kernel_args(ast):
     gen_kernel_args = GenKernelArgs()
-    gen_kernel_args.collect(ast, par_dim=par_dim)
+    gen_kernel_args.collect(ast)
     return gen_kernel_args.kernel_args
 
 
@@ -96,7 +103,7 @@ class GenKernelArgs(object):
     def __init__(self):
         self.kernel_args = dict()
 
-    def collect(self, ast, par_dim=2):
+    def collect(self, ast):
         arrays_ids = ca.GlobalArrayIds()
         arrays_ids.visit(ast)
         array_ids = arrays_ids.ids
@@ -111,7 +118,7 @@ class GenKernelArgs(object):
         types = mytype_ids.types
 
         gen_removed_ids = GenRemovedIds()
-        gen_removed_ids.collect(ast, par_dim)
+        gen_removed_ids.collect(ast)
         removed_ids = gen_removed_ids.removed_ids
 
         kernel_arg_defines = ci.get_kernel_arg_defines(ast)
@@ -138,11 +145,8 @@ class GenRemovedIds(object):
     def __init__(self):
         self.removed_ids = set()
 
-    def collect(self, ast, par_dim=2):
-        col_li = cl.LoopIndices(par_dim)
-        col_li.visit(ast)
-
-        grid_indices = col_li.grid_indices
+    def collect(self, ast):
+        grid_indices = cl.get_grid_indices(ast)
 
         col_loop_limit = cl.LoopLimit()
         col_loop_limit.visit(ast)
@@ -150,10 +154,9 @@ class GenRemovedIds(object):
 
         upper_limits = set(upper_limit[i] for i in grid_indices)
 
-        find_kernel = cd.FindKernel(par_dim)
-        find_kernel.visit(ast)
+        my_kernel = cd.get_kernel(ast)
         ids_still_in_kernel = ci.Ids()
-        ids_still_in_kernel.visit(find_kernel.kernel)
+        ids_still_in_kernel.visit(my_kernel)
         self.removed_ids = upper_limits - ids_still_in_kernel.ids
 
 
@@ -183,7 +186,8 @@ class GenIdxToThreadId(object):
             self.IndexToThreadId[n] = 'get_global_id(' + str(i) + ')'
 
 
-def gen_idx_to_dim(ast, par_dim):
+def gen_idx_to_dim(ast):
+    par_dim = cl.get_par_dim(ast)
     gi_to_dim = GenIdxToDim()
     gi_to_dim.collect(ast, par_dim)
     return gi_to_dim.IdxToDim

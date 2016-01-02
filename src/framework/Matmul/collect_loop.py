@@ -28,7 +28,8 @@ class LoopIndices(lan.NodeVisitor):
         return self.index
 
 
-def get_grid_indices(ast, par_dim):
+def get_grid_indices(ast):
+    par_dim = get_par_dim(ast)
     loop_indices = LoopIndices(par_dim)
     loop_indices.visit(ast)
     return loop_indices.grid_indices

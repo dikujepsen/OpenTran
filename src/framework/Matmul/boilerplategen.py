@@ -77,7 +77,7 @@ class Boilerplate(object):
         self.transposable_host_id = cg.gen_transposable_host_ids(ast)
         self.Type = ci.get_types(ast)
         self.NameSwap = ca.get_host_array_name_swap(ast)
-        self.kernel_args = cg.get_kernel_args(ast, self.par_dim)
+        self.kernel_args = cg.get_kernel_args(ast)
         self.ArrayIdToDimName = cg.get_array_id_to_dim_name(ast)
 
     def generate_code(self):
@@ -182,8 +182,7 @@ class Boilerplate(object):
 
         allocate_buffer.compound.statements.append(lan.GroupCompound(list_set_mem_size))
 
-        transpose_transformation = transpose.Transpose()
-        transpose_transformation.set_datastructures(self.ast)
+        transpose_transformation = transpose.Transpose(self.ast)
         transpose_arrays = ca.get_transposable_base_ids(self.ast)
         my_transposition = lan.GroupCompound([lan.Comment('// Transposition')])
         for n in transpose_arrays:

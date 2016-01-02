@@ -39,7 +39,7 @@ class SnippetGen(object):
         fai = cbi.FindLoopArrays()
         fai.collect(ast)
         self.LoopArrays = fai.loop_arrays
-        self.kernel_args = cg.get_kernel_args(ast, par_dim)
+        self.kernel_args = cg.get_kernel_args(ast)
 
     def in_source_kernel(self, ast, cond, filename, kernelstringname):
         self.rewrite_to_device_c_release(ast)
@@ -94,7 +94,7 @@ class SnippetGen(object):
                 exchange_array_id.visit(m)
 
     def _create_kernel(self):
-        my_kernel = copy.deepcopy(cd.get_kernel(self.ast, self.par_dim))
+        my_kernel = copy.deepcopy(cd.get_kernel(self.ast))
         num_array_dims = ca.get_num_array_dims(self.ast)
         array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
         rewrite_array_ref = exchange.RewriteArrayRef(num_array_dims,

@@ -164,9 +164,8 @@ def gaussian():
 
 
 def __main_transpose(tempast3):
-    tps = tp.Transpose()
-    tps.set_datastructures(tempast3)
-    tps.transpose(tempast3)
+    tps = tp.Transpose(tempast3)
+    tps.transpose()
 
 
 def __main_definearg(tempast3):

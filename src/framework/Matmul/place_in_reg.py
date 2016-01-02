@@ -38,7 +38,7 @@ class PlaceInReg(object):
         ref_to_loop = ca.get_ref_to_loop(ast, par_dim=par_dim)
         write_only = ca.get_write_only(ast)
         subscript_no_id = ca.get_subscript_no_id(ast)
-        grid_indices = cl.get_grid_indices(self.ast, par_dim=self.par_dim)
+        grid_indices = cl.get_grid_indices(self.ast)
 
         for n in ref_to_loop:
             if n in write_only:
@@ -95,7 +95,7 @@ class PlaceInReg(object):
         :param sub_idx:
         :return:
         """
-        grid_indices = cl.get_grid_indices(self.ast, par_dim=self.par_dim)
+        grid_indices = cl.get_grid_indices(self.ast)
         return set(sub_idx).intersection(set(grid_indices)) and \
                set(loop_idx).difference(set(sub_idx))
 
@@ -157,7 +157,7 @@ class PlaceInReg(object):
         self.Type = ci.get_types(ast)
         self.ast = ast
 
-        self.Kernel = cd.get_kernel(self.ast, par_dim)
+        self.Kernel = cd.get_kernel(self.ast)
 
         kernel_stats = self.Kernel.statements
         self.place_in_reg(ast, par_dim)

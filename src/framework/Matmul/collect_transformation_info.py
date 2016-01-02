@@ -141,7 +141,7 @@ class RemovedLoopLimit(FindLoops):
         fgi.collect(ast)
 
         find_removed_ids = cg.GenRemovedIds()
-        find_removed_ids.collect(ast, self.par_dim)
+        find_removed_ids.collect(ast)
         self.RemovedIds = find_removed_ids.removed_ids
 
 
@@ -181,7 +181,7 @@ class FindArrayIdsKernel(FindArrayIds):
     def collect(self, ast):
         super(FindArrayIdsKernel, self).collect(ast)
         gen_kernel_args = cg.GenKernelArgs()
-        gen_kernel_args.collect(ast, par_dim=self.par_dim)
+        gen_kernel_args.collect(ast)
         self.kernel_args = gen_kernel_args.kernel_args
 
 

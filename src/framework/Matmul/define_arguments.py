@@ -17,7 +17,7 @@ class DefineArguments(object):
         self.ParDim = cl.get_par_dim(ast)
         self.ast = ast
 
-        self.kernel_args = cg.get_kernel_args(ast, self.ParDim)
+        self.kernel_args = cg.get_kernel_args(ast)
 
     def define_arguments(self):
         """ Find all kernel arguments that can be defined

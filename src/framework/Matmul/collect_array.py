@@ -260,6 +260,10 @@ class FindReadWrite(lan.NodeVisitor):
         find_read_pattern.visit(node.rval)
 
 
+
+
+
+
 class _FindReadPattern(lan.NodeVisitor):
     """ Return whether the an array are read or written """
 
