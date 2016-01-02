@@ -5,15 +5,12 @@ import collect_array_rewrite as car
 
 
 class Rewriter(object):
-    def __init__(self):
-        # Output
-        self.Includes = list()
 
     def rewrite_array_ref(self, ast):
         naref = car.NormArrayRef(ast)
         naref.visit(ast)
 
-    def rewrite_to_baseform(self, ast, functionname='FunctionName', change_ast=True):
+    def rewrite_to_baseform(self, ast, functionname='FunctionName'):
         """ Rewrites a few things in the AST, ast, to increase the
             abstraction level.
             :param ast: abstract syntax tree
@@ -28,16 +25,18 @@ class Rewriter(object):
         array_args = lan_kernel_args.array_args
 
         arglist = lan.ArgList([] + array_args)
+        my_includes = list()
         while isinstance(ast.ext[0], lan.Include):
             include = ast.ext.pop(0)
-            self.Includes.append(include)
+            my_includes.append(include)
 
-        while not isinstance(ast.ext[0], lan.ForLoop):
-            ast.ext.pop(0)
+        # while not isinstance(ast.ext[0], lan.ForLoop):
+        #     ast.ext.pop(0)
         compound = lan.Compound(ast.ext)
-        if change_ast:
-            ast.ext = list()
-            ast.ext.append(lan.FuncDecl(typeid, arglist, compound))
+
+        ast.ext = my_includes
+
+        ast.ext.append(lan.FuncDecl(typeid, arglist, compound))
 
 
 class LanKernelArgs(object):

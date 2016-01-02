@@ -8,6 +8,7 @@ import collect_boilerplate_info as cbi
 import collect_id as ci
 import collect_array as ca
 
+
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
 
@@ -21,7 +22,6 @@ def print_dict_sorted(mydict):
 
 class SnippetGen(object):
     def __init__(self):
-        self.KernelStruct = None
         self.KernelStringStream = list()
         self.par_dim = None
         self.ast = None
@@ -32,15 +32,14 @@ class SnippetGen(object):
         self.kernel_args = dict()
 
     def set_datastructure(self,
-                          kernel_struct,
+                          par_dim,
                           ast):
-        self.KernelStruct = kernel_struct
         self.ast = ast
-        self.par_dim = self.KernelStruct.ParDim
+        self.par_dim = par_dim
         fai = cbi.FindLoopArrays()
         fai.collect(ast)
         self.LoopArrays = fai.loop_arrays
-        self.kernel_args = cg.get_kernel_args(ast, kernel_struct.ParDim)
+        self.kernel_args = cg.get_kernel_args(ast, par_dim)
 
     def in_source_kernel(self, ast, cond, filename, kernelstringname):
         self.rewrite_to_device_c_release(ast)
@@ -63,7 +62,8 @@ class SnippetGen(object):
         typeid = self._create_function_name()
 
         newast = NewAST()
-        newast.add_list_statement(copy.deepcopy(self.KernelStruct.Includes))
+        includes = cd.get_includes(ast)
+        newast.add_list_statement(copy.deepcopy(includes))
 
         if self._arg_has_type_double(arglist):
             newast.enable_double_precision()

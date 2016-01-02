@@ -62,3 +62,15 @@ class FindFunction(lan.NodeVisitor):
         self.typeid = node
 
 
+class FindIncludes(lan.NodeVisitor):
+    def __init__(self):
+        self.includes = list()
+
+    def visit_Include(self, node):
+        self.includes.append(node)
+
+
+def get_includes(ast):
+    find_includes = FindIncludes()
+    find_includes.visit(ast)
+    return find_includes.includes

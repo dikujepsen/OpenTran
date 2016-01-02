@@ -49,7 +49,7 @@ def __get_baseform_filename(name):
 
 
 def _create_baseform(name):
-    rw, ast = __get_ast_from_init(name)
+    ast = __get_ast_from_init(name)
     cprint = cgen.CGenerator()
     baseform_filename = __get_baseform_name(name)
     cprint.write_ast_to_file(ast, filename=baseform_filename)
@@ -62,13 +62,12 @@ def __get_ast_from_init(name):
     rw.rewrite_array_ref(ast)
     rw.rewrite_to_baseform(ast, name + 'For')
 
-    return rw, ast
+    return ast
 
 
 def __get_ast_from_base(name):
     ast = __get_ast_from_file(name, __get_baseform_filename(name))
-    rw, _ = __get_ast_from_init(name)
-    return rw, ast
+    return ast
 
 
 def gen_full_code(name, ks, tempast3):
@@ -87,14 +86,14 @@ def gen_full_code(name, ks, tempast3):
 def matmul():
     name = 'MatMul'
     if True:
-        rw, ast = __get_ast_from_init(name)
+        ast = __get_ast_from_init(name)
     else:
-        rw, ast = __get_ast_from_base(name)
+        ast = __get_ast_from_base(name)
 
-    __optimize(rw, ast, name)
+    __optimize(ast, name)
 
 
-def __optimize(rw, ast, name, par_dim=None):
+def __optimize(ast, name, par_dim=None):
     tempast = copy.deepcopy(ast)
     tempast2 = copy.deepcopy(ast)
     tempast3 = copy.deepcopy(ast)
@@ -102,7 +101,7 @@ def __optimize(rw, ast, name, par_dim=None):
     ks = struct.KernelStruct()
     if par_dim is not None:
         ks.ParDim = par_dim
-    ks.set_datastructure(rw, tempast3)
+    ks.set_datastructure(tempast3)
     if DoOptimizations:
         __main_transpose(tempast3, par_dim=ks.ParDim)
         __main_placeinreg(tempast3, par_dim=ks.ParDim)
@@ -116,24 +115,24 @@ def __optimize(rw, ast, name, par_dim=None):
 def knearest():
     name = 'KNearest'
     if True:
-        rw, ast = __get_ast_from_init(name)
+        ast = __get_ast_from_init(name)
     else:
-        rw, ast = __get_ast_from_base(name)
-    __optimize(rw, ast, name, par_dim=1)
+        ast = __get_ast_from_base(name)
+    __optimize(ast, name, par_dim=1)
 
 
 def jacobi():
     name = 'Jacobi'
     if True:
-        rw, ast = __get_ast_from_init(name)
+        ast = __get_ast_from_init(name)
     else:
-        rw, ast = __get_ast_from_base(name)
+        ast = __get_ast_from_base(name)
     tempast = copy.deepcopy(ast)
     tempast2 = copy.deepcopy(ast)
     tempast3 = copy.deepcopy(ast)
 
     ks = struct.KernelStruct()
-    ks.set_datastructure(rw, tempast3)
+    ks.set_datastructure(tempast3)
 
     if DoOptimizations:
         __main_transpose(tempast3)
@@ -149,29 +148,29 @@ def jacobi():
 def nbody():
     name = 'NBody'
     if True:
-        rw, ast = __get_ast_from_init(name)
+        ast = __get_ast_from_init(name)
     else:
-        rw, ast = __get_ast_from_base(name)
+        ast = __get_ast_from_base(name)
 
-    __optimize(rw, ast, name)
+    __optimize(ast, name)
 
 
 def laplace():
     name = 'Laplace'
     if True:
-        rw, ast = __get_ast_from_init(name)
+        ast = __get_ast_from_init(name)
     else:
-        rw, ast = __get_ast_from_base(name)
-    __optimize(rw, ast, name, par_dim=1)
+        ast = __get_ast_from_base(name)
+    __optimize(ast, name, par_dim=1)
 
 
 def gaussian():
     name = 'GaussianDerivates'
     if True:
-        rw, ast = __get_ast_from_init(name)
+        ast = __get_ast_from_init(name)
     else:
-        rw, ast = __get_ast_from_base(name)
-    __optimize(rw, ast, name)
+        ast = __get_ast_from_base(name)
+    __optimize(ast, name)
 
 
 def __main_transpose(tempast3, par_dim=None):

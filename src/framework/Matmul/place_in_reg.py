@@ -159,15 +159,11 @@ class PlaceInReg(object):
         kernel_stats = self.Kernel.statements
         self.place_in_reg(ast, par_dim)
 
-        # print "NEXT" , (optimizable_arrays, hoist_loop_list)
-
         if self.PlaceInRegFinding is ():
             return
 
         (optimizable_arrays, hoist_loop_list) = self.PlaceInRegFinding
         self.perform_transformation = True
-        # print self.ks.PlaceInRegArgs
-        # print []
 
         if not optimizable_arrays:
             return

@@ -37,7 +37,7 @@ class KernelGen(object):
 
         ss = snippetgen.SnippetGen()
 
-        ss.set_datastructure(self.ks, ast)
+        ss.set_datastructure(self.ks.ParDim, ast)
 
         ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                             kernelstringname=funcname)
