@@ -182,8 +182,7 @@ def __main_placeinlocal(tempast3):
 
 
 def __main_stencil(tempast3):
-    sten = stencil.Stencil()
-    sten.set_datastructures(tempast3)
+    sten = stencil.Stencil(tempast3)
     sten.stencil(['X1'], west=1, north=1, east=1, south=1, middle=0)
 
 

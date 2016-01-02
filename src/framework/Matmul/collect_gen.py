@@ -168,13 +168,20 @@ class GenLocalArrayIdx(object):
     def __init__(self):
         self.IndexToLocalVar = dict()
 
-    def collect(self, ast, par_dim=2):
+    def collect(self, ast):
+        par_dim = cl.get_par_dim(ast)
         col_li = cl.LoopIndices(par_dim)
         col_li.visit(ast)
         grid_indices = col_li.grid_indices
 
         for var in grid_indices:
             self.IndexToLocalVar[var] = 'l' + var
+
+
+def get_local_array_idx(ast):
+    gen_local_array_idx = GenLocalArrayIdx()
+    gen_local_array_idx.collect(ast)
+    return gen_local_array_idx.IndexToLocalVar
 
 
 class GenIdxToThreadId(object):

@@ -99,7 +99,8 @@ class IndicesInArrayRef(lan.NodeVisitor):
         self.tmp = set()
         self.indexIds = dict()
 
-    def collect(self, ast, par_dim=2):
+    def collect(self, ast):
+        par_dim = cl.get_par_dim(ast)
         col_li = cl.LoopIndices(par_dim)
         col_li.visit(ast)
         self.indices = col_li.grid_indices
@@ -120,6 +121,12 @@ class IndicesInArrayRef(lan.NodeVisitor):
 
         for n in node.subscript:
             self.visit(n)
+
+
+def get_indices_in_array_ref(ast):
+    indices_in_array_ref = IndicesInArrayRef()
+    indices_in_array_ref.collect(ast)
+    return indices_in_array_ref.indexIds
 
 
 class ArrayNameToRef(lan.NodeVisitor):
@@ -258,10 +265,6 @@ class FindReadWrite(lan.NodeVisitor):
         find_read_pattern.visit(node.lval)
         find_read_pattern = _FindReadPattern(self.ArrayIds, self.ReadWrite, False)
         find_read_pattern.visit(node.rval)
-
-
-
-
 
 
 class _FindReadPattern(lan.NodeVisitor):
