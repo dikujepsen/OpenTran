@@ -101,6 +101,8 @@ def __optimize(ast, name, par_dim=None):
     if DoOptimizations:
         __main_transpose(ast)
         __main_placeinreg(ast)
+        if name == 'Jacobi':
+            __main_stencil(ast)
         __main_placeinlocal(ast)
         __main_definearg(ast)
 
@@ -123,16 +125,7 @@ def jacobi():
     else:
         ast = __get_ast_from_base(name)
 
-    ast.ext.append(lan.ParDim(None))
-
-    if DoOptimizations:
-        __main_transpose(ast)
-        __main_placeinreg(ast)
-        __main_stencil(ast)
-        __main_placeinlocal(ast)
-        __main_definearg(ast)
-
-    gen_full_code(name, ast)
+    __optimize(ast, name)
 
 
 def nbody():
