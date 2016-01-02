@@ -169,8 +169,7 @@ def __main_transpose(tempast3):
 
 
 def __main_definearg(tempast3):
-    dargs = darg.DefineArguments()
-    dargs.set_datastructures(tempast3)
+    dargs = darg.DefineArguments(tempast3)
     dargs.define_arguments()
 
 

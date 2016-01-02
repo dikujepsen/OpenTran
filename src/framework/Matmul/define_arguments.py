@@ -7,17 +7,8 @@ import collect_loop as cl
 
 
 class DefineArguments(object):
-    def __init__(self):
-        self.ParDim = None  # int
-
-        self.kernel_args = dict()
-        self.ast = None
-
-    def set_datastructures(self, ast):
-        self.ParDim = cl.get_par_dim(ast)
+    def __init__(self, ast):
         self.ast = ast
-
-        self.kernel_args = cg.get_kernel_args(ast)
 
     def define_arguments(self):
         """ Find all kernel arguments that can be defined
@@ -26,7 +17,8 @@ class DefineArguments(object):
 
         types = ci.get_types(self.ast)
         defines = list()
-        for n in self.kernel_args:
+        kernel_args = cg.get_kernel_args(self.ast)
+        for n in kernel_args:
             if len(types[n]) < 2:
                 defines.append(n)
                 self.ast.ext.append(lan.KernelArgDefine(lan.Id(n)))
