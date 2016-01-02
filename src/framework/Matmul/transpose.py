@@ -4,6 +4,7 @@ import collect_gen as cg
 import collect_array as ca
 import collect_loop as cl
 
+
 class Transpose(object):
     def __init__(self):
         self.ParDim = None  # int

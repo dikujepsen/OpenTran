@@ -17,10 +17,7 @@ class DefineArguments(object):
         self.ParDim = cl.get_par_dim(ast)
         self.ast = ast
 
-        fpl = cti.FindPerfectForLoop()
-        fpl.ParDim = self.ParDim
-        fpl.collect(ast)
-        self.kernel_args = cg.get_kernel_args(ast, fpl.par_dim)
+        self.kernel_args = cg.get_kernel_args(ast, self.ParDim)
 
     def define_arguments(self):
         """ Find all kernel arguments that can be defined
