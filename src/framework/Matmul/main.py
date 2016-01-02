@@ -71,7 +71,7 @@ def __get_ast_from_base(name):
 
 
 def gen_full_code(name, ks, tempast3):
-    kgen = kernelgen.KernelGen(ks)
+    kgen = kernelgen.KernelGen(ks.ParDim)
     cprint = cgen.CGenerator()
 
     kgen.generate_kernels(tempast3, name, fileprefix)

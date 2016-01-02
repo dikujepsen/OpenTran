@@ -10,6 +10,7 @@ import collect_loop as cl
 import collect_array as ca
 import collect_device as cd
 
+
 class PlaceInLocal(object):
     def __init__(self):
         self.SubscriptNoId = dict()
@@ -102,7 +103,7 @@ class PlaceInLocal(object):
                set(sub).intersection(set(inner_loop_indices)) \
                and self.ParDim == 2
 
-    def local_memory3(self, ks, arr_dict, loop_dict=None):
+    def local_memory3(self, arr_dict, loop_dict=None):
         initstats = []
         init_comp = lan.GroupCompound(initstats)
         kernel = cd.get_kernel(self.ast, self.ParDim)
@@ -143,10 +144,13 @@ class PlaceInLocal(object):
             i = arr_dict[n]
             loopext.add(loop_dict[(n, i)][0])
 
+        loops = cl.get_inner_loops(self.ast, self.ParDim)
+        # print loops
+
         outerstats = []
         # do the extending
         for n in loopext:
-            outerloop = ks.Loops[n]
+            outerloop = loops[n]
             outeridx = n
             compound = outerloop.compound
             outerloop.compound = lan.Compound([])
@@ -161,12 +165,10 @@ class PlaceInLocal(object):
             outerloop.inc = lan.Increment(lan.Id(outeridx), '+=' + self.Local['size'][0])
             inneridx = outeridx * 2
 
-
             # new inner loop
             innerloop.cond = lan.BinOp(lan.Id(inneridx), '<', lan.Constant(self.Local['size'][0]))
             innerloop.inc = lan.Increment(lan.Id(inneridx), '++')
             innerloop.init = ast_bb.ConstantAssignment(inneridx)
-            ks.Loops[inneridx] = innerloop
 
         num_array_dims = ca.get_num_array_dims(self.ast)
         for n in arr_dict:
@@ -174,7 +176,7 @@ class PlaceInLocal(object):
 
             local_array_name = n + '_local'
             arrayinit = lan.Constant(self.Local['size'][0])
-            if num_array_dims[n] == 2 and ks.ParDim == 2:
+            if num_array_dims[n] == 2 and self.ParDim == 2:
                 arrayinit = lan.BinOp(arrayinit, '*', lan.Constant(self.Local['size'][1]))
 
             local_array_id = lan.Id(local_array_name)
@@ -183,16 +185,17 @@ class PlaceInLocal(object):
             initstats.append(local_type_id)
 
         loadings = []
+        loop_arrays = ca.get_loop_arrays(self.ast)
         for n in arr_dict:
             loc_name = n + '_local'
             i = arr_dict[n]
-            glob_subs = copy.deepcopy(ks.LoopArrays[n][i])
+            glob_subs = copy.deepcopy(loop_arrays[n][i])
             # Change loop idx to local idx
             loopname = loop_dict[(n, i)][0]
             loc_subs = copy.deepcopy(glob_subs).subscript
             loc_subs_2 = copy.deepcopy(glob_subs).subscript
             my_new_glob_sub = copy.deepcopy(glob_subs).subscript
-            my_new_glob_sub_2 = copy.deepcopy(ks.LoopArrays[n][i])
+            my_new_glob_sub_2 = copy.deepcopy(loop_arrays[n][i])
             for k, m in enumerate(loc_subs):
                 if isinstance(m, lan.Id) and \
                                 m.name not in self.GridIndices:
@@ -214,7 +217,7 @@ class PlaceInLocal(object):
 
             loadings.append(lan.Assignment(loc_ref, my_new_glob_sub_2))
 
-            inner_loc = ks.LoopArrays[n][i]
+            inner_loc = loop_arrays[n][i]
 
             inner_loc.name.name = loc_name
             exchange_id2 = exchange.ExchangeId({loopname: loopname * 2})

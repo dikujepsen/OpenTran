@@ -24,8 +24,8 @@ class KernelGenStruct(object):
 
 
 class KernelGen(object):
-    def __init__(self, ks):
-        self.ks = ks
+    def __init__(self, par_dim):
+        self.ParDim = par_dim
 
         # Output
         self.kgen_strt = KernelGenStruct()
@@ -37,14 +37,14 @@ class KernelGen(object):
 
         ss = snippetgen.SnippetGen()
 
-        ss.set_datastructure(self.ks.ParDim, ast)
+        ss.set_datastructure(self.ParDim, ast)
 
         ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                             kernelstringname=funcname)
 
         pir = pireg.PlaceInReg()
         funcname = name + 'PlaceInReg'
-        pir.place_in_reg3(ast, self.ks.ParDim,)
+        pir.place_in_reg3(ast, self.ParDim,)
         if pir.perform_transformation:
             ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                                 kernelstringname=funcname)
@@ -58,7 +58,7 @@ class KernelGen(object):
         for arg in pil.PlaceInLocalArgs:
             funcname = name + 'PlaceInLocal'
 
-            pil.local_memory3(self.ks, arg)
+            pil.local_memory3(arg)
             ss.in_source_kernel(copy.deepcopy(ast), pil.PlaceInLocalCond,
                                 filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
 
