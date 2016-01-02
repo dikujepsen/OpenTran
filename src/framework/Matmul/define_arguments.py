@@ -3,6 +3,7 @@ import collect_transformation_info as cti
 import collect_array as ca
 import collect_gen as cg
 import collect_id as ci
+import collect_loop as cl
 
 
 class DefineArguments(object):
@@ -13,6 +14,7 @@ class DefineArguments(object):
         self.ast = None
 
     def set_datastructures(self, ast):
+        self.ParDim = cl.get_par_dim(ast)
         self.ast = ast
 
         fpl = cti.FindPerfectForLoop()
@@ -31,7 +33,6 @@ class DefineArguments(object):
             if len(types[n]) < 2:
                 defines.append(n)
                 self.ast.ext.append(lan.KernelArgDefine(lan.Id(n)))
-
 
 
 def setdefine(ast):

@@ -3,12 +3,12 @@ import copy
 import ast_buildingblock as ast_bb
 import collect_transformation_info as cti
 import struct
-import collect_boilerplate_info as cbi
 import collect_gen as cg
 import collect_id as ci
 import transpose
 import collect_array as ca
 import define_arguments
+import collect_loop as cl
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -46,8 +46,8 @@ class Boilerplate(object):
     def set_no_read_back(self):
         self.NoReadBack = True
 
-    def set_struct(self, par_dim, kgen_strt, ast, no_read_back):
-        self.par_dim = par_dim
+    def set_struct(self, kgen_strt, ast, no_read_back):
+        self.par_dim = cl.get_par_dim(ast)
         self.kgen_strt = kgen_strt
         self.ast = ast
         self.NoReadBack = no_read_back
@@ -183,8 +183,7 @@ class Boilerplate(object):
         allocate_buffer.compound.statements.append(lan.GroupCompound(list_set_mem_size))
 
         transpose_transformation = transpose.Transpose()
-
-        transpose_transformation.set_datastructures(self.ast, self.par_dim)
+        transpose_transformation.set_datastructures(self.ast)
         transpose_arrays = ca.get_transposable_base_ids(self.ast)
         my_transposition = lan.GroupCompound([lan.Comment('// Transposition')])
         for n in transpose_arrays:

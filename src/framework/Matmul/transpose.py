@@ -2,7 +2,7 @@ import lan
 import collect_transformation_info as cti
 import collect_gen as cg
 import collect_array as ca
-
+import collect_loop as cl
 
 class Transpose(object):
     def __init__(self):
@@ -19,9 +19,8 @@ class Transpose(object):
         self.HstId = dict()
         self.ast = None
 
-    def set_datastructures(self, ast, par_dim):
-        if par_dim is not None:
-            self.ParDim = par_dim
+    def set_datastructures(self, ast):
+        self.ParDim = cl.get_par_dim(ast)
 
         self.ast = ast
 

@@ -5,6 +5,7 @@ import copy
 import place_in_reg as pireg
 import place_in_local as piloc
 import collect_device as cd
+import collect_loop as cl
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -24,13 +25,14 @@ class KernelGenStruct(object):
 
 
 class KernelGen(object):
-    def __init__(self, par_dim):
-        self.ParDim = par_dim
+    def __init__(self):
+        self.ParDim = None
 
         # Output
         self.kgen_strt = KernelGenStruct()
 
     def generate_kernels(self, ast, name, fileprefix):
+        self.ParDim = cl.get_par_dim(ast)
         # Create base version and possible version with Local and
         # Register optimizations
         funcname = name + 'Base'

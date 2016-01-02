@@ -71,14 +71,14 @@ def __get_ast_from_base(name):
     return ast
 
 
-def gen_full_code(name, par_dim, tempast3):
-    kgen = kernelgen.KernelGen(par_dim)
+def gen_full_code(name, tempast3):
+    kgen = kernelgen.KernelGen()
     cprint = cgen.CGenerator()
 
     kgen.generate_kernels(tempast3, name, fileprefix)
 
     boilerplate = boilerplategen.Boilerplate()
-    boilerplate.set_struct(par_dim, kgen.kgen_strt, tempast3, SetNoReadBack)
+    boilerplate.set_struct(kgen.kgen_strt, tempast3, SetNoReadBack)
     boilerast = boilerplate.generate_code()
 
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
@@ -95,21 +95,16 @@ def matmul():
 
 
 def __optimize(ast, name, par_dim=None):
-    tempast = copy.deepcopy(ast)
-    tempast2 = copy.deepcopy(ast)
-    tempast3 = copy.deepcopy(ast)
 
-    tempast3.ext.append(lan.ParDim(par_dim))
-    par_dim = cl.get_par_dim(tempast3)
+    ast.ext.append(lan.ParDim(par_dim))
 
     if DoOptimizations:
-        __main_transpose(tempast3, par_dim=par_dim)
-        __main_placeinreg(tempast3, par_dim=par_dim)
-        __main_placeinlocal(tempast3, par_dim=par_dim)
+        __main_transpose(ast)
+        __main_placeinreg(ast)
+        __main_placeinlocal(ast)
+        __main_definearg(ast)
 
-        __main_definearg(tempast3, par_dim=par_dim)
-
-    gen_full_code(name, par_dim, tempast3)
+    gen_full_code(name, ast)
 
 
 def knearest():
@@ -127,21 +122,17 @@ def jacobi():
         ast = __get_ast_from_init(name)
     else:
         ast = __get_ast_from_base(name)
-    tempast = copy.deepcopy(ast)
-    tempast2 = copy.deepcopy(ast)
-    tempast3 = copy.deepcopy(ast)
 
-    tempast3.ext.append(lan.ParDim(None))
-    par_dim = cl.get_par_dim(tempast3)
+    ast.ext.append(lan.ParDim(None))
 
     if DoOptimizations:
-        __main_transpose(tempast3)
-        __main_placeinreg(tempast3)
-        __main_stencil(tempast3)
-        __main_placeinlocal(tempast3)
-        __main_definearg(tempast3)
+        __main_transpose(ast)
+        __main_placeinreg(ast)
+        __main_stencil(ast)
+        __main_placeinlocal(ast)
+        __main_definearg(ast)
 
-    gen_full_code(name, par_dim, tempast3)
+    gen_full_code(name, ast)
 
 
 def nbody():
@@ -172,25 +163,23 @@ def gaussian():
     __optimize(ast, name)
 
 
-def __main_transpose(tempast3, par_dim=None):
+def __main_transpose(tempast3):
     tps = tp.Transpose()
-    tps.set_datastructures(tempast3, par_dim)
+    tps.set_datastructures(tempast3)
     tps.transpose(tempast3)
 
 
-def __main_definearg(tempast3, par_dim=None):
+def __main_definearg(tempast3):
     dargs = darg.DefineArguments()
-    if par_dim is not None:
-        dargs.ParDim = par_dim
     dargs.set_datastructures(tempast3)
     dargs.define_arguments()
 
 
-def __main_placeinreg(tempast3, par_dim=None):
+def __main_placeinreg(tempast3):
     pass
 
 
-def __main_placeinlocal(tempast3, par_dim=None):
+def __main_placeinlocal(tempast3):
     pass
 
 
