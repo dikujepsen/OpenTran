@@ -288,3 +288,7 @@ class CGenerator(object):
                 return self.quotes + n.value + self.quotes
         else:
             return str(n.value)
+
+    def visit_Return(self, n):
+        expr = self.visit(n.expr)
+        return 'return ' + expr

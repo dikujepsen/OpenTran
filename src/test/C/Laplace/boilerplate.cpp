@@ -147,11 +147,11 @@ std::string GetKernelCode()
 {
   if (((dim - 0) * 3) < 40)
     {
-      return  LaplacePlaceInReg();
+      return LaplacePlaceInReg();
     }
   else
     {
-      return  LaplaceBase();
+      return LaplaceBase();
     }
 }
 

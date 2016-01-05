@@ -434,6 +434,22 @@ class IfThenElse(Node):
     attr_names = ()
 
 
+class Return(Node):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def __repr__(self):
+        return "Return(%r)" % self.expr
+
+    def children(self):
+        nodelist = [("expr", self.expr)]
+        return tuple(nodelist)
+
+    attr_names = ()
+
+
+# EXTRAS FOR OPTIMIZATION INFORMATION PURPOSES
+
 class Transpose(Node):
     def __init__(self, type, name, base_name, hst_name):
         self.type = type

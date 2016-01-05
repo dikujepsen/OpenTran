@@ -212,11 +212,11 @@ std::string GetKernelCode()
 {
   if (((dim - 0) % 4) == 0)
     {
-      return  GaussianDerivatesPlaceInLocal();
+      return GaussianDerivatesPlaceInLocal();
     }
   else
     {
-      return  GaussianDerivatesBase();
+      return GaussianDerivatesBase();
     }
 }
 

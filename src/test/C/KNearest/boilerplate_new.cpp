@@ -76,11 +76,11 @@ std::string GetKernelCode()
 {
   if (((dim - 0) * 1) < 40)
     {
-      return  KNearestPlaceInReg();
+      return KNearestPlaceInReg();
     }
   else
     {
-      return  KNearestBase();
+      return KNearestBase();
     }
 }
 

@@ -93,11 +93,11 @@ std::string GetKernelCode()
 {
   if ((1 * 3) < 40)
     {
-      return  NBodyPlaceInReg();
+      return NBodyPlaceInReg();
     }
   else
     {
-      return  NBodyBase();
+      return NBodyBase();
     }
 }
 

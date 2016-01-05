@@ -49,7 +49,7 @@ std::string JacobiBase()
 
 std::string GetKernelCode()
 {
-  return  JacobiBase();
+  return JacobiBase();
 }
 
 void AllocateBuffers()

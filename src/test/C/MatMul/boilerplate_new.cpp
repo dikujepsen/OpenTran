@@ -73,11 +73,11 @@ std::string GetKernelCode()
 {
   if (((wA - 0) % 4) == 0)
     {
-      return  MatMulPlaceInLocal();
+      return MatMulPlaceInLocal();
     }
   else
     {
-      return  MatMulBase();
+      return MatMulBase();
     }
 }
 
