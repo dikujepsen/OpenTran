@@ -4,7 +4,6 @@ import stringstream
 import exchange
 import collect_device as cd
 import collect_gen as cg
-import collect_boilerplate_info as cbi
 import collect_id as ci
 import collect_array as ca
 import collect_loop as cl
@@ -22,24 +21,9 @@ def print_dict_sorted(mydict):
 
 
 class SnippetGen(object):
-    def __init__(self):
+    def __init__(self, ast):
         self.KernelStringStream = list()
-        self.par_dim = None
-        self.ast = None
-
-        self.LoopArrays = dict()
-
-        # new
-        self.kernel_args = dict()
-
-    def set_datastructure(self,
-                          ast):
         self.ast = ast
-        self.par_dim = cl.get_par_dim(ast)
-        fai = cbi.FindLoopArrays()
-        fai.collect(ast)
-        self.LoopArrays = fai.loop_arrays
-        self.kernel_args = cg.get_kernel_args(ast)
 
     def in_source_kernel(self, ast, cond, filename, kernelstringname):
         self.rewrite_to_device_c_release(ast)
@@ -75,8 +59,10 @@ class SnippetGen(object):
     def _create_arg_list(self):
         arglist = list()
 
-        for n in sorted(self.kernel_args):
-            kernel_type = copy.deepcopy(self.kernel_args[n])
+        kernel_args = cg.get_kernel_args(self.ast)
+
+        for n in sorted(kernel_args):
+            kernel_type = copy.deepcopy(kernel_args[n])
             if kernel_type[0] == 'size_t':
                 kernel_type[0] = 'unsigned'
             if len(kernel_type) == 2:
@@ -89,7 +75,9 @@ class SnippetGen(object):
         local_swap = ci.get_local_swap(self.ast)
         exchange_array_id = exchange.ExchangeArrayId(local_swap)
 
-        for n in self.LoopArrays.values():
+        loop_arrays = ca.get_loop_arrays(self.ast)
+
+        for n in loop_arrays.values():
             for m in n:
                 exchange_array_id.visit(m)
 
@@ -102,7 +90,7 @@ class SnippetGen(object):
         rewrite_array_ref.visit(my_kernel)
 
         idx_to_thread_id = cg.GenIdxToThreadId()
-        idx_to_thread_id.collect(self.ast, self.par_dim)
+        idx_to_thread_id.collect(self.ast)
         index_to_thread_id = idx_to_thread_id.IndexToThreadId
         exchange_indices = exchange.ExchangeId(index_to_thread_id)
         exchange_indices.visit(my_kernel)

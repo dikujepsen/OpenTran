@@ -4,8 +4,7 @@ import snippetgen
 import copy
 import place_in_reg as pireg
 import place_in_local as piloc
-import collect_device as cd
-import collect_loop as cl
+
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -34,9 +33,7 @@ class KernelGen(object):
         # Register optimizations
         funcname = name + 'Base'
 
-        ss = snippetgen.SnippetGen()
-
-        ss.set_datastructure(ast)
+        ss = snippetgen.SnippetGen(ast)
 
         ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                             kernelstringname=funcname)

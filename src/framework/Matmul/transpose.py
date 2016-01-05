@@ -1,7 +1,6 @@
 import lan
 import collect_gen as cg
 import collect_array as ca
-import collect_loop as cl
 import collect_id as ci
 
 

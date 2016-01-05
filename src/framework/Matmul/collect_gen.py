@@ -195,7 +195,8 @@ class GenIdxToThreadId(object):
     def __init__(self):
         self.IndexToThreadId = dict()
 
-    def collect(self, ast, par_dim=2):
+    def collect(self, ast):
+        par_dim = cl.get_par_dim(ast)
         col_li = cl.LoopIndices(par_dim)
         col_li.visit(ast)
 

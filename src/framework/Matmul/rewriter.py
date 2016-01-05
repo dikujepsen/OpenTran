@@ -15,7 +15,6 @@ class Rewriter(object):
             abstraction level.
             :param ast: abstract syntax tree
             :param functionname: nameo of kernel function
-            :param change_ast: whether or not we should make the changes to the ast
         """
 
         typeid = lan.TypeId(['void'], lan.Id(functionname), ast.coord)

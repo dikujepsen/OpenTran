@@ -1,8 +1,6 @@
 import lan
 import copy
 import ast_buildingblock as ast_bb
-import collect_transformation_info as cti
-import struct
 import collect_gen as cg
 import collect_id as ci
 import transpose
@@ -10,6 +8,7 @@ import collect_array as ca
 import define_arguments
 import collect_loop as cl
 import collect_device as cd
+
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -93,8 +92,6 @@ class Boilerplate(object):
         for n in sorted(mem_names):
             size_name = mem_names[n]
             list_mem_size.append(lan.TypeId(['size_t'], lan.Id(size_name)))
-
-
 
         for n in sorted(array_ids):
             for dimName in array_id_to_dim_name[n]:

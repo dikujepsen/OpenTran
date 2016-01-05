@@ -1,5 +1,4 @@
 import lan
-import collect_transformation_info as cti
 import collect_array as ca
 import collect_gen as cg
 import collect_id as ci

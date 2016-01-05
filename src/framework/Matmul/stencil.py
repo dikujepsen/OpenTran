@@ -2,7 +2,6 @@ import copy
 import ast_buildingblock as ast_bb
 import lan
 import collect_device as cd
-import collect_transformation_info as cti
 import exchange
 import collect_gen as cg
 import collect_array as ca

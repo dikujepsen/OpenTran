@@ -1,7 +1,6 @@
 import copy
 import lan
 from itertools import chain
-import collect_transformation_info as cti
 import exchange
 import collect_array as ca
 import collect_loop as cl
