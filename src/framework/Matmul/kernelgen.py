@@ -32,17 +32,17 @@ class KernelGen(object):
         # Create base version and possible version with Local and
         # Register optimizations
         funcname = name + 'Base'
-
+        # ast = copy.deepcopy(ast)
         ss = snippetgen.SnippetGen(ast)
 
-        ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
+        ss.in_source_kernel(copy.deepcopy(ast), filename=fileprefix + name + '/' + funcname + '.cl',
                             kernelstringname=funcname)
 
         pir = pireg.PlaceInReg(ast)
         funcname = name + 'PlaceInReg'
         pir.place_in_reg3()
         if pir.perform_transformation:
-            ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
+            ss.in_source_kernel(copy.deepcopy(ast), filename=fileprefix + name + '/' + funcname + '.cl',
                                 kernelstringname=funcname)
 
         pil = piloc.PlaceInLocal(ast)
@@ -54,8 +54,8 @@ class KernelGen(object):
             funcname = name + 'PlaceInLocal'
 
             pil.local_memory3(arg)
-            ss.in_source_kernel(copy.deepcopy(ast), pil.PlaceInLocalCond,
-                                filename=fileprefix + name + '/' + funcname + '.cl', kernelstringname=funcname)
+            ss.in_source_kernel(copy.deepcopy(ast), filename=fileprefix + name + '/' + funcname + '.cl',
+                                kernelstringname=funcname, cond=pil.PlaceInLocalCond)
 
         self.kgen_strt.KernelStringStream = ss.KernelStringStream
 

@@ -8,7 +8,8 @@ import collect_array as ca
 import define_arguments
 import collect_loop as cl
 import collect_device as cd
-
+import snippetgen
+import stringstream
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -22,10 +23,11 @@ def print_dict_sorted(mydict):
 
 
 class Boilerplate(object):
-    def __init__(self, ast, kgen_strt, no_read_back):
+    def __init__(self, ast, name, kgen_strt, no_read_back):
         self.kgen_strt = kgen_strt
         self.ast = ast
         self.NoReadBack = no_read_back
+        self.name = name
 
     def generate_code(self):
 
@@ -115,8 +117,16 @@ class Boilerplate(object):
 
         # Generate the GetKernelCode function
         for optim in self.kgen_strt.KernelStringStream:
+            # if optim['name'] == 'MatMulBase':
+            #     sg = snippetgen.SnippetGen(self.ast)
+            #     funcname = self.name + 'Base'
+            #     testast = copy.deepcopy(self.ast)
+            #     newast = sg.generate_kernel_ss(testast, funcname)
+            #
+            #     print newast
+            #     print optim['ast']
             file_ast.ext.append(optim['ast'])
-
+        #
         get_kernel_code = ast_bb.EmptyFuncDecl('GetKernelCode', type=['std::string'])
         get_kernel_stats = []
         get_kernel_code.compound.statements = get_kernel_stats

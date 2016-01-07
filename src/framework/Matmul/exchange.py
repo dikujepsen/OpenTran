@@ -6,8 +6,8 @@ class ExchangeId(lan.NodeVisitor):
     (or whatever is given in idMap)
     """
 
-    def __init__(self, idMap):
-        self.idMap = idMap
+    def __init__(self, id_map):
+        self.idMap = id_map
 
     def visit_Id(self, node):
         if node.name in self.idMap:
@@ -19,8 +19,8 @@ class ExchangeIdWithBinOp(lan.NodeVisitor):
     (or whatever is given in idMap)
     """
 
-    def __init__(self, idMap):
-        self.idMap = idMap
+    def __init__(self, id_map):
+        self.idMap = id_map
 
     def visit_Assignment(self, node):
         if isinstance(node.rval, lan.Id):
@@ -68,8 +68,8 @@ class ExchangeIndices(lan.NodeVisitor):
     	  arrays: A list/set of array names that we change
     """
 
-    def __init__(self, idMap, arrays):
-        self.idMap = idMap
+    def __init__(self, id_map, arrays):
+        self.idMap = id_map
         self.arrays = arrays
 
     def visit_ArrayRef(self, node):

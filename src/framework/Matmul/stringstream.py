@@ -46,7 +46,7 @@ class SSGenerator(object):
         except IOError:
             print "createTemp: Unable to write file"
 
-    def create_kernel_string_stream(self, ast, kernelstringname, filename='temp.cpp'):
+    def create_kernel_string_stream(self, ast, kernelstringname):
         self.newast = lan.FileAST([])
 
         oldcode = self.visit(ast)
@@ -65,8 +65,6 @@ class SSGenerator(object):
         self.statements.append(lan.Id('return str.str();'))
 
         self.newast.ext = [kernelfunc]
-        cprint = cgen.CGenerator()
-        cprint.write_ast_to_file(self.newast, filename=filename)
 
     def simple_node(self, n):
         """ Returns True for nodes that are "simple"
