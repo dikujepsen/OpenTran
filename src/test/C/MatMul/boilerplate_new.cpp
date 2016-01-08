@@ -6,11 +6,11 @@ cl_mem dev_ptrB;
 cl_mem dev_ptrC;
 
 float * hst_ptrA;
-float * hst_ptrC;
 float * hst_ptrB;
+float * hst_ptrC;
 unsigned hA;
-unsigned wB;
 unsigned wA;
+unsigned wB;
 
 size_t hst_ptrA_mem_size;
 size_t hst_ptrB_mem_size;
@@ -156,9 +156,9 @@ void ExecMatMulFor()
 
 void RunOCLMatMulForKernel(
 	float * arg_A, size_t arg_hst_ptrA_dim1, size_t arg_hst_ptrA_dim2, 
-	float * arg_C, size_t arg_hst_ptrC_dim1, size_t arg_hst_ptrC_dim2, 
 	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
-	unsigned arg_wB, unsigned arg_wA, unsigned arg_hA
+	float * arg_C, size_t arg_hst_ptrC_dim1, size_t arg_hst_ptrC_dim2, 
+	unsigned arg_hA, unsigned arg_wA, unsigned arg_wB
 	)
 {
   if (isFirstTime)
@@ -166,15 +166,15 @@ void RunOCLMatMulForKernel(
       hst_ptrA = arg_A;
       hst_ptrA_dim1 = arg_hst_ptrA_dim1;
       hst_ptrA_dim2 = arg_hst_ptrA_dim2;
-      hst_ptrC = arg_C;
-      hst_ptrC_dim1 = arg_hst_ptrC_dim1;
-      hst_ptrC_dim2 = arg_hst_ptrC_dim2;
       hst_ptrB = arg_B;
       hst_ptrB_dim1 = arg_hst_ptrB_dim1;
       hst_ptrB_dim2 = arg_hst_ptrB_dim2;
-      wB = arg_wB;
-      wA = arg_wA;
+      hst_ptrC = arg_C;
+      hst_ptrC_dim1 = arg_hst_ptrC_dim1;
+      hst_ptrC_dim2 = arg_hst_ptrC_dim2;
       hA = arg_hA;
+      wA = arg_wA;
+      wB = arg_wB;
       StartUpGPU();
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;

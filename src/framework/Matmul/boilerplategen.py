@@ -10,6 +10,9 @@ import collect_loop as cl
 import collect_device as cd
 import snippetgen
 import stringstream
+import place_in_local as piloc
+import place_in_reg as pireg
+
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -66,7 +69,8 @@ class Boilerplate(object):
         types = ci.get_types(self.ast)
 
         list_host_ptrs = []
-        for n in dev_arg_list:
+
+        for n in sorted(dev_arg_list, key=lambda type_id: type_id.name.name.lower()):
             name = n.name.name
             arg_type = types[name]
             try:
@@ -116,17 +120,42 @@ class Boilerplate(object):
         file_ast.ext.append(lan.GroupCompound(misc))
 
         # Generate the GetKernelCode function
-        for optim in self.kgen_strt.KernelStringStream:
-            # if optim['name'] == 'MatMulBase':
-            #     sg = snippetgen.SnippetGen(self.ast)
-            #     funcname = self.name + 'Base'
-            #     testast = copy.deepcopy(self.ast)
-            #     newast = sg.generate_kernel_ss(testast, funcname)
-            #
-            #     print newast
-            #     print optim['ast']
-            file_ast.ext.append(optim['ast'])
-        #
+
+        sg = snippetgen.SnippetGen(self.ast)
+        funcname = self.name + 'Base'
+        testast = copy.deepcopy(self.ast)
+        newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
+        file_ast.ext.append(newast)
+        # print newast
+
+        sg = snippetgen.SnippetGen(testast)
+        pir = pireg.PlaceInReg(testast)
+        funcname = self.name + 'PlaceInReg'
+        pir.place_in_reg3()
+        if pir.perform_transformation:
+            newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
+            file_ast.ext.append(newast)
+            # print newast
+
+        pil = piloc.PlaceInLocal(testast)
+        pil.place_in_local()
+
+        # print "pil.PlaceInLocalArgs", pil.PlaceInLocalArgs
+        for arg in pil.PlaceInLocalArgs:
+            funcname = self.name + 'PlaceInLocal'
+
+            pil.local_memory3(arg)
+            sg = snippetgen.SnippetGen(testast)
+            newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
+            file_ast.ext.append(newast)
+
+        # file_ast.ext.append(newast)
+        # print newast
+
+        # for optim in self.kgen_strt.KernelStringStream:
+        #     print optim['ast']
+        #     file_ast.ext.append(optim['ast'])
+
         get_kernel_code = ast_bb.EmptyFuncDecl('GetKernelCode', type=['std::string'])
         get_kernel_stats = []
         get_kernel_code.compound.statements = get_kernel_stats
@@ -262,7 +291,8 @@ class Boilerplate(object):
         local = cl.get_local(self.ast)
         grid_indices = cl.get_grid_indices(self.ast)
         (lower_limit, upper_limit) = cl.get_loop_limits(self.ast)
-        for n in work_size:
+
+        for n in sorted(work_size):
             lval = lan.TypeId(['size_t'], lan.Id(work_size[n] + '[]'))
             if n == 'local':
                 local_worksize = [lan.Id(i) for i in local['size']]
@@ -306,7 +336,7 @@ class Boilerplate(object):
         exec_body.append(err_check)
 
         if not self.NoReadBack:
-            for n in write_only:
+            for n in sorted(write_only):
                 lval = lan.Id(err_name)
                 hst_nname = my_host_id[n]
                 try:
@@ -346,7 +376,8 @@ class Boilerplate(object):
 
         type_id_list = []
         if_then_list = []
-        for n in arg_ids:
+
+        for n in sorted(arg_ids):
             arg_type = types[n]
             argn = lan.Id('arg_' + n)
             type_id_list.append(lan.TypeId(arg_type, argn))
@@ -358,7 +389,8 @@ class Boilerplate(object):
             rval = argn
             if_then_list.append(lan.Assignment(lval, rval))
             try:
-                for m in array_id_to_dim_name[n]:
+
+                for m in sorted(array_id_to_dim_name[n]):
                     arg_type = ['size_t']
                     argm = lan.Id('arg_' + m)
                     lval = lan.Id(m)

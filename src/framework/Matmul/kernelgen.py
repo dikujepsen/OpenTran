@@ -32,7 +32,7 @@ class KernelGen(object):
         # Create base version and possible version with Local and
         # Register optimizations
         funcname = name + 'Base'
-        # ast = copy.deepcopy(ast)
+        ast = copy.deepcopy(ast)
         ss = snippetgen.SnippetGen(ast)
 
         ss.in_source_kernel(copy.deepcopy(ast), filename=fileprefix + name + '/' + funcname + '.cl',

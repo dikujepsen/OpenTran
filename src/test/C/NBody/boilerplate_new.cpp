@@ -5,10 +5,10 @@ cl_mem dev_ptrForces;
 cl_mem dev_ptrMas;
 cl_mem dev_ptrPos;
 
-float * hst_ptrMas;
-float * hst_ptrPos;
 float * hst_ptrForces;
+float * hst_ptrMas;
 size_t N;
+float * hst_ptrPos;
 
 size_t hst_ptrForces_mem_size;
 size_t hst_ptrMas_mem_size;
@@ -174,22 +174,22 @@ void ExecNBodyFor()
 }
 
 void RunOCLNBodyForKernel(
-	float * arg_Mas, size_t arg_hst_ptrMas_dim1, float * arg_Pos, 
-	size_t arg_hst_ptrPos_dim1, size_t arg_hst_ptrPos_dim2, float * arg_Forces, 
-	size_t arg_hst_ptrForces_dim1, size_t arg_hst_ptrForces_dim2, size_t arg_N
+	float * arg_Forces, size_t arg_hst_ptrForces_dim1, size_t arg_hst_ptrForces_dim2, 
+	float * arg_Mas, size_t arg_hst_ptrMas_dim1, size_t arg_N, 
+	float * arg_Pos, size_t arg_hst_ptrPos_dim1, size_t arg_hst_ptrPos_dim2
 	)
 {
   if (isFirstTime)
     {
-      hst_ptrMas = arg_Mas;
-      hst_ptrMas_dim1 = arg_hst_ptrMas_dim1;
-      hst_ptrPos = arg_Pos;
-      hst_ptrPos_dim1 = arg_hst_ptrPos_dim1;
-      hst_ptrPos_dim2 = arg_hst_ptrPos_dim2;
       hst_ptrForces = arg_Forces;
       hst_ptrForces_dim1 = arg_hst_ptrForces_dim1;
       hst_ptrForces_dim2 = arg_hst_ptrForces_dim2;
+      hst_ptrMas = arg_Mas;
+      hst_ptrMas_dim1 = arg_hst_ptrMas_dim1;
       N = arg_N;
+      hst_ptrPos = arg_Pos;
+      hst_ptrPos_dim1 = arg_hst_ptrPos_dim1;
+      hst_ptrPos_dim2 = arg_hst_ptrPos_dim2;
       StartUpGPU();
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;

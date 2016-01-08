@@ -5,12 +5,12 @@ cl_mem dev_ptrdist_matrix;
 cl_mem dev_ptrtest_patterns;
 cl_mem dev_ptrtrain_patterns;
 
-float * hst_ptrtrain_patterns;
-float * hst_ptrtest_patterns;
-float * hst_ptrdist_matrix;
 unsigned dim;
+float * hst_ptrdist_matrix;
 unsigned NTEST;
 unsigned NTRAIN;
+float * hst_ptrtest_patterns;
+float * hst_ptrtrain_patterns;
 float * hst_ptrtest_patterns_trans;
 
 size_t hst_ptrdist_matrix_mem_size;
@@ -163,26 +163,26 @@ void ExecKNearestFor()
 }
 
 void RunOCLKNearestForKernel(
-	unsigned arg_dim, float * arg_test_patterns, size_t arg_hst_ptrtest_patterns_dim1, 
-	size_t arg_hst_ptrtest_patterns_dim2, float * arg_dist_matrix, size_t arg_hst_ptrdist_matrix_dim1, 
-	size_t arg_hst_ptrdist_matrix_dim2, float * arg_train_patterns, size_t arg_hst_ptrtrain_patterns_dim1, 
-	size_t arg_hst_ptrtrain_patterns_dim2, unsigned arg_NTEST, unsigned arg_NTRAIN
+	unsigned arg_NTEST, unsigned arg_NTRAIN, unsigned arg_dim, 
+	float * arg_dist_matrix, size_t arg_hst_ptrdist_matrix_dim1, size_t arg_hst_ptrdist_matrix_dim2, 
+	float * arg_test_patterns, size_t arg_hst_ptrtest_patterns_dim1, size_t arg_hst_ptrtest_patterns_dim2, 
+	float * arg_train_patterns, size_t arg_hst_ptrtrain_patterns_dim1, size_t arg_hst_ptrtrain_patterns_dim2
 	)
 {
   if (isFirstTime)
     {
+      NTEST = arg_NTEST;
+      NTRAIN = arg_NTRAIN;
       dim = arg_dim;
-      hst_ptrtest_patterns = arg_test_patterns;
-      hst_ptrtest_patterns_dim1 = arg_hst_ptrtest_patterns_dim1;
-      hst_ptrtest_patterns_dim2 = arg_hst_ptrtest_patterns_dim2;
       hst_ptrdist_matrix = arg_dist_matrix;
       hst_ptrdist_matrix_dim1 = arg_hst_ptrdist_matrix_dim1;
       hst_ptrdist_matrix_dim2 = arg_hst_ptrdist_matrix_dim2;
+      hst_ptrtest_patterns = arg_test_patterns;
+      hst_ptrtest_patterns_dim1 = arg_hst_ptrtest_patterns_dim1;
+      hst_ptrtest_patterns_dim2 = arg_hst_ptrtest_patterns_dim2;
       hst_ptrtrain_patterns = arg_train_patterns;
       hst_ptrtrain_patterns_dim1 = arg_hst_ptrtrain_patterns_dim1;
       hst_ptrtrain_patterns_dim2 = arg_hst_ptrtrain_patterns_dim2;
-      NTEST = arg_NTEST;
-      NTRAIN = arg_NTRAIN;
       StartUpGPU();
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;

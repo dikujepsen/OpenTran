@@ -12,19 +12,19 @@ cl_mem dev_ptrp_a_i_x;
 cl_mem dev_ptrq_a_i_x;
 
 unsigned * hst_ptrD1Ks__ijb_dimsI;
-float * hst_ptrq_a_i_x;
-float * hst_ptrD3Ks__ijbgd_x;
-unsigned * hst_ptrD2Ks__ijbg_dimsI;
-unsigned * hst_ptrD3Ks__ijbgd_dimsI;
-float * hst_ptrp_a_i_x;
 float * hst_ptrD1Ks__ijb_x;
-float * hst_ptrK__ij_x;
+unsigned * hst_ptrD2Ks__ijbg_dimsI;
 float * hst_ptrD2Ks__ijbg_x;
+unsigned * hst_ptrD3Ks__ijbgd_dimsI;
+float * hst_ptrD3Ks__ijbgd_x;
 unsigned dim;
-float scaleweight2_x;
-float scales2_x;
+float * hst_ptrK__ij_x;
 unsigned Lp;
 unsigned Lq;
+float * hst_ptrp_a_i_x;
+float * hst_ptrq_a_i_x;
+float scales2_x;
+float scaleweight2_x;
 float * hst_ptrq_a_i_x_trans;
 
 size_t hst_ptrD1Ks__ijb_dimsI_mem_size;
@@ -354,44 +354,44 @@ void ExecGaussianDerivatesFor()
 }
 
 void RunOCLGaussianDerivatesForKernel(
-	unsigned arg_dim, unsigned * arg_D1Ks__ijb_dimsI, size_t arg_hst_ptrD1Ks__ijb_dimsI_dim1, 
-	float arg_scaleweight2_x, float * arg_D3Ks__ijbgd_x, size_t arg_hst_ptrD3Ks__ijbgd_x_dim1, 
-	unsigned * arg_D2Ks__ijbg_dimsI, size_t arg_hst_ptrD2Ks__ijbg_dimsI_dim1, unsigned * arg_D3Ks__ijbgd_dimsI, 
-	size_t arg_hst_ptrD3Ks__ijbgd_dimsI_dim1, float * arg_q_a_i_x, size_t arg_hst_ptrq_a_i_x_dim1, 
-	size_t arg_hst_ptrq_a_i_x_dim2, float arg_scales2_x, unsigned arg_Lp, 
-	unsigned arg_Lq, float * arg_K__ij_x, size_t arg_hst_ptrK__ij_x_dim1, 
-	size_t arg_hst_ptrK__ij_x_dim2, float * arg_D1Ks__ijb_x, size_t arg_hst_ptrD1Ks__ijb_x_dim1, 
+	unsigned * arg_D1Ks__ijb_dimsI, size_t arg_hst_ptrD1Ks__ijb_dimsI_dim1, float * arg_D1Ks__ijb_x, 
+	size_t arg_hst_ptrD1Ks__ijb_x_dim1, unsigned * arg_D2Ks__ijbg_dimsI, size_t arg_hst_ptrD2Ks__ijbg_dimsI_dim1, 
+	float * arg_D2Ks__ijbg_x, size_t arg_hst_ptrD2Ks__ijbg_x_dim1, unsigned * arg_D3Ks__ijbgd_dimsI, 
+	size_t arg_hst_ptrD3Ks__ijbgd_dimsI_dim1, float * arg_D3Ks__ijbgd_x, size_t arg_hst_ptrD3Ks__ijbgd_x_dim1, 
+	float * arg_K__ij_x, size_t arg_hst_ptrK__ij_x_dim1, size_t arg_hst_ptrK__ij_x_dim2, 
+	unsigned arg_Lp, unsigned arg_Lq, unsigned arg_dim, 
 	float * arg_p_a_i_x, size_t arg_hst_ptrp_a_i_x_dim1, size_t arg_hst_ptrp_a_i_x_dim2, 
-	float * arg_D2Ks__ijbg_x, size_t arg_hst_ptrD2Ks__ijbg_x_dim1)
+	float * arg_q_a_i_x, size_t arg_hst_ptrq_a_i_x_dim1, size_t arg_hst_ptrq_a_i_x_dim2, 
+	float arg_scales2_x, float arg_scaleweight2_x)
 {
   if (isFirstTime)
     {
-      dim = arg_dim;
       hst_ptrD1Ks__ijb_dimsI = arg_D1Ks__ijb_dimsI;
       hst_ptrD1Ks__ijb_dimsI_dim1 = arg_hst_ptrD1Ks__ijb_dimsI_dim1;
-      scaleweight2_x = arg_scaleweight2_x;
-      hst_ptrD3Ks__ijbgd_x = arg_D3Ks__ijbgd_x;
-      hst_ptrD3Ks__ijbgd_x_dim1 = arg_hst_ptrD3Ks__ijbgd_x_dim1;
+      hst_ptrD1Ks__ijb_x = arg_D1Ks__ijb_x;
+      hst_ptrD1Ks__ijb_x_dim1 = arg_hst_ptrD1Ks__ijb_x_dim1;
       hst_ptrD2Ks__ijbg_dimsI = arg_D2Ks__ijbg_dimsI;
       hst_ptrD2Ks__ijbg_dimsI_dim1 = arg_hst_ptrD2Ks__ijbg_dimsI_dim1;
+      hst_ptrD2Ks__ijbg_x = arg_D2Ks__ijbg_x;
+      hst_ptrD2Ks__ijbg_x_dim1 = arg_hst_ptrD2Ks__ijbg_x_dim1;
       hst_ptrD3Ks__ijbgd_dimsI = arg_D3Ks__ijbgd_dimsI;
       hst_ptrD3Ks__ijbgd_dimsI_dim1 = arg_hst_ptrD3Ks__ijbgd_dimsI_dim1;
+      hst_ptrD3Ks__ijbgd_x = arg_D3Ks__ijbgd_x;
+      hst_ptrD3Ks__ijbgd_x_dim1 = arg_hst_ptrD3Ks__ijbgd_x_dim1;
+      hst_ptrK__ij_x = arg_K__ij_x;
+      hst_ptrK__ij_x_dim1 = arg_hst_ptrK__ij_x_dim1;
+      hst_ptrK__ij_x_dim2 = arg_hst_ptrK__ij_x_dim2;
+      Lp = arg_Lp;
+      Lq = arg_Lq;
+      dim = arg_dim;
+      hst_ptrp_a_i_x = arg_p_a_i_x;
+      hst_ptrp_a_i_x_dim1 = arg_hst_ptrp_a_i_x_dim1;
+      hst_ptrp_a_i_x_dim2 = arg_hst_ptrp_a_i_x_dim2;
       hst_ptrq_a_i_x = arg_q_a_i_x;
       hst_ptrq_a_i_x_dim1 = arg_hst_ptrq_a_i_x_dim1;
       hst_ptrq_a_i_x_dim2 = arg_hst_ptrq_a_i_x_dim2;
       scales2_x = arg_scales2_x;
-      Lp = arg_Lp;
-      Lq = arg_Lq;
-      hst_ptrK__ij_x = arg_K__ij_x;
-      hst_ptrK__ij_x_dim1 = arg_hst_ptrK__ij_x_dim1;
-      hst_ptrK__ij_x_dim2 = arg_hst_ptrK__ij_x_dim2;
-      hst_ptrD1Ks__ijb_x = arg_D1Ks__ijb_x;
-      hst_ptrD1Ks__ijb_x_dim1 = arg_hst_ptrD1Ks__ijb_x_dim1;
-      hst_ptrp_a_i_x = arg_p_a_i_x;
-      hst_ptrp_a_i_x_dim1 = arg_hst_ptrp_a_i_x_dim1;
-      hst_ptrp_a_i_x_dim2 = arg_hst_ptrp_a_i_x_dim2;
-      hst_ptrD2Ks__ijbg_x = arg_D2Ks__ijbg_x;
-      hst_ptrD2Ks__ijbg_x_dim1 = arg_hst_ptrD2Ks__ijbg_x_dim1;
+      scaleweight2_x = arg_scaleweight2_x;
       StartUpGPU();
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;

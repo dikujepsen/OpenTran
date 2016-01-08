@@ -10,15 +10,15 @@ cl_mem dev_ptrlevel;
 cl_mem dev_ptrlevel_int;
 cl_mem dev_ptrresult;
 
-double * hst_ptrindex;
-double * hst_ptrlevel_int;
-double * hst_ptrlevel;
-double * hst_ptrlcl_q;
-double * hst_ptrresult;
-double * hst_ptrlcl_q_inv;
 double * hst_ptralpha;
-double * hst_ptrlambda;
 size_t dim;
+double * hst_ptrindex;
+double * hst_ptrlambda;
+double * hst_ptrlcl_q;
+double * hst_ptrlcl_q_inv;
+double * hst_ptrlevel;
+double * hst_ptrlevel_int;
+double * hst_ptrresult;
 size_t storagesize;
 double * hst_ptrindex_trans;
 double * hst_ptrlevel_int_trans;
@@ -287,38 +287,38 @@ void ExecLaplaceFor()
 }
 
 void RunOCLLaplaceForKernel(
-	size_t arg_dim, double * arg_level_int, size_t arg_hst_ptrlevel_int_dim1, 
-	size_t arg_hst_ptrlevel_int_dim2, double * arg_index, size_t arg_hst_ptrindex_dim1, 
-	size_t arg_hst_ptrindex_dim2, double * arg_lcl_q, size_t arg_hst_ptrlcl_q_dim1, 
+	double * arg_alpha, size_t arg_hst_ptralpha_dim1, size_t arg_dim, 
+	double * arg_index, size_t arg_hst_ptrindex_dim1, size_t arg_hst_ptrindex_dim2, 
+	double * arg_lambda, size_t arg_hst_ptrlambda_dim1, double * arg_lcl_q, 
+	size_t arg_hst_ptrlcl_q_dim1, double * arg_lcl_q_inv, size_t arg_hst_ptrlcl_q_inv_dim1, 
 	double * arg_level, size_t arg_hst_ptrlevel_dim1, size_t arg_hst_ptrlevel_dim2, 
-	double * arg_result, size_t arg_hst_ptrresult_dim1, double * arg_lcl_q_inv, 
-	size_t arg_hst_ptrlcl_q_inv_dim1, double * arg_alpha, size_t arg_hst_ptralpha_dim1, 
-	size_t arg_storagesize, double * arg_lambda, size_t arg_hst_ptrlambda_dim1
+	double * arg_level_int, size_t arg_hst_ptrlevel_int_dim1, size_t arg_hst_ptrlevel_int_dim2, 
+	double * arg_result, size_t arg_hst_ptrresult_dim1, size_t arg_storagesize
 	)
 {
   if (isFirstTime)
     {
+      hst_ptralpha = arg_alpha;
+      hst_ptralpha_dim1 = arg_hst_ptralpha_dim1;
       dim = arg_dim;
-      hst_ptrlevel_int = arg_level_int;
-      hst_ptrlevel_int_dim1 = arg_hst_ptrlevel_int_dim1;
-      hst_ptrlevel_int_dim2 = arg_hst_ptrlevel_int_dim2;
       hst_ptrindex = arg_index;
       hst_ptrindex_dim1 = arg_hst_ptrindex_dim1;
       hst_ptrindex_dim2 = arg_hst_ptrindex_dim2;
+      hst_ptrlambda = arg_lambda;
+      hst_ptrlambda_dim1 = arg_hst_ptrlambda_dim1;
       hst_ptrlcl_q = arg_lcl_q;
       hst_ptrlcl_q_dim1 = arg_hst_ptrlcl_q_dim1;
+      hst_ptrlcl_q_inv = arg_lcl_q_inv;
+      hst_ptrlcl_q_inv_dim1 = arg_hst_ptrlcl_q_inv_dim1;
       hst_ptrlevel = arg_level;
       hst_ptrlevel_dim1 = arg_hst_ptrlevel_dim1;
       hst_ptrlevel_dim2 = arg_hst_ptrlevel_dim2;
+      hst_ptrlevel_int = arg_level_int;
+      hst_ptrlevel_int_dim1 = arg_hst_ptrlevel_int_dim1;
+      hst_ptrlevel_int_dim2 = arg_hst_ptrlevel_int_dim2;
       hst_ptrresult = arg_result;
       hst_ptrresult_dim1 = arg_hst_ptrresult_dim1;
-      hst_ptrlcl_q_inv = arg_lcl_q_inv;
-      hst_ptrlcl_q_inv_dim1 = arg_hst_ptrlcl_q_inv_dim1;
-      hst_ptralpha = arg_alpha;
-      hst_ptralpha_dim1 = arg_hst_ptralpha_dim1;
       storagesize = arg_storagesize;
-      hst_ptrlambda = arg_lambda;
-      hst_ptrlambda_dim1 = arg_hst_ptrlambda_dim1;
       StartUpGPU();
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;

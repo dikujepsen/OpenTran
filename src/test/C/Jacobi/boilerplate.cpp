@@ -5,11 +5,11 @@ cl_mem dev_ptrB;
 cl_mem dev_ptrX1;
 cl_mem dev_ptrX2;
 
-float * hst_ptrX2;
 float * hst_ptrB;
-float * hst_ptrX1;
-unsigned wB;
 unsigned wA;
+unsigned wB;
+float * hst_ptrX1;
+float * hst_ptrX2;
 
 size_t hst_ptrB_mem_size;
 size_t hst_ptrX1_mem_size;
@@ -125,24 +125,24 @@ void ExecJacobiFor()
 }
 
 void RunOCLJacobiForKernel(
-	float * arg_X2, size_t arg_hst_ptrX2_dim1, size_t arg_hst_ptrX2_dim2, 
 	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
 	float * arg_X1, size_t arg_hst_ptrX1_dim1, size_t arg_hst_ptrX1_dim2, 
-	unsigned arg_wB, unsigned arg_wA)
+	float * arg_X2, size_t arg_hst_ptrX2_dim1, size_t arg_hst_ptrX2_dim2, 
+	unsigned arg_wA, unsigned arg_wB)
 {
   if (isFirstTime)
     {
-      hst_ptrX2 = arg_X2;
-      hst_ptrX2_dim1 = arg_hst_ptrX2_dim1;
-      hst_ptrX2_dim2 = arg_hst_ptrX2_dim2;
       hst_ptrB = arg_B;
       hst_ptrB_dim1 = arg_hst_ptrB_dim1;
       hst_ptrB_dim2 = arg_hst_ptrB_dim2;
       hst_ptrX1 = arg_X1;
       hst_ptrX1_dim1 = arg_hst_ptrX1_dim1;
       hst_ptrX1_dim2 = arg_hst_ptrX1_dim2;
-      wB = arg_wB;
+      hst_ptrX2 = arg_X2;
+      hst_ptrX2_dim1 = arg_hst_ptrX2_dim1;
+      hst_ptrX2_dim2 = arg_hst_ptrX2_dim2;
       wA = arg_wA;
+      wB = arg_wB;
       StartUpGPU();
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
