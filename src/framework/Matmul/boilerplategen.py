@@ -412,50 +412,44 @@ class CreateKernels(object):
         testast = copy.deepcopy(self.ast)
         newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
         self.file_ast.ext.append(newast)
+        self.IfThenElse = self.__create_base_kernel_func()
 
-        kernel_names = list()
-        kernel_names.append(funcname)
-
-        sg = snippetgen.SnippetGen(testast)
         pir = pireg.PlaceInReg(testast)
-        funcname = self.name + 'PlaceInReg'
         pir.place_in_reg3()
         if pir.perform_transformation:
-            newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
-            self.file_ast.ext.append(newast)
-            kernel_names.append(funcname)
+            funcname = self.name + 'PlaceInReg'
+
+            self.__create_optimezed_kernel(funcname, pir.PlaceInRegCond, testast)
 
         pil = piloc.PlaceInLocal(testast)
         pil.place_in_local()
 
         for arg in pil.PlaceInLocalArgs:
             funcname = self.name + 'PlaceInLocal'
-
             pil.local_memory3(arg)
+
+            self.__create_optimezed_kernel(funcname, pil.PlaceInLocalCond, testast)
+
+        if pil.PlaceInLocalCond and pir.PlaceInRegCond:
+            raise Exception(""" PlaceInLocal and PlaceInReg can't be performed at the same time """)
+
+    def __create_base_kernel_func(self):
+        name = self.name + 'Base'
+        func = ast_bb.EmptyFuncDecl(name, type=[])
+        return lan.Return(func)
+
+    def __create_optimezed_kernel_func(self, funcname, cond):
+            returnfunc1 = self.__create_base_kernel_func()
+            name = funcname
+            func = ast_bb.EmptyFuncDecl(name, type=[])
+            returnfunc2 = lan.Return(func)
+            ifthenelse = lan.IfThenElse(cond,
+                                        lan.Compound([returnfunc2]), lan.Compound([returnfunc1]))
+            return ifthenelse
+
+    def __create_optimezed_kernel(self, funcname, cond, testast):
             sg = snippetgen.SnippetGen(testast)
             newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
             self.file_ast.ext.append(newast)
-            kernel_names.append(funcname)
+            self.IfThenElse = self.__create_optimezed_kernel_func(funcname, cond)
 
-        my_cond = None
-        if pil.PlaceInLocalCond:
-            my_cond = pil.PlaceInLocalCond
-        if pir.PlaceInRegCond:
-            my_cond = pir.PlaceInRegCond
-
-        if my_cond:
-            name = kernel_names[0]
-            func = ast_bb.EmptyFuncDecl(name, type=[])
-            returnfunc1 = lan.Return(func)
-            name = kernel_names[1]
-            func = ast_bb.EmptyFuncDecl(name, type=[])
-            returnfunc2 = lan.Return(func)
-            ifthenelse = lan.IfThenElse(my_cond,
-                                        lan.Compound([returnfunc2]), lan.Compound([returnfunc1]))
-
-            self.IfThenElse = ifthenelse
-        else:
-            name = kernel_names[0]
-            func = ast_bb.EmptyFuncDecl(name, type=[])
-            returnfunc1 = lan.Return(func)
-            self.IfThenElse = returnfunc1
