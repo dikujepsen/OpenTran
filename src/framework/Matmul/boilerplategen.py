@@ -26,11 +26,11 @@ def print_dict_sorted(mydict):
 
 
 class Boilerplate(object):
-    def __init__(self, ast, name, kgen_strt, no_read_back):
-        self.kgen_strt = kgen_strt
+    def __init__(self, ast, name, no_read_back):
         self.ast = ast
         self.NoReadBack = no_read_back
         self.name = name
+        self.IfThenElse = None
 
     def generate_code(self):
 
@@ -120,46 +120,13 @@ class Boilerplate(object):
         file_ast.ext.append(lan.GroupCompound(misc))
 
         # Generate the GetKernelCode function
-
-        sg = snippetgen.SnippetGen(self.ast)
-        funcname = self.name + 'Base'
-        testast = copy.deepcopy(self.ast)
-        newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
-        file_ast.ext.append(newast)
-        # print newast
-
-        sg = snippetgen.SnippetGen(testast)
-        pir = pireg.PlaceInReg(testast)
-        funcname = self.name + 'PlaceInReg'
-        pir.place_in_reg3()
-        if pir.perform_transformation:
-            newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
-            file_ast.ext.append(newast)
-            # print newast
-
-        pil = piloc.PlaceInLocal(testast)
-        pil.place_in_local()
-
-        # print "pil.PlaceInLocalArgs", pil.PlaceInLocalArgs
-        for arg in pil.PlaceInLocalArgs:
-            funcname = self.name + 'PlaceInLocal'
-
-            pil.local_memory3(arg)
-            sg = snippetgen.SnippetGen(testast)
-            newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
-            file_ast.ext.append(newast)
-
-        # file_ast.ext.append(newast)
-        # print newast
-
-        # for optim in self.kgen_strt.KernelStringStream:
-        #     print optim['ast']
-        #     file_ast.ext.append(optim['ast'])
+        create_kernels = CreateKernels(self.name, self.ast, file_ast)
+        create_kernels.create_kernels()
 
         get_kernel_code = ast_bb.EmptyFuncDecl('GetKernelCode', type=['std::string'])
         get_kernel_stats = []
         get_kernel_code.compound.statements = get_kernel_stats
-        get_kernel_stats.append(self.kgen_strt.IfThenElse)
+        get_kernel_stats.append(create_kernels.IfThenElse)
         file_ast.ext.append(get_kernel_code)
 
         allocate_buffer = ast_bb.EmptyFuncDecl('AllocateBuffers')
@@ -406,9 +373,7 @@ class Boilerplate(object):
         arglist = lan.ArgList([])
         if_then_list.append(lan.FuncDecl(lan.Id('StartUpGPU'), arglist, lan.Compound([])))
         if_then_list.append(lan.FuncDecl(lan.Id('AllocateBuffers'), arglist, lan.Compound([])))
-        use_file = 'true'
-        if self.kgen_strt.KernelStringStream:
-            use_file = 'false'
+        use_file = 'false'
 
         if_then_list.append(lan.Id('cout << "$Defines " << KernelDefines << endl;'))
         arglist = lan.ArgList([lan.Constant(dev_func_id),
@@ -430,3 +395,67 @@ class Boilerplate(object):
         run_ocl_body.append(lan.Id('cout << "$Time " << timer.stop() << endl;'))
 
         return file_ast
+
+
+class CreateKernels(object):
+    def __init__(self, name, ast, file_ast):
+        self.name = name
+        self.ast = ast
+        self.file_ast = file_ast
+
+        # Output
+        self.IfThenElse = None
+
+    def create_kernels(self):
+        sg = snippetgen.SnippetGen(self.ast)
+        funcname = self.name + 'Base'
+        testast = copy.deepcopy(self.ast)
+        newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
+        self.file_ast.ext.append(newast)
+
+        kernel_names = list()
+        kernel_names.append(funcname)
+
+        sg = snippetgen.SnippetGen(testast)
+        pir = pireg.PlaceInReg(testast)
+        funcname = self.name + 'PlaceInReg'
+        pir.place_in_reg3()
+        if pir.perform_transformation:
+            newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
+            self.file_ast.ext.append(newast)
+            kernel_names.append(funcname)
+
+        pil = piloc.PlaceInLocal(testast)
+        pil.place_in_local()
+
+        for arg in pil.PlaceInLocalArgs:
+            funcname = self.name + 'PlaceInLocal'
+
+            pil.local_memory3(arg)
+            sg = snippetgen.SnippetGen(testast)
+            newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
+            self.file_ast.ext.append(newast)
+            kernel_names.append(funcname)
+
+        my_cond = None
+        if pil.PlaceInLocalCond:
+            my_cond = pil.PlaceInLocalCond
+        if pir.PlaceInRegCond:
+            my_cond = pir.PlaceInRegCond
+
+        if my_cond:
+            name = kernel_names[0]
+            func = ast_bb.EmptyFuncDecl(name, type=[])
+            returnfunc1 = lan.Return(func)
+            name = kernel_names[1]
+            func = ast_bb.EmptyFuncDecl(name, type=[])
+            returnfunc2 = lan.Return(func)
+            ifthenelse = lan.IfThenElse(my_cond,
+                                        lan.Compound([returnfunc2]), lan.Compound([returnfunc1]))
+
+            self.IfThenElse = ifthenelse
+        else:
+            name = kernel_names[0]
+            func = ast_bb.EmptyFuncDecl(name, type=[])
+            returnfunc1 = lan.Return(func)
+            self.IfThenElse = returnfunc1
