@@ -141,3 +141,17 @@ def get_local_swap(ast):
     local_swap = FindLocalSwap()
     local_swap.visit(ast)
     return local_swap.local_swap
+
+
+class FindProgramName(lan.NodeVisitor):
+    def __init__(self):
+        self.name = ""
+
+    def visit_ProgramName(self, node):
+        self.name = node.name
+
+
+def get_program_name(ast):
+    program_name = FindProgramName()
+    program_name.visit(ast)
+    return program_name.name

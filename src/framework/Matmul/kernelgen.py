@@ -4,7 +4,7 @@ import snippetgen
 import copy
 import place_in_reg as pireg
 import place_in_local as piloc
-
+import collect_id as ci
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)
@@ -18,8 +18,8 @@ def print_dict_sorted(mydict):
 
 
 class KernelGen(object):
-    def __init__(self, name, ast, fileprefix):
-        self.name = name
+    def __init__(self, ast, fileprefix):
+        self.name = ci.get_program_name(ast)
         self.ast = ast
         self.fileprefix = fileprefix
 
@@ -61,8 +61,8 @@ class KernelGen(object):
 
 
 class CreateKernels(KernelGen):
-    def __init__(self, name, ast, file_ast):
-        super(CreateKernels, self).__init__(name, ast, "dontcare")
+    def __init__(self, ast, file_ast):
+        super(CreateKernels, self).__init__(ast, "dontcate")
         self.file_ast = file_ast
 
         # Output

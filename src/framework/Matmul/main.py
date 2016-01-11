@@ -1,4 +1,3 @@
-import copy
 import ply.lex as lex
 import ply.yacc as yacc
 import boilerplategen
@@ -6,13 +5,10 @@ import cgen
 import define_arguments as darg
 import kernelgen
 import lan
-import place_in_local as local
-import place_in_reg as reg
 import rewriter
 import stencil
-import struct
 import transpose as tp
-import collect_loop as cl
+import collect_id as ci
 
 fileprefix = "../../test/C/"
 SetNoReadBack = True
@@ -58,6 +54,7 @@ def _create_baseform(name):
 
 def __get_ast_from_init(name):
     ast = __get_ast_from_file(name, name + 'For.cpp')
+    ast.ext.append(lan.ProgramName(name))
 
     rw = rewriter.Rewriter()
     rw.rewrite_array_ref(ast)
@@ -71,15 +68,16 @@ def __get_ast_from_base(name):
     return ast
 
 
-def gen_full_code(name, tempast3):
-    kgen = kernelgen.KernelGen(name, tempast3, fileprefix)
+def gen_full_code(ast):
+    kgen = kernelgen.KernelGen(ast, fileprefix)
     cprint = cgen.CGenerator()
 
     kgen.generate_kernels()
 
-    boilerplate = boilerplategen.Boilerplate(tempast3, name, SetNoReadBack)
+    boilerplate = boilerplategen.Boilerplate(ast, SetNoReadBack)
     boilerast = boilerplate.generate_code()
 
+    name = ci.get_program_name(ast)
     cprint.write_ast_to_file(boilerast, filename=fileprefix + name + '/' + 'boilerplate.cpp')
 
 
@@ -90,13 +88,12 @@ def matmul():
     else:
         ast = __get_ast_from_base(name)
 
-    __optimize(ast, name)
+    __optimize(ast)
 
 
-def __optimize(ast, name, par_dim=None):
-
+def __optimize(ast, par_dim=None):
     ast.ext.append(lan.ParDim(par_dim))
-
+    name = ci.get_program_name(ast)
     if DoOptimizations:
         __main_transpose(ast)
         __main_placeinreg(ast)
@@ -105,7 +102,7 @@ def __optimize(ast, name, par_dim=None):
         __main_placeinlocal(ast)
         __main_definearg(ast)
 
-    gen_full_code(name, ast)
+    gen_full_code(ast)
 
 
 def knearest():
@@ -114,7 +111,7 @@ def knearest():
         ast = __get_ast_from_init(name)
     else:
         ast = __get_ast_from_base(name)
-    __optimize(ast, name, par_dim=1)
+    __optimize(ast, par_dim=1)
 
 
 def jacobi():
@@ -124,7 +121,7 @@ def jacobi():
     else:
         ast = __get_ast_from_base(name)
 
-    __optimize(ast, name)
+    __optimize(ast)
 
 
 def nbody():
@@ -134,7 +131,7 @@ def nbody():
     else:
         ast = __get_ast_from_base(name)
 
-    __optimize(ast, name)
+    __optimize(ast)
 
 
 def laplace():
@@ -143,7 +140,7 @@ def laplace():
         ast = __get_ast_from_init(name)
     else:
         ast = __get_ast_from_base(name)
-    __optimize(ast, name, par_dim=1)
+    __optimize(ast, par_dim=1)
 
 
 def gaussian():
@@ -152,29 +149,29 @@ def gaussian():
         ast = __get_ast_from_init(name)
     else:
         ast = __get_ast_from_base(name)
-    __optimize(ast, name)
+    __optimize(ast)
 
 
-def __main_transpose(tempast3):
-    tps = tp.Transpose(tempast3)
+def __main_transpose(ast):
+    tps = tp.Transpose(ast)
     tps.transpose()
 
 
-def __main_definearg(tempast3):
-    dargs = darg.DefineArguments(tempast3)
+def __main_definearg(ast):
+    dargs = darg.DefineArguments(ast)
     dargs.define_arguments()
 
 
-def __main_placeinreg(tempast3):
+def __main_placeinreg(ast):
     pass
 
 
-def __main_placeinlocal(tempast3):
+def __main_placeinlocal(ast):
     pass
 
 
-def __main_stencil(tempast3):
-    sten = stencil.Stencil(tempast3)
+def __main_stencil(ast):
+    sten = stencil.Stencil(ast)
     sten.stencil(['X1'], west=1, north=1, east=1, south=1, middle=0)
 
 

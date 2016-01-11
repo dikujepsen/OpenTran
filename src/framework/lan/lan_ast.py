@@ -521,3 +521,17 @@ class ParDim(Node):
         return tuple([])
 
     attr_names = ('par_dim',)
+
+
+class ProgramName(Node):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return "ProgramName(%r)" % self.name
+
+    def children(self):
+        return tuple([])
+
+    attr_names = ('name',)
+

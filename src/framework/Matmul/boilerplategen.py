@@ -27,10 +27,9 @@ def print_dict_sorted(mydict):
 
 
 class Boilerplate(object):
-    def __init__(self, ast, name, no_read_back):
+    def __init__(self, ast, no_read_back):
         self.ast = ast
         self.NoReadBack = no_read_back
-        self.name = name
         self.file_ast = lan.FileAST([])
 
     def generate_code(self):
@@ -121,7 +120,7 @@ class Boilerplate(object):
         self.file_ast.ext.append(lan.GroupCompound(misc))
 
         # Generate the GetKernelCode function
-        create_kernels = kernelgen.CreateKernels(self.name, self.ast, self.file_ast)
+        create_kernels = kernelgen.CreateKernels(self.ast, self.file_ast)
         create_kernels.create_get_kernel_code()
 
         allocate_buffer = ast_bb.EmptyFuncDecl('AllocateBuffers')
