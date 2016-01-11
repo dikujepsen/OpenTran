@@ -40,8 +40,7 @@ class Boilerplate(object):
 
         self.file_ast = lan.FileAST([])
 
-        self.file_ast.ext.append(lan.Id('#include \"../../../utils/StartUtil.cpp\"'))
-        self.file_ast.ext.append(lan.Id('using namespace std;'))
+        self.__add_util_includes()
 
         kernel_name = cd.get_kernel_name(self.ast)
         kernel_id = lan.Id(kernel_name)
@@ -389,5 +388,9 @@ class Boilerplate(object):
         run_ocl_body.append(lan.Id('cout << "$Time " << timer.stop() << endl;'))
 
         return self.file_ast
+
+    def __add_util_includes(self):
+        self.file_ast.ext.append(lan.RawCpp('#include \"../../../utils/StartUtil.cpp\"'))
+        self.file_ast.ext.append(lan.RawCpp('using namespace std;'))
 
 

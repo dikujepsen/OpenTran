@@ -535,3 +535,15 @@ class ProgramName(Node):
 
     attr_names = ('name',)
 
+
+class RawCpp(Node):
+    def __init__(self, code):
+        self.code = code
+
+    def __repr__(self):
+        return "RawCpp(%r)" % self.code
+
+    def children(self):
+        return tuple([])
+
+    attr_names = ('code',)

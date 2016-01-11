@@ -292,3 +292,6 @@ class CGenerator(object):
     def visit_Return(self, n):
         expr = self.visit(n.expr)
         return 'return ' + expr
+
+    def visit_RawCpp(self, n):
+        return n.code

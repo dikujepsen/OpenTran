@@ -339,4 +339,8 @@ class SSGenerator(object):
         else:
             return str(n.value)
 
+    def visit_RawCpp(self, n):
+        newline = self.newline
+        start = self.start
+        return start + n.code + newline
 
