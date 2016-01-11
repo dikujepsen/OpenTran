@@ -19,21 +19,21 @@ def print_dict_sorted(mydict):
 
 class KernelGen(object):
     def __init__(self, ast, fileprefix):
-        self.name = ci.get_program_name(ast)
         self.ast = ast
         self.fileprefix = fileprefix
 
     def generate_kernels(self):
         # Create base version and possible version with Local and
         # Register optimizations
-        funcname = self.name + 'Base'
+        name = ci.get_program_name(self.ast)
+        funcname = name + 'Base'
         ast = copy.deepcopy(self.ast)
         self._create_base_kernel(funcname, ast)
 
         pir = pireg.PlaceInReg(ast)
         pir.place_in_reg3()
         if pir.perform_transformation:
-            funcname = self.name + 'PlaceInReg'
+            funcname = name + 'PlaceInReg'
             self._create_optimized_kernel(funcname, ast, pir.PlaceInRegCond)
 
         pil = piloc.PlaceInLocal(ast)
@@ -42,12 +42,13 @@ class KernelGen(object):
             raise Exception("""GenerateKernels: Currently unimplemented to perform
                                 PlaceInReg and PlaceInLocal together from the analysis""")
         for arg in pil.PlaceInLocalArgs:
-            funcname = self.name + 'PlaceInLocal'
+            funcname = name + 'PlaceInLocal'
             pil.local_memory3(arg)
             self._create_optimized_kernel(funcname, ast, pil.PlaceInLocalCond)
 
     def __get_file_name(self, funcname):
-        return self.fileprefix + self.name + '/' + funcname + '.cl'
+        name = ci.get_program_name(self.ast)
+        return self.fileprefix + name + '/' + funcname + '.cl'
 
     def _create_base_kernel(self, funcname, testast):
         ss = snippetgen.SnippetGen(testast)
@@ -84,7 +85,8 @@ class CreateKernels(KernelGen):
         self.IfThenElse = self.__create_base_kernel_func()
 
     def __create_base_kernel_func(self):
-        name = self.name + 'Base'
+        program_name = ci.get_program_name(self.ast)
+        name = program_name + 'Base'
         func = ast_bb.EmptyFuncDecl(name, type=[])
         return lan.Return(func)
 
