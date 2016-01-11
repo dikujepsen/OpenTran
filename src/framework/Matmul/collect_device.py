@@ -82,11 +82,8 @@ class FindFunction(lan.NodeVisitor):
 
 
 def _get_kernel_base_name(ast):
-    find_function = FindFunction()
-    find_function.visit(ast)
-    dev_func_type_id = find_function.typeid
-    kernel_name = dev_func_type_id.name.name
-    return kernel_name
+    program_name = ci.get_program_name(ast)
+    return program_name + 'For'
 
 
 def get_kernel_name(ast):
@@ -102,7 +99,7 @@ def get_work_size(ast):
     return work_size
 
 
-def get_dev_id(ast):
+def get_dev_ids(ast):
     array_ids = ca.get_array_ids(ast)
     dev_ids = dict()
     for n in array_ids:

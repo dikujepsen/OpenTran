@@ -43,7 +43,7 @@ def get_mem_names(ast):
     return host_array_data.Mem
 
 
-def gen_host_ids(ast):
+def get_host_ids(ast):
     host_array_data = GenHostArrayData()
     host_array_data.collect(ast)
     return host_array_data.HstId

@@ -356,8 +356,8 @@ class FuncDecl(Node):
         self.coord = coord
 
     def __repr__(self):
-        return "FuncDecl(%r %r %r)" % (self.typeid, \
-                                       self.arglist, \
+        return "FuncDecl(%r %r %r)" % (self.typeid,
+                                       self.arglist,
                                        self.compound)
 
     def children(self):
@@ -547,3 +547,16 @@ class RawCpp(Node):
         return tuple([])
 
     attr_names = ('code',)
+
+
+class Type(Node):
+    def __init__(self, type):
+        self.type = type
+
+    def __repr__(self):
+        return "Type(%r)" % self.type
+
+    def children(self):
+        return tuple([])
+
+    attr_names = ('type',)

@@ -42,11 +42,13 @@ class CGenerator(object):
     def simple_node(self, n):
         """ Returns True for nodes that are "simple"
         """
-        return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef))
+        return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef, lan.FuncDecl))
 
     def parenthesize_if(self, n, condition):
         """ Visits 'n' and returns its string representation, parenthesized
             if the condition function applied to the node returns True.
+            :param n:
+            :param condition:
         """
         s = self.visit(n)
         if condition(n):
@@ -295,3 +297,6 @@ class CGenerator(object):
 
     def visit_RawCpp(self, n):
         return n.code
+
+    def visit_Type(self, n):
+        return n.type

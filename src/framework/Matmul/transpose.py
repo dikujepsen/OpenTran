@@ -14,7 +14,7 @@ class Transpose(object):
             :param ast:
         """
         transpose_arrays = self.find_transposable_arrays()
-        hst_id = cg.gen_host_ids(self.ast)
+        hst_id = cg.get_host_ids(self.ast)
         types = ci.get_types(self.ast)
         for n in transpose_arrays:
             hst_name = hst_id[n]
@@ -58,7 +58,7 @@ class Transpose(object):
 
     def create_transposition_func(self, arr_name):
         my_transposition = []
-        hst_id = cg.gen_host_ids(self.ast)
+        hst_id = cg.get_host_ids(self.ast)
         array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
         types = ci.get_types(self.ast)
         mem_names = cg.get_mem_names(self.ast)
