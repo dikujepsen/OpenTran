@@ -12,6 +12,7 @@ import snippetgen
 import stringstream
 import place_in_local as piloc
 import place_in_reg as pireg
+import kernelgen
 
 
 def print_dict_sorted(mydict):
@@ -30,7 +31,7 @@ class Boilerplate(object):
         self.ast = ast
         self.NoReadBack = no_read_back
         self.name = name
-        self.IfThenElse = None
+        self.file_ast = lan.FileAST([])
 
     def generate_code(self):
 
@@ -38,15 +39,15 @@ class Boilerplate(object):
         array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
         dict_n_to_dim_names = array_id_to_dim_name
 
-        file_ast = lan.FileAST([])
+        self.file_ast = lan.FileAST([])
 
-        file_ast.ext.append(lan.Id('#include \"../../../utils/StartUtil.cpp\"'))
-        file_ast.ext.append(lan.Id('using namespace std;'))
+        self.file_ast.ext.append(lan.Id('#include \"../../../utils/StartUtil.cpp\"'))
+        self.file_ast.ext.append(lan.Id('using namespace std;'))
 
         kernel_name = cd.get_kernel_name(self.ast)
         kernel_id = lan.Id(kernel_name)
         kernel_type_id = lan.TypeId(['cl_kernel'], kernel_id, 0)
-        file_ast.ext.append(kernel_type_id)
+        self.file_ast.ext.append(kernel_type_id)
 
         list_dev_buffers = []
 
@@ -63,7 +64,7 @@ class Boilerplate(object):
         dict_n_to_dev_ptr = dev_ids
         list_dev_buffers = lan.GroupCompound(list_dev_buffers)
 
-        file_ast.ext.append(list_dev_buffers)
+        self.file_ast.ext.append(list_dev_buffers)
 
         dev_arg_list = cd.get_devices_arg_list(self.ast)
         types = ci.get_types(self.ast)
@@ -88,7 +89,7 @@ class Boilerplate(object):
         dict_n_to_hst_ptr = my_host_id
         dict_type_host_ptrs = copy.deepcopy(types)
         list_host_ptrs = lan.GroupCompound(list_host_ptrs)
-        file_ast.ext.append(list_host_ptrs)
+        self.file_ast.ext.append(list_host_ptrs)
 
         list_mem_size = []
         list_dim_size = []
@@ -103,8 +104,8 @@ class Boilerplate(object):
             for dimName in array_id_to_dim_name[n]:
                 list_dim_size.append(lan.TypeId(['size_t'], lan.Id(dimName)))
 
-        file_ast.ext.append(lan.GroupCompound(list_mem_size))
-        file_ast.ext.append(lan.GroupCompound(list_dim_size))
+        self.file_ast.ext.append(lan.GroupCompound(list_mem_size))
+        self.file_ast.ext.append(lan.GroupCompound(list_dim_size))
         misc = []
         lval = lan.TypeId(['size_t'], lan.Id('isFirstTime'))
         rval = lan.Constant(1)
@@ -117,20 +118,14 @@ class Boilerplate(object):
         lval = lan.TypeId(['Stopwatch'], lan.Id('timer'))
         misc.append(lval)
 
-        file_ast.ext.append(lan.GroupCompound(misc))
+        self.file_ast.ext.append(lan.GroupCompound(misc))
 
         # Generate the GetKernelCode function
-        create_kernels = CreateKernels(self.name, self.ast, file_ast)
-        create_kernels.create_kernels()
-
-        get_kernel_code = ast_bb.EmptyFuncDecl('GetKernelCode', type=['std::string'])
-        get_kernel_stats = []
-        get_kernel_code.compound.statements = get_kernel_stats
-        get_kernel_stats.append(create_kernels.IfThenElse)
-        file_ast.ext.append(get_kernel_code)
+        create_kernels = kernelgen.CreateKernels(self.name, self.ast, self.file_ast)
+        create_kernels.create_get_kernel_code()
 
         allocate_buffer = ast_bb.EmptyFuncDecl('AllocateBuffers')
-        file_ast.ext.append(allocate_buffer)
+        self.file_ast.ext.append(allocate_buffer)
 
         list_set_mem_size = []
         for entry in sorted(array_ids):
@@ -197,7 +192,7 @@ class Boilerplate(object):
         dev_func_id = cd.get_dev_func_id(self.ast)
         set_arguments_kernel = ast_bb.EmptyFuncDecl('SetArguments' + dev_func_id)
 
-        file_ast.ext.append(set_arguments_kernel)
+        self.file_ast.ext.append(set_arguments_kernel)
         arg_body = set_arguments_kernel.compound.statements
         arg_body.append(cl_suc)
         cnt_name = lan.Id('counter')
@@ -247,7 +242,7 @@ class Boilerplate(object):
         arg_body.append(err_check)
 
         exec_kernel = ast_bb.EmptyFuncDecl('Exec' + dev_func_id)
-        file_ast.ext.append(exec_kernel)
+        self.file_ast.ext.append(exec_kernel)
         exec_body = exec_kernel.compound.statements
         exec_body.append(cl_suc)
         event_name = lan.Id('GPUExecution')
@@ -335,7 +330,7 @@ class Boilerplate(object):
             exec_body.append(err_check)
 
         run_ocl = ast_bb.EmptyFuncDecl('RunOCL' + kernel_name)
-        file_ast.ext.append(run_ocl)
+        self.file_ast.ext.append(run_ocl)
         run_ocl_body = run_ocl.compound.statements
         non_array_ids = ci.get_non_array_ids(self.ast)
         array_ids = ca.get_array_ids(self.ast)
@@ -394,62 +389,6 @@ class Boilerplate(object):
         run_ocl_body.append(lan.FuncDecl(lan.Id('Exec' + dev_func_id), arglist, lan.Compound([])))
         run_ocl_body.append(lan.Id('cout << "$Time " << timer.stop() << endl;'))
 
-        return file_ast
+        return self.file_ast
 
-
-class CreateKernels(object):
-    def __init__(self, name, ast, file_ast):
-        self.name = name
-        self.ast = ast
-        self.file_ast = file_ast
-
-        # Output
-        self.IfThenElse = None
-
-    def create_kernels(self):
-        sg = snippetgen.SnippetGen(self.ast)
-        funcname = self.name + 'Base'
-        testast = copy.deepcopy(self.ast)
-        newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
-        self.file_ast.ext.append(newast)
-        self.IfThenElse = self.__create_base_kernel_func()
-
-        pir = pireg.PlaceInReg(testast)
-        pir.place_in_reg3()
-        if pir.perform_transformation:
-            funcname = self.name + 'PlaceInReg'
-
-            self.__create_optimezed_kernel(funcname, pir.PlaceInRegCond, testast)
-
-        pil = piloc.PlaceInLocal(testast)
-        pil.place_in_local()
-
-        for arg in pil.PlaceInLocalArgs:
-            funcname = self.name + 'PlaceInLocal'
-            pil.local_memory3(arg)
-
-            self.__create_optimezed_kernel(funcname, pil.PlaceInLocalCond, testast)
-
-        if pil.PlaceInLocalCond and pir.PlaceInRegCond:
-            raise Exception(""" PlaceInLocal and PlaceInReg can't be performed at the same time """)
-
-    def __create_base_kernel_func(self):
-        name = self.name + 'Base'
-        func = ast_bb.EmptyFuncDecl(name, type=[])
-        return lan.Return(func)
-
-    def __create_optimezed_kernel_func(self, funcname, cond):
-            returnfunc1 = self.__create_base_kernel_func()
-            name = funcname
-            func = ast_bb.EmptyFuncDecl(name, type=[])
-            returnfunc2 = lan.Return(func)
-            ifthenelse = lan.IfThenElse(cond,
-                                        lan.Compound([returnfunc2]), lan.Compound([returnfunc1]))
-            return ifthenelse
-
-    def __create_optimezed_kernel(self, funcname, cond, testast):
-            sg = snippetgen.SnippetGen(testast)
-            newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
-            self.file_ast.ext.append(newast)
-            self.IfThenElse = self.__create_optimezed_kernel_func(funcname, cond)
 

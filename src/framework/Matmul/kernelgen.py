@@ -18,26 +18,23 @@ def print_dict_sorted(mydict):
 
 
 class KernelGen(object):
-    def __init__(self):
-        pass
-        # Output
+    def __init__(self, name, ast, fileprefix):
+        self.name = name
+        self.ast = ast
+        self.fileprefix = fileprefix
 
-    def generate_kernels(self, ast, name, fileprefix):
+    def generate_kernels(self):
         # Create base version and possible version with Local and
         # Register optimizations
-        funcname = name + 'Base'
-        ast = copy.deepcopy(ast)
-        ss = snippetgen.SnippetGen(ast)
-
-        ss.in_source_kernel(copy.deepcopy(ast), filename=fileprefix + name + '/' + funcname + '.cl',
-                            kernelstringname=funcname)
+        funcname = self.name + 'Base'
+        ast = copy.deepcopy(self.ast)
+        self._create_base_kernel(funcname, ast)
 
         pir = pireg.PlaceInReg(ast)
-        funcname = name + 'PlaceInReg'
         pir.place_in_reg3()
         if pir.perform_transformation:
-            ss.in_source_kernel(copy.deepcopy(ast), filename=fileprefix + name + '/' + funcname + '.cl',
-                                kernelstringname=funcname)
+            funcname = self.name + 'PlaceInReg'
+            self._create_optimized_kernel(funcname, ast, pir.PlaceInRegCond)
 
         pil = piloc.PlaceInLocal(ast)
         pil.place_in_local()
@@ -45,8 +42,64 @@ class KernelGen(object):
             raise Exception("""GenerateKernels: Currently unimplemented to perform
                                 PlaceInReg and PlaceInLocal together from the analysis""")
         for arg in pil.PlaceInLocalArgs:
-            funcname = name + 'PlaceInLocal'
-
+            funcname = self.name + 'PlaceInLocal'
             pil.local_memory3(arg)
-            ss.in_source_kernel(copy.deepcopy(ast), filename=fileprefix + name + '/' + funcname + '.cl',
-                                kernelstringname=funcname, cond=pil.PlaceInLocalCond)
+            self._create_optimized_kernel(funcname, ast, pil.PlaceInLocalCond)
+
+    def __get_file_name(self, funcname):
+        return self.fileprefix + self.name + '/' + funcname + '.cl'
+
+    def _create_base_kernel(self, funcname, testast):
+        ss = snippetgen.SnippetGen(testast)
+        ss.in_source_kernel(copy.deepcopy(testast), filename=self.__get_file_name(funcname),
+                            kernelstringname=funcname)
+
+    def _create_optimized_kernel(self, funcname, testast, cond):
+        ss = snippetgen.SnippetGen(testast)
+        ss.in_source_kernel(copy.deepcopy(testast), filename=self.__get_file_name(funcname),
+                            kernelstringname=funcname)
+
+
+class CreateKernels(KernelGen):
+    def __init__(self, name, ast, file_ast):
+        super(CreateKernels, self).__init__(name, ast, "dontcare")
+        self.file_ast = file_ast
+
+        # Output
+        self.IfThenElse = None
+
+    def create_get_kernel_code(self):
+
+        self.generate_kernels()
+
+        get_kernel_code = ast_bb.EmptyFuncDecl('GetKernelCode', type=['std::string'])
+        get_kernel_stats = [self.IfThenElse]
+        get_kernel_code.compound.statements = get_kernel_stats
+        self.file_ast.ext.append(get_kernel_code)
+
+    def _create_base_kernel(self, funcname, testast):
+        sg = snippetgen.SnippetGen(self.ast)
+        newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
+        self.file_ast.ext.append(newast)
+        self.IfThenElse = self.__create_base_kernel_func()
+
+    def __create_base_kernel_func(self):
+        name = self.name + 'Base'
+        func = ast_bb.EmptyFuncDecl(name, type=[])
+        return lan.Return(func)
+
+    def __create_optimized_kernel_func(self, funcname, cond):
+        returnfunc1 = self.__create_base_kernel_func()
+        name = funcname
+        func = ast_bb.EmptyFuncDecl(name, type=[])
+        returnfunc2 = lan.Return(func)
+        ifthenelse = lan.IfThenElse(cond,
+                                    lan.Compound([returnfunc2]), lan.Compound([returnfunc1]))
+        return ifthenelse
+
+    def _create_optimized_kernel(self, funcname, testast, cond):
+
+        sg = snippetgen.SnippetGen(testast)
+        newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
+        self.file_ast.ext.append(newast)
+        self.IfThenElse = self.__create_optimized_kernel_func(funcname, cond)

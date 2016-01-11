@@ -72,10 +72,10 @@ def __get_ast_from_base(name):
 
 
 def gen_full_code(name, tempast3):
-    kgen = kernelgen.KernelGen()
+    kgen = kernelgen.KernelGen(name, tempast3, fileprefix)
     cprint = cgen.CGenerator()
 
-    kgen.generate_kernels(tempast3, name, fileprefix)
+    kgen.generate_kernels()
 
     boilerplate = boilerplategen.Boilerplate(tempast3, name, SetNoReadBack)
     boilerast = boilerplate.generate_code()

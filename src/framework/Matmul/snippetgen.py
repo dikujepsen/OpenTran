@@ -33,14 +33,10 @@ class SnippetGen(object):
         ssprint.create_kernel_string_stream(ast, kernelstringname)
         return ssprint.newast
 
-    def in_source_kernel(self, ast, filename, kernelstringname, cond=lan.Id('true')):
+    def in_source_kernel(self, ast, filename, kernelstringname):
         newast = self.generate_kernel_ss(ast, kernelstringname)
         cprint = cgen.CGenerator()
         cprint.write_ast_to_file(newast, filename=filename)
-
-        self.KernelStringStream.append({'name': kernelstringname,
-                                        'ast': newast,
-                                        'cond': cond})
 
     def rewrite_to_device_c_release(self, ast):
         arglist = self._create_arg_list()
