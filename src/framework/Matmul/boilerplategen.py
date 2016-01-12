@@ -53,68 +53,15 @@ class Boilerplate(object):
         # Generate the GetKernelCode function
         create_kernels = kernelgen.CreateKernels(self.ast, self.file_ast)
         create_kernels.create_get_kernel_code()
-
-        allocate_buffer = ast_bb.EmptyFuncDecl('AllocateBuffers')
-        self.file_ast.ext.append(allocate_buffer)
-
-        self.__set_mem_sizes(allocate_buffer)
-
-        self.__set_transpose_arrays(allocate_buffer)
-
-        allocate_buffer.compound.statements.append(lan.GroupCompound([lan.Comment('// Constant Memory')]))
-
-        define_compound = define_arguments.setdefine(self.ast)
-        allocate_buffer.compound.statements.append(define_compound)
-
-        self.__add_create_device_buffers(allocate_buffer)
+        self.__add_buffer_allocation_function()
 
         dev_func_id = cd.get_dev_func_id(self.ast)
         set_arguments_kernel = ast_bb.EmptyFuncDecl('SetArguments' + dev_func_id)
-
         self.file_ast.ext.append(set_arguments_kernel)
         arg_body = set_arguments_kernel.compound.statements
-        arg_body.append(self.__cl_success())
-        cnt_name = lan.Id('counter')
-        lval = lan.TypeId(['int'], cnt_name)
-        rval = lan.Constant(0)
-        arg_body.append(lan.Assignment(lval, rval))
+        self.__set_arg_misc(arg_body)
 
-        kernel_args = cg.get_kernel_args(self.ast)
-        # clSetKernelArg for Arrays
-        kernel_id = self.__get_kernel_id()
-        types = ci.get_types(self.ast)
-        err_name = self.__err_name
-        dict_n_to_dev_ptr = cd.get_dev_ids(self.ast)
-        name_swap = ca.get_host_array_name_swap(self.ast)
-        for n in sorted(kernel_args):
-            lval = lan.Id(err_name)
-            op = '|='
-            arg_type = types[n]
-            if len(arg_type) == 2:
-                arglist = lan.ArgList([kernel_id,
-                                       lan.Increment(cnt_name, '++'),
-                                       lan.Id('sizeof(cl_mem)'),
-                                       lan.Id('(void *) &' + dict_n_to_dev_ptr[n])])
-                rval = lan.FuncDecl(lan.Id('clSetKernelArg'), arglist, lan.Compound([]))
-            else:
-                try:
-                    n = name_swap[n]
-                except KeyError:
-                    pass
-                cl_type = arg_type[0]
-                if cl_type == 'size_t':
-                    cl_type = 'unsigned'
-                arglist = lan.ArgList([kernel_id,
-                                       lan.Increment(cnt_name, '++'),
-                                       lan.Id('sizeof(' + cl_type + ')'),
-                                       lan.Id('(void *) &' + n)])
-                rval = lan.FuncDecl(lan.Id('clSetKernelArg'), arglist, lan.Compound([]))
-            arg_body.append(lan.Assignment(lval, rval, op))
-
-        arglist = lan.ArgList([lan.Id(err_name), lan.Constant('clSetKernelArg')])
-        err_id = lan.Id('oclCheckErr')
-        err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
-        arg_body.append(err_check)
+        self.__set_kernel_args(arg_body)
 
         exec_kernel = ast_bb.EmptyFuncDecl('Exec' + dev_func_id)
         self.file_ast.ext.append(exec_kernel)
@@ -148,7 +95,7 @@ class Boilerplate(object):
             exec_body.append(lan.Assignment(lval, rval))
 
         par_dim = cl.get_par_dim(self.ast)
-        lval = lan.Id(err_name)
+        lval = lan.Id(self.__err_name)
         kernel_name = cd.get_kernel_name(self.ast)
         arglist = lan.ArgList([lan.Id('command_queue'),
                                lan.Id(kernel_name),
@@ -161,31 +108,31 @@ class Boilerplate(object):
         rval = lan.FuncDecl(lan.Id('clEnqueueNDRangeKernel'), arglist, lan.Compound([]))
         exec_body.append(lan.Assignment(lval, rval))
 
-        arglist = lan.ArgList([lan.Id(err_name), lan.Constant('clEnqueueNDRangeKernel')])
+        err_id = lan.Id('oclCheckErr')
+        arglist = lan.ArgList([lan.Id(self.__err_name), lan.Constant('clEnqueueNDRangeKernel')])
         err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
         exec_body.append(err_check)
 
         arglist = lan.ArgList([lan.Id('command_queue')])
         finish = lan.FuncDecl(lan.Id('clFinish'), arglist, lan.Compound([]))
-        exec_body.append(lan.Assignment(lan.Id(err_name), finish))
+        exec_body.append(lan.Assignment(lan.Id(self.__err_name), finish))
 
-        arglist = lan.ArgList([lan.Id(err_name), lan.Constant('clFinish')])
+        arglist = lan.ArgList([lan.Id(self.__err_name), lan.Constant('clFinish')])
         err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
         exec_body.append(err_check)
         dev_ids = cd.get_dev_ids(self.ast)
         my_host_id = cg.get_host_ids(self.ast)
-        name_swap = ca.get_host_array_name_swap(self.ast)
+        name_swap = BPNameSwap(self.ast)
+
         write_only = ca.get_write_only(self.ast)
         mem_names = cg.get_mem_names(self.ast)
 
         if not self.NoReadBack:
             for n in sorted(write_only):
-                lval = lan.Id(err_name)
+                lval = lan.Id(self.__err_name)
                 hst_nname = my_host_id[n]
-                try:
-                    hst_nname = name_swap[hst_nname]
-                except KeyError:
-                    pass
+                hst_nname = name_swap.try_swap(hst_nname)
+
                 arglist = lan.ArgList([lan.Id('command_queue'),
                                        lan.Id(dev_ids[n]),
                                        lan.Id('CL_TRUE'),
@@ -197,16 +144,16 @@ class Boilerplate(object):
                 rval = lan.FuncDecl(lan.Id('clEnqueueReadBuffer'), arglist, lan.Compound([]))
                 exec_body.append(lan.Assignment(lval, rval))
 
-                arglist = lan.ArgList([lan.Id(err_name), lan.Constant('clEnqueueReadBuffer')])
+                arglist = lan.ArgList([lan.Id(self.__err_name), lan.Constant('clEnqueueReadBuffer')])
                 err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
                 exec_body.append(err_check)
 
             # add clFinish statement
             arglist = lan.ArgList([lan.Id('command_queue')])
             finish = lan.FuncDecl(lan.Id('clFinish'), arglist, lan.Compound([]))
-            exec_body.append(lan.Assignment(lan.Id(err_name), finish))
+            exec_body.append(lan.Assignment(lan.Id(self.__err_name), finish))
 
-            arglist = lan.ArgList([lan.Id(err_name), lan.Constant('clFinish')])
+            arglist = lan.ArgList([lan.Id(self.__err_name), lan.Constant('clFinish')])
             err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
             exec_body.append(err_check)
 
@@ -221,6 +168,8 @@ class Boilerplate(object):
         if_then_list = []
 
         array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
+        types = ci.get_types(self.ast)
+
         for n in sorted(arg_ids):
             arg_type = types[n]
             argn = lan.Id('arg_' + n)
@@ -374,7 +323,7 @@ class Boilerplate(object):
         for entry in sorted(array_ids):
             n = array_id_to_dim_name[entry]
             lval = lan.Id(mem_names[entry])
-            rval = lan.BinOp(lan.Id(n[0]), '*', ast_bb.FuncCall('sizeof', [lan.Type(types[entry][0])]))
+            rval = lan.BinOp(lan.Id(n[0]), '*', _func_call_sizeof(types[entry][0]))
             if len(n) == 2:
                 rval = lan.BinOp(lan.Id(n[1]), '*', rval)
             list_set_mem_size.append(lan.Assignment(lval, rval))
@@ -403,7 +352,7 @@ class Boilerplate(object):
         cl_suc = self.__cl_success()
         allocate_buffer.compound.statements.extend([lan.GroupCompound([cl_suc])])
 
-        name_swap = ca.get_host_array_name_swap(self.ast)
+        name_swap = BPNameSwap(self.ast)
         write_only = ca.get_write_only(self.ast)
         read_only = ca.get_read_only(self.ast)
 
@@ -413,10 +362,7 @@ class Boilerplate(object):
         for n in sorted(dict_n_to_dev_ptr):
             lval = lan.Id(dict_n_to_dev_ptr[n])
             arrayn = dict_n_to_hst_ptr[n]
-            try:
-                arrayn = name_swap[arrayn]
-            except KeyError:
-                pass
+            arrayn = name_swap.try_swap(arrayn)
             if n in write_only:
                 flag = lan.Id('CL_MEM_WRITE_ONLY')
                 arrayn_id = lan.Id('NULL')
@@ -436,6 +382,96 @@ class Boilerplate(object):
             rval = ast_bb.FuncCall('clCreateBuffer', arglist)
             allocate_buffer.compound.statements.append(lan.Assignment(lval, rval))
 
-            arglist = [lan.Id(self.__err_name), lan.Constant("clCreateBuffer " + lval.name)]
-            err_check = ast_bb.FuncCall('oclCheckErr', arglist)
+            err_check = self.__err_check_function('clCreateBuffer', lval.name)
             allocate_buffer.compound.statements.append(err_check)
+
+    def __add_buffer_allocation_function(self):
+        allocate_buffer = ast_bb.EmptyFuncDecl('AllocateBuffers')
+        self.file_ast.ext.append(allocate_buffer)
+
+        self.__set_mem_sizes(allocate_buffer)
+
+        self.__set_transpose_arrays(allocate_buffer)
+
+        allocate_buffer.compound.statements.append(lan.GroupCompound([lan.Comment('// Constant Memory')]))
+
+        define_compound = define_arguments.setdefine(self.ast)
+        allocate_buffer.compound.statements.append(define_compound)
+
+        self.__add_create_device_buffers(allocate_buffer)
+
+    def __err_check_function(self, cl_function_name, var_name):
+        if not var_name == '':
+            var_name = ' ' + var_name
+        arglist = [lan.Id(self.__err_name), lan.Constant(cl_function_name + var_name)]
+        return ast_bb.FuncCall('oclCheckErr', arglist)
+
+    def __set_arg_misc(self, arg_body):
+        arg_body.append(self.__cl_success())
+
+        lval = lan.TypeId(['int'], _count_id())
+        rval = lan.Constant(0)
+        arg_body.append(lan.Assignment(lval, rval))
+
+    def __set_kernel_args(self, arg_body):
+        kernel_args = cg.get_kernel_args(self.ast)
+
+        kernel_id = self.__get_kernel_id()
+        types = ci.get_types(self.ast)
+        err_name = self.__err_name
+        dict_n_to_dev_ptr = cd.get_dev_ids(self.ast)
+
+        name_swap = BPNameSwap(self.ast)
+
+        lval = lan.Id(err_name)
+        op = '|='
+        for n in sorted(kernel_args):
+            arg_type = types[n]
+            if _is_type_pointer(arg_type):
+                rval = _create_cl_set_kernel_arg(kernel_id, _count_id(), 'cl_mem', dict_n_to_dev_ptr[n])
+            else:
+                n = name_swap.try_swap(n)
+                cl_type = arg_type[0]
+                if cl_type == 'size_t':
+                    cl_type = 'unsigned'
+                rval = _create_cl_set_kernel_arg(kernel_id, _count_id(), cl_type, n)
+            arg_body.append(lan.Assignment(lval, rval, op))
+
+        err_check = self.__err_check_function('clSetKernelArg', '')
+        arg_body.append(err_check)
+
+
+def _func_call_sizeof(ctype):
+    return ast_bb.FuncCall('sizeof', [lan.Type(ctype)])
+
+
+def _void_pointer_ref(ptr_name):
+    return lan.Id('(void *) &' + ptr_name)
+
+
+def _create_cl_set_kernel_arg(kernel_id, cnt_name, ctype, var_ref):
+    arglist = [kernel_id,
+               lan.Increment(cnt_name, '++'),
+               _func_call_sizeof(ctype),
+               _void_pointer_ref(var_ref)]
+    return ast_bb.FuncCall('clSetKernelArg', arglist)
+
+
+def _is_type_pointer(ctype):
+    return len(ctype) == 2
+
+
+def _count_id():
+    return lan.Id('counter')
+
+
+class BPNameSwap(object):
+    def __init__(self, ast):
+        self.name_swap = ca.get_host_array_name_swap(ast)
+
+    def try_swap(self, key):
+        try:
+            key = self.name_swap[key]
+        except KeyError:
+            pass
+        return key
