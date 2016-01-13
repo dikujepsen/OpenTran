@@ -55,108 +55,11 @@ class Boilerplate(object):
         create_kernels.create_get_kernel_code()
         self.__add_buffer_allocation_function()
 
-        dev_func_id = cd.get_dev_func_id(self.ast)
-        set_arguments_kernel = ast_bb.EmptyFuncDecl('SetArguments' + dev_func_id)
-        self.file_ast.ext.append(set_arguments_kernel)
-        arg_body = set_arguments_kernel.compound.statements
-        self.__set_arg_misc(arg_body)
+        self.__set_kernel_args()
 
-        self.__set_kernel_args(arg_body)
+        self.__add_exec_kernel_func()
 
-        exec_kernel = ast_bb.EmptyFuncDecl('Exec' + dev_func_id)
-        self.file_ast.ext.append(exec_kernel)
-        exec_body = exec_kernel.compound.statements
-        exec_body.append(self.__cl_success())
-        event_name = lan.Id('GPUExecution')
-        event = lan.TypeId(['cl_event'], event_name)
-        exec_body.append(event)
-
-        work_size = cd.get_work_size(self.ast)
-        local = cl.get_local(self.ast)
-        grid_indices = cl.get_grid_indices(self.ast)
-        (lower_limit, upper_limit) = cl.get_loop_limits(self.ast)
-
-        for n in sorted(work_size):
-            lval = lan.TypeId(['size_t'], lan.Id(work_size[n] + '[]'))
-            if n == 'local':
-                local_worksize = [lan.Id(i) for i in local['size']]
-                rval = lan.ArrayInit(local_worksize)
-            elif n == 'global':
-                initlist = []
-                for m in reversed(grid_indices):
-                    initlist.append(lan.Id(upper_limit[m] + ' - ' + lower_limit[m]))
-                rval = lan.ArrayInit(initlist)
-            else:
-                initlist = []
-                for m in reversed(grid_indices):
-                    initlist.append(lan.Id(lower_limit[m]))
-                rval = lan.ArrayInit(initlist)
-
-            exec_body.append(lan.Assignment(lval, rval))
-
-        par_dim = cl.get_par_dim(self.ast)
-        lval = lan.Id(self.__err_name)
         kernel_name = cd.get_kernel_name(self.ast)
-        arglist = lan.ArgList([lan.Id('command_queue'),
-                               lan.Id(kernel_name),
-                               lan.Constant(par_dim),
-                               lan.Id(work_size['offset']),
-                               lan.Id(work_size['global']),
-                               lan.Id(work_size['local']),
-                               lan.Constant(0), lan.Id('NULL'),
-                               lan.Id('&' + event_name.name)])
-        rval = lan.FuncDecl(lan.Id('clEnqueueNDRangeKernel'), arglist, lan.Compound([]))
-        exec_body.append(lan.Assignment(lval, rval))
-
-        err_id = lan.Id('oclCheckErr')
-        arglist = lan.ArgList([lan.Id(self.__err_name), lan.Constant('clEnqueueNDRangeKernel')])
-        err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
-        exec_body.append(err_check)
-
-        arglist = lan.ArgList([lan.Id('command_queue')])
-        finish = lan.FuncDecl(lan.Id('clFinish'), arglist, lan.Compound([]))
-        exec_body.append(lan.Assignment(lan.Id(self.__err_name), finish))
-
-        arglist = lan.ArgList([lan.Id(self.__err_name), lan.Constant('clFinish')])
-        err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
-        exec_body.append(err_check)
-        dev_ids = cd.get_dev_ids(self.ast)
-        my_host_id = cg.get_host_ids(self.ast)
-        name_swap = BPNameSwap(self.ast)
-
-        write_only = ca.get_write_only(self.ast)
-        mem_names = cg.get_mem_names(self.ast)
-
-        if not self.NoReadBack:
-            for n in sorted(write_only):
-                lval = lan.Id(self.__err_name)
-                hst_nname = my_host_id[n]
-                hst_nname = name_swap.try_swap(hst_nname)
-
-                arglist = lan.ArgList([lan.Id('command_queue'),
-                                       lan.Id(dev_ids[n]),
-                                       lan.Id('CL_TRUE'),
-                                       lan.Constant(0),
-                                       lan.Id(mem_names[n]),
-                                       lan.Id(hst_nname),
-                                       lan.Constant(1),
-                                       lan.Id('&' + event_name.name), lan.Id('NULL')])
-                rval = lan.FuncDecl(lan.Id('clEnqueueReadBuffer'), arglist, lan.Compound([]))
-                exec_body.append(lan.Assignment(lval, rval))
-
-                arglist = lan.ArgList([lan.Id(self.__err_name), lan.Constant('clEnqueueReadBuffer')])
-                err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
-                exec_body.append(err_check)
-
-            # add clFinish statement
-            arglist = lan.ArgList([lan.Id('command_queue')])
-            finish = lan.FuncDecl(lan.Id('clFinish'), arglist, lan.Compound([]))
-            exec_body.append(lan.Assignment(lan.Id(self.__err_name), finish))
-
-            arglist = lan.ArgList([lan.Id(self.__err_name), lan.Constant('clFinish')])
-            err_check = lan.FuncDecl(err_id, arglist, lan.Compound([]))
-            exec_body.append(err_check)
-
         run_ocl = ast_bb.EmptyFuncDecl('RunOCL' + kernel_name)
         self.file_ast.ext.append(run_ocl)
         run_ocl_body = run_ocl.compound.statements
@@ -169,7 +72,7 @@ class Boilerplate(object):
 
         array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
         types = ci.get_types(self.ast)
-
+        my_host_id = cg.get_host_ids(self.ast)
         for n in sorted(arg_ids):
             arg_type = types[n]
             argn = lan.Id('arg_' + n)
@@ -201,6 +104,8 @@ class Boilerplate(object):
         if_then_list.append(lan.FuncDecl(lan.Id('AllocateBuffers'), arglist, lan.Compound([])))
         use_file = 'false'
 
+        dev_func_id = cd.get_dev_func_id(self.ast)
+        kernel_name = cd.get_kernel_name(self.ast)
         if_then_list.append(lan.Id('cout << "$Defines " << KernelDefines << endl;'))
         arglist = lan.ArgList([lan.Constant(dev_func_id),
                                lan.Constant(dev_func_id + '.cl'),
@@ -343,6 +248,22 @@ class Boilerplate(object):
     def __err_name(self):
         return 'oclErrNum'
 
+    @property
+    def __exec_event_name(self):
+        return 'GPUExecution'
+
+    @property
+    def __command_queue_name(self):
+        return 'command_queue'
+
+    @property
+    def __cl_exec_kernel_func_name(self):
+        return 'clEnqueueNDRangeKernel'
+
+    @property
+    def __cl_finish_name(self):
+        return 'clFinish'
+
     def __cl_success(self):
         lval = lan.TypeId(['cl_int'], lan.Id(self.__err_name))
         rval = lan.Id('CL_SUCCESS')
@@ -382,7 +303,7 @@ class Boilerplate(object):
             rval = ast_bb.FuncCall('clCreateBuffer', arglist)
             allocate_buffer.compound.statements.append(lan.Assignment(lval, rval))
 
-            err_check = self.__err_check_function('clCreateBuffer', lval.name)
+            err_check = self.__err_check_function('clCreateBuffer', var_name=lval.name)
             allocate_buffer.compound.statements.append(err_check)
 
     def __add_buffer_allocation_function(self):
@@ -400,7 +321,7 @@ class Boilerplate(object):
 
         self.__add_create_device_buffers(allocate_buffer)
 
-    def __err_check_function(self, cl_function_name, var_name):
+    def __err_check_function(self, cl_function_name, var_name=''):
         if not var_name == '':
             var_name = ' ' + var_name
         arglist = [lan.Id(self.__err_name), lan.Constant(cl_function_name + var_name)]
@@ -413,7 +334,15 @@ class Boilerplate(object):
         rval = lan.Constant(0)
         arg_body.append(lan.Assignment(lval, rval))
 
-    def __set_kernel_args(self, arg_body):
+    def __set_kernel_args(self):
+
+        dev_func_id = cd.get_dev_func_id(self.ast)
+
+        set_arguments_kernel = ast_bb.EmptyFuncDecl('SetArguments' + dev_func_id)
+        self.file_ast.ext.append(set_arguments_kernel)
+        arg_body = set_arguments_kernel.compound.statements
+        self.__set_arg_misc(arg_body)
+
         kernel_args = cg.get_kernel_args(self.ast)
 
         kernel_id = self.__get_kernel_id()
@@ -437,9 +366,115 @@ class Boilerplate(object):
                 rval = _create_cl_set_kernel_arg(kernel_id, _count_id(), cl_type, n)
             arg_body.append(lan.Assignment(lval, rval, op))
 
-        err_check = self.__err_check_function('clSetKernelArg', '')
+        err_check = self.__err_check_function('clSetKernelArg')
         arg_body.append(err_check)
 
+    def __add_exec_misc(self, exec_body):
+        exec_body.append(self.__cl_success())
+        event_name = lan.Id(self.__exec_event_name)
+        event = lan.TypeId(['cl_event'], event_name)
+        exec_body.append(event)
+
+    def __add_exec_grid_var(self, name, value, exec_body):
+        lval = lan.TypeId(['size_t'], lan.Id(name + '[]'))
+        rval = lan.ArrayInit(value)
+        exec_body.append(lan.Assignment(lval, rval))
+
+    def __add_exec_grid_vars(self, exec_body):
+        grid_indices = cl.get_grid_indices(self.ast)
+        (lower_limit, upper_limit) = cl.get_loop_limits(self.ast)
+
+        initlist = []
+        for m in reversed(grid_indices):
+            initlist.append(lan.Id(upper_limit[m] + ' - ' + lower_limit[m]))
+        self.__add_exec_grid_var(cd.get_global_work_size(self.ast), initlist, exec_body)
+
+        local = cl.get_local(self.ast)
+        local_worksize = [lan.Id(i) for i in local['size']]
+        self.__add_exec_grid_var(cd.get_local_work_size(self.ast), local_worksize, exec_body)
+
+        initlist = []
+        for m in reversed(grid_indices):
+            initlist.append(lan.Id(lower_limit[m]))
+        self.__add_exec_grid_var(cd.get_global_grid_offset(self.ast), initlist, exec_body)
+
+    def __add_exec_cl_kernel_func_call(self, exec_body):
+        par_dim = cl.get_par_dim(self.ast)
+        lval = lan.Id(self.__err_name)
+        kernel_name = cd.get_kernel_name(self.ast)
+
+        arglist = [lan.Id(self.__command_queue_name),
+                   lan.Id(kernel_name),
+                   lan.Constant(par_dim),
+                   lan.Id(cd.get_global_grid_offset(self.ast)),
+                   lan.Id(cd.get_global_work_size(self.ast)),
+                   lan.Id(cd.get_local_work_size(self.ast)),
+                   lan.Constant(0), lan.Id('NULL'),
+                   lan.Ref(self.__exec_event_name)]
+        rval = ast_bb.FuncCall(self.__cl_exec_kernel_func_name, arglist)
+        exec_body.append(lan.Assignment(lval, rval))
+
+        err_check = self.__err_check_function(self.__cl_exec_kernel_func_name)
+        exec_body.append(err_check)
+
+    def __add_exec_cl_kernel_finish(self, exec_body):
+        finish = ast_bb.FuncCall(self.__cl_finish_name, [lan.Id(self.__command_queue_name)])
+        exec_body.append(lan.Assignment(lan.Id(self.__err_name), finish))
+
+        err_check = self.__err_check_function(self.__cl_finish_name)
+        exec_body.append(err_check)
+
+    def __add_exec_read_back(self, exec_body):
+        dev_ids = cd.get_dev_ids(self.ast)
+        my_host_id = cg.get_host_ids(self.ast)
+        name_swap = BPNameSwap(self.ast)
+
+        write_only = ca.get_write_only(self.ast)
+        mem_names = cg.get_mem_names(self.ast)
+
+        cl_read_back_func_name = 'clEnqueueReadBuffer'
+        if not self.NoReadBack:
+            for n in sorted(write_only):
+                lval = lan.Id(self.__err_name)
+                hst_nname = my_host_id[n]
+                hst_nname = name_swap.try_swap(hst_nname)
+
+                arglist = [lan.Id(self.__command_queue_name),
+                           lan.Id(dev_ids[n]),
+                           lan.Id('CL_TRUE'),
+                           lan.Constant(0),
+                           lan.Id(mem_names[n]),
+                           lan.Id(hst_nname),
+                           lan.Constant(1),
+                           lan.Ref(self.__exec_event_name), lan.Id('NULL')]
+                rval = ast_bb.FuncCall(cl_read_back_func_name, arglist)
+                exec_body.append(lan.Assignment(lval, rval))
+
+                err_check = self.__err_check_function(cl_read_back_func_name)
+                exec_body.append(err_check)
+
+            # add clFinish statement
+            arglist = [lan.Id(self.__command_queue_name)]
+            finish = ast_bb.FuncCall(self.__cl_finish_name, arglist)
+            exec_body.append(lan.Assignment(lan.Id(self.__err_name), finish))
+
+            err_check = self.__err_check_function(self.__cl_finish_name)
+            exec_body.append(err_check)
+
+    def __add_exec_kernel_func(self):
+        dev_func_id = cd.get_dev_func_id(self.ast)
+        exec_kernel = ast_bb.EmptyFuncDecl('Exec' + dev_func_id)
+        self.file_ast.ext.append(exec_kernel)
+        exec_body = exec_kernel.compound.statements
+        self.__add_exec_misc(exec_body)
+
+        self.__add_exec_grid_vars(exec_body)
+
+        self.__add_exec_cl_kernel_func_call(exec_body)
+
+        self.__add_exec_cl_kernel_finish(exec_body)
+
+        self.__add_exec_read_back(exec_body)
 
 def _func_call_sizeof(ctype):
     return ast_bb.FuncCall('sizeof', [lan.Type(ctype)])

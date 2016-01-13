@@ -300,3 +300,7 @@ class CGenerator(object):
 
     def visit_Type(self, n):
         return n.type
+
+    def visit_Ref(self, n):
+        expr = self.visit(n.expr)
+        return '&' + expr

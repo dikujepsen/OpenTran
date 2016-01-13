@@ -560,3 +560,19 @@ class Type(Node):
         return tuple([])
 
     attr_names = ('type',)
+
+
+class Ref(Node):
+    def __init__(self, expr):
+        if isinstance(expr, str):
+            expr = Id(expr)
+        self.expr = expr
+
+    def __repr__(self):
+        return "Ref(%r)" % self.expr
+
+    def children(self):
+        nodelist = [("var", self.expr)]
+        return tuple(nodelist)
+
+    attr_names = ()

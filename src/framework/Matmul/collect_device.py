@@ -90,13 +90,19 @@ def get_kernel_name(ast):
     return _get_kernel_base_name(ast) + 'Kernel'
 
 
-def get_work_size(ast):
+def get_local_work_size(ast):
     kernel_name = _get_kernel_base_name(ast)
-    work_size = dict()
-    work_size['local'] = kernel_name + '_local_worksize'
-    work_size['global'] = kernel_name + '_global_worksize'
-    work_size['offset'] = kernel_name + '_global_offset'
-    return work_size
+    return kernel_name + '_local_worksize'
+
+
+def get_global_work_size(ast):
+    kernel_name = _get_kernel_base_name(ast)
+    return kernel_name + '_global_worksize'
+
+
+def get_global_grid_offset(ast):
+    kernel_name = _get_kernel_base_name(ast)
+    return kernel_name + '_global_offset'
 
 
 def get_dev_ids(ast):
