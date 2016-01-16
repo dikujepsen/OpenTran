@@ -576,3 +576,17 @@ class Ref(Node):
         return tuple(nodelist)
 
     attr_names = ()
+
+
+class Cout(Node):
+    def __init__(self, print_args):
+        self.print_args = print_args
+
+    def __repr__(self):
+        return "Cout(%r)" % self.print_args
+
+    def children(self):
+        nodelist = [("print_args", self.print_args)]
+        return tuple(nodelist)
+
+    attr_names = ()

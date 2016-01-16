@@ -59,71 +59,7 @@ class Boilerplate(object):
 
         self.__add_exec_kernel_func()
 
-        kernel_name = cd.get_kernel_name(self.ast)
-        run_ocl = ast_bb.EmptyFuncDecl('RunOCL' + kernel_name)
-        self.file_ast.ext.append(run_ocl)
-        run_ocl_body = run_ocl.compound.statements
-        non_array_ids = ci.get_non_array_ids(self.ast)
-        array_ids = ca.get_array_ids(self.ast)
-        arg_ids = non_array_ids.union(array_ids)
-
-        type_id_list = []
-        if_then_list = []
-
-        array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
-        types = ci.get_types(self.ast)
-        my_host_id = cg.get_host_ids(self.ast)
-        for n in sorted(arg_ids):
-            arg_type = types[n]
-            argn = lan.Id('arg_' + n)
-            type_id_list.append(lan.TypeId(arg_type, argn))
-            try:
-                newn = my_host_id[n]
-            except KeyError:
-                newn = n
-            lval = lan.Id(newn)
-            rval = argn
-            if_then_list.append(lan.Assignment(lval, rval))
-            try:
-
-                for m in sorted(array_id_to_dim_name[n]):
-                    arg_type = ['size_t']
-                    argm = lan.Id('arg_' + m)
-                    lval = lan.Id(m)
-                    rval = argm
-                    if_then_list.append(lan.Assignment(lval, rval))
-                    type_id_list.append(lan.TypeId(arg_type, argm))
-            except KeyError:
-                pass
-
-        arglist = lan.ArgList(type_id_list)
-        run_ocl.arglist = arglist
-
-        arglist = lan.ArgList([])
-        if_then_list.append(lan.FuncDecl(lan.Id('StartUpGPU'), arglist, lan.Compound([])))
-        if_then_list.append(lan.FuncDecl(lan.Id('AllocateBuffers'), arglist, lan.Compound([])))
-        use_file = 'false'
-
-        dev_func_id = cd.get_dev_func_id(self.ast)
-        kernel_name = cd.get_kernel_name(self.ast)
-        if_then_list.append(lan.Id('cout << "$Defines " << KernelDefines << endl;'))
-        arglist = lan.ArgList([lan.Constant(dev_func_id),
-                               lan.Constant(dev_func_id + '.cl'),
-                               lan.Id('GetKernelCode()'),
-                               lan.Id(use_file),
-                               lan.Id('&' + kernel_name),
-                               lan.Id('KernelDefines')])
-        if_then_list.append(lan.FuncDecl(lan.Id('compileKernel'), arglist, lan.Compound([])))
-        if_then_list.append(
-            lan.FuncDecl(lan.Id('SetArguments' + dev_func_id), lan.ArgList([]), lan.Compound([])))
-
-        run_ocl_body.append(lan.IfThen(lan.Id('isFirstTime'), lan.Compound(if_then_list)))
-        arglist = lan.ArgList([])
-
-        # Insert timing
-        run_ocl_body.append(lan.Id('timer.start();'))
-        run_ocl_body.append(lan.FuncDecl(lan.Id('Exec' + dev_func_id), arglist, lan.Compound([])))
-        run_ocl_body.append(lan.Id('cout << "$Time " << timer.stop() << endl;'))
+        self.__add_runocl_func()
 
         return self.file_ast
 
@@ -150,7 +86,7 @@ class Boilerplate(object):
         for n in sorted(array_ids):
             try:
                 name = dev_ids[n]
-                list_dev_buffers.append(lan.TypeId(['cl_mem'], lan.Id(name)))
+                list_dev_buffers.append(lan.TypeId([self.__cl_mem_name], lan.Id(name)))
             except KeyError:
                 pass
 
@@ -205,11 +141,11 @@ class Boilerplate(object):
 
     def __add_global_misc(self):
         misc = []
-        lval = lan.TypeId(['size_t'], lan.Id('isFirstTime'))
+        lval = lan.TypeId(['size_t'], lan.Id(self.__first_time_name))
         rval = lan.Constant(1)
         misc.append(lan.Assignment(lval, rval))
 
-        lval = lan.TypeId(['std::string'], lan.Id('KernelDefines'))
+        lval = lan.TypeId(['std::string'], lan.Id(self.__kernel_defines_name))
         rval = lan.Constant('""')
         misc.append(lan.Assignment(lval, rval))
 
@@ -243,6 +179,30 @@ class Boilerplate(object):
             my_transposition.statements.extend(transpose_transformation.create_transposition_func(n))
 
         allocate_buffer.compound.statements.append(my_transposition)
+
+    @property
+    def __cl_mem_name(self):
+        return 'cl_mem'
+
+    @property
+    def __set_arguments_name(self):
+        return 'SetArguments'
+
+    @property
+    def __cl_set_kernel_arg_name(self):
+        return 'clSetKernelArg'
+
+    @property
+    def __kernel_defines_name(self):
+        return 'KernelDefines'
+
+    @property
+    def __allocate_buffers_name(self):
+        return 'AllocateBuffers'
+
+    @property
+    def __first_time_name(self):
+        return 'isFirstTime'
 
     @property
     def __err_name(self):
@@ -298,16 +258,17 @@ class Boilerplate(object):
                        flag,
                        lan.Id(mem_names[n]),
                        arrayn_id,
-                       lan.Id('&' + self.__err_name)]
+                       lan.Ref(self.__err_name)]
 
-            rval = ast_bb.FuncCall('clCreateBuffer', arglist)
+            cl_create_buffer_name = 'clCreateBuffer'
+            rval = ast_bb.FuncCall(cl_create_buffer_name, arglist)
             allocate_buffer.compound.statements.append(lan.Assignment(lval, rval))
 
-            err_check = self.__err_check_function('clCreateBuffer', var_name=lval.name)
+            err_check = self.__err_check_function(cl_create_buffer_name, var_name=lval.name)
             allocate_buffer.compound.statements.append(err_check)
 
     def __add_buffer_allocation_function(self):
-        allocate_buffer = ast_bb.EmptyFuncDecl('AllocateBuffers')
+        allocate_buffer = ast_bb.EmptyFuncDecl(self.__allocate_buffers_name)
         self.file_ast.ext.append(allocate_buffer)
 
         self.__set_mem_sizes(allocate_buffer)
@@ -338,7 +299,7 @@ class Boilerplate(object):
 
         dev_func_id = cd.get_dev_func_id(self.ast)
 
-        set_arguments_kernel = ast_bb.EmptyFuncDecl('SetArguments' + dev_func_id)
+        set_arguments_kernel = ast_bb.EmptyFuncDecl(self.__set_arguments_name + dev_func_id)
         self.file_ast.ext.append(set_arguments_kernel)
         arg_body = set_arguments_kernel.compound.statements
         self.__set_arg_misc(arg_body)
@@ -357,16 +318,16 @@ class Boilerplate(object):
         for n in sorted(kernel_args):
             arg_type = types[n]
             if _is_type_pointer(arg_type):
-                rval = _create_cl_set_kernel_arg(kernel_id, _count_id(), 'cl_mem', dict_n_to_dev_ptr[n])
+                rval = self._create_cl_set_kernel_arg(kernel_id, _count_id(), self.__cl_mem_name, dict_n_to_dev_ptr[n])
             else:
                 n = name_swap.try_swap(n)
                 cl_type = arg_type[0]
                 if cl_type == 'size_t':
                     cl_type = 'unsigned'
-                rval = _create_cl_set_kernel_arg(kernel_id, _count_id(), cl_type, n)
+                rval = self._create_cl_set_kernel_arg(kernel_id, _count_id(), cl_type, n)
             arg_body.append(lan.Assignment(lval, rval, op))
 
-        err_check = self.__err_check_function('clSetKernelArg')
+        err_check = self.__err_check_function(self.__cl_set_kernel_arg_name)
         arg_body.append(err_check)
 
     def __add_exec_misc(self, exec_body):
@@ -476,6 +437,111 @@ class Boilerplate(object):
 
         self.__add_exec_read_back(exec_body)
 
+    def __get_runocl_args(self):
+        arg_ids = self.__get_arg_ids()
+        type_id_list = []
+        array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
+        types = ci.get_types(self.ast)
+
+        for n in sorted(arg_ids):
+            arg_type = types[n]
+            argn = _get_arg_id(n)
+            type_id_list.append(lan.TypeId(arg_type, argn))
+            try:
+                for m in sorted(array_id_to_dim_name[n]):
+                    arg_type = ['size_t']
+                    argm = _get_arg_id(m)
+                    type_id_list.append(lan.TypeId(arg_type, argm))
+            except KeyError:
+                pass
+        return type_id_list
+
+    def __get_arg_ids(self):
+        non_array_ids = ci.get_non_array_ids(self.ast)
+        array_ids = ca.get_array_ids(self.ast)
+        arg_ids = non_array_ids.union(array_ids)
+        return arg_ids
+
+    def __set_runocl_in_host(self):
+        if_then_list = []
+        arg_ids = self.__get_arg_ids()
+        array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
+        my_host_id = cg.get_host_ids(self.ast)
+
+        for n in sorted(arg_ids):
+            try:
+                newn = my_host_id[n]
+            except KeyError:
+                newn = n
+            lval = lan.Id(newn)
+            argn = _get_arg_id(n)
+            rval = argn
+            if_then_list.append(lan.Assignment(lval, rval))
+            try:
+                for m in sorted(array_id_to_dim_name[n]):
+                    argm = _get_arg_id(m)
+                    lval = lan.Id(m)
+                    rval = argm
+                    if_then_list.append(lan.Assignment(lval, rval))
+            except KeyError:
+                pass
+        return if_then_list
+
+    def __runocl_compile_kernel(self, if_then_list):
+        dev_func_id = cd.get_dev_func_id(self.ast)
+        kernel_name = cd.get_kernel_name(self.ast)
+        arglist = [lan.Constant(dev_func_id),
+                   lan.Constant(dev_func_id + '.cl'),
+                   ast_bb.FuncCall('GetKernelCode'),
+                   lan.Id('false'),
+                   lan.Ref(kernel_name),
+                   lan.Id(self.__kernel_defines_name)]
+        if_then_list.append(ast_bb.FuncCall('compileKernel', arglist))
+
+    def __runocl_set_kernel_arguments(self, if_then_list):
+        dev_func_id = cd.get_dev_func_id(self.ast)
+        if_then_list.append(ast_bb.FuncCall(self.__set_arguments_name + dev_func_id))
+
+    def __runocl_insert_timing(self, run_ocl_body):
+        dev_func_id = cd.get_dev_func_id(self.ast)
+        run_ocl_body.append(lan.Id('timer.start();'))
+        run_ocl_body.append(ast_bb.FuncCall('Exec' + dev_func_id))
+        run_ocl_body.append(lan.Id('cout << "$Time " << timer.stop() << endl;'))
+
+    def __add_runocl_func(self):
+        kernel_name = cd.get_kernel_name(self.ast)
+        run_ocl = ast_bb.EmptyFuncDecl('RunOCL' + kernel_name)
+        self.file_ast.ext.append(run_ocl)
+
+        run_ocl_body = run_ocl.compound.statements
+
+        type_id_list = self.__get_runocl_args()
+        run_ocl.arglist = lan.ArgList(type_id_list)
+
+        if_then_list = self.__set_runocl_in_host()
+
+        self._add_runocl_start_up(if_then_list)
+
+        self.__runocl_compile_kernel(if_then_list)
+        self.__runocl_set_kernel_arguments(if_then_list)
+
+        run_ocl_body.append(lan.IfThen(lan.Id(self.__first_time_name), lan.Compound(if_then_list)))
+
+        self.__runocl_insert_timing(run_ocl_body)
+
+    def _add_runocl_start_up(self, if_then_list):
+        if_then_list.append(ast_bb.FuncCall('StartUpGPU'))
+        if_then_list.append(ast_bb.FuncCall(self.__allocate_buffers_name))
+        if_then_list.append(lan.Cout([lan.Constant('$Defines '), lan.Id(self.__kernel_defines_name)]))
+
+    def _create_cl_set_kernel_arg(self, kernel_id, cnt_name, ctype, var_ref):
+        arglist = [kernel_id,
+                   lan.Increment(cnt_name, '++'),
+                   _func_call_sizeof(ctype),
+                   _void_pointer_ref(var_ref)]
+        return ast_bb.FuncCall(self.__cl_set_kernel_arg_name, arglist)
+
+
 def _func_call_sizeof(ctype):
     return ast_bb.FuncCall('sizeof', [lan.Type(ctype)])
 
@@ -484,12 +550,6 @@ def _void_pointer_ref(ptr_name):
     return lan.Id('(void *) &' + ptr_name)
 
 
-def _create_cl_set_kernel_arg(kernel_id, cnt_name, ctype, var_ref):
-    arglist = [kernel_id,
-               lan.Increment(cnt_name, '++'),
-               _func_call_sizeof(ctype),
-               _void_pointer_ref(var_ref)]
-    return ast_bb.FuncCall('clSetKernelArg', arglist)
 
 
 def _is_type_pointer(ctype):
@@ -498,6 +558,10 @@ def _is_type_pointer(ctype):
 
 def _count_id():
     return lan.Id('counter')
+
+
+def _get_arg_id(var_name):
+    return lan.Id('arg_' + var_name)
 
 
 class BPNameSwap(object):

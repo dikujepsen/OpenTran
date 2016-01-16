@@ -13,7 +13,7 @@ def EmptyFuncDecl(name, type=['void']):
     return allocateBuffer
 
 
-def FuncCall(name, arglist):
+def FuncCall(name, arglist=[]):
     """ Returns a FuncDecl with no arguments or body """
     allocateBufferTypeId = lan.Id(name)
     allocateBufferArgList = lan.ArgList(arglist)

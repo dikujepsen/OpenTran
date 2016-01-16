@@ -22,6 +22,8 @@ class CGenerator(object):
         #
         self.indent_level = 0
         self.inside_ArgList = False
+        self.inside_ArgList2 = list()
+        self.arg_list_level = 0
         self.inside_Assignment = False
 
     def write_ast_to_file(self, ast, filename='temp.cpp'):
@@ -210,15 +212,16 @@ class CGenerator(object):
         if debug:
             newline = n.__class__.__name__ + newline
 
+        my_inside_arg_list = self.inside_ArgList
         self.inside_ArgList = True
+
         typeid = self.visit(n.typeid)
 
         arglist = self.visit(n.arglist)
 
-        self.inside_ArgList = False
-        if self.inside_Assignment:
+        self.inside_ArgList = False or my_inside_arg_list
+        if self.inside_Assignment or self.inside_ArgList:
             compound = ''
-            end = ''
         elif n.compound.statements:
             typeid = self.start + typeid
             arglist += newline
@@ -304,3 +307,10 @@ class CGenerator(object):
     def visit_Ref(self, n):
         expr = self.visit(n.expr)
         return '&' + expr
+
+    def visit_Cout(self, n):
+        s = ''
+        for arg in n.print_args:
+            s += ' << ' + self.visit(arg)
+        return 'cout' + s + ' << endl;'
+
