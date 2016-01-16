@@ -76,12 +76,12 @@ class CreateKernels(KernelGen):
         get_kernel_code = ast_bb.EmptyFuncDecl('GetKernelCode', type=['std::string'])
         get_kernel_stats = [self.IfThenElse]
         get_kernel_code.compound.statements = get_kernel_stats
-        self.file_ast.ext.append(get_kernel_code)
+        self.file_ast.append(get_kernel_code)
 
     def _create_base_kernel(self, funcname, testast):
         sg = snippetgen.SnippetGen(self.ast)
         newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
-        self.file_ast.ext.append(newast)
+        self.file_ast.append(newast)
         self.IfThenElse = self.__create_base_kernel_func()
 
     def __create_base_kernel_func(self):
@@ -103,5 +103,5 @@ class CreateKernels(KernelGen):
 
         sg = snippetgen.SnippetGen(testast)
         newast = sg.generate_kernel_ss(copy.deepcopy(testast), funcname)
-        self.file_ast.ext.append(newast)
+        self.file_ast.append(newast)
         self.IfThenElse = self.__create_optimized_kernel_func(funcname, cond)
