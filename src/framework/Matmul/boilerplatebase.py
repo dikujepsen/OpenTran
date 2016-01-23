@@ -18,6 +18,10 @@ class BoilerplateBase(object):
         self._allocate_buffers_name = 'AllocateBuffers'
         self._err_name = 'oclErrNum'
 
+        # Used in KernelArgs
+        self._set_arguments_name = 'SetArguments'
+        self._cl_set_kernel_arg_name = 'clSetKernelArg'
+
     def _get_kernel_id(self):
         kernel_name = cd.get_kernel_name(self.ast)
         kernel_id = lan.Id(kernel_name)
@@ -37,6 +41,18 @@ class BoilerplateBase(object):
 
 def func_call_sizeof(ctype):
     return ast_bb.FuncCall('sizeof', [lan.Type(ctype)])
+
+
+def is_type_pointer(ctype):
+    return len(ctype) == 2
+
+
+def count_id():
+    return lan.Id('counter')
+
+
+def void_pointer_ref(ptr_name):
+    return lan.Id('(void *) &' + ptr_name)
 
 
 class BPNameSwap(object):

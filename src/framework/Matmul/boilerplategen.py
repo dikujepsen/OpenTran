@@ -12,6 +12,7 @@ import kernelgen
 import global_vars
 import boilerplatebase
 import buffer_allocation
+import kernel_args
 
 
 def print_dict_sorted(mydict):
@@ -45,7 +46,8 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
         host_buffer_allocation = buffer_allocation.BufferAllocation(self.ast, self.file_ast.ext)
         host_buffer_allocation.add_buffer_allocation_function()
 
-        self.__set_kernel_args()
+        host_kernel_args = kernel_args.KernelArgs(self.ast, self.file_ast.ext)
+        host_kernel_args.set_kernel_args()
 
         self.__add_exec_kernel_func()
 
@@ -56,10 +58,6 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
     @property
     def __set_arguments_name(self):
         return 'SetArguments'
-
-    @property
-    def __cl_set_kernel_arg_name(self):
-        return 'clSetKernelArg'
 
     @property
     def __exec_event_name(self):
@@ -76,48 +74,6 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
     @property
     def __cl_finish_name(self):
         return 'clFinish'
-
-    def __set_arg_misc(self, arg_body):
-        arg_body.append(self._cl_success())
-
-        lval = lan.TypeId(['int'], _count_id())
-        rval = lan.Constant(0)
-        arg_body.append(lan.Assignment(lval, rval))
-
-    def __set_kernel_args(self):
-
-        dev_func_id = cd.get_dev_func_id(self.ast)
-
-        set_arguments_kernel = ast_bb.EmptyFuncDecl(self.__set_arguments_name + dev_func_id)
-        self.file_ast.ext.append(set_arguments_kernel)
-        arg_body = set_arguments_kernel.compound.statements
-        self.__set_arg_misc(arg_body)
-
-        kernel_args = cg.get_kernel_args(self.ast)
-
-        kernel_id = self._get_kernel_id()
-        types = ci.get_types(self.ast)
-        err_name = self._err_name
-        dict_n_to_dev_ptr = cd.get_dev_ids(self.ast)
-
-        name_swap = boilerplatebase.BPNameSwap(self.ast)
-
-        lval = lan.Id(err_name)
-        op = '|='
-        for n in sorted(kernel_args):
-            arg_type = types[n]
-            if _is_type_pointer(arg_type):
-                rval = self._create_cl_set_kernel_arg(kernel_id, _count_id(), self._cl_mem_name, dict_n_to_dev_ptr[n])
-            else:
-                n = name_swap.try_swap(n)
-                cl_type = arg_type[0]
-                if cl_type == 'size_t':
-                    cl_type = 'unsigned'
-                rval = self._create_cl_set_kernel_arg(kernel_id, _count_id(), cl_type, n)
-            arg_body.append(lan.Assignment(lval, rval, op))
-
-        err_check = self._err_check_function(self.__cl_set_kernel_arg_name)
-        arg_body.append(err_check)
 
     def __add_exec_misc(self, exec_body):
         exec_body.append(self._cl_success())
@@ -322,25 +278,6 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
         if_then_list.append(ast_bb.FuncCall('StartUpGPU'))
         if_then_list.append(ast_bb.FuncCall(self._allocate_buffers_name))
         if_then_list.append(lan.Cout([lan.Constant('$Defines '), lan.Id(self._kernel_defines_name)]))
-
-    def _create_cl_set_kernel_arg(self, kernel_id, cnt_name, ctype, var_ref):
-        arglist = [kernel_id,
-                   lan.Increment(cnt_name, '++'),
-                   boilerplatebase.func_call_sizeof(ctype),
-                   _void_pointer_ref(var_ref)]
-        return ast_bb.FuncCall(self.__cl_set_kernel_arg_name, arglist)
-
-
-def _void_pointer_ref(ptr_name):
-    return lan.Id('(void *) &' + ptr_name)
-
-
-def _is_type_pointer(ctype):
-    return len(ctype) == 2
-
-
-def _count_id():
-    return lan.Id('counter')
 
 
 def _get_arg_id(var_name):
