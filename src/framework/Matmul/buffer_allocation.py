@@ -10,8 +10,7 @@ import collect_device as cd
 
 class BufferAllocation(boilerplatebase.BoilerplateBase):
     def __init__(self, ast, file_ast):
-        super(BufferAllocation, self).__init__(ast)
-        self.file_ast = file_ast
+        super(BufferAllocation, self).__init__(ast, file_ast)
 
     def add_buffer_allocation_function(self):
         allocate_buffer = ast_bb.EmptyFuncDecl(self._allocate_buffers_name)

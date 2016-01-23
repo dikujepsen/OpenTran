@@ -5,8 +5,9 @@ import collect_array as ca
 
 
 class BoilerplateBase(object):
-    def __init__(self, ast):
+    def __init__(self, ast, file_ast):
         self.ast = ast
+        self.file_ast = file_ast
 
         # Properties
         # Used in globals_vars
@@ -21,6 +22,12 @@ class BoilerplateBase(object):
         # Used in KernelArgs
         self._set_arguments_name = 'SetArguments'
         self._cl_set_kernel_arg_name = 'clSetKernelArg'
+
+        # Used in ExecKernel
+        self._exec_event_name = 'GPUExecution'
+        self._command_queue_name = 'command_queue'
+        self._cl_exec_kernel_func_name = 'clEnqueueNDRangeKernel'
+        self._cl_finish_name = 'clFinish'
 
     def _get_kernel_id(self):
         kernel_name = cd.get_kernel_name(self.ast)

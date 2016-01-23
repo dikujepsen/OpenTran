@@ -1,18 +1,15 @@
-import lan
-import copy
 import ast_buildingblock as ast_bb
-import collect_gen as cg
-import collect_id as ci
-import transpose
-import collect_array as ca
-import define_arguments
-import collect_loop as cl
-import collect_device as cd
-import kernelgen
-import global_vars
 import boilerplatebase
 import buffer_allocation
+import collect_array as ca
+import collect_device as cd
+import collect_gen as cg
+import collect_id as ci
+import exec_kernel
+import global_vars
 import kernel_args
+import kernelgen
+import lan
 
 
 def print_dict_sorted(mydict):
@@ -28,9 +25,8 @@ def print_dict_sorted(mydict):
 
 class Boilerplate(boilerplatebase.BoilerplateBase):
     def __init__(self, ast, no_read_back):
-        super(Boilerplate, self).__init__(ast)
+        super(Boilerplate, self).__init__(ast, lan.FileAST([]))
         self.NoReadBack = no_read_back
-        self.file_ast = lan.FileAST([])
 
     def generate_code(self):
 
@@ -49,7 +45,8 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
         host_kernel_args = kernel_args.KernelArgs(self.ast, self.file_ast.ext)
         host_kernel_args.set_kernel_args()
 
-        self.__add_exec_kernel_func()
+        host_exec_kernel = exec_kernel.ExecKernel(self.ast, self.file_ast.ext, self.NoReadBack)
+        host_exec_kernel.add_exec_kernel_func()
 
         self.__add_runocl_func()
 
@@ -58,129 +55,6 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
     @property
     def __set_arguments_name(self):
         return 'SetArguments'
-
-    @property
-    def __exec_event_name(self):
-        return 'GPUExecution'
-
-    @property
-    def __command_queue_name(self):
-        return 'command_queue'
-
-    @property
-    def __cl_exec_kernel_func_name(self):
-        return 'clEnqueueNDRangeKernel'
-
-    @property
-    def __cl_finish_name(self):
-        return 'clFinish'
-
-    def __add_exec_misc(self, exec_body):
-        exec_body.append(self._cl_success())
-        event_name = lan.Id(self.__exec_event_name)
-        event = lan.TypeId(['cl_event'], event_name)
-        exec_body.append(event)
-
-    def __add_exec_grid_var(self, name, value, exec_body):
-        lval = lan.TypeId(['size_t'], lan.Id(name + '[]'))
-        rval = lan.ArrayInit(value)
-        exec_body.append(lan.Assignment(lval, rval))
-
-    def __add_exec_grid_vars(self, exec_body):
-        grid_indices = cl.get_grid_indices(self.ast)
-        (lower_limit, upper_limit) = cl.get_loop_limits(self.ast)
-
-        initlist = []
-        for m in reversed(grid_indices):
-            initlist.append(lan.Id(upper_limit[m] + ' - ' + lower_limit[m]))
-        self.__add_exec_grid_var(cd.get_global_work_size(self.ast), initlist, exec_body)
-
-        local = cl.get_local(self.ast)
-        local_worksize = [lan.Id(i) for i in local['size']]
-        self.__add_exec_grid_var(cd.get_local_work_size(self.ast), local_worksize, exec_body)
-
-        initlist = []
-        for m in reversed(grid_indices):
-            initlist.append(lan.Id(lower_limit[m]))
-        self.__add_exec_grid_var(cd.get_global_grid_offset(self.ast), initlist, exec_body)
-
-    def __add_exec_cl_kernel_func_call(self, exec_body):
-        par_dim = cl.get_par_dim(self.ast)
-        lval = lan.Id(self._err_name)
-        kernel_name = cd.get_kernel_name(self.ast)
-
-        arglist = [lan.Id(self.__command_queue_name),
-                   lan.Id(kernel_name),
-                   lan.Constant(par_dim),
-                   lan.Id(cd.get_global_grid_offset(self.ast)),
-                   lan.Id(cd.get_global_work_size(self.ast)),
-                   lan.Id(cd.get_local_work_size(self.ast)),
-                   lan.Constant(0), lan.Id('NULL'),
-                   lan.Ref(self.__exec_event_name)]
-        rval = ast_bb.FuncCall(self.__cl_exec_kernel_func_name, arglist)
-        exec_body.append(lan.Assignment(lval, rval))
-
-        err_check = self._err_check_function(self.__cl_exec_kernel_func_name)
-        exec_body.append(err_check)
-
-    def __add_exec_cl_kernel_finish(self, exec_body):
-        finish = ast_bb.FuncCall(self.__cl_finish_name, [lan.Id(self.__command_queue_name)])
-        exec_body.append(lan.Assignment(lan.Id(self._err_name), finish))
-
-        err_check = self._err_check_function(self.__cl_finish_name)
-        exec_body.append(err_check)
-
-    def __add_exec_read_back(self, exec_body):
-        dev_ids = cd.get_dev_ids(self.ast)
-        my_host_id = cg.get_host_ids(self.ast)
-        name_swap = boilerplatebase.BPNameSwap(self.ast)
-
-        write_only = ca.get_write_only(self.ast)
-        mem_names = cg.get_mem_names(self.ast)
-
-        cl_read_back_func_name = 'clEnqueueReadBuffer'
-        if not self.NoReadBack:
-            for n in sorted(write_only):
-                lval = lan.Id(self._err_name)
-                hst_nname = my_host_id[n]
-                hst_nname = name_swap.try_swap(hst_nname)
-
-                arglist = [lan.Id(self.__command_queue_name),
-                           lan.Id(dev_ids[n]),
-                           lan.Id('CL_TRUE'),
-                           lan.Constant(0),
-                           lan.Id(mem_names[n]),
-                           lan.Id(hst_nname),
-                           lan.Constant(1),
-                           lan.Ref(self.__exec_event_name), lan.Id('NULL')]
-                rval = ast_bb.FuncCall(cl_read_back_func_name, arglist)
-                exec_body.append(lan.Assignment(lval, rval))
-
-                err_check = self._err_check_function(cl_read_back_func_name)
-                exec_body.append(err_check)
-
-            # add clFinish statement
-            arglist = [lan.Id(self.__command_queue_name)]
-            finish = ast_bb.FuncCall(self.__cl_finish_name, arglist)
-            exec_body.append(lan.Assignment(lan.Id(self._err_name), finish))
-
-            err_check = self._err_check_function(self.__cl_finish_name)
-            exec_body.append(err_check)
-
-    def __add_exec_kernel_func(self):
-        dev_func_id = cd.get_dev_func_id(self.ast)
-        exec_kernel = ast_bb.EmptyFuncDecl('Exec' + dev_func_id)
-        self.file_ast.ext.append(exec_kernel)
-        exec_body = exec_kernel.compound.statements
-        self.__add_exec_misc(exec_body)
-
-        self.__add_exec_grid_vars(exec_body)
-
-        self.__add_exec_cl_kernel_func_call(exec_body)
-
-        self.__add_exec_cl_kernel_finish(exec_body)
-
-        self.__add_exec_read_back(exec_body)
 
     def __get_runocl_args(self):
         arg_ids = self.__get_arg_ids()
@@ -282,3 +156,5 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
 
 def _get_arg_id(var_name):
     return lan.Id('arg_' + var_name)
+
+

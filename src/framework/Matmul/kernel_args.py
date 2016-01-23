@@ -8,8 +8,7 @@ import ast_buildingblock as ast_bb
 
 class KernelArgs(boilerplatebase.BoilerplateBase):
     def __init__(self, ast, file_ast):
-        super(KernelArgs, self).__init__(ast)
-        self.file_ast = file_ast
+        super(KernelArgs, self).__init__(ast, file_ast)
 
     def set_kernel_args(self):
 

@@ -8,8 +8,7 @@ import collect_gen as cg
 
 class GlobalVars(boilerplatebase.BoilerplateBase):
     def __init__(self, ast, file_ast):
-        super(GlobalVars, self).__init__(ast)
-        self.file_ast = file_ast
+        super(GlobalVars, self).__init__(ast, file_ast)
 
     def __add_util_includes(self):
         self.file_ast.append(lan.RawCpp('#include \"../../../utils/StartUtil.cpp\"'))
