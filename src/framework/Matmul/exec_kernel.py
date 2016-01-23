@@ -1,10 +1,11 @@
-import lan
-import boilerplatebase
-import collect_gen as cg
-import collect_device as cd
+from processing import collect_array as ca
+from processing import collect_device as cd
+from processing import collect_gen as cg
+
 import ast_buildingblock as ast_bb
-import collect_loop as cl
-import collect_array as ca
+import boilerplatebase
+import lan
+from processing import collect_loop as cl
 
 
 class ExecKernel(boilerplatebase.BoilerplateBase):

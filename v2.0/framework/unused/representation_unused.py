@@ -1,8 +1,4 @@
 import lan
-import collect_array as ca
-import collect_array_rewrite as car
-import collect_id as ci
-import collect_loop as cl
 
 
 def print_dict_sorted(mydict):

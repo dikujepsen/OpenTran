@@ -1,11 +1,13 @@
 import copy
-import lan
 from itertools import chain
-import exchange
+
 import collect_array as ca
-import collect_loop as cl
-import collect_id as ci
 import collect_device as cd
+import collect_id as ci
+import exchange
+
+import lan
+from processing import collect_loop as cl
 
 
 class PlaceInReg(object):

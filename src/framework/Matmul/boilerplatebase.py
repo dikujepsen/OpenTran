@@ -1,7 +1,8 @@
-import lan
-import collect_device as cd
+from processing import collect_array as ca
+
 import ast_buildingblock as ast_bb
-import collect_array as ca
+import lan
+from processing import collect_device as cd
 
 
 class BoilerplateBase(object):

@@ -1,12 +1,14 @@
-import lan
-import boilerplatebase
-import define_arguments
+from processing import collect_array as ca
+from processing import collect_device as cd
+from processing import collect_id as ci
+
 import ast_buildingblock as ast_bb
-import collect_id as ci
-import collect_gen as cg
-import collect_array as ca
-import transpose
-import collect_device as cd
+import boilerplatebase
+import lan
+from processing import collect_gen as cg
+from transformation import define_arguments
+from transformation import transpose
+
 
 class BufferAllocation(boilerplatebase.BoilerplateBase):
     def __init__(self, ast, file_ast):

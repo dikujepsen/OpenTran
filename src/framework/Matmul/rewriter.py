@@ -1,7 +1,8 @@
-import lan
-import collect_id as ci
 import collect_array as ca
-import collect_array_rewrite as car
+import collect_id as ci
+
+import lan
+from processing import collect_array_rewrite as car
 
 
 class Rewriter(object):

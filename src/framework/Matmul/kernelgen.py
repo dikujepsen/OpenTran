@@ -1,10 +1,12 @@
-import lan
-import ast_buildingblock as ast_bb
-import snippetgen
 import copy
-import place_in_reg as pireg
-import place_in_local as piloc
-import collect_id as ci
+
+import ast_buildingblock as ast_bb
+import lan
+import snippetgen
+from processing import collect_id as ci
+from transformation import place_in_local as piloc
+from transformation import place_in_reg as pireg
+
 
 def print_dict_sorted(mydict):
     keys = sorted(mydict)

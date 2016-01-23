@@ -1,6 +1,7 @@
-import collect_transformation_info as cti
-import collect_device as cd
 import collect_array as ca
+import collect_transformation_info as cti
+
+from processing import collect_device as cd
 
 
 class FindLoopArrays(object):

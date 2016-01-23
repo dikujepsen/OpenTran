@@ -1,8 +1,9 @@
+import collect_array as ca
 import collect_device as cd
 import collect_gen as cg
-import collect_array as ca
 import collect_id as ci
-import collect_loop as cl
+
+from processing import collect_loop as cl
 
 
 def print_dict_sorted(mydict):

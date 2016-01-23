@@ -1,9 +1,10 @@
-import lan
-import boilerplatebase
-import collect_gen as cg
-import collect_id as ci
 import collect_device as cd
+import collect_id as ci
+
 import ast_buildingblock as ast_bb
+import boilerplatebase
+import lan
+from processing import collect_gen as cg
 
 
 class KernelArgs(boilerplatebase.BoilerplateBase):

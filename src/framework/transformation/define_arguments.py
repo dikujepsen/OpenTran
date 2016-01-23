@@ -1,8 +1,8 @@
+from processing import collect_array as ca
+from processing import collect_gen as cg
+from processing import collect_id as ci
+
 import lan
-import collect_array as ca
-import collect_gen as cg
-import collect_id as ci
-import collect_loop as cl
 
 
 class DefineArguments(object):

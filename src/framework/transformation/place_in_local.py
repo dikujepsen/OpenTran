@@ -1,12 +1,14 @@
-import lan
 import copy
-import ast_buildingblock as ast_bb
-import exchange
-import collect_gen as cg
-import collect_id as ci
-import collect_loop as cl
+
 import collect_array as ca
 import collect_device as cd
+import collect_gen as cg
+import collect_id as ci
+import exchange
+
+import ast_buildingblock as ast_bb
+import lan
+from processing import collect_loop as cl
 
 
 class PlaceInLocal(object):

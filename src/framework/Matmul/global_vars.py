@@ -1,9 +1,10 @@
-import lan
-import boilerplatebase
 import collect_array as ca
 import collect_device as cd
 import collect_id as ci
-import collect_gen as cg
+
+import boilerplatebase
+import lan
+from processing import collect_gen as cg
 
 
 class GlobalVars(boilerplatebase.BoilerplateBase):

@@ -3,13 +3,13 @@ import ply.yacc as yacc
 
 import boilerplategen
 import cgen
-import collect_id as ci
-import define_arguments as darg
 import kernelgen
 import lan
 import rewriter
-import stencil
-import transpose as tp
+from processing import collect_id as ci
+from transformation import define_arguments as darg
+from transformation import stencil
+from transformation import transpose as tp
 
 fileprefix = "../../test/C/"
 SetNoReadBack = True

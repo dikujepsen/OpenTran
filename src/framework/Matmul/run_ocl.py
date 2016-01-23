@@ -1,10 +1,11 @@
-import ast_buildingblock as ast_bb
-import boilerplatebase
 import collect_array as ca
 import collect_device as cd
-import collect_gen as cg
-import lan
 import collect_id as ci
+
+import ast_buildingblock as ast_bb
+import boilerplatebase
+import lan
+from processing import collect_gen as cg
 
 
 class RunOCL(boilerplatebase.BoilerplateBase):
