@@ -1,9 +1,9 @@
 import copy
 from itertools import chain
 
-import Matmul.ast_buildingblock as ast_bb
 import codegen.snippetgen
 import lan
+import lan.ast_buildingblock as ast_bb
 
 
 class Analysis:

@@ -1,9 +1,10 @@
 import copy
 
-import Matmul.ast_buildingblock as ast_bb
-import Matmul.transf_visitor as tvisitor
-import Matmul.visitor
+import framework.transf_visitor as tvisitor
+import framework.visitor
+
 import lan
+import lan.ast_buildingblock as ast_bb
 
 
 class MyError(Exception):
@@ -44,7 +45,7 @@ class Transformation():
         rw = self.rw
         # find loops and check that the loops given in the argument
         # exist
-        loopIndices = Matmul.visitor.LoopIndices()
+        loopIndices = framework.visitor.LoopIndices()
         loopIndices.visit(rw.Kernel)
         kernelLoops = loopIndices.Loops
         for l in looplist:
@@ -346,10 +347,10 @@ class Transformation():
         isInsideLoop = False
         try:
             # Find out if arrName is inside a loop
-            forLoops = Matmul.visitor.ForLoops()
+            forLoops = framework.visitor.ForLoops()
             forLoops.visit(rw.Kernel)
             forLoopAst = forLoops.ast
-            arrays = Matmul.visitor.Arrays([])
+            arrays = framework.visitor.Arrays([])
             arrays.visit(forLoopAst)
             for arrName in arrNames:
                 if arrName in arrays.trans_ids:
@@ -360,7 +361,7 @@ class Transformation():
 
         if isInsideLoop:
             # find loop index
-            loopIndices = Matmul.visitor.LoopIndices()
+            loopIndices = framework.visitor.LoopIndices()
             loopIndices.visit(forLoopAst)
             outeridx = loopIndices.index[0]
             forLoopAst.inc = lan.Increment(lan.Id(outeridx), '+=' + rw.Local['size'][0])
@@ -449,7 +450,7 @@ class Transformation():
                     exchangeId.visit(m)
                 if isInsideLoop:
                     for i, n in enumerate(orisub):
-                        addToId = Matmul.visitor.Ids()
+                        addToId = framework.visitor.Ids()
                         addToId.visit(n)
                         # REMEMBER: orisub[i] might not simply be an Id
                         # might need to do something more complicated here

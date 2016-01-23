@@ -1,7 +1,6 @@
-from processing import collect_array as ca
-
-import ast_buildingblock as ast_bb
 import lan
+import lan.ast_buildingblock as ast_bb
+from processing import collect_array as ca
 from processing import collect_device as cd
 
 

@@ -1,13 +1,12 @@
 import copy
 
+import exchange
+import lan
+from lan import ast_buildingblock as ast_bb
 from processing import collect_array as ca
 from processing import collect_device as cd
 from processing import collect_gen as cg
 from processing import collect_id as ci
-from Matmul import exchange
-
-from Matmul import ast_buildingblock as ast_bb
-import lan
 from processing import collect_loop as cl
 
 

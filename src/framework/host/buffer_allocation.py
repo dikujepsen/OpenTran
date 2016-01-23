@@ -1,11 +1,10 @@
-from processing import collect_array as ca
-from processing import collect_device as cd
-from processing import collect_id as ci
-
-import ast_buildingblock as ast_bb
 import boilerplatebase
 import lan
+import lan.ast_buildingblock as ast_bb
+from processing import collect_array as ca
+from processing import collect_device as cd
 from processing import collect_gen as cg
+from processing import collect_id as ci
 from transformation import define_arguments
 from transformation import transpose
 

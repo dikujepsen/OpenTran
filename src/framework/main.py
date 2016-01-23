@@ -1,17 +1,16 @@
 import ply.lex as lex
 import ply.yacc as yacc
 
-import boilerplategen
-import kernelgen
 import lan
 import rewriter
 from codegen import cgen
+from host import boilerplategen, kernelgen
 from processing import collect_id as ci
 from transformation import define_arguments as darg
 from transformation import stencil
 from transformation import transpose as tp
 
-fileprefix = "../../test/C/"
+fileprefix = "../test/C/"
 SetNoReadBack = True
 DoOptimizations = True
 

@@ -1,6 +1,3 @@
-from Matmul.transf_visitor import *
-
-
 class TransfRepr(NodeVisitor):
     """ Class for rewriting of the original AST. Includes:
     1. the initial small rewritings,

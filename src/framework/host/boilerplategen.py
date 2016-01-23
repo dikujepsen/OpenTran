@@ -2,8 +2,8 @@ import boilerplatebase
 import buffer_allocation
 import exec_kernel
 import global_vars
+import host.kernelgen
 import kernel_args
-import kernelgen
 import lan
 import run_ocl
 
@@ -31,7 +31,7 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
         globals_vars.add_global_vars()
 
         # Generate the GetKernelCode function
-        create_kernels = kernelgen.CreateKernels(self.ast, self.file_ast.ext)
+        create_kernels = host.kernelgen.CreateKernels(self.ast, self.file_ast.ext)
         create_kernels.create_get_kernel_code()
 
         host_buffer_allocation = buffer_allocation.BufferAllocation(self.ast, self.file_ast.ext)

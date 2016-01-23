@@ -1,7 +1,7 @@
 import copy
 
-import ast_buildingblock as ast_bb
 import lan
+import lan.ast_buildingblock as ast_bb
 from codegen import snippetgen
 from processing import collect_id as ci
 from transformation import place_in_local as piloc

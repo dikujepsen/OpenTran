@@ -1,10 +1,9 @@
+import boilerplatebase
+import lan
+import lan.ast_buildingblock as ast_bb
 from processing import collect_array as ca
 from processing import collect_device as cd
 from processing import collect_gen as cg
-
-import ast_buildingblock as ast_bb
-import boilerplatebase
-import lan
 from processing import collect_loop as cl
 
 
