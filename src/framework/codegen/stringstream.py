@@ -1,7 +1,7 @@
 import os
 import lan
 import cgen
-import ast_buildingblock as ast_bb
+import Matmul.ast_buildingblock as ast_bb
 
 debug = False
 

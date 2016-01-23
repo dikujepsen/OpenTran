@@ -1,5 +1,5 @@
-import collect_device as cd
-import collect_id as ci
+from processing import collect_device as cd
+from processing import collect_id as ci
 
 import ast_buildingblock as ast_bb
 import boilerplatebase

@@ -1,5 +1,5 @@
-import collect_array as ca
-import collect_id as ci
+from processing import collect_array as ca
+from processing import collect_id as ci
 
 import lan
 from processing import collect_array_rewrite as car

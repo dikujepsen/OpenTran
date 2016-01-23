@@ -2,10 +2,10 @@ import ply.lex as lex
 import ply.yacc as yacc
 
 import boilerplategen
-import cgen
 import kernelgen
 import lan
 import rewriter
+from codegen import cgen
 from processing import collect_id as ci
 from transformation import define_arguments as darg
 from transformation import stencil

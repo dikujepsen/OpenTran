@@ -1,12 +1,12 @@
 import copy
 
-import collect_array as ca
-import collect_device as cd
-import collect_gen as cg
-import collect_id as ci
-import exchange
+from processing import collect_array as ca
+from processing import collect_device as cd
+from processing import collect_gen as cg
+from processing import collect_id as ci
+from Matmul import exchange
 
-import ast_buildingblock as ast_bb
+from Matmul import ast_buildingblock as ast_bb
 import lan
 from processing import collect_loop as cl
 

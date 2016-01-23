@@ -1,11 +1,11 @@
 import copy
 
-import collect_array as ca
-import collect_device as cd
-import collect_id as ci
+from processing import collect_array as ca
+from processing import collect_device as cd
+from processing import collect_id as ci
 
+import Matmul.exchange
 import cgen
-import exchange
 import lan
 import stringstream
 from processing import collect_gen as cg
@@ -78,7 +78,7 @@ class SnippetGen(object):
 
     def _swap_local_array_id(self):
         local_swap = ci.get_local_swap(self.ast)
-        exchange_array_id = exchange.ExchangeArrayId(local_swap)
+        exchange_array_id = Matmul.exchange.ExchangeArrayId(local_swap)
 
         loop_arrays = ca.get_loop_arrays(self.ast)
 
@@ -90,17 +90,17 @@ class SnippetGen(object):
         my_kernel = copy.deepcopy(cd.get_kernel(self.ast))
         num_array_dims = ca.get_num_array_dims(self.ast)
         array_id_to_dim_name = cg.get_array_id_to_dim_name(self.ast)
-        rewrite_array_ref = exchange.RewriteArrayRef(num_array_dims,
-                                                     array_id_to_dim_name)
+        rewrite_array_ref = Matmul.exchange.RewriteArrayRef(num_array_dims,
+                                                            array_id_to_dim_name)
         rewrite_array_ref.visit(my_kernel)
 
         idx_to_thread_id = cg.GenIdxToThreadId()
         idx_to_thread_id.collect(self.ast)
         index_to_thread_id = idx_to_thread_id.IndexToThreadId
-        exchange_indices = exchange.ExchangeId(index_to_thread_id)
+        exchange_indices = Matmul.exchange.ExchangeId(index_to_thread_id)
         exchange_indices.visit(my_kernel)
 
-        exchange_types = exchange.ExchangeTypes()
+        exchange_types = Matmul.exchange.ExchangeTypes()
         exchange_types.visit(my_kernel)
 
         return my_kernel

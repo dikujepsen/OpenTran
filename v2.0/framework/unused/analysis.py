@@ -1,8 +1,9 @@
-from itertools import chain
-import Matmul.snippetgen
-import lan
 import copy
+from itertools import chain
+
 import Matmul.ast_buildingblock as ast_bb
+import codegen.snippetgen
+import lan
 
 
 class Analysis:
@@ -160,7 +161,7 @@ class Analysis:
             raise Exception("""GenerateKernels: Currently unimplemented to perform
                                 PlaceInReg and PlaceInLocal together from the analysis""")
 
-        ss = Matmul.snippetgen.SnippetGen(rw)
+        ss = codegen.snippetgen.SnippetGen(rw)
 
         ss.in_source_kernel(copy.deepcopy(ast), lan.Id('true'), filename=fileprefix + name + '/' + funcname + '.cl',
                             kernelstringname=funcname)

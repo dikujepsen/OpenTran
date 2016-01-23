@@ -1,10 +1,10 @@
 import copy
 from itertools import chain
 
-import collect_array as ca
-import collect_device as cd
-import collect_id as ci
-import exchange
+from processing import collect_array as ca
+from processing import collect_device as cd
+from processing import collect_id as ci
+from Matmul import exchange
 
 import lan
 from processing import collect_loop as cl
