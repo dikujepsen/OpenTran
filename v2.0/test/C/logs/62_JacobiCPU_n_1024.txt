@@ -1,0 +1,10 @@
+$Func JacobiCPU, $Defines -n 1024, $Time 0.0103609
+$Func JacobiCPU, $Defines -n 1024, $Time 0.0106144
+$Func JacobiCPU, $Defines -n 1024, $Time 0.010489
+$Func JacobiCPU, $Defines -n 1024, $Time 0.00954632
+$Func JacobiCPU, $Defines -n 1024, $Time 0.0101755
+$Func JacobiCPU, $Defines -n 1024, $Time 0.00950016
+$Func JacobiCPU, $Defines -n 1024, $Time 0.00952314
+$Func JacobiCPU, $Defines -n 1024, $Time 0.00948179
+$Func JacobiCPU, $Defines -n 1024, $Time 0.00954088
+$Func JacobiCPU, $Defines -n 1024, $Time 0.00948479

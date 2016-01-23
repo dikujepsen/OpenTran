@@ -1,0 +1,10 @@
+$Func NBodyCPU, $Defines -n 1024, $Time 0.0173616
+$Func NBodyCPU, $Defines -n 1024, $Time 0.0166677
+$Func NBodyCPU, $Defines -n 1024, $Time 0.0167509
+$Func NBodyCPU, $Defines -n 1024, $Time 0.01666
+$Func NBodyCPU, $Defines -n 1024, $Time 0.0167052
+$Func NBodyCPU, $Defines -n 1024, $Time 0.0167088
+$Func NBodyCPU, $Defines -n 1024, $Time 0.0166582
+$Func NBodyCPU, $Defines -n 1024, $Time 0.0166955
+$Func NBodyCPU, $Defines -n 1024, $Time 0.016714
+$Func NBodyCPU, $Defines -n 1024, $Time 0.0167018

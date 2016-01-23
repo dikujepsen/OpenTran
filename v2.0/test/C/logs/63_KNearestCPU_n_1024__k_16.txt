@@ -1,0 +1,10 @@
+$Func KNearestCPU, $Defines -n 1024 -k 16, $Time 0.0863951
+$Func KNearestCPU, $Defines -n 1024 -k 16, $Time 0.121509
+$Func KNearestCPU, $Defines -n 1024 -k 16, $Time 0.104586
+$Func KNearestCPU, $Defines -n 1024 -k 16, $Time 0.0741802
+$Func KNearestCPU, $Defines -n 1024 -k 16, $Time 0.0854475
+$Func KNearestCPU, $Defines -n 1024 -k 16, $Time 0.0861764
+$Func KNearestCPU, $Defines -n 1024 -k 16, $Time 0.0811359
+$Func KNearestCPU, $Defines -n 1024 -k 16, $Time 0.0793879
+$Func KNearestCPU, $Defines -n 1024 -k 16, $Time 0.104164
+$Func KNearestCPU, $Defines -n 1024 -k 16, $Time 0.0740552
