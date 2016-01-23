@@ -96,10 +96,8 @@ def __optimize(ast, par_dim=None):
     name = ci.get_program_name(ast)
     if DoOptimizations:
         __main_transpose(ast)
-        __main_placeinreg(ast)
         if name == 'Jacobi':
             __main_stencil(ast)
-        __main_placeinlocal(ast)
         __main_definearg(ast)
 
     gen_full_code(ast)
@@ -160,14 +158,6 @@ def __main_transpose(ast):
 def __main_definearg(ast):
     dargs = darg.DefineArguments(ast)
     dargs.define_arguments()
-
-
-def __main_placeinreg(ast):
-    pass
-
-
-def __main_placeinlocal(ast):
-    pass
 
 
 def __main_stencil(ast):

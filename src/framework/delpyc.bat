@@ -1,1 +1,2 @@
-rm -f *.pyc
+rm -rf *.pyc
+find . -name "*.pyc" -type f -delete
