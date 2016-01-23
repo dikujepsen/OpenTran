@@ -1,14 +1,15 @@
 import ply.lex as lex
 import ply.yacc as yacc
+
 import boilerplategen
 import cgen
+import collect_id as ci
 import define_arguments as darg
 import kernelgen
 import lan
 import rewriter
 import stencil
 import transpose as tp
-import collect_id as ci
 
 fileprefix = "../../test/C/"
 SetNoReadBack = True
