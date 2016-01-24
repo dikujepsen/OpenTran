@@ -370,6 +370,25 @@ class FuncDecl(Node):
     attr_names = ()
 
 
+class FuncCall(Node):
+    def __init__(self, id, arglist, coord=None):
+        self.id = id
+        self.arglist = arglist
+        self.coord = coord
+
+    def __repr__(self):
+        return "FuncCall(%r %r)" % (self.id,
+                                    self.arglist)
+
+    def children(self):
+        nodelist = []
+        nodelist.append(("id", self.id))
+        nodelist.append(("arglist", self.arglist))
+        return tuple(nodelist)
+
+    attr_names = ()
+
+
 class ForLoop(Node):
     def __init__(self, init, cond, inc, compound, coord=None):
         self.init = init

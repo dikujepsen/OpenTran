@@ -63,6 +63,9 @@ class _NonArrayIdsInLoop(lan.NodeVisitor):
         self.visit(node.arglist)
         self.visit(node.compound)
 
+    def visit_FuncCall(self, node):
+        self.visit(node.arglist)
+
     def visit_Id(self, node):
         name = node.name
         if name not in opencl_builtins:

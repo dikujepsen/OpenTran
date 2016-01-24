@@ -15,14 +15,12 @@ def EmptyFuncDecl(name, type=['void']):
 
 def FuncCall(name, arglist=[]):
     """ Returns a FuncDecl with no arguments or body """
-    allocateBufferTypeId = lan.Id(name)
-    allocateBufferArgList = lan.ArgList(arglist)
-    allocateBufferCompound = lan.Compound([])
-    allocateBuffer = lan.FuncDecl(allocateBufferTypeId,
-                                  allocateBufferArgList,
-                                  allocateBufferCompound)
+    funcId = lan.Id(name)
+    funcArgList = lan.ArgList(arglist)
+    func_call = lan.FuncCall(funcId,
+                             funcArgList)
 
-    return allocateBuffer
+    return func_call
 
 
 def ConstantAssignment(name, constant=0, type=['unsigned']):

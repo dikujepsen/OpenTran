@@ -44,7 +44,7 @@ class CGenerator(object):
     def simple_node(self, n):
         """ Returns True for nodes that are "simple"
         """
-        return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef, lan.FuncDecl))
+        return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef, lan.FuncDecl, lan.FuncCall))
 
     def parenthesize_if(self, n, condition):
         """ Visits 'n' and returns its string representation, parenthesized
@@ -229,6 +229,23 @@ class CGenerator(object):
         else:
             compound = self.semi
         return typeid + arglist + compound
+
+    def visit_FuncCall(self, n):
+
+        my_inside_arg_list = self.inside_ArgList
+        self.inside_ArgList = True
+
+        id = self.visit(n.id)
+        arglist = self.visit(n.arglist)
+
+        self.inside_ArgList = False or my_inside_arg_list
+        if self.inside_Assignment or self.inside_ArgList:
+            end = ''
+        else:
+            end = self.semi
+        return id + arglist + end
+
+
 
     def visit_ForLoop(self, n):
         newline = self.newline

@@ -187,15 +187,15 @@ def p_compound(p):
 
 def p_func_call(p):
     """ function_call : identifier arglist """
-    p[0] = FuncDecl(p[1], p[2], Compound([]), p.lineno(1))
+    p[0] = FuncCall(p[1], p[2], p.lineno(1))
+
+
+# def p_func_decl_1(p):
+#     """function_declaration : typeid arglist SEMI"""
+#     p[0] = FuncDecl(p[1], p[2], Compound([], p.lineno(1)), p.lineno(1))
 
 
 def p_func_decl_1(p):
-    """function_declaration : typeid arglist SEMI"""
-    p[0] = FuncDecl(p[1], p[2], Compound([], p.lineno(1)), p.lineno(1))
-
-
-def p_func_decl_2(p):
     """function_declaration : typeid arglist compound """
     p[0] = FuncDecl(p[1], p[2], p[3], p.lineno(1))
 

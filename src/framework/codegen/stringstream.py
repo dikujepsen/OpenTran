@@ -69,7 +69,7 @@ class SSGenerator(object):
     def simple_node(self, n):
         """ Returns True for nodes that are "simple"
         """
-        return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef, lan.FuncDecl))
+        return not isinstance(n, (lan.Constant, lan.Id, lan.ArrayRef, lan.FuncDecl, lan.FuncCall))
 
     def parenthesize_if(self, n, condition):
         """ Visits 'n' and returns its string representation, parenthesized
@@ -277,6 +277,24 @@ class SSGenerator(object):
         retval = typeid + arglist + compound
         # print "RETVAL ", retval
         return retval
+
+    def visit_FuncCall(self, n):
+
+        self.inside_ArgList = True
+        id = self.visit(n.id)
+
+        arglist = self.visit(n.arglist)
+
+        self.inside_ArgList = False
+        if self.inside_Assignment:
+            end = ''
+        else:
+            end = self.semi
+
+        retval = id + arglist + end
+        return retval
+
+
 
     def visit_ForLoop(self, n):
         newline = self.newline
