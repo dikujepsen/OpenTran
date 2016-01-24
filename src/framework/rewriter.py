@@ -1,15 +1,9 @@
+import lan
 from processing import collect_array as ca
 from processing import collect_id as ci
 
-import lan
-from processing import collect_array_rewrite as car
-
 
 class Rewriter(object):
-
-    def rewrite_array_ref(self, ast):
-        naref = car.NormArrayRef(ast)
-        naref.visit(ast)
 
     def rewrite_to_baseform(self, ast, functionname='FunctionName'):
         """ Rewrites a few things in the AST, ast, to increase the
@@ -20,7 +14,7 @@ class Rewriter(object):
 
         typeid = lan.TypeId(['void'], lan.Id(functionname), ast.coord)
 
-        lan_kernel_args = LanKernelArgs()
+        lan_kernel_args = _LanKernelArgs()
         lan_kernel_args.generate(ast)
         array_args = lan_kernel_args.array_args
 
@@ -30,8 +24,6 @@ class Rewriter(object):
             include = ast.ext.pop(0)
             my_includes.append(include)
 
-        # while not isinstance(ast.ext[0], lan.ForLoop):
-        #     ast.ext.pop(0)
         compound = lan.Compound(ast.ext)
 
         ast.ext = my_includes
@@ -39,7 +31,7 @@ class Rewriter(object):
         ast.ext.append(lan.FuncDecl(typeid, arglist, compound))
 
 
-class LanKernelArgs(object):
+class _LanKernelArgs(object):
     def __init__(self):
         self.array_args = list()
 

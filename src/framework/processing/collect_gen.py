@@ -3,6 +3,16 @@ import collect_id as ci
 import collect_loop as cl
 import collect_device as cd
 
+def print_dict_sorted(mydict):
+    keys = sorted(mydict)
+
+    entries = ""
+    for key in keys:
+        value = mydict[key]
+        entries += "'" + key + "': " + value.__repr__() + ","
+
+    return "{" + entries[:-1] + "}"
+
 
 class GenReverseIdx(object):
     def __init__(self):

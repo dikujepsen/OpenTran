@@ -14,12 +14,12 @@ for (unsigned i = 0; i < storagesize; i++) {
     double gradient_temp[dim];
     double dot_temp[dim];
     for (unsigned d = 0; d < dim; d++) {
-      double level_i = level[i * dim + d];
-      double level_j = level[j * dim + d];
-      double level_int_i = level_int[i * dim + d];
-      double level_int_j = level_int[j * dim + d];
-      double index_i = index[i * dim + d];
-      double index_j = index[j * dim + d];
+      double level_i = level[i][d];
+      double level_j = level[j][d];
+      double level_int_i = level_int[i][d];
+      double level_int_j = level_int[j][d];
+      double index_i = index[i][d];
+      double index_j = index[j][d];
       gradient_temp[d] = gradient(level_i,index_i,
 				   level_j,index_j, lcl_q_inv[d]);
       dot_temp[d] = l2dot(level_i,

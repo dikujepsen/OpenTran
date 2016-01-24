@@ -57,7 +57,6 @@ def __get_ast_from_init(name):
     ast.ext.append(lan.ProgramName(name))
 
     rw = rewriter.Rewriter()
-    rw.rewrite_array_ref(ast)
     rw.rewrite_to_baseform(ast, name + 'For')
 
     return ast

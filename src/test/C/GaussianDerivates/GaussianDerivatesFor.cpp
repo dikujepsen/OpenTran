@@ -18,11 +18,11 @@ for (int j=0; j<Lp; j++) {
     float xj[3];
     float xi[3];
     for (int k = 0; k < dim; k++) {
-      xj[k] = p_a_i_x[j*p_a_i_rows + k];
+      xj[k] = p_a_i_x[j][k];
     }
 
     for (int k = 0; k < dim; k++) {
-      xi[k] = q_a_i_x[i*q_a_i_rows + k];
+      xi[k] = q_a_i_x[i][k];
     }
 
 
@@ -36,7 +36,7 @@ for (int j=0; j<Lp; j++) {
     float r = sqrt(scales2_x);
 
     float ks = gamma(ximxj, scales2_x, scaleweight2_x);
-    K__ij_x[i+K__ij_rows*j] = ks;
+    K__ij_x[j][i] = ks;
 
     int da[3];
     int db[3];
