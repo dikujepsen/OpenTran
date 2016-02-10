@@ -1,0 +1,6 @@
+{'train_patterns': [['j', 'k']], 'test_patterns': [['i', 'k']], 'dist_matrix': [['j', 'i']]} subnoid
+{0: 'i'} idxtodim
+
+
+{'train_patterns': [['j', 'k']], 'test_patterns': [['i', 'k']], 'dist_matrix': [['j', 'i']]} subnoid
+{0: 'i'} idxtodim
