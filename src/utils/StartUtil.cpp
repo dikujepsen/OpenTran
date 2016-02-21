@@ -81,7 +81,7 @@ void oclCheckErr(cl_int err, const char * function) {
 
 
 
-void StartUpGPU() {
+void StartUpGPU(std::string ocl_type) {
   std::cout << "StartUpGPU" << std::endl;
   cl_int err = CL_SUCCESS;
   err |= clGetPlatformIDs(0, NULL, &num_platforms);
@@ -93,18 +93,37 @@ void StartUpGPU() {
   err |= clGetPlatformIDs(num_platforms, platform_ids, NULL);
   oclCheckErr(err, "clGetPlatformIDs2");
 
-  //#ifdef OCLCPU
-#if 0
-  cl_device_type devtype = CL_DEVICE_TYPE_CPU;
-  unsigned plat_id = 1;
-#else
+  std::string plat_info_str = "";;
+  unsigned info_type = CL_PLATFORM_NAME;
+  for (unsigned i = 0; i < num_platforms; i++) {
+    size_t info_size = 0;
+    clGetPlatformInfo(platform_ids[i], info_type, 0, NULL, &info_size);
+    char * info = (char*)malloc(info_size * sizeof(char));
+    clGetPlatformInfo(platform_ids[i], info_type, info_size, info, NULL);
+    plat_info_str += info;
+    plat_info_str += "\n";
+    free(info);
+  }
+  std::cout << "plat_info_str: " << plat_info_str << std::endl;
+
   cl_device_type devtype = CL_DEVICE_TYPE_GPU;
-  unsigned plat_id = 0;
-#endif
-  platform_id = platform_ids[plat_id];
-  err |= clGetDeviceIDs(platform_id, devtype, 0, NULL, &num_devices);
-  oclCheckErr(err, "clGetDeviceIDs1");
+
+  if (ocl_type == "cpu") {
+    devtype = CL_DEVICE_TYPE_CPU;
+  }
+
+
+  for (unsigned i = 0; i < num_platforms; i++) {
+    platform_id = platform_ids[i];
+    err |= clGetDeviceIDs(platform_id, devtype, 0, NULL, &num_devices);
+    if (err == CL_DEVICE_NOT_FOUND) {
+      err = 0;
+    } else {
+      break;
+    }
+  }
   
+  oclCheckErr(err, "clGetDeviceIDs1");
   std::cout << "$numDEV " << num_devices << std::endl;
   num_devices = std::min<unsigned>(num_devices, NUMDEVS);
 
