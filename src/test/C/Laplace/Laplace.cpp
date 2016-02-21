@@ -3,6 +3,7 @@
 #include <iostream>
 #include <math.h>
 #include "boilerplate.cpp"
+#include "../../../utils/helper.cpp"
 
 using namespace std;
 double gradient2(
@@ -132,13 +133,18 @@ Laplace(double * level,
       for (size_t d_outer = 0; d_outer < dim; d_outer++) {
 	double element = alpha[j];
 
+
 	for (size_t d_inner = 0; d_inner < dim; d_inner++) {
 	  element *= ((dot_temp[d_inner] * (d_outer != d_inner)) + (gradient_temp[d_inner] * (d_outer == d_inner)));
 	}
+//cout << "element " << element << endl;
+//cout << "lambda[d_outer] " << lambda[d_outer] << endl;
 	sub += lambda[d_outer] * element;
       }
-      
+
+
     }
+//    cout << "sub " << sub << endl;
     result[i] = sub;
   }
 }
@@ -192,7 +198,7 @@ int main(int argc, char** argv)
 
   unsigned storage_size;
   unsigned dim;
-  ParseCommandLine(argc, argv, &storage_size, NULL, &dim);
+  ParseCommandLine(argc, argv, &storage_size, NULL, &dim, NULL);
   unsigned wLevel = dim;
   unsigned hLevel = storage_size;
   unsigned wLevel_int = dim;
@@ -210,6 +216,7 @@ int main(int argc, char** argv)
   double * level = new double[level_size];
   double * level_int = new double[level_int_size];
   double * index = new double[index_size];
+  double * result_cpu = new double[result_size];
   double * result = new double[result_size];
   double * alpha = new double[alpha_size];
   double * lcl_q = new double[dim];
@@ -223,16 +230,17 @@ int main(int argc, char** argv)
   randMat(lcl_q_inv, dim);
   randMat(lambda, dim);
   randMat(alpha, alpha_size); 
+  zeroMatrix(result_cpu, 1, result_size);
   zeroMatrix(result, 1, result_size);
   divMat(alpha, alpha_size, 100.0);
   divMat(level_int, level_int_size, 10000.0);
 
-#if CPU
-  timer.start();  
+
+  timer.start();
   Laplace(level,
   	  level_int,
   	  index,
-  	  result,
+  	  result_cpu,
   	  lcl_q_inv,
   	  lcl_q,
   	  alpha,
@@ -240,21 +248,20 @@ int main(int argc, char** argv)
   	  storage_size,  dim);
   cout << "$Time " << timer.stop() << endl;  
 
-#else
-  RunOCLLaplaceForKernel(
-			 dim, level_int, wLevel_int, 
-			 hLevel_int, index, wIndex, hIndex, lcl_q, dim, 
-			 level, wLevel, hLevel, 
-			 result, result_size, lcl_q_inv, dim,
-			 alpha, alpha_size, 
-			 storage_size, lambda, dim
-			 );
-#endif
+  RunOCLLaplaceForKernel(alpha, alpha_size, dim,
+	index, wIndex, hIndex,
+	lambda, dim, lcl_q, dim, lcl_q_inv, dim,
+	level, wLevel, hLevel,
+	level_int, wLevel_int, hLevel_int,
+	"gpu", result, result_size,
+	storage_size);
+
+
   // printMat(alpha, alpha_size);
     
-#if PRINT
-  printMat(result, 100);
-#endif
+  helper::check_matrices(result_cpu, result, result_size);
+//  printMat(result_cpu, 100);
+//#endif
   // printMat(result, result_size);
 
   free(level);
