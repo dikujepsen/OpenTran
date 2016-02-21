@@ -28,7 +28,7 @@ bool AlmostEqualRelative(T A, T B,
             T cpu_num = cpu_mat[i];
             T ocl_num = ocl_mat[i];
             T diff = abs(cpu_num - ocl_num);
-            if (!AlmostEqualRelative(cpu_num, ocl_num, (T)1e-5)) {
+            if (!AlmostEqualRelative(cpu_num, ocl_num, (T)1e-3)) {
                 std::cout << "Error in calculated matrix: CPU: " << cpu_num << " OCL: " << ocl_num;
                 std::cout << " Diff: " << diff << std::endl;
                 retval = false;

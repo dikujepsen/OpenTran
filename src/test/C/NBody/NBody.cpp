@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include "boilerplate.cpp"
+#include "../../../utils/helper.cpp"
 
 
 using namespace std;
@@ -13,14 +14,14 @@ createMasses(float* M, unsigned wM, unsigned hM)
 {
   for (unsigned i = 0; i < hM; i++) {
     for (unsigned j = 0; j < wM; j++) {
-      M[i * wM + j] = ((rand() % 100) / 100.0) * 500.0;
+      M[i * wM + j] = ((rand() % 100) / 10.0) * 500.0;
     }
   }
 
 }
 
-#define ri 100000
-#define rd 100000.0
+#define ri 9000
+#define rd 9000.0
 void
 createPosses(float* M, unsigned wM, unsigned hM)
 {
@@ -152,7 +153,7 @@ void computeForces(float * Forces, float * Pos, float * Mas, unsigned N) {
 int main(int argc, char** argv)
 {
   unsigned matsize;
-  ParseCommandLine(argc, argv, &matsize, NULL, NULL);
+  ParseCommandLine(argc, argv, &matsize, NULL, NULL, NULL);
 
   unsigned hPos = 2;
   unsigned hM = 1;
@@ -170,6 +171,7 @@ int main(int argc, char** argv)
   float* M_mat = new float[M_size];
   float* Pos = new float[Pos_size];
   float* Vel = new float[Vel_size];
+  float* Forces_cpu = new float[Vel_size];
   float* Forces = new float[Vel_size];
 
   srand(2553);
@@ -181,24 +183,23 @@ int main(int argc, char** argv)
   // float dt = 0.015;
   
 
-#if CPU
-  timer.start();  
-  computeForces(Forces, Pos, M_mat, N);
+  timer.start();
+  computeForces(Forces_cpu, Pos, M_mat, N);
   cout << "$Time " << timer.stop() << endl;  
-#else
-  RunOCLNBodyForKernel(M_mat, wM,
-		       Pos, wPos, 2,
-		       Forces, wVel, 2,
-		       N);
+  RunOCLNBodyForKernel(Forces, wVel, 2,
+	M_mat, wM, N,
+	Pos, wPos, 2,
+	"gpu");
+
+
+
   
-#endif
+  helper::check_matrices(Forces_cpu, Forces, Vel_size);
   // printMat2(M_mat, wM, hM);
   // printMat2(Pos   , wPos, hPos);
   // printMat2(Vel   , wVel, hVel);
   // printMat2(Forces, wVel, hVel);
-#if PRINT
-  printMat(Forces, 100);
-#endif
+//  printMat(Forces, 100);
 
   free(Pos);
   free(M_mat);
