@@ -8,6 +8,7 @@ cl_mem dev_ptrPos;
 float * hst_ptrForces;
 float * hst_ptrMas;
 size_t N;
+std::string ocl_type;
 float * hst_ptrPos;
 
 size_t hst_ptrForces_mem_size;
@@ -171,13 +172,23 @@ void ExecNBodyFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrForces, CL_TRUE, 
+	0, hst_ptrForces_mem_size, hst_ptrForces, 
+	1, &GPUExecution, NULL
+	);
+  oclCheckErr(
+	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
 }
 
 void RunOCLNBodyForKernel(
 	float * arg_Forces, size_t arg_hst_ptrForces_dim1, size_t arg_hst_ptrForces_dim2, 
 	float * arg_Mas, size_t arg_hst_ptrMas_dim1, size_t arg_N, 
-	float * arg_Pos, size_t arg_hst_ptrPos_dim1, size_t arg_hst_ptrPos_dim2
-	)
+	float * arg_Pos, size_t arg_hst_ptrPos_dim1, size_t arg_hst_ptrPos_dim2, 
+	std::string arg_ocl_type)
 {
   if (isFirstTime)
     {
@@ -190,6 +201,7 @@ void RunOCLNBodyForKernel(
       hst_ptrPos = arg_Pos;
       hst_ptrPos_dim1 = arg_hst_ptrPos_dim1;
       hst_ptrPos_dim2 = arg_hst_ptrPos_dim2;
+      ocl_type = arg_ocl_type;
       StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;

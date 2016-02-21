@@ -6,6 +6,7 @@ cl_mem dev_ptrX1;
 cl_mem dev_ptrX2;
 
 float * hst_ptrB;
+std::string ocl_type;
 unsigned wA;
 unsigned wB;
 float * hst_ptrX1;
@@ -122,13 +123,24 @@ void ExecJacobiFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrX2, CL_TRUE, 
+	0, hst_ptrX2_mem_size, hst_ptrX2, 
+	1, &GPUExecution, NULL
+	);
+  oclCheckErr(
+	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
 }
 
 void RunOCLJacobiForKernel(
 	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
 	float * arg_X1, size_t arg_hst_ptrX1_dim1, size_t arg_hst_ptrX1_dim2, 
 	float * arg_X2, size_t arg_hst_ptrX2_dim1, size_t arg_hst_ptrX2_dim2, 
-	unsigned arg_wA, unsigned arg_wB)
+	std::string arg_ocl_type, unsigned arg_wA, unsigned arg_wB
+	)
 {
   if (isFirstTime)
     {
@@ -141,6 +153,7 @@ void RunOCLJacobiForKernel(
       hst_ptrX2 = arg_X2;
       hst_ptrX2_dim1 = arg_hst_ptrX2_dim1;
       hst_ptrX2_dim2 = arg_hst_ptrX2_dim2;
+      ocl_type = arg_ocl_type;
       wA = arg_wA;
       wB = arg_wB;
       StartUpOCL(ocl_type);

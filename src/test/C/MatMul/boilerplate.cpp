@@ -1,4 +1,5 @@
 #include "../../../utils/StartUtil.cpp"
+
 using namespace std;
 cl_kernel MatMulForKernel;
 cl_mem dev_ptrA;
@@ -150,6 +151,16 @@ void ExecMatMulFor()
 	);
   oclCheckErr(
 	oclErrNum, "clEnqueueNDRangeKernel");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrC, CL_TRUE, 
+	0, hst_ptrC_mem_size, hst_ptrC, 
+	1, &GPUExecution, NULL
+	);
+  oclCheckErr(
+	oclErrNum, "clEnqueueReadBuffer");
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");

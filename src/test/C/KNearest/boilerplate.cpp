@@ -9,6 +9,7 @@ unsigned dim;
 float * hst_ptrdist_matrix;
 unsigned NTEST;
 unsigned NTRAIN;
+std::string ocl_type;
 float * hst_ptrtest_patterns;
 float * hst_ptrtrain_patterns;
 float * hst_ptrtest_patterns_trans;
@@ -160,14 +161,24 @@ void ExecKNearestFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrdist_matrix, CL_TRUE, 
+	0, hst_ptrdist_matrix_mem_size, hst_ptrdist_matrix, 
+	1, &GPUExecution, NULL
+	);
+  oclCheckErr(
+	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
 }
 
 void RunOCLKNearestForKernel(
 	unsigned arg_NTEST, unsigned arg_NTRAIN, unsigned arg_dim, 
 	float * arg_dist_matrix, size_t arg_hst_ptrdist_matrix_dim1, size_t arg_hst_ptrdist_matrix_dim2, 
-	float * arg_test_patterns, size_t arg_hst_ptrtest_patterns_dim1, size_t arg_hst_ptrtest_patterns_dim2, 
-	float * arg_train_patterns, size_t arg_hst_ptrtrain_patterns_dim1, size_t arg_hst_ptrtrain_patterns_dim2
-	)
+	std::string arg_ocl_type, float * arg_test_patterns, size_t arg_hst_ptrtest_patterns_dim1, 
+	size_t arg_hst_ptrtest_patterns_dim2, float * arg_train_patterns, size_t arg_hst_ptrtrain_patterns_dim1, 
+	size_t arg_hst_ptrtrain_patterns_dim2)
 {
   if (isFirstTime)
     {
@@ -177,6 +188,7 @@ void RunOCLKNearestForKernel(
       hst_ptrdist_matrix = arg_dist_matrix;
       hst_ptrdist_matrix_dim1 = arg_hst_ptrdist_matrix_dim1;
       hst_ptrdist_matrix_dim2 = arg_hst_ptrdist_matrix_dim2;
+      ocl_type = arg_ocl_type;
       hst_ptrtest_patterns = arg_test_patterns;
       hst_ptrtest_patterns_dim1 = arg_hst_ptrtest_patterns_dim1;
       hst_ptrtest_patterns_dim2 = arg_hst_ptrtest_patterns_dim2;

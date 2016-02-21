@@ -11,7 +11,7 @@ from transformation import stencil
 from transformation import transpose as tp
 
 fileprefix = "../test/C/"
-SetNoReadBack = True
+SetNoReadBack = False
 DoOptimizations = True
 
 
@@ -167,8 +167,8 @@ def __main_stencil(ast):
 
 if __name__ == "__main__":
     matmul()
-    # knearest()
-    # jacobi()
-    # nbody()
-    # laplace()
-    # gaussian()
+    knearest()
+    jacobi()
+    nbody()
+    laplace()
+    gaussian()

@@ -18,6 +18,7 @@ double * hst_ptrlcl_q;
 double * hst_ptrlcl_q_inv;
 double * hst_ptrlevel;
 double * hst_ptrlevel_int;
+std::string ocl_type;
 double * hst_ptrresult;
 size_t storagesize;
 double * hst_ptrindex_trans;
@@ -284,6 +285,16 @@ void ExecLaplaceFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrresult, CL_TRUE, 
+	0, hst_ptrresult_mem_size, hst_ptrresult, 
+	1, &GPUExecution, NULL
+	);
+  oclCheckErr(
+	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
 }
 
 void RunOCLLaplaceForKernel(
@@ -293,8 +304,8 @@ void RunOCLLaplaceForKernel(
 	size_t arg_hst_ptrlcl_q_dim1, double * arg_lcl_q_inv, size_t arg_hst_ptrlcl_q_inv_dim1, 
 	double * arg_level, size_t arg_hst_ptrlevel_dim1, size_t arg_hst_ptrlevel_dim2, 
 	double * arg_level_int, size_t arg_hst_ptrlevel_int_dim1, size_t arg_hst_ptrlevel_int_dim2, 
-	double * arg_result, size_t arg_hst_ptrresult_dim1, size_t arg_storagesize
-	)
+	std::string arg_ocl_type, double * arg_result, size_t arg_hst_ptrresult_dim1, 
+	size_t arg_storagesize)
 {
   if (isFirstTime)
     {
@@ -316,6 +327,7 @@ void RunOCLLaplaceForKernel(
       hst_ptrlevel_int = arg_level_int;
       hst_ptrlevel_int_dim1 = arg_hst_ptrlevel_int_dim1;
       hst_ptrlevel_int_dim2 = arg_hst_ptrlevel_int_dim2;
+      ocl_type = arg_ocl_type;
       hst_ptrresult = arg_result;
       hst_ptrresult_dim1 = arg_hst_ptrresult_dim1;
       storagesize = arg_storagesize;

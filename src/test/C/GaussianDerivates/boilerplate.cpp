@@ -21,6 +21,7 @@ unsigned dim;
 float * hst_ptrK__ij_x;
 unsigned Lp;
 unsigned Lq;
+std::string ocl_type;
 float * hst_ptrp_a_i_x;
 float * hst_ptrq_a_i_x;
 float scales2_x;
@@ -351,6 +352,37 @@ void ExecGaussianDerivatesFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrD1Ks__ijb_x, CL_TRUE, 
+	0, hst_ptrD1Ks__ijb_x_mem_size, hst_ptrD1Ks__ijb_x, 
+	1, &GPUExecution, NULL
+	);
+  oclCheckErr(
+	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrD2Ks__ijbg_x, CL_TRUE, 
+	0, hst_ptrD2Ks__ijbg_x_mem_size, hst_ptrD2Ks__ijbg_x, 
+	1, &GPUExecution, NULL
+	);
+  oclCheckErr(
+	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrD3Ks__ijbgd_x, CL_TRUE, 
+	0, hst_ptrD3Ks__ijbgd_x_mem_size, hst_ptrD3Ks__ijbgd_x, 
+	1, &GPUExecution, NULL
+	);
+  oclCheckErr(
+	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrK__ij_x, CL_TRUE, 
+	0, hst_ptrK__ij_x_mem_size, hst_ptrK__ij_x, 
+	1, &GPUExecution, NULL
+	);
+  oclCheckErr(
+	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
 }
 
 void RunOCLGaussianDerivatesForKernel(
@@ -360,9 +392,10 @@ void RunOCLGaussianDerivatesForKernel(
 	size_t arg_hst_ptrD3Ks__ijbgd_dimsI_dim1, float * arg_D3Ks__ijbgd_x, size_t arg_hst_ptrD3Ks__ijbgd_x_dim1, 
 	float * arg_K__ij_x, size_t arg_hst_ptrK__ij_x_dim1, size_t arg_hst_ptrK__ij_x_dim2, 
 	unsigned arg_Lp, unsigned arg_Lq, unsigned arg_dim, 
-	float * arg_p_a_i_x, size_t arg_hst_ptrp_a_i_x_dim1, size_t arg_hst_ptrp_a_i_x_dim2, 
-	float * arg_q_a_i_x, size_t arg_hst_ptrq_a_i_x_dim1, size_t arg_hst_ptrq_a_i_x_dim2, 
-	float arg_scales2_x, float arg_scaleweight2_x)
+	std::string arg_ocl_type, float * arg_p_a_i_x, size_t arg_hst_ptrp_a_i_x_dim1, 
+	size_t arg_hst_ptrp_a_i_x_dim2, float * arg_q_a_i_x, size_t arg_hst_ptrq_a_i_x_dim1, 
+	size_t arg_hst_ptrq_a_i_x_dim2, float arg_scales2_x, float arg_scaleweight2_x
+	)
 {
   if (isFirstTime)
     {
@@ -384,6 +417,7 @@ void RunOCLGaussianDerivatesForKernel(
       Lp = arg_Lp;
       Lq = arg_Lq;
       dim = arg_dim;
+      ocl_type = arg_ocl_type;
       hst_ptrp_a_i_x = arg_p_a_i_x;
       hst_ptrp_a_i_x_dim1 = arg_hst_ptrp_a_i_x_dim1;
       hst_ptrp_a_i_x_dim2 = arg_hst_ptrp_a_i_x_dim2;
