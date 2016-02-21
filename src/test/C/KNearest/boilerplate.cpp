@@ -111,8 +111,8 @@ void AllocateBuffers()
   cl_int oclErrNum = CL_SUCCESS;
   
   dev_ptrdist_matrix = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrdist_matrix_mem_size, 
-	NULL, &oclErrNum);
+	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrdist_matrix_mem_size, 
+	hst_ptrdist_matrix, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrdist_matrix");
   dev_ptrtest_patterns = clCreateBuffer(

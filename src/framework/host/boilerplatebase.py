@@ -29,6 +29,9 @@ class BoilerplateBase(object):
         self._cl_exec_kernel_func_name = 'clEnqueueNDRangeKernel'
         self._cl_finish_name = 'clFinish'
 
+        # Debug purposes
+        self._is_debug = False
+
     def _get_kernel_id(self):
         kernel_name = cd.get_kernel_name(self.ast)
         kernel_id = lan.Id(kernel_name)

@@ -10,8 +10,9 @@ from transformation import transpose
 
 
 class BufferAllocation(boilerplatebase.BoilerplateBase):
-    def __init__(self, ast, file_ast):
+    def __init__(self, ast, file_ast, is_debug):
         super(BufferAllocation, self).__init__(ast, file_ast)
+        self._is_debug = is_debug
 
     def add_buffer_allocation_function(self):
         allocate_buffer = ast_bb.EmptyFuncDecl(self._allocate_buffers_name)
@@ -70,8 +71,14 @@ class BufferAllocation(boilerplatebase.BoilerplateBase):
             arrayn = dict_n_to_hst_ptr[n]
             arrayn = name_swap.try_swap(arrayn)
             if n in write_only:
-                flag = lan.Id('CL_MEM_WRITE_ONLY')
-                arrayn_id = lan.Id('NULL')
+                flag_name = 'CL_MEM_WRITE_ONLY'
+                if self._is_debug:
+                    flag_name += ' | CL_MEM_USE_HOST_PTR'
+                    flag = lan.Id(flag_name)
+                    arrayn_id = lan.Id(arrayn)
+                else:
+                    flag = lan.Id('CL_MEM_WRITE_ONLY')
+                    arrayn_id = lan.Id('NULL')
             elif n in read_only:
                 flag = lan.Id('CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY')
                 arrayn_id = lan.Id(arrayn)

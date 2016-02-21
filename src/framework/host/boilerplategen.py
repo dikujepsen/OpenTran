@@ -20,8 +20,9 @@ def print_dict_sorted(mydict):
 
 
 class Boilerplate(boilerplatebase.BoilerplateBase):
-    def __init__(self, ast, no_read_back):
+    def __init__(self, ast, no_read_back, is_debug):
         super(Boilerplate, self).__init__(ast, lan.FileAST([]))
+        self._is_debug = is_debug
         self.NoReadBack = no_read_back
 
     def generate_code(self):
@@ -34,7 +35,7 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
         create_kernels = host.kernelgen.CreateKernels(self.ast, self.file_ast.ext)
         create_kernels.create_get_kernel_code()
 
-        host_buffer_allocation = buffer_allocation.BufferAllocation(self.ast, self.file_ast.ext)
+        host_buffer_allocation = buffer_allocation.BufferAllocation(self.ast, self.file_ast.ext, self._is_debug)
         host_buffer_allocation.add_buffer_allocation_function()
 
         host_kernel_args = kernel_args.KernelArgs(self.ast, self.file_ast.ext)

@@ -230,8 +230,8 @@ void AllocateBuffers()
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrlevel_int");
   dev_ptrresult = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrresult_mem_size, 
-	NULL, &oclErrNum);
+	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrresult_mem_size, 
+	hst_ptrresult, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrresult");
 }

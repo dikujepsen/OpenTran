@@ -13,6 +13,7 @@ from transformation import transpose as tp
 fileprefix = "../test/C/"
 SetNoReadBack = False
 DoOptimizations = True
+IsDebug = True
 
 
 def __get_ast_from_file(foldername, filename):
@@ -74,7 +75,7 @@ def gen_full_code(ast):
 
     kgen.generate_kernels()
 
-    boilerplate = boilerplategen.Boilerplate(ast, SetNoReadBack)
+    boilerplate = boilerplategen.Boilerplate(ast, SetNoReadBack, IsDebug)
     boilerast = boilerplate.generate_code()
 
     name = ci.get_program_name(ast)

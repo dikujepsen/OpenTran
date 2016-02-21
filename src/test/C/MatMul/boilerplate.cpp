@@ -1,5 +1,4 @@
 #include "../../../utils/StartUtil.cpp"
-
 using namespace std;
 cl_kernel MatMulForKernel;
 cl_mem dev_ptrA;
@@ -114,8 +113,8 @@ void AllocateBuffers()
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrB");
   dev_ptrC = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrC_mem_size, 
-	NULL, &oclErrNum);
+	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrC_mem_size, 
+	hst_ptrC, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrC");
 }

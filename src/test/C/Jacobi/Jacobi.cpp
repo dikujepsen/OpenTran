@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include "boilerplate.cpp"
-
+#include "../../../utils/helper.cpp"
 
 using namespace std;
 
@@ -98,7 +98,7 @@ copyMat(float* mat1, float* mat2, unsigned wMat, unsigned hMat)
 int main(int argc, char** argv)
 {
   unsigned matsize;
-  ParseCommandLine(argc, argv, &matsize, NULL, NULL);
+  ParseCommandLine(argc, argv, &matsize, NULL, NULL, NULL);
 
   unsigned hA = matsize+2;
   unsigned hB = matsize+1;
@@ -113,35 +113,35 @@ int main(int argc, char** argv)
   
   float* X1_mat = new float[A_size];
   float* B_mat = new float[B_size];
+  float* X2_mat_cpu = new float[C_size];
   float* X2_mat = new float[C_size];
 
   zeroMatrix(X1_mat, wA, hA);
+  zeroMatrix(X2_mat_cpu, wC, hC);
   zeroMatrix(X2_mat, wC, hC);
-  
+
   createB(B_mat, wB, hB);
   // printMat2(B_mat, wB, hB);
 
-#if CPU
-  timer.start();  
-  Jacobi(B_mat, X1_mat, X2_mat, wA, wB);
+  timer.start();
+  Jacobi(B_mat, X1_mat, X2_mat_cpu, wA, wB);
+//    printMat3(X2_mat_cpu, 200, wA, hA);
   cout << "$Time " << timer.stop() << endl;  
-#else 
-  RunOCLJacobiForKernel(X2_mat, wC, hC,
-			X1_mat, wA, hA,
+  RunOCLJacobiForKernel(
 			B_mat,  wB, hB,
-			wB, wA
+			X1_mat, wA, hA,
+			X2_mat, wC, hC,
+			"gpu",
+			wB
 			);
-#endif
-  // for (unsigned i = 0; i < 10; i++) {
-  //   for (unsigned j = 0; j < 10; j++) {
-  //     cout << X2_mat[i * wA + j] << " ";
-  //   }
-  //   cout << endl;
-  // }
-  // cout << endl;
-#if PRINT
-  printMat3(X2_mat, 100, wA, hA);
-#endif
+
+  helper::check_matrices(X2_mat_cpu, X2_mat, C_size);
+
+
+
+//#if PRINT
+//  printMat3(X2_mat, 200, wA, hA);
+//#endif
   // printMat(X2_mat, 100);
 
   free(X1_mat);

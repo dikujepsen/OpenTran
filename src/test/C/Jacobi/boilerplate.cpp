@@ -7,7 +7,6 @@ cl_mem dev_ptrX2;
 
 float * hst_ptrB;
 std::string ocl_type;
-unsigned wA;
 unsigned wB;
 float * hst_ptrX1;
 float * hst_ptrX2;
@@ -83,8 +82,8 @@ void AllocateBuffers()
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrX1");
   dev_ptrX2 = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrX2_mem_size, 
-	NULL, &oclErrNum);
+	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrX2_mem_size, 
+	hst_ptrX2, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrX2");
 }
@@ -110,7 +109,7 @@ void ExecJacobiFor()
 {
   cl_int oclErrNum = CL_SUCCESS;
   cl_event GPUExecution;
-  size_t JacobiFor_global_worksize[] = {wA - 1, wB - 1};
+  size_t JacobiFor_global_worksize[] = {wB - 1, wB - 1};
   size_t JacobiFor_local_worksize[] = {4, 4};
   size_t JacobiFor_global_offset[] = {1, 1};
   oclErrNum = clEnqueueNDRangeKernel(
@@ -139,8 +138,7 @@ void RunOCLJacobiForKernel(
 	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
 	float * arg_X1, size_t arg_hst_ptrX1_dim1, size_t arg_hst_ptrX1_dim2, 
 	float * arg_X2, size_t arg_hst_ptrX2_dim1, size_t arg_hst_ptrX2_dim2, 
-	std::string arg_ocl_type, unsigned arg_wA, unsigned arg_wB
-	)
+	std::string arg_ocl_type, unsigned arg_wB)
 {
   if (isFirstTime)
     {
@@ -154,7 +152,6 @@ void RunOCLJacobiForKernel(
       hst_ptrX2_dim1 = arg_hst_ptrX2_dim1;
       hst_ptrX2_dim2 = arg_hst_ptrX2_dim2;
       ocl_type = arg_ocl_type;
-      wA = arg_wA;
       wB = arg_wB;
       StartUpOCL(ocl_type);
       AllocateBuffers();

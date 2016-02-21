@@ -122,8 +122,8 @@ void AllocateBuffers()
   cl_int oclErrNum = CL_SUCCESS;
   
   dev_ptrForces = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrForces_mem_size, 
-	NULL, &oclErrNum);
+	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrForces_mem_size, 
+	hst_ptrForces, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrForces");
   dev_ptrMas = clCreateBuffer(
