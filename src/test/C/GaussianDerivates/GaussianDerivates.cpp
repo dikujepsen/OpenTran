@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include "boilerplate.cpp"
+#include "../../../utils/helper.cpp"
 
 using namespace std;
 
@@ -174,6 +175,14 @@ printMat(float* mat, unsigned mat_size)
   cout << endl;
 }
 
+void
+copyMat(float* mat1, float* mat2, unsigned mat_size)
+{
+  for (unsigned i = 0; i < mat_size; i++) {
+      mat1[i] = mat2[i];
+  }
+}
+
 
 // #define LP 2048
 // #define LQ 2048
@@ -183,9 +192,9 @@ int main(int argc, char** argv)
   unsigned Lp;
   unsigned Lq;
   unsigned dim;
-  ParseCommandLine(argc, argv, &Lp, &Lq, &dim);
+  ParseCommandLine(argc, argv, &Lp, &Lq, &dim, NULL);
 
-
+  cout << "dim is " << dim << " and should be smaller than 4." << endl;
 
   unsigned p_a_i_rows = dim;
   unsigned q_a_i_rows = dim;
@@ -198,6 +207,7 @@ int main(int argc, char** argv)
   unsigned K__ij_x_size = Lq * K__ij_rows; 
   float * p_a_i_x = new float[p_a_i_x_size];
   float * q_a_i_x = new float[q_a_i_x_size];
+  float * K__ij_x_cpu = new float[K__ij_x_size];
   float * K__ij_x = new float[K__ij_x_size];
 
   unsigned * D1Ks__ijb_dimsI = new unsigned[2];
@@ -236,7 +246,8 @@ int main(int argc, char** argv)
 
   randMat(p_a_i_x, p_a_i_x_size);
   randMat(q_a_i_x, q_a_i_x_size);
-  randMat(K__ij_x, K__ij_x_size);
+  randMat(K__ij_x_cpu, K__ij_x_size);
+  copyMat(K__ij_x, K__ij_x_cpu, K__ij_x_size);
 
   
   // randMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
@@ -245,38 +256,49 @@ int main(int argc, char** argv)
   
 
   
-#if CPU
+//#if CPU
   timer.start();
   GaussianDerivates( Lp,  Lq,  dim,
 		     p_a_i_x,  p_a_i_rows,
 		     q_a_i_x,  q_a_i_rows,
-		     K__ij_x,  K__ij_rows,
+		     K__ij_x_cpu,  K__ij_rows,
 		     scales2_x,  scaleweight2_x,
 		     D1Ks__ijb_x,     D1Ks__ijb_dimsI,
 		     D2Ks__ijbg_x,    D2Ks__ijbg_dimsI,
 		     D3Ks__ijbgd_x,   D3Ks__ijbgd_dimsI);
-  cout << "$Time " << timer.stop() << endl;  
+  cout << "$Time " << timer.stop() << endl;
 
-#else
+//#else
 
- 
+// printMat(K__ij_x_cpu, 100);
+
   RunOCLGaussianDerivatesForKernel(
-				   dim, D1Ks__ijb_dimsI, 2, 
-				   scaleweight2_x, D3Ks__ijbgd_x, D3Ks__ijbgd_x_size, 
-				   D2Ks__ijbg_dimsI, 3,
-				   D3Ks__ijbgd_dimsI, 4,
-				   q_a_i_x, q_a_i_rows, Lq,
-				   scales2_x, Lp, Lq,
-				   p_a_i_x, p_a_i_rows, Lp,
-				   D1Ks__ijb_x, D1Ks__ijb_x_size, 
-				   K__ij_x, Lq, Lp, 
-				   D2Ks__ijbg_x, D2Ks__ijbg_x_size);
-#endif
+    D1Ks__ijb_dimsI, 2, D1Ks__ijb_x, D1Ks__ijb_x_size, D2Ks__ijbg_dimsI, 3,
+	D2Ks__ijbg_x, D2Ks__ijbg_x_size, D3Ks__ijbgd_dimsI, 4,
+	D3Ks__ijbgd_x, D3Ks__ijbgd_x_size,
+	K__ij_x, Lq, Lp,
+	Lp, Lq, dim, "gpu", p_a_i_x, p_a_i_rows, Lp
+	, q_a_i_x, q_a_i_rows, Lq, scales2_x, scaleweight2_x);
 
+//dim, D1Ks__ijb_dimsI, 2,
+//				   scaleweight2_x, D3Ks__ijbgd_x, D3Ks__ijbgd_x_size,
+//				   D2Ks__ijbg_dimsI, 3,
+//				   D3Ks__ijbgd_dimsI, 4,
+//				   q_a_i_x, q_a_i_rows, Lq,
+//				   scales2_x, Lp, Lq,
+//				   "gpu",
+//				   p_a_i_x, p_a_i_rows, Lp,
+//				   D1Ks__ijb_x, D1Ks__ijb_x_size,
+//				   K__ij_x, Lq, Lp,
+//				   D2Ks__ijbg_x, D2Ks__ijbg_x_size);
 
-#if PRINT
-  printMat(K__ij_x, 100);
-#endif
+//#endif
+//printMat(K__ij_x, 100);
+  helper::check_matrices(K__ij_x_cpu, K__ij_x, K__ij_x_size);
+
+//#if PRINT
+//  printMat(K__ij_x, 100);
+//#endif
   // printMat(K__ij_x, K__ij_x_size); 
   // printMat(D1Ks__ijb_x,   D1Ks__ijb_x_size);
   // printMat(D2Ks__ijbg_x,  D2Ks__ijbg_x_size);
