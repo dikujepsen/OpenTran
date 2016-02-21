@@ -81,7 +81,7 @@ void oclCheckErr(cl_int err, const char * function) {
 
 
 
-void StartUpGPU(std::string ocl_type) {
+void StartUpOCL(std::string ocl_type) {
   std::cout << "StartUpGPU" << std::endl;
   cl_int err = CL_SUCCESS;
   err |= clGetPlatformIDs(0, NULL, &num_platforms);
@@ -93,21 +93,7 @@ void StartUpGPU(std::string ocl_type) {
   err |= clGetPlatformIDs(num_platforms, platform_ids, NULL);
   oclCheckErr(err, "clGetPlatformIDs2");
 
-  std::string plat_info_str = "";;
-  unsigned info_type = CL_PLATFORM_NAME;
-  for (unsigned i = 0; i < num_platforms; i++) {
-    size_t info_size = 0;
-    clGetPlatformInfo(platform_ids[i], info_type, 0, NULL, &info_size);
-    char * info = (char*)malloc(info_size * sizeof(char));
-    clGetPlatformInfo(platform_ids[i], info_type, info_size, info, NULL);
-    plat_info_str += info;
-    plat_info_str += "\n";
-    free(info);
-  }
-  std::cout << "plat_info_str: " << plat_info_str << std::endl;
-
   cl_device_type devtype = CL_DEVICE_TYPE_GPU;
-
   if (ocl_type == "cpu") {
     devtype = CL_DEVICE_TYPE_CPU;
   }
@@ -137,7 +123,7 @@ void StartUpGPU(std::string ocl_type) {
     char * buff = new char[len];
     clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, sizeof(char)*len, buff, NULL);
     cout << "$Devicename " << buff << endl;
-    
+    free(buff);
   }
 
   context = clCreateContext(0, num_devices, device_ids, NULL, NULL, &err);

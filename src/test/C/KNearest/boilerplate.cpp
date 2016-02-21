@@ -183,7 +183,7 @@ void RunOCLKNearestForKernel(
       hst_ptrtrain_patterns = arg_train_patterns;
       hst_ptrtrain_patterns_dim1 = arg_hst_ptrtrain_patterns_dim1;
       hst_ptrtrain_patterns_dim2 = arg_hst_ptrtrain_patterns_dim2;
-      StartUpGPU();
+      StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
       compileKernel(

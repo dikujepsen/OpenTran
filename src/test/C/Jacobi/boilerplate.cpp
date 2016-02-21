@@ -143,7 +143,7 @@ void RunOCLJacobiForKernel(
       hst_ptrX2_dim2 = arg_hst_ptrX2_dim2;
       wA = arg_wA;
       wB = arg_wB;
-      StartUpGPU();
+      StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
       compileKernel(

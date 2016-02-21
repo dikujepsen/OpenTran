@@ -319,7 +319,7 @@ void RunOCLLaplaceForKernel(
       hst_ptrresult = arg_result;
       hst_ptrresult_dim1 = arg_hst_ptrresult_dim1;
       storagesize = arg_storagesize;
-      StartUpGPU();
+      StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
       compileKernel(

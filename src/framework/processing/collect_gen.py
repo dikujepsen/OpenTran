@@ -137,7 +137,9 @@ class GenKernelArgs(object):
 
         kernel_arg_defines = ci.get_kernel_arg_defines(ast)
 
-        arg_ids = non_array_ids.union(array_ids) - removed_ids - kernel_arg_defines
+        runocl_args = ci.get_runocl_args(ast)
+
+        arg_ids = non_array_ids.union(array_ids) - removed_ids - kernel_arg_defines - runocl_args
 
         gen_array_dimnames = GenArrayDimNames()
         gen_array_dimnames.collect(ast)

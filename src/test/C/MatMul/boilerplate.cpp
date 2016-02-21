@@ -9,6 +9,7 @@ float * hst_ptrA;
 float * hst_ptrB;
 float * hst_ptrC;
 unsigned hA;
+std::string ocl_type;
 unsigned wA;
 unsigned wB;
 
@@ -158,8 +159,8 @@ void RunOCLMatMulForKernel(
 	float * arg_A, size_t arg_hst_ptrA_dim1, size_t arg_hst_ptrA_dim2, 
 	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
 	float * arg_C, size_t arg_hst_ptrC_dim1, size_t arg_hst_ptrC_dim2, 
-	unsigned arg_hA, unsigned arg_wA, unsigned arg_wB
-	)
+	unsigned arg_hA, std::string arg_ocl_type, unsigned arg_wA, 
+	unsigned arg_wB)
 {
   if (isFirstTime)
     {
@@ -173,9 +174,10 @@ void RunOCLMatMulForKernel(
       hst_ptrC_dim1 = arg_hst_ptrC_dim1;
       hst_ptrC_dim2 = arg_hst_ptrC_dim2;
       hA = arg_hA;
+      ocl_type = arg_ocl_type;
       wA = arg_wA;
       wB = arg_wB;
-      StartUpGPU();
+      StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
       compileKernel(

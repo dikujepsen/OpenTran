@@ -331,3 +331,6 @@ class CGenerator(object):
             s += ' << ' + self.visit(arg)
         return 'cout' + s + ' << endl;'
 
+    def visit_RunOCLArg(self, n):
+        s = self.visit(n.ocl_arg)
+        return s

@@ -55,6 +55,7 @@ def _create_baseform(name):
 def __get_ast_from_init(name):
     ast = __get_ast_from_file(name, name + 'For.cpp')
     ast.ext.append(lan.ProgramName(name))
+    ast.ext.append(lan.RunOCLArg(lan.TypeId(['std::string'], lan.Id('ocl_type'))))
 
     rw = rewriter.Rewriter()
     rw.rewrite_to_baseform(ast, name + 'For')
@@ -166,8 +167,8 @@ def __main_stencil(ast):
 
 if __name__ == "__main__":
     matmul()
-    knearest()
-    jacobi()
-    nbody()
-    laplace()
-    gaussian()
+    # knearest()
+    # jacobi()
+    # nbody()
+    # laplace()
+    # gaussian()

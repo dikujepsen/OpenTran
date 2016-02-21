@@ -46,7 +46,8 @@ printMat(float* mat, unsigned mat_size)
 int main(int argc, char** argv)
 {
   unsigned matsize;
-  ParseCommandLine(argc, argv, &matsize, NULL, NULL);
+  std::string ocl_type;
+  ParseCommandLine(argc, argv, &matsize, NULL, NULL, &ocl_type);
   
   unsigned hA = matsize;
   unsigned hB = matsize;
@@ -68,7 +69,7 @@ int main(int argc, char** argv)
   randMat(B_mat,B_size);
   randMat(C_mat,C_size);
 
-  StartUpGPU("cpu");
+  StartUpOCL(ocl_type);
   
 // #if CPU
 //   timer.start();  

@@ -12,6 +12,8 @@ class RunOCL(boilerplatebase.BoilerplateBase):
         super(RunOCL, self).__init__(ast, file_ast)
 
     def add_runocl_func(self):
+
+
         kernel_name = cd.get_kernel_name(self.ast)
         run_ocl = ast_bb.EmptyFuncDecl('RunOCL' + kernel_name)
         self.file_ast.append(run_ocl)
@@ -77,7 +79,7 @@ class RunOCL(boilerplatebase.BoilerplateBase):
         return if_then_list
 
     def __add_runocl_start_up(self, if_then_list):
-        if_then_list.append(ast_bb.FuncCall('StartUpGPU'))
+        if_then_list.append(ast_bb.FuncCall('StartUpOCL', [lan.Id(self.__get_ocl_type_name)]))
         if_then_list.append(ast_bb.FuncCall(self._allocate_buffers_name))
         if_then_list.append(lan.Cout([lan.Constant('$Defines '), lan.Id(self._kernel_defines_name)]))
 
@@ -103,6 +105,7 @@ class RunOCL(boilerplatebase.BoilerplateBase):
         run_ocl_body.append(lan.Id('cout << "$Time " << timer.stop() << endl;'))
 
     def __get_arg_ids(self):
+
         non_array_ids = ci.get_non_array_ids(self.ast)
         array_ids = ca.get_array_ids(self.ast)
         arg_ids = non_array_ids.union(array_ids)
@@ -111,3 +114,7 @@ class RunOCL(boilerplatebase.BoilerplateBase):
     @staticmethod
     def __get_arg_id(var_name):
         return lan.Id('arg_' + var_name)
+
+    @property
+    def __get_ocl_type_name(self):
+        return 'ocl_type'

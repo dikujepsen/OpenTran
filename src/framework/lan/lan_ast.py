@@ -609,3 +609,19 @@ class Cout(Node):
         return tuple(nodelist)
 
     attr_names = ()
+
+
+class RunOCLArg(Node):
+    def __init__(self, ocl_arg):
+        self.ocl_arg = ocl_arg
+
+    def __repr__(self):
+        return "RunOCLArg(%r)" % self.ocl_arg
+
+    def children(self):
+        nodelist = [("ocl_arg", self.ocl_arg)]
+        return tuple(nodelist)
+
+    attr_names = ()
+
+

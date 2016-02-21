@@ -40,9 +40,27 @@ void CheckNull(unsigned * ptr, const char* val) {
       }
 }
 
+void CheckType(std::string * ptr, const char* val) {
+      if (ptr == NULL) {
+	std::cout << "Command line option saved to null pointer. Exiting...\n";
+	exit(-1);
+      } else {
+	std::string temp;
+	stringstream toStr(val);
+	if ( !(toStr >> temp) ) {
+	  std::cout << "Command line option: invalid number: " << val << std::endl;
+	  exit(-1);
+	}	  
+	*ptr = temp;
+      }
+}
+
 
 void ParseCommandLine(int argc, char** argv,
-		      unsigned * val1, unsigned * val2, unsigned * val3) {
+		      unsigned * val1,
+		      unsigned * val2,
+		      unsigned * val3,
+		      std::string * ocl_type) {
   int len = 1;
   if (val1 != NULL) {
     len += 2;
@@ -53,9 +71,12 @@ void ParseCommandLine(int argc, char** argv,
   if (val3 != NULL) {
     len += 2;
   }
+  if (ocl_type != NULL) {
+    len += 2;
+  }
   
   if (((argc-1) % 2 != 0) || argc != len || argc < 3) {
-    std::cout << "Please set -n <x> -m <y> -k <z>\n";
+    std::cout << "Please set -n <x> -m <y> -k <z>\n -t <w>";
     exit(-1);
   }
   
@@ -66,6 +87,8 @@ void ParseCommandLine(int argc, char** argv,
       CheckNull(val2, argv[i + 1]);
     } else if (std::string(argv[i]) == "-k") {
       CheckNull(val3, argv[i + 1]);
+    } else if (std::string(argv[i]) == "-t") {
+      CheckType(ocl_type, argv[i + 1]);
     } else {
       std::cout << "Unrecognized command line option\n";
       exit(-1);

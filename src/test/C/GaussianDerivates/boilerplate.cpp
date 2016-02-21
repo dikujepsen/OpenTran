@@ -392,7 +392,7 @@ void RunOCLGaussianDerivatesForKernel(
       hst_ptrq_a_i_x_dim2 = arg_hst_ptrq_a_i_x_dim2;
       scales2_x = arg_scales2_x;
       scaleweight2_x = arg_scaleweight2_x;
-      StartUpGPU();
+      StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
       compileKernel(

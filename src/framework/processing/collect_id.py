@@ -22,15 +22,21 @@ class GlobalNonArrayIds(lan.NodeVisitor):
     def __init__(self):
         self.HasNotVisitedFirst = True
         self.gnai = _NonArrayIdsInLoop()
+        self.ocl_arg_ids = set()
 
     def visit_ForLoop(self, node):
         if self.HasNotVisitedFirst:
             self.gnai.visit(node)
             self.HasNotVisitedFirst = False
 
+    def visit_RunOCLArg(self, node):
+        ids = Ids()
+        ids.visit(node.ocl_arg)
+        self.ocl_arg_ids = self.ocl_arg_ids.union(ids.ids)
+
     @property
     def ids(self):
-        return self.gnai.ids
+        return self.gnai.ids.union(self.ocl_arg_ids)
 
 
 def get_non_array_ids(ast):
@@ -128,6 +134,22 @@ def get_kernel_arg_defines(ast):
     kernel_arg_define = FindKernelArgDefine()
     kernel_arg_define.visit(ast)
     return kernel_arg_define.kernal_arg_ids
+
+
+class FindRunOCLArg(lan.NodeVisitor):
+    def __init__(self):
+        self.arg_ids = set()
+
+    def visit_RunOCLArg(self, node):
+        ids = Ids()
+        ids.visit(node.ocl_arg)
+        self.arg_ids = self.arg_ids.union(ids.ids)
+
+
+def get_runocl_args(ast):
+    runocl_args = FindRunOCLArg()
+    runocl_args.visit(ast)
+    return runocl_args.arg_ids
 
 
 class FindLocalSwap(lan.NodeVisitor):

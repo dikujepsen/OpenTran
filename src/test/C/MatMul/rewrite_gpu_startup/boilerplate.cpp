@@ -175,7 +175,7 @@ void RunOCLMatMulForKernel(
       hA = arg_hA;
       wA = arg_wA;
       wB = arg_wB;
-      StartUpGPU("gpu");
+      StartUpOCL("gpu");
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
       compileKernel(

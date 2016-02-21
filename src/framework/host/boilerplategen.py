@@ -47,5 +47,3 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
         host_run_ocl.add_runocl_func()
 
         return self.file_ast
-
-

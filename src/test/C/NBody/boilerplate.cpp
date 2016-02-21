@@ -190,7 +190,7 @@ void RunOCLNBodyForKernel(
       hst_ptrPos = arg_Pos;
       hst_ptrPos_dim1 = arg_hst_ptrPos_dim1;
       hst_ptrPos_dim2 = arg_hst_ptrPos_dim2;
-      StartUpGPU();
+      StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
       compileKernel(

@@ -4,8 +4,8 @@ EXECDEP = $(EXEC:.exe=.cpp)
 
 LNK_LIB = -lOpenCL -lrt
 
-INC_LIB = /usr/local/cuda-5.5/targets/x86_64-linux/include
-#INC_LIB = /opt/intel/opencl-1.2-3.2.1.16712/include
+#INC_LIB = /usr/local/cuda-5.5/targets/x86_64-linux/include
+INC_LIB = /opt/intel/opencl-1.2-3.2.1.16712/include
 CC = g++
 
 OPTS = -O3 -Wall
