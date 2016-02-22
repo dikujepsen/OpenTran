@@ -19,56 +19,7 @@ cl_command_queue command_queue;
 
 #include "Stopwatch.cpp"
 
-char * ReadSources(const char *fileName) {
 
-  FILE *file = fopen(fileName, "rb");
-  if (!file)
-    {
-      printf("ERROR: Failed to open file '%s'\n", fileName);
-      return NULL;
-    }
-
-  if (fseek(file, 0, SEEK_END))
-    {
-      printf("ERROR: Failed to seek file '%s'\n", fileName);
-      fclose(file);
-      return NULL;
-    }
-
-  long size = ftell(file);
-  if (size == 0)
-    {
-      printf("ERROR: Failed to check position on file '%s'\n", fileName);
-      fclose(file);
-      return NULL;
-    }
-
-  rewind(file);
-
-  char *src = (char *)malloc(sizeof(char) * size + 1);
-  if (!src)
-    {
-      printf("ERROR: Failed to allocate memory for file '%s'\n", fileName);
-      fclose(file);
-      return NULL;
-    }
-
-  printf("Reading file '%s' (size %ld bytes)\n", fileName, size);
-  size_t res = fread(src, 1, sizeof(char) * size, file);
-  if (res != sizeof(char) * size)
-    {
-      printf("ERROR: Failed to read file '%s'\n", fileName);
-      fclose(file);
-      free(src);
-      return NULL;
-    }
-
-  src[size] = '\0'; /* NULL terminated */
-  fclose(file);
-
-  return src;
-      
-}
 
 
 void oclCheckErr(cl_int err, const char * function) {
@@ -198,3 +149,54 @@ void transpose(T * sink, T* source, size_t source_dim1, size_t source_dim2) {
   }
 
 }
+char * ReadSources(const char *fileName) {
+
+  FILE *file = fopen(fileName, "rb");
+  if (!file)
+    {
+      printf("ERROR: Failed to open file '%s'\n", fileName);
+      return NULL;
+    }
+
+  if (fseek(file, 0, SEEK_END))
+    {
+      printf("ERROR: Failed to seek file '%s'\n", fileName);
+      fclose(file);
+      return NULL;
+    }
+
+  long size = ftell(file);
+  if (size == 0)
+    {
+      printf("ERROR: Failed to check position on file '%s'\n", fileName);
+      fclose(file);
+      return NULL;
+    }
+
+  rewind(file);
+
+  char *src = (char *)malloc(sizeof(char) * size + 1);
+  if (!src)
+    {
+      printf("ERROR: Failed to allocate memory for file '%s'\n", fileName);
+      fclose(file);
+      return NULL;
+    }
+
+  printf("Reading file '%s' (size %ld bytes)\n", fileName, size);
+  size_t res = fread(src, 1, sizeof(char) * size, file);
+  if (res != sizeof(char) * size)
+    {
+      printf("ERROR: Failed to read file '%s'\n", fileName);
+      fclose(file);
+      free(src);
+      return NULL;
+    }
+
+  src[size] = '\0'; /* NULL terminated */
+  fclose(file);
+
+  return src;
+      
+}
+

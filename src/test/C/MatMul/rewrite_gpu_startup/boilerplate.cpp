@@ -9,6 +9,7 @@ float * hst_ptrA;
 float * hst_ptrB;
 float * hst_ptrC;
 unsigned hA;
+std::string ocl_type;
 unsigned wA;
 unsigned wB;
 
@@ -112,8 +113,8 @@ void AllocateBuffers()
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrB");
   dev_ptrC = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY, hst_ptrC_mem_size, 
-	NULL, &oclErrNum);
+	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrC_mem_size, 
+	hst_ptrC, &oclErrNum);
   oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrC");
 }
@@ -152,14 +153,24 @@ void ExecMatMulFor()
   oclErrNum = clFinish(command_queue);
   oclCheckErr(
 	oclErrNum, "clFinish");
+  oclErrNum = clEnqueueReadBuffer(
+	command_queue, dev_ptrC, CL_TRUE, 
+	0, hst_ptrC_mem_size, hst_ptrC, 
+	1, &GPUExecution, NULL
+	);
+  oclCheckErr(
+	oclErrNum, "clEnqueueReadBuffer");
+  oclErrNum = clFinish(command_queue);
+  oclCheckErr(
+	oclErrNum, "clFinish");
 }
 
 void RunOCLMatMulForKernel(
 	float * arg_A, size_t arg_hst_ptrA_dim1, size_t arg_hst_ptrA_dim2, 
 	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
 	float * arg_C, size_t arg_hst_ptrC_dim1, size_t arg_hst_ptrC_dim2, 
-	unsigned arg_hA, unsigned arg_wA, unsigned arg_wB
-	)
+	unsigned arg_hA, std::string arg_ocl_type, unsigned arg_wA, 
+	unsigned arg_wB)
 {
   if (isFirstTime)
     {
@@ -173,9 +184,10 @@ void RunOCLMatMulForKernel(
       hst_ptrC_dim1 = arg_hst_ptrC_dim1;
       hst_ptrC_dim2 = arg_hst_ptrC_dim2;
       hA = arg_hA;
+      ocl_type = arg_ocl_type;
       wA = arg_wA;
       wB = arg_wB;
-      StartUpOCL("gpu");
+      StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
       compileKernel(

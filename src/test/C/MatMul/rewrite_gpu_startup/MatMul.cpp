@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <iostream>
 #include "boilerplate.cpp"
+#include "../../../../utils/helper.cpp"
 
 using namespace std;
 
@@ -28,6 +29,14 @@ randMat(float* mat, unsigned mat_size)
 }
 
 void
+randZero(float* mat, unsigned mat_size)
+{
+  for (unsigned i = 0; i < mat_size; ++i) {
+    mat[i] = 0;
+  }
+}
+
+void
 printMat(float* mat, unsigned mat_size)
 {
   for (unsigned i = 0; i < mat_size; ++i) {
@@ -46,8 +55,7 @@ printMat(float* mat, unsigned mat_size)
 int main(int argc, char** argv)
 {
   unsigned matsize;
-  std::string ocl_type;
-  ParseCommandLine(argc, argv, &matsize, NULL, NULL, &ocl_type);
+  ParseCommandLine(argc, argv, &matsize, NULL, NULL, NULL);
   
   unsigned hA = matsize;
   unsigned hB = matsize;
@@ -63,26 +71,25 @@ int main(int argc, char** argv)
   float* A_mat = new float[A_size];
   float* B_mat = new float[B_size];
   float* C_mat = new float[C_size];
+  float* C_mat_cpu = new float[C_size];
   srand(2013);
 
   randMat(A_mat,A_size);
   randMat(B_mat,B_size);
   randMat(C_mat,C_size);
-
-  StartUpOCL(ocl_type);
   
-// #if CPU
-//   timer.start();  
-//   matmul(A_mat, B_mat, C_mat, hA, wA, wB);
-//   cout << "$Time " << timer.stop() << endl;  
-// #else
-//   RunOCLMatMulForKernel(
-// 	 A_mat, wA, hA,
-// 	 C_mat, wC, hC,
-// 	 B_mat, wB, hB,
-// 	 wB, wA, hA);
+ timer.start();
+ matmul(A_mat, B_mat, C_mat_cpu, hA, wA, wB);
+ cout << "$Time " << timer.stop() << endl;
 
-// #endif
+ RunOCLMatMulForKernel(
+	 A_mat, wA, hA,
+	 B_mat, wB, hB,
+	 C_mat, wC, hC,
+	 wB, "gpu", wA, hA);
+
+ helper::check_matrices(C_mat_cpu, C_mat, C_size);
+ 
 
 #if PRINT
   printMat(C_mat, 100);
