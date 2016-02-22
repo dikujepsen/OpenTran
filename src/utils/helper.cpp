@@ -35,6 +35,9 @@ bool AlmostEqualRelative(T A, T B,
             }
 
         }
+	if (!retval) {
+	  std::cout << "$Error" << endl;
+	}
         return retval;
     }
 

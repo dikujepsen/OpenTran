@@ -8,6 +8,8 @@ parser.add_argument("-m", "--make", help="run make clean && make on all files",
                     action="store_true")
 parser.add_argument("-c", "--check", help="run ./check.sh on all files",
                     action="store_true")
+parser.add_argument("-co", "--checkocl", help="run all files and check that none returned an error",
+                    action="store_true")
 parser.add_argument("-p", "--printresult", help="Compiles the code with printing of the result enabled",
                     action="store_true")
 parser.add_argument("-t", "--tag", help="tag this benchmark with a string")
@@ -74,7 +76,25 @@ if args.make or args.check:
                 print line
         os.chdir('..')
 
-        
+
+if args.checkocl:
+    for n in benchmark:
+        os.chdir(n)
+        command = "./" + n + "GPU.exe " + cmdlineoptsbasic[n]
+        print command
+        p1 = subprocess.Popen(command, shell=True,\
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE)
+        erracc = ''
+        while True:
+            line = p1.stdout.readline()
+            if not line:
+                line = p1.stderr.readline()
+            if not line: break
+            erracc += line
+            if line[0:6] == '$Error':
+                print('Program ' + n + ' ran with error.')
+        os.chdir('..')        
     
 if args.run is not None:
     dev = args.run
