@@ -1,5 +1,5 @@
-#include "CL/cl.h"
-#include "CL/cl_ext.h"
+#include <CL/cl.h>
+#include <CL/cl_ext.h>
 #include <string.h>
 #include <malloc.h>
 #include <cstdlib>
@@ -20,7 +20,7 @@ cl_command_queue command_queue;
 #include "Stopwatch.cpp"
 
 
-
+char * ReadSources(const char *fileName);
 
 void oclCheckErr(cl_int err, const char * function) {
   if (err != CL_SUCCESS)
