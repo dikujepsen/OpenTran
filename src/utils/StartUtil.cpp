@@ -92,11 +92,11 @@ class OCLContext
       }
 
       context = clCreateContext(0, num_devices, device_ids, NULL, NULL, &err);
-      helper::oclCheckErr(err, "clCreateContext");
+      helper::oclCheckErr(err, "clCreateContext Allocate");
 
       command_queue = clCreateCommandQueue(context, device_ids[0],
                                            CL_QUEUE_PROFILING_ENABLE, &err);
-      helper::oclCheckErr(err, "clCreateCommandQueue");
+      helper::oclCheckErr(err, "clCreateCommandQueue Allocate");
     }
 
 

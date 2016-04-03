@@ -203,7 +203,7 @@ class OCLMatmulTask
         oclErrNum, "clEnqueueNDRangeKernel");
       oclErrNum = clFinish(ocl_context->getCommandQueue());
       helper::oclCheckErr(
-        oclErrNum, "clFinish");
+        oclErrNum, "clFinish Kernel");
       oclErrNum = clEnqueueReadBuffer(
                     ocl_context->getCommandQueue(), dev_ptrC, CL_TRUE,
                     0, hst_ptrC_mem_size, hst_ptrC,
@@ -213,7 +213,7 @@ class OCLMatmulTask
         oclErrNum, "clEnqueueReadBuffer");
       oclErrNum = clFinish(ocl_context->getCommandQueue());
       helper::oclCheckErr(
-        oclErrNum, "clFinish");
+        oclErrNum, "clFinish Read");
     }
 
 
