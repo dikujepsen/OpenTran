@@ -1,4 +1,5 @@
 #include "../../../utils/StartUtil.cpp"
+#include "../../../utils/helper.hpp"
 using namespace std;
 cl_kernel MatMulForKernel;
 cl_mem dev_ptrA;
@@ -27,6 +28,7 @@ size_t hst_ptrC_dim2;
 size_t isFirstTime = 1;
 std::string KernelDefines = "";
 Stopwatch timer;
+OCLContext* ocl_context;
 
 std::string MatMulBase()
 {
@@ -40,7 +42,7 @@ std::string MatMulBase()
   str << "  }" << endl;
   str << "  C[(get_global_id(1) * hst_ptrC_dim1) + get_global_id(0)] = sum;" << endl;
   str << "}" << endl;
-  
+
   return str.str();
 }
 
@@ -65,7 +67,7 @@ std::string MatMulPlaceInLocal()
   str << "  }" << endl;
   str << "  C[(get_global_id(1) * hst_ptrC_dim1) + get_global_id(0)] = sum;" << endl;
   str << "}" << endl;
-  
+
   return str.str();
 }
 
@@ -87,11 +89,11 @@ void AllocateBuffers()
   hst_ptrA_mem_size = hst_ptrA_dim2 * (hst_ptrA_dim1 * sizeof(float));
   hst_ptrB_mem_size = hst_ptrB_dim2 * (hst_ptrB_dim1 * sizeof(float));
   hst_ptrC_mem_size = hst_ptrC_dim2 * (hst_ptrC_dim1 * sizeof(float));
-  
+
   // Transposition
-  
+
   // Constant Memory
-  
+
   // Defines for the kernel
   std::stringstream str;
   str << "-Dhst_ptrA_dim1=" << hst_ptrA_dim1 << " ";
@@ -99,23 +101,23 @@ void AllocateBuffers()
   str << "-Dhst_ptrC_dim1=" << hst_ptrC_dim1 << " ";
   str << "-DwA=" << wA << " ";
   KernelDefines = str.str();
-  
+
   cl_int oclErrNum = CL_SUCCESS;
-  
+
   dev_ptrA = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrA_mem_size, 
+	ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrA_mem_size,
 	hst_ptrA, &oclErrNum);
-  oclCheckErr(
+  helper::oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrA");
   dev_ptrB = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrB_mem_size, 
+	ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrB_mem_size,
 	hst_ptrB, &oclErrNum);
-  oclCheckErr(
+  helper::oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrB");
   dev_ptrC = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrC_mem_size, 
+	ocl_context->getContext(), CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrC_mem_size,
 	hst_ptrC, &oclErrNum);
-  oclCheckErr(
+  helper::oclCheckErr(
 	oclErrNum, "clCreateBuffer dev_ptrC");
 }
 
@@ -124,15 +126,15 @@ void SetArgumentsMatMulFor()
   cl_int oclErrNum = CL_SUCCESS;
   int counter = 0;
   oclErrNum |= clSetKernelArg(
-	MatMulForKernel, counter++, sizeof(cl_mem), 
+	MatMulForKernel, counter++, sizeof(cl_mem),
 	(void *) &dev_ptrA);
   oclErrNum |= clSetKernelArg(
-	MatMulForKernel, counter++, sizeof(cl_mem), 
+	MatMulForKernel, counter++, sizeof(cl_mem),
 	(void *) &dev_ptrB);
   oclErrNum |= clSetKernelArg(
-	MatMulForKernel, counter++, sizeof(cl_mem), 
+	MatMulForKernel, counter++, sizeof(cl_mem),
 	(void *) &dev_ptrC);
-  oclCheckErr(
+  helper::oclCheckErr(
 	oclErrNum, "clSetKernelArg");
 }
 
@@ -144,32 +146,32 @@ void ExecMatMulFor()
   size_t MatMulFor_local_worksize[] = {4, 4};
   size_t MatMulFor_global_offset[] = {0, 0};
   oclErrNum = clEnqueueNDRangeKernel(
-	command_queue, MatMulForKernel, 2, 
-	MatMulFor_global_offset, MatMulFor_global_worksize, MatMulFor_local_worksize, 
+	ocl_context->getCommandQueue(), MatMulForKernel, 2,
+	MatMulFor_global_offset, MatMulFor_global_worksize, MatMulFor_local_worksize,
 	0, NULL, &GPUExecution
 	);
-  oclCheckErr(
+  helper::oclCheckErr(
 	oclErrNum, "clEnqueueNDRangeKernel");
-  oclErrNum = clFinish(command_queue);
-  oclCheckErr(
+  oclErrNum = clFinish(ocl_context->getCommandQueue());
+  helper::oclCheckErr(
 	oclErrNum, "clFinish");
   oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrC, CL_TRUE, 
-	0, hst_ptrC_mem_size, hst_ptrC, 
+	ocl_context->getCommandQueue(), dev_ptrC, CL_TRUE,
+	0, hst_ptrC_mem_size, hst_ptrC,
 	1, &GPUExecution, NULL
 	);
-  oclCheckErr(
+  helper::oclCheckErr(
 	oclErrNum, "clEnqueueReadBuffer");
-  oclErrNum = clFinish(command_queue);
-  oclCheckErr(
+  oclErrNum = clFinish(ocl_context->getCommandQueue());
+  helper::oclCheckErr(
 	oclErrNum, "clFinish");
 }
 
 void RunOCLMatMulForKernel(
-	float * arg_A, size_t arg_hst_ptrA_dim1, size_t arg_hst_ptrA_dim2, 
-	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
-	float * arg_C, size_t arg_hst_ptrC_dim1, size_t arg_hst_ptrC_dim2, 
-	unsigned arg_hA, std::string arg_ocl_type, unsigned arg_wA, 
+	float * arg_A, size_t arg_hst_ptrA_dim1, size_t arg_hst_ptrA_dim2,
+	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2,
+	float * arg_C, size_t arg_hst_ptrC_dim1, size_t arg_hst_ptrC_dim2,
+	unsigned arg_hA, std::string arg_ocl_type, unsigned arg_wA,
 	unsigned arg_wB)
 {
   if (isFirstTime)
@@ -187,11 +189,13 @@ void RunOCLMatMulForKernel(
       ocl_type = arg_ocl_type;
       wA = arg_wA;
       wB = arg_wB;
-      StartUpOCL(ocl_type);
+      ocl_context = new OCLContext();
+      ocl_context->StartUpOCL(ocl_type);
+
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
-      compileKernel(
-	"MatMulFor", "MatMulFor.cl", GetKernelCode(), 
+      ocl_context->compileKernel(
+	"MatMulFor", "MatMulFor.cl", GetKernelCode(),
 	false, &MatMulForKernel, KernelDefines
 	);
       SetArgumentsMatMulFor();
