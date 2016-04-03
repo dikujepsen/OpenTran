@@ -2,7 +2,7 @@
 #include "../../../utils/helper.hpp"
 using namespace std;
 
-class OCLTask
+class OCLMatmulTask
 {
 
     cl_kernel MatMulForKernel;
@@ -34,12 +34,13 @@ class OCLTask
     Stopwatch timer;
     OCLContext* ocl_context;
 
-public:
-    OCLTask() {
+  public:
+    OCLMatmulTask()
+    {
       isFirstTime = 1;
       KernelDefines = "";
     }
-    void RunOCLMatMulForKernel(
+    void Run(
       float * arg_A, size_t arg_hst_ptrA_dim1, size_t arg_hst_ptrA_dim2,
       float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2,
       float * arg_C, size_t arg_hst_ptrC_dim1, size_t arg_hst_ptrC_dim2,
@@ -77,7 +78,7 @@ public:
       cout << "$Time " << timer.stop() << endl;
     }
 
-
+  private:
     std::string MatMulBase()
     {
       std::stringstream str;
