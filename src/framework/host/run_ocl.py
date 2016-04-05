@@ -13,7 +13,6 @@ class RunOCL(boilerplatebase.BoilerplateBase):
 
     def add_runocl_func(self):
 
-
         kernel_name = cd.get_kernel_name(self.ast)
         run_ocl = ast_bb.EmptyFuncDecl('RunOCL' + kernel_name)
         self.file_ast.append(run_ocl)

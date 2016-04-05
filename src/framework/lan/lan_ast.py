@@ -75,7 +75,7 @@ class FileAST(Node):
         self.coord = coord
 
     def __repr__(self):
-        return "FileAST(%r)" % (self.ext)
+        return "FileAST(%r)" % self.ext
 
     def children(self):
         nodelist = []
@@ -92,7 +92,7 @@ class Comment(Node):
         self.coord = coord
 
     def __repr__(self):
-        return "Comment(%r)" % (self.value)
+        return "Comment(%r)" % self.value
 
     def children(self):
         nodelist = []
@@ -107,7 +107,7 @@ class ArrayInit(Node):
         self.coord = coord
 
     def __repr__(self):
-        return "ArrayInit(%r)" % (self.values)
+        return "ArrayInit(%r)" % self.values
 
     def children(self):
         nodelist = []
@@ -124,7 +124,7 @@ class Constant(Node):
         self.coord = coord
 
     def __repr__(self):
-        return "Constant(%r)" % (self.value)
+        return "Constant(%r)" % self.value
 
     def children(self):
         nodelist = []
@@ -173,7 +173,7 @@ class Id(Node):
         self.coord = coord
 
     def __repr__(self):
-        return "Id(%r)" % (self.name)
+        return "Id(%r)" % self.name
 
     def children(self):
         nodelist = []
@@ -188,7 +188,7 @@ class Include(Node):
         self.coord = coord
 
     def __repr__(self):
-        return "Include(%r)" % (self.name)
+        return "Include(%r)" % self.name
 
     def children(self):
         nodelist = []
@@ -295,7 +295,7 @@ class ArgList(Node):
         self.coord = coord
 
     def __repr__(self):
-        return "ArgList(%r)" % (self.arglist)
+        return "ArgList(%r)" % self.arglist
 
     def children(self):
         nodelist = []
@@ -397,9 +397,9 @@ class ForLoop(Node):
         self.compound = compound
 
     def __repr__(self):
-        return "\nForLoop(%r, %r, %r, %r) " % (self.init.lval.name, \
-                                               self.cond, \
-                                               self.inc, \
+        return "\nForLoop(%r, %r, %r, %r) " % (self.init.lval.name,
+                                               self.cond,
+                                               self.inc,
                                                self.compound
                                                )
 
@@ -420,7 +420,7 @@ class IfThen(Node):
         self.compound = compound
 
     def __repr__(self):
-        return "If(%r) then {%r}" % (self.cond, \
+        return "If(%r) then {%r}" % (self.cond,
                                      self.compound)
 
     def children(self):
@@ -439,8 +439,8 @@ class IfThenElse(Node):
         self.compound2 = compound2
 
     def __repr__(self):
-        return "If(%r) then {%r} else {%r}" % (self.cond, \
-                                               self.compound1, \
+        return "If(%r) then {%r} else {%r}" % (self.cond,
+                                               self.compound1,
                                                self.compound2)
 
     def children(self):
@@ -625,3 +625,22 @@ class RunOCLArg(Node):
     attr_names = ()
 
 
+class CppClass(Node):
+    def __init__(self, name, var_list, public_list, protected_list, private_list):
+        self.name = name
+        self.var_list = var_list
+        self.public_list = public_list
+        self.protected_list = protected_list
+        self.private_list = private_list
+
+    def __repr__(self):
+        return "CppClass(%r\n %r\n %r \n %r)" % self.name, self.var_list, \
+               self.public_list, self.protected_list, self.private_list
+
+    def children(self):
+        nodelist = [("name", self.name), ("var_list", self.var_list),
+                    ("public_list", self.public_list), ("protected_list", self.protected_list),
+                    ("private_list", self.private_list)]
+        return tuple(nodelist)
+
+    attr_names = ()

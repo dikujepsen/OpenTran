@@ -6,6 +6,7 @@ import host.kernelgen
 import kernel_args
 import lan
 import run_ocl
+from processing import collect_device as cd
 
 
 def print_dict_sorted(mydict):
@@ -28,6 +29,8 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
     def generate_code(self):
         self.file_ast = lan.FileAST([])
 
+        kernel_name = cd.get_kernel_name(self.ast)
+        # GroupCompound
         globals_vars = global_vars.GlobalVars(self.ast, self.file_ast.ext)
         globals_vars.add_global_vars()
 

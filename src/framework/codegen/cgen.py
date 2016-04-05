@@ -334,3 +334,10 @@ class CGenerator(object):
     def visit_RunOCLArg(self, n):
         s = self.visit(n.ocl_arg)
         return s
+
+    def visit_CppClass(self, n):
+        s = ''
+        name = self.visit(n.name)
+        s += 'class ' + name + '\n {\n'
+        for var in n.var_list:
+            s += self.visit(var)
