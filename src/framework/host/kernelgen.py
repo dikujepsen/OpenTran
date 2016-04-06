@@ -65,7 +65,7 @@ class KernelGen(object):
 
 class CreateKernels(KernelGen):
     def __init__(self, ast, file_ast):
-        super(CreateKernels, self).__init__(ast, "dontcate")
+        super(CreateKernels, self).__init__(ast, "dontcare")
         self.file_ast = file_ast
 
         # Output

@@ -644,3 +644,25 @@ class CppClass(Node):
         return tuple(nodelist)
 
     attr_names = ()
+
+
+class ClassConstructor(Node):
+    def __init__(self, name, arglist, compound, coord=None):
+        self.name = name
+        self.arglist = arglist
+        self.compound = compound
+        self.coord = coord
+
+    def __repr__(self):
+        return "ClassConstructor(%r %r %r)" % (self.name,
+                                               self.arglist,
+                                               self.compound)
+
+    def children(self):
+        nodelist = []
+        nodelist.append(("name", self.name))
+        nodelist.append(("arglist", self.arglist))
+        nodelist.append(("compound", self.compound))
+        return tuple(nodelist)
+
+    attr_names = ()

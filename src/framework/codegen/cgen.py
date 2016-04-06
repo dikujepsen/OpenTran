@@ -102,10 +102,7 @@ class CGenerator(object):
             start = n.__class__.__name__ + start
         s = ''
         for i, stat in enumerate(n.statements):
-            start1 = ''
-            if i != 0:
-                start1 = start
-            s += start1 + self.visit(stat) + newline + self._make_indent()
+            s += self._make_indent() + start + self.visit(stat) + newline
         s += start
         return s
 
@@ -338,6 +335,40 @@ class CGenerator(object):
     def visit_CppClass(self, n):
         s = ''
         name = self.visit(n.name)
-        s += 'class ' + name + '\n {\n'
-        for var in n.var_list:
-            s += self.visit(var)
+        self.indent_level += 2
+        s += 'class ' + name + self.newline + '{' + self.newline
+        s += self.visit(n.var_list)
+        s += self.newline
+
+        s += 'public:' + self.newline
+        s += self.visit(n.public_list)
+        s += self.newline
+
+        protected_str = self.visit(n.protected_list)
+        if len(protected_str) > 3:
+            s += 'protected:' + self.newline
+            s += protected_str
+            s += self.newline
+
+        s += 'private:' + self.newline
+        s += self.visit(n.private_list)
+        s += self.newline
+
+        s += '}'
+        self.indent_level -= 2
+        return s
+
+    def visit_ClassConstructor(self, n):
+        newline = self.newline
+        if debug:
+            newline = n.__class__.__name__ + newline
+
+        name = self.visit(n.name)
+
+        arglist = self.visit(n.arglist)
+
+        name = self.start + name
+        arglist += newline
+        compound = self.visit(n.compound) + newline
+
+        return name + arglist + compound

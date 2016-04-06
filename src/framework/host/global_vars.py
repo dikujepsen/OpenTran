@@ -10,10 +10,6 @@ class GlobalVars(boilerplatebase.BoilerplateBase):
     def __init__(self, ast, file_ast):
         super(GlobalVars, self).__init__(ast, file_ast)
 
-    def __add_util_includes(self):
-        self.file_ast.append(lan.RawCpp('#include \"../../../utils/StartUtil.cpp\"'))
-        self.file_ast.append(lan.RawCpp('using namespace std;'))
-
     def __add_global_kernel(self):
         kernel_id = self._get_kernel_id()
         kernel_type_id = lan.TypeId(['cl_kernel'], kernel_id, 0)
@@ -97,8 +93,6 @@ class GlobalVars(boilerplatebase.BoilerplateBase):
         self.file_ast.append(lan.GroupCompound(misc))
 
     def add_global_vars(self):
-        self.__add_util_includes()
-
         self.__add_global_kernel()
 
         self.__add_global_device_buffers()
