@@ -4,7 +4,7 @@ using namespace std;
 class OCLLaplaceTask
 {
   cl_kernel LaplaceForKernel;
-    cl_mem dev_ptralpha;
+  cl_mem dev_ptralpha;
   cl_mem dev_ptrindex;
   cl_mem dev_ptrlambda;
   cl_mem dev_ptrlcl_q;
@@ -13,7 +13,7 @@ class OCLLaplaceTask
   cl_mem dev_ptrlevel_int;
   cl_mem dev_ptrresult;
 
-    double * hst_ptralpha;
+  double * hst_ptralpha;
   size_t dim;
   double * hst_ptrindex;
   double * hst_ptrlambda;
@@ -28,7 +28,7 @@ class OCLLaplaceTask
   double * hst_ptrlevel_int_trans;
   double * hst_ptrlevel_trans;
 
-    size_t hst_ptralpha_mem_size;
+  size_t hst_ptralpha_mem_size;
   size_t hst_ptrindex_mem_size;
   size_t hst_ptrlambda_mem_size;
   size_t hst_ptrlcl_q_mem_size;
@@ -37,7 +37,7 @@ class OCLLaplaceTask
   size_t hst_ptrlevel_int_mem_size;
   size_t hst_ptrresult_mem_size;
 
-    size_t hst_ptralpha_dim1;
+  size_t hst_ptralpha_dim1;
   size_t hst_ptrindex_dim1;
   size_t hst_ptrindex_dim2;
   size_t hst_ptrlambda_dim1;
@@ -49,8 +49,8 @@ class OCLLaplaceTask
   size_t hst_ptrlevel_int_dim2;
   size_t hst_ptrresult_dim1;
 
-    size_t isFirstTime = 1;
-  std::string KernelDefines = "";
+  size_t isFirstTime;
+  std::string KernelDefines;
   Stopwatch timer;
 
 
@@ -58,7 +58,7 @@ public:
   OCLLaplaceTask()
   {
     isFirstTime = 1;
-    KernelDefines = 1;
+    KernelDefines = "";
   }
 
   void RunOCLLaplaceForKernel(
@@ -72,38 +72,38 @@ public:
 	size_t arg_storagesize)
   {
     if (isFirstTime)
-      {
-        hst_ptralpha = arg_alpha;
-        hst_ptralpha_dim1 = arg_hst_ptralpha_dim1;
-        dim = arg_dim;
-        hst_ptrindex = arg_index;
-        hst_ptrindex_dim1 = arg_hst_ptrindex_dim1;
-        hst_ptrindex_dim2 = arg_hst_ptrindex_dim2;
-        hst_ptrlambda = arg_lambda;
-        hst_ptrlambda_dim1 = arg_hst_ptrlambda_dim1;
-        hst_ptrlcl_q = arg_lcl_q;
-        hst_ptrlcl_q_dim1 = arg_hst_ptrlcl_q_dim1;
-        hst_ptrlcl_q_inv = arg_lcl_q_inv;
-        hst_ptrlcl_q_inv_dim1 = arg_hst_ptrlcl_q_inv_dim1;
-        hst_ptrlevel = arg_level;
-        hst_ptrlevel_dim1 = arg_hst_ptrlevel_dim1;
-        hst_ptrlevel_dim2 = arg_hst_ptrlevel_dim2;
-        hst_ptrlevel_int = arg_level_int;
-        hst_ptrlevel_int_dim1 = arg_hst_ptrlevel_int_dim1;
-        hst_ptrlevel_int_dim2 = arg_hst_ptrlevel_int_dim2;
-        ocl_type = arg_ocl_type;
-        hst_ptrresult = arg_result;
-        hst_ptrresult_dim1 = arg_hst_ptrresult_dim1;
-        storagesize = arg_storagesize;
-        StartUpOCL(ocl_type);
-        AllocateBuffers();
-        cout << "$Defines " << KernelDefines << endl;
-        compileKernel(
+    {
+      hst_ptralpha = arg_alpha;
+      hst_ptralpha_dim1 = arg_hst_ptralpha_dim1;
+      dim = arg_dim;
+      hst_ptrindex = arg_index;
+      hst_ptrindex_dim1 = arg_hst_ptrindex_dim1;
+      hst_ptrindex_dim2 = arg_hst_ptrindex_dim2;
+      hst_ptrlambda = arg_lambda;
+      hst_ptrlambda_dim1 = arg_hst_ptrlambda_dim1;
+      hst_ptrlcl_q = arg_lcl_q;
+      hst_ptrlcl_q_dim1 = arg_hst_ptrlcl_q_dim1;
+      hst_ptrlcl_q_inv = arg_lcl_q_inv;
+      hst_ptrlcl_q_inv_dim1 = arg_hst_ptrlcl_q_inv_dim1;
+      hst_ptrlevel = arg_level;
+      hst_ptrlevel_dim1 = arg_hst_ptrlevel_dim1;
+      hst_ptrlevel_dim2 = arg_hst_ptrlevel_dim2;
+      hst_ptrlevel_int = arg_level_int;
+      hst_ptrlevel_int_dim1 = arg_hst_ptrlevel_int_dim1;
+      hst_ptrlevel_int_dim2 = arg_hst_ptrlevel_int_dim2;
+      ocl_type = arg_ocl_type;
+      hst_ptrresult = arg_result;
+      hst_ptrresult_dim1 = arg_hst_ptrresult_dim1;
+      storagesize = arg_storagesize;
+      StartUpOCL(ocl_type);
+      AllocateBuffers();
+      cout << "$Defines " << KernelDefines << endl;
+      compileKernel(
 	"LaplaceFor", "LaplaceFor.cl", GetKernelCode(), 
 	false, &LaplaceForKernel, KernelDefines
 	);
-        SetArgumentsLaplaceFor();
-      }
+      SetArgumentsLaplaceFor();
+    }
     timer.start();
     ExecLaplaceFor();
     cout << "$Time " << timer.stop() << endl;
@@ -117,9 +117,9 @@ private:
     str << "#pragma OPENCL EXTENSION cl_khr_fp64: enable" << endl;
     str << "#include \"LaplaceIncludes.hpp\"" << endl;
     str << "__kernel void LaplaceFor(" << endl;
-    str << "	__global double * alpha, __global double * index, __global double * lambda, " << endl;
-    str << "	__global double * lcl_q, __global double * lcl_q_inv, __global double * level, " << endl;
-    str << "	__global double * level_int, __global double * result) {" << endl;
+    str << "  __global double * alpha, __global double * index, __global double * lambda, " << endl;
+    str << "  __global double * lcl_q, __global double * lcl_q_inv, __global double * level, " << endl;
+    str << "  __global double * level_int, __global double * result) {" << endl;
     str << "  for (unsigned j = 0; j < storagesize; j++) {" << endl;
     str << "      double gradient_temp[dim];" << endl;
     str << "      double dot_temp[dim];" << endl;
@@ -131,12 +131,12 @@ private:
     str << "          double index_i = index[(d * hst_ptrindex_dim1) + get_global_id(0)];" << endl;
     str << "          double index_j = index[(d * hst_ptrindex_dim1) + j];" << endl;
     str << "          gradient_temp[d] = gradient(" << endl;
-    str << "	level_i, index_i, level_j, " << endl;
-    str << "	index_j, lcl_q_inv[d]);" << endl;
+    str << "  level_i, index_i, level_j, " << endl;
+    str << "  index_j, lcl_q_inv[d]);" << endl;
     str << "          dot_temp[d] = l2dot(" << endl;
-    str << "	level_i, level_j, index_i, " << endl;
-    str << "	index_j, level_int_i, level_int_j, " << endl;
-    str << "	lcl_q[d]);" << endl;
+    str << "  level_i, level_j, index_i, " << endl;
+    str << "  index_j, level_int_i, level_int_j, " << endl;
+    str << "  lcl_q[d]);" << endl;
     str << "      }" << endl;
     str << "      double sub = 0.0;" << endl;
     str << "      for (unsigned d_outer = 0; d_outer < dim; d_outer++) {" << endl;
@@ -160,9 +160,9 @@ private:
     str << "#pragma OPENCL EXTENSION cl_khr_fp64: enable" << endl;
     str << "#include \"LaplaceIncludes.hpp\"" << endl;
     str << "__kernel void LaplaceFor(" << endl;
-    str << "	__global double * alpha, __global double * index, __global double * lambda, " << endl;
-    str << "	__global double * lcl_q, __global double * lcl_q_inv, __global double * level, " << endl;
-    str << "	__global double * level_int, __global double * result) {" << endl;
+    str << "  __global double * alpha, __global double * index, __global double * lambda, " << endl;
+    str << "  __global double * lcl_q, __global double * lcl_q_inv, __global double * level, " << endl;
+    str << "  __global double * level_int, __global double * result) {" << endl;
     str << "  double index_reg[dim];" << endl;
     str << "  double level_int_reg[dim];" << endl;
     str << "  double level_reg[dim];" << endl;
@@ -182,12 +182,12 @@ private:
     str << "          double index_i = index_reg[d];" << endl;
     str << "          double index_j = index[(d * hst_ptrindex_dim1) + j];" << endl;
     str << "          gradient_temp[d] = gradient(" << endl;
-    str << "	level_i, index_i, level_j, " << endl;
-    str << "	index_j, lcl_q_inv[d]);" << endl;
+    str << "  level_i, index_i, level_j, " << endl;
+    str << "  index_j, lcl_q_inv[d]);" << endl;
     str << "          dot_temp[d] = l2dot(" << endl;
-    str << "	level_i, level_j, index_i, " << endl;
-    str << "	index_j, level_int_i, level_int_j, " << endl;
-    str << "	lcl_q[d]);" << endl;
+    str << "  level_i, level_j, index_i, " << endl;
+    str << "  index_j, level_int_i, level_int_j, " << endl;
+    str << "  lcl_q[d]);" << endl;
     str << "      }" << endl;
     str << "      double sub = 0.0;" << endl;
     str << "      for (unsigned d_outer = 0; d_outer < dim; d_outer++) {" << endl;
@@ -208,18 +208,18 @@ private:
   std::string GetKernelCode()
   {
     if (((dim - 0) * 3) < 40)
-      {
-        return LaplacePlaceInReg();
-      }
+    {
+      return LaplacePlaceInReg();
+    }    
     else
-      {
-        return LaplaceBase();
-      }
+    {
+      return LaplaceBase();
+    }
   }
 
   void AllocateBuffers()
   {
-        hst_ptralpha_mem_size = hst_ptralpha_dim1 * sizeof(double);
+    hst_ptralpha_mem_size = hst_ptralpha_dim1 * sizeof(double);
     hst_ptrindex_mem_size = hst_ptrindex_dim2 * (hst_ptrindex_dim1 * sizeof(double));
     hst_ptrlambda_mem_size = hst_ptrlambda_dim1 * sizeof(double);
     hst_ptrlcl_q_mem_size = hst_ptrlcl_q_dim1 * sizeof(double);
@@ -228,7 +228,7 @@ private:
     hst_ptrlevel_int_mem_size = hst_ptrlevel_int_dim2 * (hst_ptrlevel_int_dim1 * sizeof(double));
     hst_ptrresult_mem_size = hst_ptrresult_dim1 * sizeof(double);
 
-        // Transposition
+    // Transposition
     hst_ptrindex_trans = new double[hst_ptrindex_mem_size];
     transpose<double>(
 	hst_ptrindex, hst_ptrindex_trans, hst_ptrindex_dim1, 
@@ -242,9 +242,9 @@ private:
 	hst_ptrlevel, hst_ptrlevel_trans, hst_ptrlevel_dim1, 
 	hst_ptrlevel_dim2);
 
-        // Constant Memory
+    // Constant Memory
 
-        // Defines for the kernel
+    // Defines for the kernel
     std::stringstream str;
     str << "-Ddim=" << dim << " ";
     str << "-Dhst_ptrindex_dim1=" << hst_ptrindex_dim2 << " ";
@@ -253,7 +253,7 @@ private:
     str << "-Dstoragesize=" << storagesize << " ";
     KernelDefines = str.str();
 
-        cl_int oclErrNum = CL_SUCCESS;
+    cl_int oclErrNum = CL_SUCCESS;
 
     dev_ptralpha = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptralpha_mem_size, 

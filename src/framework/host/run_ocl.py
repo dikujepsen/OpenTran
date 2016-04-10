@@ -29,7 +29,7 @@ class RunOCL(boilerplatebase.BoilerplateBase):
         self.__runocl_compile_kernel(if_then_list)
         self.__runocl_set_kernel_arguments(if_then_list)
 
-        run_ocl_body.append(lan.IfThen(lan.Id(self._first_time_name), lan.Compound(if_then_list)))
+        run_ocl_body.append(lan.IfThen(lan.Id(self._first_time_name), if_then_list))
 
         self.__runocl_insert_timing(run_ocl_body)
 

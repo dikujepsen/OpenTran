@@ -4,11 +4,11 @@ using namespace std;
 class OCLKNearestTask
 {
   cl_kernel KNearestForKernel;
-    cl_mem dev_ptrdist_matrix;
+  cl_mem dev_ptrdist_matrix;
   cl_mem dev_ptrtest_patterns;
   cl_mem dev_ptrtrain_patterns;
 
-    unsigned dim;
+  unsigned dim;
   float * hst_ptrdist_matrix;
   unsigned NTEST;
   unsigned NTRAIN;
@@ -17,19 +17,19 @@ class OCLKNearestTask
   float * hst_ptrtrain_patterns;
   float * hst_ptrtest_patterns_trans;
 
-    size_t hst_ptrdist_matrix_mem_size;
+  size_t hst_ptrdist_matrix_mem_size;
   size_t hst_ptrtest_patterns_mem_size;
   size_t hst_ptrtrain_patterns_mem_size;
 
-    size_t hst_ptrdist_matrix_dim1;
+  size_t hst_ptrdist_matrix_dim1;
   size_t hst_ptrdist_matrix_dim2;
   size_t hst_ptrtest_patterns_dim1;
   size_t hst_ptrtest_patterns_dim2;
   size_t hst_ptrtrain_patterns_dim1;
   size_t hst_ptrtrain_patterns_dim2;
 
-    size_t isFirstTime = 1;
-  std::string KernelDefines = "";
+  size_t isFirstTime;
+  std::string KernelDefines;
   Stopwatch timer;
 
 
@@ -37,7 +37,7 @@ public:
   OCLKNearestTask()
   {
     isFirstTime = 1;
-    KernelDefines = 1;
+    KernelDefines = "";
   }
 
   void RunOCLKNearestForKernel(
@@ -48,29 +48,29 @@ public:
 	size_t arg_hst_ptrtrain_patterns_dim2)
   {
     if (isFirstTime)
-      {
-        NTEST = arg_NTEST;
-        NTRAIN = arg_NTRAIN;
-        dim = arg_dim;
-        hst_ptrdist_matrix = arg_dist_matrix;
-        hst_ptrdist_matrix_dim1 = arg_hst_ptrdist_matrix_dim1;
-        hst_ptrdist_matrix_dim2 = arg_hst_ptrdist_matrix_dim2;
-        ocl_type = arg_ocl_type;
-        hst_ptrtest_patterns = arg_test_patterns;
-        hst_ptrtest_patterns_dim1 = arg_hst_ptrtest_patterns_dim1;
-        hst_ptrtest_patterns_dim2 = arg_hst_ptrtest_patterns_dim2;
-        hst_ptrtrain_patterns = arg_train_patterns;
-        hst_ptrtrain_patterns_dim1 = arg_hst_ptrtrain_patterns_dim1;
-        hst_ptrtrain_patterns_dim2 = arg_hst_ptrtrain_patterns_dim2;
-        StartUpOCL(ocl_type);
-        AllocateBuffers();
-        cout << "$Defines " << KernelDefines << endl;
-        compileKernel(
+    {
+      NTEST = arg_NTEST;
+      NTRAIN = arg_NTRAIN;
+      dim = arg_dim;
+      hst_ptrdist_matrix = arg_dist_matrix;
+      hst_ptrdist_matrix_dim1 = arg_hst_ptrdist_matrix_dim1;
+      hst_ptrdist_matrix_dim2 = arg_hst_ptrdist_matrix_dim2;
+      ocl_type = arg_ocl_type;
+      hst_ptrtest_patterns = arg_test_patterns;
+      hst_ptrtest_patterns_dim1 = arg_hst_ptrtest_patterns_dim1;
+      hst_ptrtest_patterns_dim2 = arg_hst_ptrtest_patterns_dim2;
+      hst_ptrtrain_patterns = arg_train_patterns;
+      hst_ptrtrain_patterns_dim1 = arg_hst_ptrtrain_patterns_dim1;
+      hst_ptrtrain_patterns_dim2 = arg_hst_ptrtrain_patterns_dim2;
+      StartUpOCL(ocl_type);
+      AllocateBuffers();
+      cout << "$Defines " << KernelDefines << endl;
+      compileKernel(
 	"KNearestFor", "KNearestFor.cl", GetKernelCode(), 
 	false, &KNearestForKernel, KernelDefines
 	);
-        SetArgumentsKNearestFor();
-      }
+      SetArgumentsKNearestFor();
+    }
     timer.start();
     ExecKNearestFor();
     cout << "$Time " << timer.stop() << endl;
@@ -82,8 +82,8 @@ private:
   {
     std::stringstream str;
     str << "__kernel void KNearestFor(" << endl;
-    str << "	__global float * dist_matrix, __global float * test_patterns, __global float * train_patterns" << endl;
-    str << "	) {" << endl;
+    str << "  __global float * dist_matrix, __global float * test_patterns, __global float * train_patterns" << endl;
+    str << "  ) {" << endl;
     str << "  for (unsigned j = 0; j < NTRAIN; j++) {" << endl;
     str << "      float d = 0.0;" << endl;
     str << "      for (unsigned k = 0; k < dim; k++) {" << endl;
@@ -102,8 +102,8 @@ private:
   {
     std::stringstream str;
     str << "__kernel void KNearestFor(" << endl;
-    str << "	__global float * dist_matrix, __global float * test_patterns, __global float * train_patterns" << endl;
-    str << "	) {" << endl;
+    str << "  __global float * dist_matrix, __global float * test_patterns, __global float * train_patterns" << endl;
+    str << "  ) {" << endl;
     str << "  float test_patterns_reg[dim];" << endl;
     str << "  for (unsigned k = 0; k < dim; k++) {" << endl;
     str << "      test_patterns_reg[k] = test_patterns[(k * hst_ptrtest_patterns_dim1) + get_global_id(0)];" << endl;
@@ -125,30 +125,30 @@ private:
   std::string GetKernelCode()
   {
     if (((dim - 0) * 1) < 40)
-      {
-        return KNearestPlaceInReg();
-      }
+    {
+      return KNearestPlaceInReg();
+    }    
     else
-      {
-        return KNearestBase();
-      }
+    {
+      return KNearestBase();
+    }
   }
 
   void AllocateBuffers()
   {
-        hst_ptrdist_matrix_mem_size = hst_ptrdist_matrix_dim2 * (hst_ptrdist_matrix_dim1 * sizeof(float));
+    hst_ptrdist_matrix_mem_size = hst_ptrdist_matrix_dim2 * (hst_ptrdist_matrix_dim1 * sizeof(float));
     hst_ptrtest_patterns_mem_size = hst_ptrtest_patterns_dim2 * (hst_ptrtest_patterns_dim1 * sizeof(float));
     hst_ptrtrain_patterns_mem_size = hst_ptrtrain_patterns_dim2 * (hst_ptrtrain_patterns_dim1 * sizeof(float));
 
-        // Transposition
+    // Transposition
     hst_ptrtest_patterns_trans = new float[hst_ptrtest_patterns_mem_size];
     transpose<float>(
 	hst_ptrtest_patterns, hst_ptrtest_patterns_trans, hst_ptrtest_patterns_dim1, 
 	hst_ptrtest_patterns_dim2);
 
-        // Constant Memory
+    // Constant Memory
 
-        // Defines for the kernel
+    // Defines for the kernel
     std::stringstream str;
     str << "-DNTRAIN=" << NTRAIN << " ";
     str << "-Ddim=" << dim << " ";
@@ -157,7 +157,7 @@ private:
     str << "-Dhst_ptrtrain_patterns_dim1=" << hst_ptrtrain_patterns_dim1 << " ";
     KernelDefines = str.str();
 
-        cl_int oclErrNum = CL_SUCCESS;
+    cl_int oclErrNum = CL_SUCCESS;
 
     dev_ptrdist_matrix = clCreateBuffer(
 	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrdist_matrix_mem_size, 

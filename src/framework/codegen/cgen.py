@@ -25,6 +25,7 @@ class CGenerator(object):
         self.inside_ArgList2 = list()
         self.arg_list_level = 0
         self.inside_Assignment = False
+        self._is_first_group_compount = True
 
     def write_ast_to_file(self, ast, filename='temp.cpp'):
         code = self.visit(ast)
@@ -101,8 +102,17 @@ class CGenerator(object):
             newline = n.__class__.__name__ + newline
             start = n.__class__.__name__ + start
         s = ''
+        if self._is_first_group_compount:
+            self._is_first_group_compount = False
+            indent = ''
+        else:
+            indent = self._make_indent()
+
         for i, stat in enumerate(n.statements):
-            s += self._make_indent() + start + self.visit(stat) + newline
+            if not isinstance(stat, lan.GroupCompound):
+                s += self._make_indent() + start + self.visit(stat) + newline
+            else:
+                s += indent + start + self.visit(stat) + newline
         s += start
         return s
 
@@ -164,8 +174,13 @@ class CGenerator(object):
 
         s = start + self._make_indent() + '{' + newline
         self.indent_level += 2
+
         for stat in n.statements:
-            s += start + self._make_indent() + self.visit(stat) + newline
+            if isinstance(stat, lan.GroupCompound):
+                indent = start
+            else:
+                indent = start + self._make_indent()
+            s += indent + self.visit(stat) + newline
         self.indent_level -= 2
         s += start + self._make_indent() + '}'
         return s
@@ -269,7 +284,10 @@ class CGenerator(object):
         self.indent_level += 2
         compound = self.visit(n.compound)
         self.indent_level -= 2
-        return 'if (' + cond + ')' + newline + compound
+        if_cond = self.__create_if_cond(cond)
+        first_compound = self.__create_if_compound(compound)
+
+        return if_cond + first_compound
 
     def visit_IfThenElse(self, n):
         newline = self.newline
@@ -283,8 +301,18 @@ class CGenerator(object):
         compound1 = self.visit(n.compound1)
         compound2 = self.visit(n.compound2)
         self.indent_level -= 2
-        return 'if (' + cond + ')' + newline + compound1 \
-               + newline + self._make_indent() + 'else' + newline + compound2
+
+        if_cond = self.__create_if_cond(cond)
+        first_compound = self.__create_if_compound(compound1)
+        else_clause = self._make_indent() + newline + self._make_indent() + 'else' + newline
+        second_compound = self.__create_if_compound(compound2)
+        return if_cond + first_compound + else_clause + second_compound
+
+    def __create_if_compound(self, compound):
+        return self._make_indent() + '{' + self.newline + compound + self._make_indent() + '}'
+
+    def __create_if_cond(self, cond):
+        return 'if (' + cond + ')' + self.newline
 
     def visit_Id(self, n):
         return n.name
@@ -337,6 +365,8 @@ class CGenerator(object):
         name = self.visit(n.name)
         self.indent_level += 2
         s += 'class ' + name + self.newline + '{' + self.newline
+        self._is_first_group_compount = True
+
         s += self.visit(n.var_list)
         s += self.newline
 

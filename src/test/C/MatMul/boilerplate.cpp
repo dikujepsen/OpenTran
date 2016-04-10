@@ -4,11 +4,11 @@ using namespace std;
 class OCLMatMulTask
 {
   cl_kernel MatMulForKernel;
-    cl_mem dev_ptrA;
+  cl_mem dev_ptrA;
   cl_mem dev_ptrB;
   cl_mem dev_ptrC;
 
-    float * hst_ptrA;
+  float * hst_ptrA;
   float * hst_ptrB;
   float * hst_ptrC;
   unsigned hA;
@@ -16,19 +16,19 @@ class OCLMatMulTask
   unsigned wA;
   unsigned wB;
 
-    size_t hst_ptrA_mem_size;
+  size_t hst_ptrA_mem_size;
   size_t hst_ptrB_mem_size;
   size_t hst_ptrC_mem_size;
 
-    size_t hst_ptrA_dim1;
+  size_t hst_ptrA_dim1;
   size_t hst_ptrA_dim2;
   size_t hst_ptrB_dim1;
   size_t hst_ptrB_dim2;
   size_t hst_ptrC_dim1;
   size_t hst_ptrC_dim2;
 
-    size_t isFirstTime = 1;
-  std::string KernelDefines = "";
+  size_t isFirstTime;
+  std::string KernelDefines;
   Stopwatch timer;
 
 
@@ -36,7 +36,7 @@ public:
   OCLMatMulTask()
   {
     isFirstTime = 1;
-    KernelDefines = 1;
+    KernelDefines = "";
   }
 
   void RunOCLMatMulForKernel(
@@ -47,29 +47,29 @@ public:
 	unsigned arg_wB)
   {
     if (isFirstTime)
-      {
-        hst_ptrA = arg_A;
-        hst_ptrA_dim1 = arg_hst_ptrA_dim1;
-        hst_ptrA_dim2 = arg_hst_ptrA_dim2;
-        hst_ptrB = arg_B;
-        hst_ptrB_dim1 = arg_hst_ptrB_dim1;
-        hst_ptrB_dim2 = arg_hst_ptrB_dim2;
-        hst_ptrC = arg_C;
-        hst_ptrC_dim1 = arg_hst_ptrC_dim1;
-        hst_ptrC_dim2 = arg_hst_ptrC_dim2;
-        hA = arg_hA;
-        ocl_type = arg_ocl_type;
-        wA = arg_wA;
-        wB = arg_wB;
-        StartUpOCL(ocl_type);
-        AllocateBuffers();
-        cout << "$Defines " << KernelDefines << endl;
-        compileKernel(
+    {
+      hst_ptrA = arg_A;
+      hst_ptrA_dim1 = arg_hst_ptrA_dim1;
+      hst_ptrA_dim2 = arg_hst_ptrA_dim2;
+      hst_ptrB = arg_B;
+      hst_ptrB_dim1 = arg_hst_ptrB_dim1;
+      hst_ptrB_dim2 = arg_hst_ptrB_dim2;
+      hst_ptrC = arg_C;
+      hst_ptrC_dim1 = arg_hst_ptrC_dim1;
+      hst_ptrC_dim2 = arg_hst_ptrC_dim2;
+      hA = arg_hA;
+      ocl_type = arg_ocl_type;
+      wA = arg_wA;
+      wB = arg_wB;
+      StartUpOCL(ocl_type);
+      AllocateBuffers();
+      cout << "$Defines " << KernelDefines << endl;
+      compileKernel(
 	"MatMulFor", "MatMulFor.cl", GetKernelCode(), 
 	false, &MatMulForKernel, KernelDefines
 	);
-        SetArgumentsMatMulFor();
-      }
+      SetArgumentsMatMulFor();
+    }
     timer.start();
     ExecMatMulFor();
     cout << "$Time " << timer.stop() << endl;
@@ -81,8 +81,8 @@ private:
   {
     std::stringstream str;
     str << "__kernel void MatMulFor(" << endl;
-    str << "	__global float * A, __global float * B, __global float * C" << endl;
-    str << "	) {" << endl;
+    str << "  __global float * A, __global float * B, __global float * C" << endl;
+    str << "  ) {" << endl;
     str << "  float sum = 0;" << endl;
     str << "  for (unsigned k = 0; k < wA; k++) {" << endl;
     str << "      sum += A[(get_global_id(1) * hst_ptrA_dim1) + k] * B[(k * hst_ptrB_dim1) + get_global_id(0)];" << endl;
@@ -98,8 +98,8 @@ private:
   {
     std::stringstream str;
     str << "__kernel void MatMulFor(" << endl;
-    str << "	__global float * A, __global float * B, __global float * C" << endl;
-    str << "	) {" << endl;
+    str << "  __global float * A, __global float * B, __global float * C" << endl;
+    str << "  ) {" << endl;
     str << "  __local float A_local[4 * 4];" << endl;
     str << "  __local float B_local[4 * 4];" << endl;
     str << "  float sum = 0;" << endl;
@@ -122,26 +122,26 @@ private:
   std::string GetKernelCode()
   {
     if (((wA - 0) % 4) == 0)
-      {
-        return MatMulPlaceInLocal();
-      }
+    {
+      return MatMulPlaceInLocal();
+    }    
     else
-      {
-        return MatMulBase();
-      }
+    {
+      return MatMulBase();
+    }
   }
 
   void AllocateBuffers()
   {
-        hst_ptrA_mem_size = hst_ptrA_dim2 * (hst_ptrA_dim1 * sizeof(float));
+    hst_ptrA_mem_size = hst_ptrA_dim2 * (hst_ptrA_dim1 * sizeof(float));
     hst_ptrB_mem_size = hst_ptrB_dim2 * (hst_ptrB_dim1 * sizeof(float));
     hst_ptrC_mem_size = hst_ptrC_dim2 * (hst_ptrC_dim1 * sizeof(float));
 
-        // Transposition
+    // Transposition
 
-        // Constant Memory
+    // Constant Memory
 
-        // Defines for the kernel
+    // Defines for the kernel
     std::stringstream str;
     str << "-Dhst_ptrA_dim1=" << hst_ptrA_dim1 << " ";
     str << "-Dhst_ptrB_dim1=" << hst_ptrB_dim1 << " ";
@@ -149,7 +149,7 @@ private:
     str << "-DwA=" << wA << " ";
     KernelDefines = str.str();
 
-        cl_int oclErrNum = CL_SUCCESS;
+    cl_int oclErrNum = CL_SUCCESS;
 
     dev_ptrA = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrA_mem_size, 

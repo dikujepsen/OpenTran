@@ -53,7 +53,7 @@ class SSGenerator(object):
 
         split = oldcode.split('\n')
         for s in split:
-            self.statements.append(lan.Id(s))
+            self.statements.append(lan.RawCpp(s))
 
         # Create the function where we generate the code for the
         # kernel function
@@ -62,7 +62,7 @@ class SSGenerator(object):
         self.statements.insert(0, lan.TypeId(['std::stringstream'], lan.Id('str')))
         kernelfunc.compound.statements = self.statements
         # insert conversion to std::string
-        self.statements.append(lan.Id('return str.str();'))
+        self.statements.append(lan.RawCpp('return str.str();'))
 
         self.newast.ext = [kernelfunc]
 
@@ -223,12 +223,12 @@ class SSGenerator(object):
 
         for arg in n.arglist:
             if count == 1:
-                s += newline + start + '\t'
+                s += newline + start + '  '
             s += self.visit(arg)
             if count != (len(n.arglist)):
                 s += ', '
             if count % 3 == 0:
-                s += newline + start + '\t'
+                s += newline + start + '  '
             count += 1
         ## if n.arglist:
         ##     s = s[:-2]

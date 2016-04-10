@@ -80,12 +80,12 @@ class GlobalVars(boilerplatebase.BoilerplateBase):
     def __add_global_misc(self):
         misc = []
         lval = lan.TypeId(['size_t'], lan.Id(self._first_time_name))
-        rval = lan.Constant(1)
-        misc.append(lan.Assignment(lval, rval))
+
+        misc.append(lval)
 
         lval = lan.TypeId(['std::string'], lan.Id(self._kernel_defines_name))
-        rval = lan.Constant('""')
-        misc.append(lan.Assignment(lval, rval))
+
+        misc.append(lval)
 
         lval = lan.TypeId(['Stopwatch'], lan.Id('timer'))
         misc.append(lval)

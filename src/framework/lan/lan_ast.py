@@ -415,9 +415,9 @@ class ForLoop(Node):
 
 
 class IfThen(Node):
-    def __init__(self, cond, compound, coord=None):
+    def __init__(self, cond, compound_list, coord=None):
         self.cond = cond
-        self.compound = compound
+        self.compound = GroupCompound(compound_list)
 
     def __repr__(self):
         return "If(%r) then {%r}" % (self.cond,
@@ -433,10 +433,10 @@ class IfThen(Node):
 
 
 class IfThenElse(Node):
-    def __init__(self, cond, compound1, compound2, coord=None):
+    def __init__(self, cond, compound1_list, compound2_list, coord=None):
         self.cond = cond
-        self.compound1 = compound1
-        self.compound2 = compound2
+        self.compound1 = GroupCompound(compound1_list)
+        self.compound2 = GroupCompound(compound2_list)
 
     def __repr__(self):
         return "If(%r) then {%r} else {%r}" % (self.cond,

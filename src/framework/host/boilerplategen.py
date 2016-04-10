@@ -59,7 +59,6 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
         host_run_ocl = run_ocl.RunOCL(self.ast, public_list)
         host_run_ocl.add_runocl_func()
 
-
         self.file_ast.ext.append(lan.CppClass(lan.Id(program_name), lan.GroupCompound(global_vars_list),
                                  lan.GroupCompound(public_list), lan.GroupCompound(protected_list),
                                               lan.GroupCompound(private_list)))
@@ -72,5 +71,5 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
 
     def __add_class_init(self, file_ast, program_name):
         stat_list = [lan.Assignment(lan.Id(self._first_time_name), lan.Constant(1)),
-                     lan.Assignment(lan.Id(self._kernel_defines_name), lan.Constant(1))]
+                     lan.Assignment(lan.Id(self._kernel_defines_name), lan.Constant(""))]
         file_ast.append(lan.ClassConstructor(lan.Id(program_name), lan.ArgList([]), lan.Compound(stat_list)))

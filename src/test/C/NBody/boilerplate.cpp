@@ -4,28 +4,28 @@ using namespace std;
 class OCLNBodyTask
 {
   cl_kernel NBodyForKernel;
-    cl_mem dev_ptrForces;
+  cl_mem dev_ptrForces;
   cl_mem dev_ptrMas;
   cl_mem dev_ptrPos;
 
-    float * hst_ptrForces;
+  float * hst_ptrForces;
   float * hst_ptrMas;
   size_t N;
   std::string ocl_type;
   float * hst_ptrPos;
 
-    size_t hst_ptrForces_mem_size;
+  size_t hst_ptrForces_mem_size;
   size_t hst_ptrMas_mem_size;
   size_t hst_ptrPos_mem_size;
 
-    size_t hst_ptrForces_dim1;
+  size_t hst_ptrForces_dim1;
   size_t hst_ptrForces_dim2;
   size_t hst_ptrMas_dim1;
   size_t hst_ptrPos_dim1;
   size_t hst_ptrPos_dim2;
 
-    size_t isFirstTime = 1;
-  std::string KernelDefines = "";
+  size_t isFirstTime;
+  std::string KernelDefines;
   Stopwatch timer;
 
 
@@ -33,7 +33,7 @@ public:
   OCLNBodyTask()
   {
     isFirstTime = 1;
-    KernelDefines = 1;
+    KernelDefines = "";
   }
 
   void RunOCLNBodyForKernel(
@@ -43,26 +43,26 @@ public:
 	std::string arg_ocl_type)
   {
     if (isFirstTime)
-      {
-        hst_ptrForces = arg_Forces;
-        hst_ptrForces_dim1 = arg_hst_ptrForces_dim1;
-        hst_ptrForces_dim2 = arg_hst_ptrForces_dim2;
-        hst_ptrMas = arg_Mas;
-        hst_ptrMas_dim1 = arg_hst_ptrMas_dim1;
-        N = arg_N;
-        hst_ptrPos = arg_Pos;
-        hst_ptrPos_dim1 = arg_hst_ptrPos_dim1;
-        hst_ptrPos_dim2 = arg_hst_ptrPos_dim2;
-        ocl_type = arg_ocl_type;
-        StartUpOCL(ocl_type);
-        AllocateBuffers();
-        cout << "$Defines " << KernelDefines << endl;
-        compileKernel(
+    {
+      hst_ptrForces = arg_Forces;
+      hst_ptrForces_dim1 = arg_hst_ptrForces_dim1;
+      hst_ptrForces_dim2 = arg_hst_ptrForces_dim2;
+      hst_ptrMas = arg_Mas;
+      hst_ptrMas_dim1 = arg_hst_ptrMas_dim1;
+      N = arg_N;
+      hst_ptrPos = arg_Pos;
+      hst_ptrPos_dim1 = arg_hst_ptrPos_dim1;
+      hst_ptrPos_dim2 = arg_hst_ptrPos_dim2;
+      ocl_type = arg_ocl_type;
+      StartUpOCL(ocl_type);
+      AllocateBuffers();
+      cout << "$Defines " << KernelDefines << endl;
+      compileKernel(
 	"NBodyFor", "NBodyFor.cl", GetKernelCode(), 
 	false, &NBodyForKernel, KernelDefines
 	);
-        SetArgumentsNBodyFor();
-      }
+      SetArgumentsNBodyFor();
+    }
     timer.start();
     ExecNBodyFor();
     cout << "$Time " << timer.stop() << endl;
@@ -74,8 +74,8 @@ private:
   {
     std::stringstream str;
     str << "__kernel void NBodyFor(" << endl;
-    str << "	__global float * Forces, __global float * Mas, __global float * Pos" << endl;
-    str << "	) {" << endl;
+    str << "  __global float * Forces, __global float * Mas, __global float * Pos" << endl;
+    str << "  ) {" << endl;
     str << "  float f_x = 0;" << endl;
     str << "  float f_y = 0;" << endl;
     str << "  for (unsigned j = 0; j < N; j++) {" << endl;
@@ -105,8 +105,8 @@ private:
   {
     std::stringstream str;
     str << "__kernel void NBodyFor(" << endl;
-    str << "	__global float * Forces, __global float * Mas, __global float * Pos" << endl;
-    str << "	) {" << endl;
+    str << "  __global float * Forces, __global float * Mas, __global float * Pos" << endl;
+    str << "  ) {" << endl;
     str << "  float Mas0_reg = Mas[get_global_id(0)];" << endl;
     str << "  float Pos0_reg = Pos[(0 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
     str << "  float Pos1_reg = Pos[(1 * hst_ptrPos_dim1) + get_global_id(0)];" << endl;
@@ -138,33 +138,33 @@ private:
   std::string GetKernelCode()
   {
     if ((1 * 3) < 40)
-      {
-        return NBodyPlaceInReg();
-      }
+    {
+      return NBodyPlaceInReg();
+    }    
     else
-      {
-        return NBodyBase();
-      }
+    {
+      return NBodyBase();
+    }
   }
 
   void AllocateBuffers()
   {
-        hst_ptrForces_mem_size = hst_ptrForces_dim2 * (hst_ptrForces_dim1 * sizeof(float));
+    hst_ptrForces_mem_size = hst_ptrForces_dim2 * (hst_ptrForces_dim1 * sizeof(float));
     hst_ptrMas_mem_size = hst_ptrMas_dim1 * sizeof(float);
     hst_ptrPos_mem_size = hst_ptrPos_dim2 * (hst_ptrPos_dim1 * sizeof(float));
 
-        // Transposition
+    // Transposition
 
-        // Constant Memory
+    // Constant Memory
 
-        // Defines for the kernel
+    // Defines for the kernel
     std::stringstream str;
     str << "-DN=" << N << " ";
     str << "-Dhst_ptrForces_dim1=" << hst_ptrForces_dim1 << " ";
     str << "-Dhst_ptrPos_dim1=" << hst_ptrPos_dim1 << " ";
     KernelDefines = str.str();
 
-        cl_int oclErrNum = CL_SUCCESS;
+    cl_int oclErrNum = CL_SUCCESS;
 
     dev_ptrForces = clCreateBuffer(
 	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrForces_mem_size, 

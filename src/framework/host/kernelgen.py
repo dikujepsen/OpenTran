@@ -94,11 +94,11 @@ class CreateKernels(KernelGen):
 
     def __create_optimized_kernel_func(self, funcname, cond):
         returnfunc1 = self.__create_base_kernel_func()
-        name = funcname
-        func = ast_bb.EmptyFuncDecl(name, type=[])
+
+        func = ast_bb.FuncCall(funcname)
         returnfunc2 = lan.Return(func)
         ifthenelse = lan.IfThenElse(cond,
-                                    lan.Compound([returnfunc2]), lan.Compound([returnfunc1]))
+                                    [returnfunc2], [returnfunc1])
         return ifthenelse
 
     def _create_optimized_kernel(self, funcname, testast, cond):

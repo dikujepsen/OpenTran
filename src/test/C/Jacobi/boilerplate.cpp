@@ -4,29 +4,29 @@ using namespace std;
 class OCLJacobiTask
 {
   cl_kernel JacobiForKernel;
-    cl_mem dev_ptrB;
+  cl_mem dev_ptrB;
   cl_mem dev_ptrX1;
   cl_mem dev_ptrX2;
 
-    float * hst_ptrB;
+  float * hst_ptrB;
   std::string ocl_type;
   unsigned wB;
   float * hst_ptrX1;
   float * hst_ptrX2;
 
-    size_t hst_ptrB_mem_size;
+  size_t hst_ptrB_mem_size;
   size_t hst_ptrX1_mem_size;
   size_t hst_ptrX2_mem_size;
 
-    size_t hst_ptrB_dim1;
+  size_t hst_ptrB_dim1;
   size_t hst_ptrB_dim2;
   size_t hst_ptrX1_dim1;
   size_t hst_ptrX1_dim2;
   size_t hst_ptrX2_dim1;
   size_t hst_ptrX2_dim2;
 
-    size_t isFirstTime = 1;
-  std::string KernelDefines = "";
+  size_t isFirstTime;
+  std::string KernelDefines;
   Stopwatch timer;
 
 
@@ -34,7 +34,7 @@ public:
   OCLJacobiTask()
   {
     isFirstTime = 1;
-    KernelDefines = 1;
+    KernelDefines = "";
   }
 
   void RunOCLJacobiForKernel(
@@ -44,27 +44,27 @@ public:
 	std::string arg_ocl_type, unsigned arg_wB)
   {
     if (isFirstTime)
-      {
-        hst_ptrB = arg_B;
-        hst_ptrB_dim1 = arg_hst_ptrB_dim1;
-        hst_ptrB_dim2 = arg_hst_ptrB_dim2;
-        hst_ptrX1 = arg_X1;
-        hst_ptrX1_dim1 = arg_hst_ptrX1_dim1;
-        hst_ptrX1_dim2 = arg_hst_ptrX1_dim2;
-        hst_ptrX2 = arg_X2;
-        hst_ptrX2_dim1 = arg_hst_ptrX2_dim1;
-        hst_ptrX2_dim2 = arg_hst_ptrX2_dim2;
-        ocl_type = arg_ocl_type;
-        wB = arg_wB;
-        StartUpOCL(ocl_type);
-        AllocateBuffers();
-        cout << "$Defines " << KernelDefines << endl;
-        compileKernel(
+    {
+      hst_ptrB = arg_B;
+      hst_ptrB_dim1 = arg_hst_ptrB_dim1;
+      hst_ptrB_dim2 = arg_hst_ptrB_dim2;
+      hst_ptrX1 = arg_X1;
+      hst_ptrX1_dim1 = arg_hst_ptrX1_dim1;
+      hst_ptrX1_dim2 = arg_hst_ptrX1_dim2;
+      hst_ptrX2 = arg_X2;
+      hst_ptrX2_dim1 = arg_hst_ptrX2_dim1;
+      hst_ptrX2_dim2 = arg_hst_ptrX2_dim2;
+      ocl_type = arg_ocl_type;
+      wB = arg_wB;
+      StartUpOCL(ocl_type);
+      AllocateBuffers();
+      cout << "$Defines " << KernelDefines << endl;
+      compileKernel(
 	"JacobiFor", "JacobiFor.cl", GetKernelCode(), 
 	false, &JacobiForKernel, KernelDefines
 	);
-        SetArgumentsJacobiFor();
-      }
+      SetArgumentsJacobiFor();
+    }
     timer.start();
     ExecJacobiFor();
     cout << "$Time " << timer.stop() << endl;
@@ -76,8 +76,8 @@ private:
   {
     std::stringstream str;
     str << "__kernel void JacobiFor(" << endl;
-    str << "	__global float * B, __global float * X1, __global float * X2" << endl;
-    str << "	) {" << endl;
+    str << "  __global float * B, __global float * X1, __global float * X2" << endl;
+    str << "  ) {" << endl;
     str << "  __local float X1_local[6 * 6];" << endl;
     str << "  unsigned li = get_local_id(1) + 1;" << endl;
     str << "  unsigned lj = get_local_id(0) + 1;" << endl;
@@ -100,22 +100,22 @@ private:
 
   void AllocateBuffers()
   {
-        hst_ptrB_mem_size = hst_ptrB_dim2 * (hst_ptrB_dim1 * sizeof(float));
+    hst_ptrB_mem_size = hst_ptrB_dim2 * (hst_ptrB_dim1 * sizeof(float));
     hst_ptrX1_mem_size = hst_ptrX1_dim2 * (hst_ptrX1_dim1 * sizeof(float));
     hst_ptrX2_mem_size = hst_ptrX2_dim2 * (hst_ptrX2_dim1 * sizeof(float));
 
-        // Transposition
+    // Transposition
 
-        // Constant Memory
+    // Constant Memory
 
-        // Defines for the kernel
+    // Defines for the kernel
     std::stringstream str;
     str << "-Dhst_ptrB_dim1=" << hst_ptrB_dim1 << " ";
     str << "-Dhst_ptrX1_dim1=" << hst_ptrX1_dim1 << " ";
     str << "-Dhst_ptrX2_dim1=" << hst_ptrX2_dim1 << " ";
     KernelDefines = str.str();
 
-        cl_int oclErrNum = CL_SUCCESS;
+    cl_int oclErrNum = CL_SUCCESS;
 
     dev_ptrB = clCreateBuffer(
 	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrB_mem_size, 
