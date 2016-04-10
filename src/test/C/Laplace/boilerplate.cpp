@@ -1,4 +1,5 @@
 #include "../../../utils/StartUtil.cpp"
+#include "../../../utils/helper.hpp"
 using namespace std;
 
 class OCLLaplaceTask
@@ -52,6 +53,7 @@ class OCLLaplaceTask
   size_t isFirstTime;
   std::string KernelDefines;
   Stopwatch timer;
+  OCLContext * ocl_context;
 
 
 public:
@@ -61,8 +63,7 @@ public:
     KernelDefines = "";
   }
 
-  void RunOCLLaplaceForKernel(
-	double * arg_alpha, size_t arg_hst_ptralpha_dim1, size_t arg_dim, 
+  void RunOCLLaplaceForKernel(double * arg_alpha, size_t arg_hst_ptralpha_dim1, size_t arg_dim, 
 	double * arg_index, size_t arg_hst_ptrindex_dim1, size_t arg_hst_ptrindex_dim2, 
 	double * arg_lambda, size_t arg_hst_ptrlambda_dim1, double * arg_lcl_q, 
 	size_t arg_hst_ptrlcl_q_dim1, double * arg_lcl_q_inv, size_t arg_hst_ptrlcl_q_inv_dim1, 
@@ -95,11 +96,11 @@ public:
       hst_ptrresult = arg_result;
       hst_ptrresult_dim1 = arg_hst_ptrresult_dim1;
       storagesize = arg_storagesize;
-      StartUpOCL(ocl_type);
+      ocl_context = new OCLContext();
+      ocl_context->StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
-      compileKernel(
-	"LaplaceFor", "LaplaceFor.cl", GetKernelCode(), 
+      ocl_context->compileKernel("LaplaceFor", "LaplaceFor.cl", GetKernelCode(), 
 	false, &LaplaceForKernel, KernelDefines
 	);
       SetArgumentsLaplaceFor();
@@ -230,16 +231,13 @@ private:
 
     // Transposition
     hst_ptrindex_trans = new double[hst_ptrindex_mem_size];
-    transpose<double>(
-	hst_ptrindex, hst_ptrindex_trans, hst_ptrindex_dim1, 
+    transpose<double>(hst_ptrindex, hst_ptrindex_trans, hst_ptrindex_dim1, 
 	hst_ptrindex_dim2);
     hst_ptrlevel_int_trans = new double[hst_ptrlevel_int_mem_size];
-    transpose<double>(
-	hst_ptrlevel_int, hst_ptrlevel_int_trans, hst_ptrlevel_int_dim1, 
+    transpose<double>(hst_ptrlevel_int, hst_ptrlevel_int_trans, hst_ptrlevel_int_dim1, 
 	hst_ptrlevel_int_dim2);
     hst_ptrlevel_trans = new double[hst_ptrlevel_mem_size];
-    transpose<double>(
-	hst_ptrlevel, hst_ptrlevel_trans, hst_ptrlevel_dim1, 
+    transpose<double>(hst_ptrlevel, hst_ptrlevel_trans, hst_ptrlevel_dim1, 
 	hst_ptrlevel_dim2);
 
     // Constant Memory
@@ -255,78 +253,53 @@ private:
 
     cl_int oclErrNum = CL_SUCCESS;
 
-    dev_ptralpha = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptralpha_mem_size, 
+    dev_ptralpha = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptralpha_mem_size, 
 	hst_ptralpha, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptralpha");
-    dev_ptrindex = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrindex_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptralpha");
+    dev_ptrindex = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrindex_mem_size, 
 	hst_ptrindex_trans, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrindex");
-    dev_ptrlambda = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlambda_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrindex");
+    dev_ptrlambda = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlambda_mem_size, 
 	hst_ptrlambda, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrlambda");
-    dev_ptrlcl_q = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlcl_q_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrlambda");
+    dev_ptrlcl_q = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlcl_q_mem_size, 
 	hst_ptrlcl_q, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrlcl_q");
-    dev_ptrlcl_q_inv = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlcl_q_inv_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrlcl_q");
+    dev_ptrlcl_q_inv = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlcl_q_inv_mem_size, 
 	hst_ptrlcl_q_inv, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrlcl_q_inv");
-    dev_ptrlevel = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlevel_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrlcl_q_inv");
+    dev_ptrlevel = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlevel_mem_size, 
 	hst_ptrlevel_trans, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrlevel");
-    dev_ptrlevel_int = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlevel_int_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrlevel");
+    dev_ptrlevel_int = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrlevel_int_mem_size, 
 	hst_ptrlevel_int_trans, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrlevel_int");
-    dev_ptrresult = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrresult_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrlevel_int");
+    dev_ptrresult = clCreateBuffer(ocl_context->getContext(), CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrresult_mem_size, 
 	hst_ptrresult, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrresult");
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrresult");
   }
 
   void SetArgumentsLaplaceFor()
   {
     cl_int oclErrNum = CL_SUCCESS;
     int counter = 0;
-    oclErrNum |= clSetKernelArg(
-	LaplaceForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptralpha);
-    oclErrNum |= clSetKernelArg(
-	LaplaceForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrindex);
-    oclErrNum |= clSetKernelArg(
-	LaplaceForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrlambda);
-    oclErrNum |= clSetKernelArg(
-	LaplaceForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrlcl_q);
-    oclErrNum |= clSetKernelArg(
-	LaplaceForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrlcl_q_inv);
-    oclErrNum |= clSetKernelArg(
-	LaplaceForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrlevel);
-    oclErrNum |= clSetKernelArg(
-	LaplaceForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrlevel_int);
-    oclErrNum |= clSetKernelArg(
-	LaplaceForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(LaplaceForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrresult);
-    oclCheckErr(
-	oclErrNum, "clSetKernelArg");
+    helper::oclCheckErr(oclErrNum, "clSetKernelArg");
   }
 
   void ExecLaplaceFor()
@@ -336,27 +309,21 @@ private:
     size_t LaplaceFor_global_worksize[] = {storagesize - 0};
     size_t LaplaceFor_local_worksize[] = {16};
     size_t LaplaceFor_global_offset[] = {0};
-    oclErrNum = clEnqueueNDRangeKernel(
-	command_queue, LaplaceForKernel, 1, 
+    oclErrNum = clEnqueueNDRangeKernel(ocl_context->getCommandQueue(), LaplaceForKernel, 1, 
 	LaplaceFor_global_offset, LaplaceFor_global_worksize, LaplaceFor_local_worksize, 
 	0, NULL, &GPUExecution
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueNDRangeKernel");
-    oclErrNum = clFinish(command_queue);
-    oclCheckErr(
-	oclErrNum, "clFinish");
-    oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrresult, CL_TRUE, 
+    helper::oclCheckErr(oclErrNum, "clEnqueueNDRangeKernel");
+    oclErrNum = clFinish(ocl_context->getCommandQueue());
+    helper::oclCheckErr(oclErrNum, "clFinish");
+    oclErrNum = clEnqueueReadBuffer(ocl_context->getCommandQueue(), dev_ptrresult, CL_TRUE, 
 	0, hst_ptrresult_mem_size, hst_ptrresult, 
 	1, &GPUExecution, NULL
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-    oclErrNum = clFinish(command_queue);
-    oclCheckErr(
-	oclErrNum, "clFinish");
+    helper::oclCheckErr(oclErrNum, "clEnqueueReadBuffer");
+    oclErrNum = clFinish(ocl_context->getCommandQueue());
+    helper::oclCheckErr(oclErrNum, "clFinish");
   }
 
 
-}
+};

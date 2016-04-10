@@ -1,4 +1,5 @@
 #include "../../../utils/StartUtil.cpp"
+#include "../../../utils/helper.hpp"
 using namespace std;
 
 class OCLGaussianDerivatesTask
@@ -57,6 +58,7 @@ class OCLGaussianDerivatesTask
   size_t isFirstTime;
   std::string KernelDefines;
   Stopwatch timer;
+  OCLContext * ocl_context;
 
 
 public:
@@ -66,8 +68,7 @@ public:
     KernelDefines = "";
   }
 
-  void RunOCLGaussianDerivatesForKernel(
-	unsigned * arg_D1Ks__ijb_dimsI, size_t arg_hst_ptrD1Ks__ijb_dimsI_dim1, float * arg_D1Ks__ijb_x, 
+  void RunOCLGaussianDerivatesForKernel(unsigned * arg_D1Ks__ijb_dimsI, size_t arg_hst_ptrD1Ks__ijb_dimsI_dim1, float * arg_D1Ks__ijb_x, 
 	size_t arg_hst_ptrD1Ks__ijb_x_dim1, unsigned * arg_D2Ks__ijbg_dimsI, size_t arg_hst_ptrD2Ks__ijbg_dimsI_dim1, 
 	float * arg_D2Ks__ijbg_x, size_t arg_hst_ptrD2Ks__ijbg_x_dim1, unsigned * arg_D3Ks__ijbgd_dimsI, 
 	size_t arg_hst_ptrD3Ks__ijbgd_dimsI_dim1, float * arg_D3Ks__ijbgd_x, size_t arg_hst_ptrD3Ks__ijbgd_x_dim1, 
@@ -107,11 +108,11 @@ public:
       hst_ptrq_a_i_x_dim2 = arg_hst_ptrq_a_i_x_dim2;
       scales2_x = arg_scales2_x;
       scaleweight2_x = arg_scaleweight2_x;
-      StartUpOCL(ocl_type);
+      ocl_context = new OCLContext();
+      ocl_context->StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
-      compileKernel(
-	"GaussianDerivatesFor", "GaussianDerivatesFor.cl", GetKernelCode(), 
+      ocl_context->compileKernel("GaussianDerivatesFor", "GaussianDerivatesFor.cl", GetKernelCode(), 
 	false, &GaussianDerivatesForKernel, KernelDefines
 	);
       SetArgumentsGaussianDerivatesFor();
@@ -303,8 +304,7 @@ private:
 
     // Transposition
     hst_ptrq_a_i_x_trans = new float[hst_ptrq_a_i_x_mem_size];
-    transpose<float>(
-	hst_ptrq_a_i_x, hst_ptrq_a_i_x_trans, hst_ptrq_a_i_x_dim1, 
+    transpose<float>(hst_ptrq_a_i_x, hst_ptrq_a_i_x_trans, hst_ptrq_a_i_x_dim1, 
 	hst_ptrq_a_i_x_dim2);
 
     // Constant Memory
@@ -321,86 +321,58 @@ private:
 
     cl_int oclErrNum = CL_SUCCESS;
 
-    dev_ptrD1Ks__ijb_dimsI = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrD1Ks__ijb_dimsI_mem_size, 
+    dev_ptrD1Ks__ijb_dimsI = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrD1Ks__ijb_dimsI_mem_size, 
 	hst_ptrD1Ks__ijb_dimsI, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrD1Ks__ijb_dimsI");
-    dev_ptrD1Ks__ijb_x = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrD1Ks__ijb_x_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrD1Ks__ijb_dimsI");
+    dev_ptrD1Ks__ijb_x = clCreateBuffer(ocl_context->getContext(), CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrD1Ks__ijb_x_mem_size, 
 	hst_ptrD1Ks__ijb_x, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrD1Ks__ijb_x");
-    dev_ptrD2Ks__ijbg_dimsI = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrD2Ks__ijbg_dimsI_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrD1Ks__ijb_x");
+    dev_ptrD2Ks__ijbg_dimsI = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrD2Ks__ijbg_dimsI_mem_size, 
 	hst_ptrD2Ks__ijbg_dimsI, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrD2Ks__ijbg_dimsI");
-    dev_ptrD2Ks__ijbg_x = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrD2Ks__ijbg_x_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrD2Ks__ijbg_dimsI");
+    dev_ptrD2Ks__ijbg_x = clCreateBuffer(ocl_context->getContext(), CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrD2Ks__ijbg_x_mem_size, 
 	hst_ptrD2Ks__ijbg_x, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrD2Ks__ijbg_x");
-    dev_ptrD3Ks__ijbgd_dimsI = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrD3Ks__ijbgd_dimsI_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrD2Ks__ijbg_x");
+    dev_ptrD3Ks__ijbgd_dimsI = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrD3Ks__ijbgd_dimsI_mem_size, 
 	hst_ptrD3Ks__ijbgd_dimsI, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrD3Ks__ijbgd_dimsI");
-    dev_ptrD3Ks__ijbgd_x = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrD3Ks__ijbgd_x_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrD3Ks__ijbgd_dimsI");
+    dev_ptrD3Ks__ijbgd_x = clCreateBuffer(ocl_context->getContext(), CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrD3Ks__ijbgd_x_mem_size, 
 	hst_ptrD3Ks__ijbgd_x, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrD3Ks__ijbgd_x");
-    dev_ptrK__ij_x = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrK__ij_x_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrD3Ks__ijbgd_x");
+    dev_ptrK__ij_x = clCreateBuffer(ocl_context->getContext(), CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrK__ij_x_mem_size, 
 	hst_ptrK__ij_x, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrK__ij_x");
-    dev_ptrp_a_i_x = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrp_a_i_x_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrK__ij_x");
+    dev_ptrp_a_i_x = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrp_a_i_x_mem_size, 
 	hst_ptrp_a_i_x, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrp_a_i_x");
-    dev_ptrq_a_i_x = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrq_a_i_x_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrp_a_i_x");
+    dev_ptrq_a_i_x = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrq_a_i_x_mem_size, 
 	hst_ptrq_a_i_x_trans, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrq_a_i_x");
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrq_a_i_x");
   }
 
   void SetArgumentsGaussianDerivatesFor()
   {
     cl_int oclErrNum = CL_SUCCESS;
     int counter = 0;
-    oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrD1Ks__ijb_dimsI);
-    oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrD1Ks__ijb_x);
-    oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrD2Ks__ijbg_dimsI);
-    oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrD2Ks__ijbg_x);
-    oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrD3Ks__ijbgd_dimsI);
-    oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrD3Ks__ijbgd_x);
-    oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrK__ij_x);
-    oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrp_a_i_x);
-    oclErrNum |= clSetKernelArg(
-	GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(GaussianDerivatesForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrq_a_i_x);
-    oclCheckErr(
-	oclErrNum, "clSetKernelArg");
+    helper::oclCheckErr(oclErrNum, "clSetKernelArg");
   }
 
   void ExecGaussianDerivatesFor()
@@ -410,48 +382,36 @@ private:
     size_t GaussianDerivatesFor_global_worksize[] = {Lq - 0, Lp - 0};
     size_t GaussianDerivatesFor_local_worksize[] = {4, 4};
     size_t GaussianDerivatesFor_global_offset[] = {0, 0};
-    oclErrNum = clEnqueueNDRangeKernel(
-	command_queue, GaussianDerivatesForKernel, 2, 
+    oclErrNum = clEnqueueNDRangeKernel(ocl_context->getCommandQueue(), GaussianDerivatesForKernel, 2, 
 	GaussianDerivatesFor_global_offset, GaussianDerivatesFor_global_worksize, GaussianDerivatesFor_local_worksize, 
 	0, NULL, &GPUExecution
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueNDRangeKernel");
-    oclErrNum = clFinish(command_queue);
-    oclCheckErr(
-	oclErrNum, "clFinish");
-    oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrD1Ks__ijb_x, CL_TRUE, 
+    helper::oclCheckErr(oclErrNum, "clEnqueueNDRangeKernel");
+    oclErrNum = clFinish(ocl_context->getCommandQueue());
+    helper::oclCheckErr(oclErrNum, "clFinish");
+    oclErrNum = clEnqueueReadBuffer(ocl_context->getCommandQueue(), dev_ptrD1Ks__ijb_x, CL_TRUE, 
 	0, hst_ptrD1Ks__ijb_x_mem_size, hst_ptrD1Ks__ijb_x, 
 	1, &GPUExecution, NULL
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-    oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrD2Ks__ijbg_x, CL_TRUE, 
+    helper::oclCheckErr(oclErrNum, "clEnqueueReadBuffer");
+    oclErrNum = clEnqueueReadBuffer(ocl_context->getCommandQueue(), dev_ptrD2Ks__ijbg_x, CL_TRUE, 
 	0, hst_ptrD2Ks__ijbg_x_mem_size, hst_ptrD2Ks__ijbg_x, 
 	1, &GPUExecution, NULL
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-    oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrD3Ks__ijbgd_x, CL_TRUE, 
+    helper::oclCheckErr(oclErrNum, "clEnqueueReadBuffer");
+    oclErrNum = clEnqueueReadBuffer(ocl_context->getCommandQueue(), dev_ptrD3Ks__ijbgd_x, CL_TRUE, 
 	0, hst_ptrD3Ks__ijbgd_x_mem_size, hst_ptrD3Ks__ijbgd_x, 
 	1, &GPUExecution, NULL
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-    oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrK__ij_x, CL_TRUE, 
+    helper::oclCheckErr(oclErrNum, "clEnqueueReadBuffer");
+    oclErrNum = clEnqueueReadBuffer(ocl_context->getCommandQueue(), dev_ptrK__ij_x, CL_TRUE, 
 	0, hst_ptrK__ij_x_mem_size, hst_ptrK__ij_x, 
 	1, &GPUExecution, NULL
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-    oclErrNum = clFinish(command_queue);
-    oclCheckErr(
-	oclErrNum, "clFinish");
+    helper::oclCheckErr(oclErrNum, "clEnqueueReadBuffer");
+    oclErrNum = clFinish(ocl_context->getCommandQueue());
+    helper::oclCheckErr(oclErrNum, "clFinish");
   }
 
 
-}
+};

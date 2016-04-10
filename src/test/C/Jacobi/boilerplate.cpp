@@ -1,4 +1,5 @@
 #include "../../../utils/StartUtil.cpp"
+#include "../../../utils/helper.hpp"
 using namespace std;
 
 class OCLJacobiTask
@@ -28,6 +29,7 @@ class OCLJacobiTask
   size_t isFirstTime;
   std::string KernelDefines;
   Stopwatch timer;
+  OCLContext * ocl_context;
 
 
 public:
@@ -37,8 +39,7 @@ public:
     KernelDefines = "";
   }
 
-  void RunOCLJacobiForKernel(
-	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
+  void RunOCLJacobiForKernel(float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
 	float * arg_X1, size_t arg_hst_ptrX1_dim1, size_t arg_hst_ptrX1_dim2, 
 	float * arg_X2, size_t arg_hst_ptrX2_dim1, size_t arg_hst_ptrX2_dim2, 
 	std::string arg_ocl_type, unsigned arg_wB)
@@ -56,11 +57,11 @@ public:
       hst_ptrX2_dim2 = arg_hst_ptrX2_dim2;
       ocl_type = arg_ocl_type;
       wB = arg_wB;
-      StartUpOCL(ocl_type);
+      ocl_context = new OCLContext();
+      ocl_context->StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
-      compileKernel(
-	"JacobiFor", "JacobiFor.cl", GetKernelCode(), 
+      ocl_context->compileKernel("JacobiFor", "JacobiFor.cl", GetKernelCode(), 
 	false, &JacobiForKernel, KernelDefines
 	);
       SetArgumentsJacobiFor();
@@ -117,38 +118,28 @@ private:
 
     cl_int oclErrNum = CL_SUCCESS;
 
-    dev_ptrB = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrB_mem_size, 
+    dev_ptrB = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrB_mem_size, 
 	hst_ptrB, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrB");
-    dev_ptrX1 = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrX1_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrB");
+    dev_ptrX1 = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrX1_mem_size, 
 	hst_ptrX1, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrX1");
-    dev_ptrX2 = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrX2_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrX1");
+    dev_ptrX2 = clCreateBuffer(ocl_context->getContext(), CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrX2_mem_size, 
 	hst_ptrX2, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrX2");
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrX2");
   }
 
   void SetArgumentsJacobiFor()
   {
     cl_int oclErrNum = CL_SUCCESS;
     int counter = 0;
-    oclErrNum |= clSetKernelArg(
-	JacobiForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(JacobiForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrB);
-    oclErrNum |= clSetKernelArg(
-	JacobiForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(JacobiForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrX1);
-    oclErrNum |= clSetKernelArg(
-	JacobiForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(JacobiForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrX2);
-    oclCheckErr(
-	oclErrNum, "clSetKernelArg");
+    helper::oclCheckErr(oclErrNum, "clSetKernelArg");
   }
 
   void ExecJacobiFor()
@@ -158,27 +149,21 @@ private:
     size_t JacobiFor_global_worksize[] = {wB - 1, wB - 1};
     size_t JacobiFor_local_worksize[] = {4, 4};
     size_t JacobiFor_global_offset[] = {1, 1};
-    oclErrNum = clEnqueueNDRangeKernel(
-	command_queue, JacobiForKernel, 2, 
+    oclErrNum = clEnqueueNDRangeKernel(ocl_context->getCommandQueue(), JacobiForKernel, 2, 
 	JacobiFor_global_offset, JacobiFor_global_worksize, JacobiFor_local_worksize, 
 	0, NULL, &GPUExecution
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueNDRangeKernel");
-    oclErrNum = clFinish(command_queue);
-    oclCheckErr(
-	oclErrNum, "clFinish");
-    oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrX2, CL_TRUE, 
+    helper::oclCheckErr(oclErrNum, "clEnqueueNDRangeKernel");
+    oclErrNum = clFinish(ocl_context->getCommandQueue());
+    helper::oclCheckErr(oclErrNum, "clFinish");
+    oclErrNum = clEnqueueReadBuffer(ocl_context->getCommandQueue(), dev_ptrX2, CL_TRUE, 
 	0, hst_ptrX2_mem_size, hst_ptrX2, 
 	1, &GPUExecution, NULL
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-    oclErrNum = clFinish(command_queue);
-    oclCheckErr(
-	oclErrNum, "clFinish");
+    helper::oclCheckErr(oclErrNum, "clEnqueueReadBuffer");
+    oclErrNum = clFinish(ocl_context->getCommandQueue());
+    helper::oclCheckErr(oclErrNum, "clFinish");
   }
 
 
-}
+};

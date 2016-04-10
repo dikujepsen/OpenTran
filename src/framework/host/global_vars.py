@@ -90,6 +90,9 @@ class GlobalVars(boilerplatebase.BoilerplateBase):
         lval = lan.TypeId(['Stopwatch'], lan.Id('timer'))
         misc.append(lval)
 
+        lval = lan.TypeId([self._ocl_context_class_name, '*'], lan.Id(self._ocl_context_name))
+        misc.append(lval)
+
         self.file_ast.append(lan.GroupCompound(misc))
 
     def add_global_vars(self):

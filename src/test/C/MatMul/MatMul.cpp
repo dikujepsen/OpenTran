@@ -91,8 +91,8 @@ int main(int argc, char** argv)
   matmul(A_mat, B_mat, C_mat_cpu, hA, wA, wB);
   cout << "$Time " << timer.stop() << endl;
 
-  OCLMatmulTask ocl_task;
-  ocl_task.Run(
+  OCLMatMulTask ocl_task;
+  ocl_task.RunOCLMatMulForKernel(
     A_mat, wA, hA,
     B_mat, wB, hB,
     C_mat, wC, hC,

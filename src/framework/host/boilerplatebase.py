@@ -14,9 +14,12 @@ class BoilerplateBase(object):
         self._cl_mem_name = 'cl_mem'
         self._first_time_name = 'isFirstTime'
         self._kernel_defines_name = 'KernelDefines'
+        self._ocl_context_name = 'ocl_context'
+        self._ocl_context_class_name = 'OCLContext'
 
         # Used in BufferAllocation
         self._allocate_buffers_name = 'AllocateBuffers'
+        self._context_member_func = ast_bb.ClassMemberFuncCall(self._ocl_context_name, 'getContext')
         self._err_name = 'oclErrNum'
 
         # Used in KernelArgs
@@ -26,6 +29,7 @@ class BoilerplateBase(object):
         # Used in ExecKernel
         self._exec_event_name = 'GPUExecution'
         self._command_queue_name = 'command_queue'
+        self._command_queue_name_member_func = ast_bb.ClassMemberFuncCall(self._ocl_context_name, 'getCommandQueue')
         self._cl_exec_kernel_func_name = 'clEnqueueNDRangeKernel'
         self._cl_finish_name = 'clFinish'
 
@@ -41,7 +45,7 @@ class BoilerplateBase(object):
         if not var_name == '':
             var_name = ' ' + var_name
         arglist = [lan.Id(self._err_name), lan.Constant(cl_function_name + var_name)]
-        return ast_bb.FuncCall('oclCheckErr', arglist)
+        return ast_bb.FuncCall('helper::oclCheckErr', arglist)
 
     def _cl_success(self):
         lval = lan.TypeId(['cl_int'], lan.Id(self._err_name))

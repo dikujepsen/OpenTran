@@ -199,7 +199,7 @@ class CGenerator(object):
 
         for arg in n.arglist:
             if count == 1:
-                s += newline + '\t' + start
+                s += start
             s += self.visit(arg)
             if count != (len(n.arglist)):
                 s += ', '
@@ -257,7 +257,21 @@ class CGenerator(object):
             end = self.semi
         return id + arglist + end
 
+    def visit_ClassMemberFuncCall(self, n):
 
+        my_inside_arg_list = self.inside_ArgList
+        self.inside_ArgList = True
+
+        name = self.visit(n.name)
+        classname = self.visit(n.classname)
+        arglist = self.visit(n.arglist)
+
+        self.inside_ArgList = False or my_inside_arg_list
+        if self.inside_Assignment or self.inside_ArgList:
+            end = ''
+        else:
+            end = self.semi
+        return classname + '->' + name + arglist + end
 
     def visit_ForLoop(self, n):
         newline = self.newline
@@ -384,7 +398,7 @@ class CGenerator(object):
         s += self.visit(n.private_list)
         s += self.newline
 
-        s += '}'
+        s += '};'
         self.indent_level -= 2
         return s
 

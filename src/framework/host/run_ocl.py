@@ -78,7 +78,14 @@ class RunOCL(boilerplatebase.BoilerplateBase):
         return if_then_list
 
     def __add_runocl_start_up(self, if_then_list):
-        if_then_list.append(ast_bb.FuncCall('StartUpOCL', [lan.Id(self.__get_ocl_type_name)]))
+
+        lval = lan.Id(self._ocl_context_name)
+        nat_type = self._ocl_context_class_name
+        rval = lan.Id('new ' + nat_type + '()')
+        if_then_list.append(lan.Assignment(lval, rval))
+
+        if_then_list.append(ast_bb.ClassMemberFuncCall(self._ocl_context_name, 'StartUpOCL',
+                                                       [lan.Id(self.__get_ocl_type_name)]))
         if_then_list.append(ast_bb.FuncCall(self._allocate_buffers_name))
         if_then_list.append(lan.Cout([lan.Constant('$Defines '), lan.Id(self._kernel_defines_name)]))
 
@@ -91,7 +98,7 @@ class RunOCL(boilerplatebase.BoilerplateBase):
                    lan.Id('false'),
                    lan.Ref(kernel_name),
                    lan.Id(self._kernel_defines_name)]
-        if_then_list.append(ast_bb.FuncCall('compileKernel', arglist))
+        if_then_list.append(ast_bb.ClassMemberFuncCall(self._ocl_context_name, 'compileKernel', arglist))
 
     def __runocl_set_kernel_arguments(self, if_then_list):
         dev_func_id = cd.get_dev_func_id(self.ast)

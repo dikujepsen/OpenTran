@@ -56,7 +56,7 @@ class ExecKernel(boilerplatebase.BoilerplateBase):
         lval = lan.Id(self._err_name)
         kernel_name = cd.get_kernel_name(self.ast)
 
-        arglist = [lan.Id(self._command_queue_name),
+        arglist = [self._command_queue_name_member_func,
                    lan.Id(kernel_name),
                    lan.Constant(par_dim),
                    lan.Id(cd.get_global_grid_offset(self.ast)),
@@ -71,7 +71,7 @@ class ExecKernel(boilerplatebase.BoilerplateBase):
         exec_body.append(err_check)
 
     def __add_exec_cl_kernel_finish(self, exec_body):
-        finish = ast_bb.FuncCall(self._cl_finish_name, [lan.Id(self._command_queue_name)])
+        finish = ast_bb.FuncCall(self._cl_finish_name, [self._command_queue_name_member_func])
         exec_body.append(lan.Assignment(lan.Id(self._err_name), finish))
 
         err_check = self._err_check_function(self._cl_finish_name)
@@ -92,7 +92,7 @@ class ExecKernel(boilerplatebase.BoilerplateBase):
                 hst_nname = my_host_id[n]
                 hst_nname = name_swap.try_swap(hst_nname)
 
-                arglist = [lan.Id(self._command_queue_name),
+                arglist = [self._command_queue_name_member_func,
                            lan.Id(dev_ids[n]),
                            lan.Id('CL_TRUE'),
                            lan.Constant(0),
@@ -107,7 +107,7 @@ class ExecKernel(boilerplatebase.BoilerplateBase):
                 exec_body.append(err_check)
 
             # add clFinish statement
-            arglist = [lan.Id(self._command_queue_name)]
+            arglist = [self._command_queue_name_member_func]
             finish = ast_bb.FuncCall(self._cl_finish_name, arglist)
             exec_body.append(lan.Assignment(lan.Id(self._err_name), finish))
 

@@ -66,7 +66,8 @@ class Boilerplate(boilerplatebase.BoilerplateBase):
         return self.file_ast
 
     def __add_util_includes(self, file_ast):
-        stat_list = [lan.RawCpp('#include \"../../../utils/StartUtil.cpp\"'), lan.RawCpp('using namespace std;')]
+        stat_list = [lan.RawCpp('#include \"../../../utils/StartUtil.cpp\"'),
+                     lan.RawCpp('#include \"../../../utils/helper.hpp\"'), lan.RawCpp('using namespace std;')]
         file_ast.append(lan.GroupCompound(stat_list))
 
     def __add_class_init(self, file_ast, program_name):

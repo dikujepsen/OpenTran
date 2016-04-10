@@ -23,6 +23,16 @@ def FuncCall(name, arglist=[]):
     return func_call
 
 
+def ClassMemberFuncCall(classname, name, arglist=[]):
+    classname_id = lan.Id(classname)
+    func_id = lan.Id(name)
+    func_arg_list = lan.ArgList(arglist)
+    func_call = lan.ClassMemberFuncCall(classname_id, func_id,
+                                        func_arg_list)
+
+    return func_call
+
+
 def ConstantAssignment(name, constant=0, type=['unsigned']):
     lval = lan.TypeId(type, lan.Id(name))
     rval = lan.Constant(constant)

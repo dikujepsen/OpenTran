@@ -86,7 +86,7 @@ class BufferAllocation(boilerplatebase.BoilerplateBase):
                 flag = lan.Id('CL_MEM_USE_HOST_PTR')
                 arrayn_id = lan.Id(arrayn)
 
-            arglist = [lan.Id('context'),
+            arglist = [self._context_member_func,
                        flag,
                        lan.Id(mem_names[n]),
                        arrayn_id,

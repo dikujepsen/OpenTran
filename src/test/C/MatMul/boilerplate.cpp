@@ -1,4 +1,5 @@
 #include "../../../utils/StartUtil.cpp"
+#include "../../../utils/helper.hpp"
 using namespace std;
 
 class OCLMatMulTask
@@ -30,6 +31,7 @@ class OCLMatMulTask
   size_t isFirstTime;
   std::string KernelDefines;
   Stopwatch timer;
+  OCLContext * ocl_context;
 
 
 public:
@@ -39,8 +41,7 @@ public:
     KernelDefines = "";
   }
 
-  void RunOCLMatMulForKernel(
-	float * arg_A, size_t arg_hst_ptrA_dim1, size_t arg_hst_ptrA_dim2, 
+  void RunOCLMatMulForKernel(float * arg_A, size_t arg_hst_ptrA_dim1, size_t arg_hst_ptrA_dim2, 
 	float * arg_B, size_t arg_hst_ptrB_dim1, size_t arg_hst_ptrB_dim2, 
 	float * arg_C, size_t arg_hst_ptrC_dim1, size_t arg_hst_ptrC_dim2, 
 	unsigned arg_hA, std::string arg_ocl_type, unsigned arg_wA, 
@@ -61,11 +62,11 @@ public:
       ocl_type = arg_ocl_type;
       wA = arg_wA;
       wB = arg_wB;
-      StartUpOCL(ocl_type);
+      ocl_context = new OCLContext();
+      ocl_context->StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
-      compileKernel(
-	"MatMulFor", "MatMulFor.cl", GetKernelCode(), 
+      ocl_context->compileKernel("MatMulFor", "MatMulFor.cl", GetKernelCode(), 
 	false, &MatMulForKernel, KernelDefines
 	);
       SetArgumentsMatMulFor();
@@ -151,38 +152,28 @@ private:
 
     cl_int oclErrNum = CL_SUCCESS;
 
-    dev_ptrA = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrA_mem_size, 
+    dev_ptrA = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrA_mem_size, 
 	hst_ptrA, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrA");
-    dev_ptrB = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrB_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrA");
+    dev_ptrB = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrB_mem_size, 
 	hst_ptrB, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrB");
-    dev_ptrC = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrC_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrB");
+    dev_ptrC = clCreateBuffer(ocl_context->getContext(), CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrC_mem_size, 
 	hst_ptrC, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrC");
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrC");
   }
 
   void SetArgumentsMatMulFor()
   {
     cl_int oclErrNum = CL_SUCCESS;
     int counter = 0;
-    oclErrNum |= clSetKernelArg(
-	MatMulForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(MatMulForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrA);
-    oclErrNum |= clSetKernelArg(
-	MatMulForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(MatMulForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrB);
-    oclErrNum |= clSetKernelArg(
-	MatMulForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(MatMulForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrC);
-    oclCheckErr(
-	oclErrNum, "clSetKernelArg");
+    helper::oclCheckErr(oclErrNum, "clSetKernelArg");
   }
 
   void ExecMatMulFor()
@@ -192,27 +183,21 @@ private:
     size_t MatMulFor_global_worksize[] = {wB - 0, hA - 0};
     size_t MatMulFor_local_worksize[] = {4, 4};
     size_t MatMulFor_global_offset[] = {0, 0};
-    oclErrNum = clEnqueueNDRangeKernel(
-	command_queue, MatMulForKernel, 2, 
+    oclErrNum = clEnqueueNDRangeKernel(ocl_context->getCommandQueue(), MatMulForKernel, 2, 
 	MatMulFor_global_offset, MatMulFor_global_worksize, MatMulFor_local_worksize, 
 	0, NULL, &GPUExecution
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueNDRangeKernel");
-    oclErrNum = clFinish(command_queue);
-    oclCheckErr(
-	oclErrNum, "clFinish");
-    oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrC, CL_TRUE, 
+    helper::oclCheckErr(oclErrNum, "clEnqueueNDRangeKernel");
+    oclErrNum = clFinish(ocl_context->getCommandQueue());
+    helper::oclCheckErr(oclErrNum, "clFinish");
+    oclErrNum = clEnqueueReadBuffer(ocl_context->getCommandQueue(), dev_ptrC, CL_TRUE, 
 	0, hst_ptrC_mem_size, hst_ptrC, 
 	1, &GPUExecution, NULL
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-    oclErrNum = clFinish(command_queue);
-    oclCheckErr(
-	oclErrNum, "clFinish");
+    helper::oclCheckErr(oclErrNum, "clEnqueueReadBuffer");
+    oclErrNum = clFinish(ocl_context->getCommandQueue());
+    helper::oclCheckErr(oclErrNum, "clFinish");
   }
 
 
-}
+};

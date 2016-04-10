@@ -1,4 +1,5 @@
 #include "../../../utils/StartUtil.cpp"
+#include "../../../utils/helper.hpp"
 using namespace std;
 
 class OCLKNearestTask
@@ -31,6 +32,7 @@ class OCLKNearestTask
   size_t isFirstTime;
   std::string KernelDefines;
   Stopwatch timer;
+  OCLContext * ocl_context;
 
 
 public:
@@ -40,8 +42,7 @@ public:
     KernelDefines = "";
   }
 
-  void RunOCLKNearestForKernel(
-	unsigned arg_NTEST, unsigned arg_NTRAIN, unsigned arg_dim, 
+  void RunOCLKNearestForKernel(unsigned arg_NTEST, unsigned arg_NTRAIN, unsigned arg_dim, 
 	float * arg_dist_matrix, size_t arg_hst_ptrdist_matrix_dim1, size_t arg_hst_ptrdist_matrix_dim2, 
 	std::string arg_ocl_type, float * arg_test_patterns, size_t arg_hst_ptrtest_patterns_dim1, 
 	size_t arg_hst_ptrtest_patterns_dim2, float * arg_train_patterns, size_t arg_hst_ptrtrain_patterns_dim1, 
@@ -62,11 +63,11 @@ public:
       hst_ptrtrain_patterns = arg_train_patterns;
       hst_ptrtrain_patterns_dim1 = arg_hst_ptrtrain_patterns_dim1;
       hst_ptrtrain_patterns_dim2 = arg_hst_ptrtrain_patterns_dim2;
-      StartUpOCL(ocl_type);
+      ocl_context = new OCLContext();
+      ocl_context->StartUpOCL(ocl_type);
       AllocateBuffers();
       cout << "$Defines " << KernelDefines << endl;
-      compileKernel(
-	"KNearestFor", "KNearestFor.cl", GetKernelCode(), 
+      ocl_context->compileKernel("KNearestFor", "KNearestFor.cl", GetKernelCode(), 
 	false, &KNearestForKernel, KernelDefines
 	);
       SetArgumentsKNearestFor();
@@ -142,8 +143,7 @@ private:
 
     // Transposition
     hst_ptrtest_patterns_trans = new float[hst_ptrtest_patterns_mem_size];
-    transpose<float>(
-	hst_ptrtest_patterns, hst_ptrtest_patterns_trans, hst_ptrtest_patterns_dim1, 
+    transpose<float>(hst_ptrtest_patterns, hst_ptrtest_patterns_trans, hst_ptrtest_patterns_dim1, 
 	hst_ptrtest_patterns_dim2);
 
     // Constant Memory
@@ -159,38 +159,28 @@ private:
 
     cl_int oclErrNum = CL_SUCCESS;
 
-    dev_ptrdist_matrix = clCreateBuffer(
-	context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrdist_matrix_mem_size, 
+    dev_ptrdist_matrix = clCreateBuffer(ocl_context->getContext(), CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, hst_ptrdist_matrix_mem_size, 
 	hst_ptrdist_matrix, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrdist_matrix");
-    dev_ptrtest_patterns = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrtest_patterns_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrdist_matrix");
+    dev_ptrtest_patterns = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrtest_patterns_mem_size, 
 	hst_ptrtest_patterns_trans, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrtest_patterns");
-    dev_ptrtrain_patterns = clCreateBuffer(
-	context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrtrain_patterns_mem_size, 
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrtest_patterns");
+    dev_ptrtrain_patterns = clCreateBuffer(ocl_context->getContext(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, hst_ptrtrain_patterns_mem_size, 
 	hst_ptrtrain_patterns, &oclErrNum);
-    oclCheckErr(
-	oclErrNum, "clCreateBuffer dev_ptrtrain_patterns");
+    helper::oclCheckErr(oclErrNum, "clCreateBuffer dev_ptrtrain_patterns");
   }
 
   void SetArgumentsKNearestFor()
   {
     cl_int oclErrNum = CL_SUCCESS;
     int counter = 0;
-    oclErrNum |= clSetKernelArg(
-	KNearestForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(KNearestForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrdist_matrix);
-    oclErrNum |= clSetKernelArg(
-	KNearestForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(KNearestForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrtest_patterns);
-    oclErrNum |= clSetKernelArg(
-	KNearestForKernel, counter++, sizeof(cl_mem), 
+    oclErrNum |= clSetKernelArg(KNearestForKernel, counter++, sizeof(cl_mem), 
 	(void *) &dev_ptrtrain_patterns);
-    oclCheckErr(
-	oclErrNum, "clSetKernelArg");
+    helper::oclCheckErr(oclErrNum, "clSetKernelArg");
   }
 
   void ExecKNearestFor()
@@ -200,27 +190,21 @@ private:
     size_t KNearestFor_global_worksize[] = {NTEST - 0};
     size_t KNearestFor_local_worksize[] = {16};
     size_t KNearestFor_global_offset[] = {0};
-    oclErrNum = clEnqueueNDRangeKernel(
-	command_queue, KNearestForKernel, 1, 
+    oclErrNum = clEnqueueNDRangeKernel(ocl_context->getCommandQueue(), KNearestForKernel, 1, 
 	KNearestFor_global_offset, KNearestFor_global_worksize, KNearestFor_local_worksize, 
 	0, NULL, &GPUExecution
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueNDRangeKernel");
-    oclErrNum = clFinish(command_queue);
-    oclCheckErr(
-	oclErrNum, "clFinish");
-    oclErrNum = clEnqueueReadBuffer(
-	command_queue, dev_ptrdist_matrix, CL_TRUE, 
+    helper::oclCheckErr(oclErrNum, "clEnqueueNDRangeKernel");
+    oclErrNum = clFinish(ocl_context->getCommandQueue());
+    helper::oclCheckErr(oclErrNum, "clFinish");
+    oclErrNum = clEnqueueReadBuffer(ocl_context->getCommandQueue(), dev_ptrdist_matrix, CL_TRUE, 
 	0, hst_ptrdist_matrix_mem_size, hst_ptrdist_matrix, 
 	1, &GPUExecution, NULL
 	);
-    oclCheckErr(
-	oclErrNum, "clEnqueueReadBuffer");
-    oclErrNum = clFinish(command_queue);
-    oclCheckErr(
-	oclErrNum, "clFinish");
+    helper::oclCheckErr(oclErrNum, "clEnqueueReadBuffer");
+    oclErrNum = clFinish(ocl_context->getCommandQueue());
+    helper::oclCheckErr(oclErrNum, "clFinish");
   }
 
 
-}
+};
