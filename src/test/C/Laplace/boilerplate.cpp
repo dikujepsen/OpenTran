@@ -231,13 +231,13 @@ private:
 
     // Transposition
     hst_ptrindex_trans = new double[hst_ptrindex_mem_size];
-    transpose<double>(hst_ptrindex, hst_ptrindex_trans, hst_ptrindex_dim1, 
+    helper::transpose<double>(hst_ptrindex, hst_ptrindex_trans, hst_ptrindex_dim1, 
 	hst_ptrindex_dim2);
     hst_ptrlevel_int_trans = new double[hst_ptrlevel_int_mem_size];
-    transpose<double>(hst_ptrlevel_int, hst_ptrlevel_int_trans, hst_ptrlevel_int_dim1, 
+    helper::transpose<double>(hst_ptrlevel_int, hst_ptrlevel_int_trans, hst_ptrlevel_int_dim1, 
 	hst_ptrlevel_int_dim2);
     hst_ptrlevel_trans = new double[hst_ptrlevel_mem_size];
-    transpose<double>(hst_ptrlevel, hst_ptrlevel_trans, hst_ptrlevel_dim1, 
+    helper::transpose<double>(hst_ptrlevel, hst_ptrlevel_trans, hst_ptrlevel_dim1, 
 	hst_ptrlevel_dim2);
 
     // Constant Memory

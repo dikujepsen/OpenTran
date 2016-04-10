@@ -304,7 +304,7 @@ private:
 
     // Transposition
     hst_ptrq_a_i_x_trans = new float[hst_ptrq_a_i_x_mem_size];
-    transpose<float>(hst_ptrq_a_i_x, hst_ptrq_a_i_x_trans, hst_ptrq_a_i_x_dim1, 
+    helper::transpose<float>(hst_ptrq_a_i_x, hst_ptrq_a_i_x_trans, hst_ptrq_a_i_x_dim1, 
 	hst_ptrq_a_i_x_dim2);
 
     // Constant Memory

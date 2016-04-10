@@ -78,7 +78,7 @@ class Transpose(object):
                                    lan.Id(hst_trans_name),
                                    lan.Id(dim_name[0]),
                                    lan.Id(dim_name[1])])
-            trans = lan.FuncDecl(lan.Id('transpose<' + nat_type + '>'), arglist, lan.Compound([]))
+            trans = lan.FuncDecl(lan.Id('helper::transpose<' + nat_type + '>'), arglist, lan.Compound([]))
             my_transposition.append(trans)
 
         return my_transposition

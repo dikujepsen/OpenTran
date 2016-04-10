@@ -123,11 +123,15 @@ int main(int argc, char** argv)
   createB(B_mat, wB, hB);
   // printMat2(B_mat, wB, hB);
 
+  Stopwatch timer;
   timer.start();
+
   Jacobi(B_mat, X1_mat, X2_mat_cpu, wA, wB);
 //    printMat3(X2_mat_cpu, 200, wA, hA);
   cout << "$Time " << timer.stop() << endl;  
-  RunOCLJacobiForKernel(
+  
+  OCLJacobiTask ocl_task;
+  ocl_task.RunOCLJacobiForKernel(
 			B_mat,  wB, hB,
 			X1_mat, wA, hA,
 			X2_mat, wC, hC,

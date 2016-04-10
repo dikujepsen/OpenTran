@@ -143,7 +143,7 @@ private:
 
     // Transposition
     hst_ptrtest_patterns_trans = new float[hst_ptrtest_patterns_mem_size];
-    transpose<float>(hst_ptrtest_patterns, hst_ptrtest_patterns_trans, hst_ptrtest_patterns_dim1, 
+    helper::transpose<float>(hst_ptrtest_patterns, hst_ptrtest_patterns_trans, hst_ptrtest_patterns_dim1, 
 	hst_ptrtest_patterns_dim2);
 
     // Constant Memory

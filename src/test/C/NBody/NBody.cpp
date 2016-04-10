@@ -183,10 +183,14 @@ int main(int argc, char** argv)
   // float dt = 0.015;
   
 
+  Stopwatch timer;
   timer.start();
   computeForces(Forces_cpu, Pos, M_mat, N);
   cout << "$Time " << timer.stop() << endl;  
-  RunOCLNBodyForKernel(Forces, wVel, 2,
+
+
+  OCLNBodyTask ocl_task;
+  ocl_task.RunOCLNBodyForKernel(Forces, wVel, 2,
 	M_mat, wM, N,
 	Pos, wPos, 2,
 	"gpu");

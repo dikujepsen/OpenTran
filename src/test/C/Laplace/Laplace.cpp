@@ -236,6 +236,7 @@ int main(int argc, char** argv)
   divMat(level_int, level_int_size, 10000.0);
 
 
+  Stopwatch timer;
   timer.start();
   Laplace(level,
   	  level_int,
@@ -248,7 +249,8 @@ int main(int argc, char** argv)
   	  storage_size,  dim);
   cout << "$Time " << timer.stop() << endl;  
 
-  RunOCLLaplaceForKernel(alpha, alpha_size, dim,
+  OCLLaplaceTask ocl_task;
+  ocl_task.RunOCLLaplaceForKernel(alpha, alpha_size, dim,
 	index, wIndex, hIndex,
 	lambda, dim, lcl_q, dim, lcl_q_inv, dim,
 	level, wLevel, hLevel,

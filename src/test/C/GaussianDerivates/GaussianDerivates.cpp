@@ -257,6 +257,7 @@ int main(int argc, char** argv)
 
   
 //#if CPU
+  Stopwatch timer;
   timer.start();
   GaussianDerivates( Lp,  Lq,  dim,
 		     p_a_i_x,  p_a_i_rows,
@@ -271,8 +272,9 @@ int main(int argc, char** argv)
 //#else
 
 // printMat(K__ij_x_cpu, 100);
+  OCLGaussianDerivatesTask ocl_task;
 
-  RunOCLGaussianDerivatesForKernel(
+  ocl_task.RunOCLGaussianDerivatesForKernel(
     D1Ks__ijb_dimsI, 2, D1Ks__ijb_x, D1Ks__ijb_x_size, D2Ks__ijbg_dimsI, 3,
 	D2Ks__ijbg_x, D2Ks__ijbg_x_size, D3Ks__ijbgd_dimsI, 4,
 	D3Ks__ijbgd_x, D3Ks__ijbgd_x_size,

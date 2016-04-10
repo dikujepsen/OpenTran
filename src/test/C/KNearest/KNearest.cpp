@@ -68,6 +68,7 @@ int main( int argc, char* argv[] )
     }
   }
   
+  Stopwatch timer;
   timer.start();
   float d,tmp;
   for (i=0;i<NTEST;i++) {
@@ -84,7 +85,8 @@ int main( int argc, char* argv[] )
   }
   cout << "$Time " << timer.stop() << endl;  
   
-  RunOCLKNearestForKernel(
+  OCLKNearestTask ocl_task;
+  ocl_task.RunOCLKNearestForKernel(
 	NTEST, NTRAIN, dim,
 	dist_matrix, NTEST, NTRAIN,
 	"gpu", test_patterns, dim, NTEST, train_patterns,

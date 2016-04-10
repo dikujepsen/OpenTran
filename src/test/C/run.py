@@ -132,7 +132,7 @@ if args.run is not None:
             log.write(acc + '\n')
             log.flush()
             os.fsync(log)
-            #print acc + '\n'
+            print acc + '\n'
         os.chdir('..')
         log.close()
         uniqueid.close()
