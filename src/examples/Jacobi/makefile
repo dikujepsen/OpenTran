@@ -1,5 +1,5 @@
 
-EXEC = MatMul.exe
+EXEC = Jacobi.exe
 
 
 EXECDEP = $(EXEC:.exe=.cpp)
